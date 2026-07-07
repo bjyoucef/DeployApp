@@ -1,0 +1,848 @@
+{% extends 'admin/admin_layout.html' %}
+
+{% block title %}Gestion des Types de Chambres{% endblock %}
+
+{% block style %}
+<style>
+    :root {
+        --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        --card-radius: 12px;
+        --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .page-header {
+        background: var(--primary-gradient);
+        color: white;
+        padding: 2rem;
+        border-radius: var(--card-radius);
+        margin-bottom: 2rem;
+        box-shadow: 0 8px 24px rgba(102, 126, 234, 0.15);
+    }
+
+    .stats-card {
+        background: white;
+        border-radius: var(--card-radius);
+        padding: 1.5rem;
+        box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+        transition: var(--transition-smooth);
+        border-left: 4px solid transparent;
+    }
+
+    .stats-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+    }
+
+    .stats-card.primary {
+        border-left-color: #667eea;
+    }
+
+    .stats-card.success {
+        border-left-color: #28a745;
+    }
+
+    .stats-card.info {
+        border-left-color: #17a2b8;
+    }
+
+    .stats-card.warning {
+        border-left-color: #ffc107;
+    }
+
+    .table-card {
+        background: white;
+        border-radius: var(--card-radius);
+        box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+        overflow: hidden;
+    }
+
+    .table-header {
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        padding: 1.5rem;
+        border-bottom: 2px solid #dee2e6;
+    }
+
+    .search-box {
+        position: relative;
+    }
+
+    .search-box input {
+        padding-left: 2.5rem;
+        border-radius: 50px;
+        border: 2px solid #e9ecef;
+        transition: var(--transition-smooth);
+    }
+
+    .search-box input:focus {
+        border-color: #667eea;
+        box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+    }
+
+    .search-box i {
+        position: absolute;
+        left: 1rem;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #6c757d;
+    }
+
+    .table-chambres {
+        margin-bottom: 0;
+    }
+
+    .table-chambres thead {
+        background: #f8f9fa;
+    }
+
+    .table-chambres th {
+        font-weight: 600;
+        text-transform: uppercase;
+        font-size: 0.75rem;
+        letter-spacing: 0.5px;
+        color: #495057;
+        border-bottom: 2px solid #dee2e6;
+        padding: 1rem;
+    }
+
+    .table-chambres tbody tr {
+        transition: var(--transition-smooth);
+    }
+
+    .table-chambres tbody tr:hover {
+        background-color: #f8f9fa;
+        transform: scale(1.01);
+    }
+
+    .badge-standard {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 0.35rem 0.75rem;
+        font-size: 0.75rem;
+        border-radius: 50px;
+        font-weight: 500;
+    }
+
+    .badge-personnalise {
+        background: linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%);
+        color: white;
+        padding: 0.35rem 0.75rem;
+        font-size: 0.75rem;
+        border-radius: 50px;
+        font-weight: 500;
+    }
+
+    .badge-actif {
+        background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+        color: white;
+    }
+
+    .badge-inactif {
+        background: linear-gradient(135deg, #6c757d 0%, #5a6268 100%);
+        color: white;
+    }
+
+    .btn-action {
+        padding: 0.375rem 0.75rem;
+        border-radius: 6px;
+        transition: var(--transition-smooth);
+        border: none;
+    }
+
+    .btn-action:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
+
+    .btn-add {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 0.75rem 1.5rem;
+        border-radius: 50px;
+        font-weight: 600;
+        transition: var(--transition-smooth);
+        border: none;
+    }
+
+    .btn-add:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 24px rgba(102, 126, 234, 0.3);
+        color: white;
+    }
+
+    .modal-content {
+        border-radius: var(--card-radius);
+        border: none;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    }
+
+    .modal-header {
+        background: var(--primary-gradient);
+        color: white;
+        border-radius: var(--card-radius) var(--card-radius) 0 0;
+        padding: 1.5rem;
+    }
+
+    .modal-header .btn-close {
+        filter: brightness(0) invert(1);
+    }
+
+    .form-label {
+        font-weight: 600;
+        color: #495057;
+        margin-bottom: 0.5rem;
+    }
+
+    .form-control,
+    .form-select {
+        border-radius: 8px;
+        border: 2px solid #e9ecef;
+        padding: 0.75rem 1rem;
+        transition: var(--transition-smooth);
+    }
+
+    .form-control:focus,
+    .form-select:focus {
+        border-color: #667eea;
+        box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+    }
+
+    .form-check-input {
+        width: 1.5rem;
+        height: 1.5rem;
+        border-radius: 4px;
+        border: 2px solid #dee2e6;
+    }
+
+    .form-check-input:checked {
+        background-color: #667eea;
+        border-color: #667eea;
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 4rem 2rem;
+    }
+
+    .empty-state i {
+        font-size: 4rem;
+        color: #dee2e6;
+        margin-bottom: 1rem;
+    }
+
+    .no-results {
+        text-align: center;
+        padding: 2rem;
+        background: #fff3cd;
+        border-radius: var(--card-radius);
+        margin: 1rem;
+        display: none;
+    }
+
+    @media (max-width: 768px) {
+        .page-header h2 {
+            font-size: 1.5rem;
+        }
+
+        .stats-card {
+            margin-bottom: 1rem;
+        }
+
+        .table-responsive {
+            font-size: 0.875rem;
+        }
+
+        .btn-action {
+            padding: 0.25rem 0.5rem;
+            font-size: 0.75rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Header -->
+    <div class="page-header">
+        <div class="row align-items-center">
+            <div class="col-md-6">
+                <h2 class="mb-1">
+                    <i class="fas fa-bed me-2"></i>Gestion des Types de Chambres
+                </h2>
+                <p class="mb-0 opacity-75">Configuration des types de chambres et tarification</p>
+            </div>
+            <div class="col-md-6 text-end">
+                <button class="btn btn-add" data-bs-toggle="modal" data-bs-target="#modalAjouterType">
+                    <i class="fas fa-plus-circle me-2"></i>Ajouter un type
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistiques -->
+    <div class="row mb-4 g-3">
+        <div class="col-lg-3 col-md-6">
+            <div class="stats-card primary">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <p class="text-muted mb-1 small">Total Types</p>
+                        <h3 class="mb-0" id="stat-total">{{ types_chambres|length }}</h3>
+                    </div>
+                    <div class="text-primary">
+                        <i class="fas fa-door-open fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6">
+            <div class="stats-card success">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <p class="text-muted mb-1 small">Types Actifs</p>
+                        <h3 class="mb-0">{{ types_chambres|selectattr('est_actif', 'equalto', 1)|list|length }}</h3>
+                    </div>
+                    <div class="text-success">
+                        <i class="fas fa-check-circle fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6">
+            <div class="stats-card info">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <p class="text-muted mb-1 small">Types Standards</p>
+                        <h3 class="mb-0">{{ types_chambres|selectattr('est_standard', 'equalto', 1)|list|length }}</h3>
+                    </div>
+                    <div class="text-info">
+                        <i class="fas fa-star fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6">
+            <div class="stats-card warning">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <p class="text-muted mb-1 small">Prix Moyen</p>
+                        <h3 class="mb-0">
+                            {% if types_chambres %}
+                            {{ "{:,.0f}".format(types_chambres|map(attribute='prix_unitaire')|sum /
+                            types_chambres|length) }} DA
+                            {% else %}
+                            0 DA
+                            {% endif %}
+                        </h3>
+                    </div>
+                    <div class="text-warning">
+                        <i class="fas fa-coins fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Table Card -->
+    <div class="table-card">
+        <div class="table-header">
+            <div class="row align-items-center g-3">
+                <div class="col-md-6">
+                    <div class="search-box">
+                        <i class="fas fa-search"></i>
+                        <input type="text" id="searchInput" class="form-control"
+                            placeholder="Rechercher un type de chambre...">
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="d-flex gap-2 justify-content-md-end">
+                        <select id="filterStatut" class="form-select" style="max-width: 200px;">
+                            <option value="all">Tous les statuts</option>
+                            <option value="actif">Actifs uniquement</option>
+                            <option value="inactif">Inactifs uniquement</option>
+                        </select>
+                        <select id="filterType" class="form-select" style="max-width: 200px;">
+                            <option value="all">Tous les types</option>
+                            <option value="standard">Standards</option>
+                            <option value="personnalise">Personnalisés</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="no-results" id="noResults">
+            <i class="fas fa-search me-2"></i>Aucun type de chambre ne correspond à votre recherche
+        </div>
+
+        {% if types_chambres %}
+        <div class="table-responsive">
+            <table class="table table-chambres table-hover" id="tableTypes">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Nom du Type</th>
+                        <th class="text-end">Prix Unitaire</th>
+                        <th class="text-center">Capacité</th>
+                        <th>Type</th>
+                        <th>Statut</th>
+                        <th>Description</th>
+                        <th class="text-center">Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="tableBody">
+                    {% for type_chambre in types_chambres %}
+                    <tr data-type-id="{{ type_chambre.id_type_chambre }}"
+                        data-type-name="{{ (type_chambre.nom_type or '')|lower }}"
+                        data-statut="{{ 'actif' if type_chambre.est_actif else 'inactif' }}"
+                        data-category="{{ 'standard' if type_chambre.est_standard else 'personnalise' }}">
+                        <td><span class="badge bg-secondary">#{{ type_chambre.id_type_chambre }}</span></td>
+                        <td>
+                            <strong>{{ type_chambre.nom_type }}</strong>
+                        </td>
+                        <td class="text-end">
+                            <strong class="text-success">{{ "{:,.2f}".format(type_chambre.prix_unitaire) }} DA</strong>
+                        </td>
+                        <td class="text-center">
+                            <span class="badge bg-info">{{ type_chambre.capacite }} pers.</span>
+                        </td>
+                        <td>
+                            {% if type_chambre.est_standard %}
+                            <span class="badge badge-standard">
+                                <i class="fas fa-star me-1"></i>Standard
+                            </span>
+                            {% else %}
+                            <span class="badge badge-personnalise">
+                                <i class="fas fa-cog me-1"></i>Personnalisé
+                            </span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if type_chambre.est_actif %}
+                            <span class="badge badge-actif">
+                                <i class="fas fa-check-circle me-1"></i>Actif
+                            </span>
+                            {% else %}
+                            <span class="badge badge-inactif">
+                                <i class="fas fa-times-circle me-1"></i>Inactif
+                            </span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <small class="text-muted">
+                                {{ type_chambre.description[:50] + '...' if type_chambre.description and
+                                type_chambre.description|length > 50 else (type_chambre.description or 'N/A') }}
+                            </small>
+                        </td>
+                        <td class="text-center">
+                            <div class="btn-group btn-group-sm" role="group">
+                                <button onclick="openEditModal({{ type_chambre.id_type_chambre }})"
+                                    class="btn btn-action btn-warning" title="Modifier">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button onclick="toggleActif({{ type_chambre.id_type_chambre }})"
+                                    class="btn btn-action {{ 'btn-secondary' if type_chambre.est_actif else 'btn-success' }}"
+                                    title="{{ 'Désactiver' if type_chambre.est_actif else 'Activer' }}">
+                                    <i class="fas fa-{{ 'power-off' if type_chambre.est_actif else 'check' }}"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <i class="fas fa-bed"></i>
+            <h4 class="text-muted mt-3">Aucun type de chambre enregistré</h4>
+            <p class="text-muted">Commencez par ajouter votre premier type de chambre</p>
+            <button class="btn btn-add mt-3" data-bs-toggle="modal" data-bs-target="#modalAjouterType">
+                <i class="fas fa-plus-circle me-2"></i>Ajouter un type
+            </button>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Modal Ajouter Type -->
+<div class="modal fade" id="modalAjouterType" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form id="formAjouterType">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="fas fa-plus-circle me-2"></i>Ajouter un type de chambre
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Nom du Type <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" name="nom_type"
+                            placeholder="Ex: Chambre Standard, Suite VIP..." required>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Prix Unitaire (DA) <span class="text-danger">*</span></label>
+                            <input type="number" class="form-control" name="prix_unitaire" step="0.01" min="0" value="0"
+                                required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Capacité <span class="text-danger">*</span></label>
+                            <input type="number" class="form-control" name="capacite" min="1" value="1" required>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Description</label>
+                        <textarea class="form-control" name="description" rows="3"
+                            placeholder="Description du type de chambre..."></textarea>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="est_standard"
+                                    id="add_est_standard">
+                                <label class="form-check-label" for="add_est_standard">
+                                    Type standard
+                                </label>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="est_actif" id="add_est_actif"
+                                    checked>
+                                <label class="form-check-label" for="add_est_actif">
+                                    Actif
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-check me-2"></i>Ajouter
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Modifier Type -->
+<div class="modal fade" id="modalModifierType" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form id="formModifierType">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="fas fa-edit me-2"></i>Modifier le type de chambre
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Nom du Type <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="edit_nom_type" name="nom_type" required>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Prix Unitaire (DA) <span class="text-danger">*</span></label>
+                            <input type="number" class="form-control" id="edit_prix_unitaire" name="prix_unitaire"
+                                step="0.01" min="0" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Capacité <span class="text-danger">*</span></label>
+                            <input type="number" class="form-control" id="edit_capacite" name="capacite" min="1"
+                                required>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Description</label>
+                        <textarea class="form-control" id="edit_description" name="description" rows="3"></textarea>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="est_standard"
+                                    id="edit_est_standard">
+                                <label class="form-check-label" for="edit_est_standard">
+                                    Type standard
+                                </label>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="est_actif" id="edit_est_actif">
+                                <label class="form-check-label" for="edit_est_actif">
+                                    Actif
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                    <button type="submit" class="btn btn-warning">
+                        <i class="fas fa-save me-2"></i>Enregistrer
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // ========================================================================
+    // FONCTIONS UTILITAIRES
+    // ========================================================================
+
+    function showToast(message, type = 'info') {
+        const alertDiv = document.createElement('div');
+        alertDiv.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
+        alertDiv.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+        alertDiv.innerHTML = `
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+        document.body.appendChild(alertDiv);
+
+        setTimeout(() => {
+            alertDiv.remove();
+        }, 5000);
+    }
+
+    // ========================================================================
+    // RECHERCHE ET FILTRES
+    // ========================================================================
+
+    function filterTable() {
+        const searchValue = document.getElementById('searchInput').value.toLowerCase();
+        const statutFilter = document.getElementById('filterStatut').value;
+        const typeFilter = document.getElementById('filterType').value;
+
+        const rows = document.querySelectorAll('#tableBody tr');
+        let visibleCount = 0;
+
+        rows.forEach(row => {
+            const name = row.dataset.typeName || '';
+            const statut = row.dataset.statut || '';
+            const category = row.dataset.category || '';
+
+            let matchSearch = true;
+            let matchStatut = true;
+            let matchType = true;
+
+            // Recherche textuelle
+            if (searchValue) {
+                matchSearch = name.includes(searchValue);
+            }
+
+            // Filtre par statut
+            if (statutFilter !== 'all') {
+                matchStatut = statut === statutFilter;
+            }
+
+            // Filtre par type
+            if (typeFilter !== 'all') {
+                matchType = category === typeFilter;
+            }
+
+            // Afficher ou masquer la ligne
+            if (matchSearch && matchStatut && matchType) {
+                row.style.display = '';
+                visibleCount++;
+            } else {
+                row.style.display = 'none';
+            }
+        });
+
+        // Afficher/masquer le message "Aucun résultat"
+        const noResults = document.getElementById('noResults');
+        if (noResults) {
+            noResults.style.display = visibleCount === 0 ? 'block' : 'none';
+        }
+
+        // Mettre à jour le compteur
+        const statTotal = document.getElementById('stat-total');
+        if (statTotal) {
+            statTotal.textContent = visibleCount;
+        }
+    }
+
+    // Debounce pour la recherche
+    function debounce(func, wait) {
+        let timeout;
+        return function executedFunction(...args) {
+            const later = () => {
+                clearTimeout(timeout);
+                func(...args);
+            };
+            clearTimeout(timeout);
+            timeout = setTimeout(later, wait);
+        };
+    }
+
+    const debouncedFilter = debounce(filterTable, 300);
+
+    // ========================================================================
+    // AJOUTER UN TYPE
+    // ========================================================================
+
+    document.getElementById('formAjouterType').addEventListener('submit', async function (e) {
+        e.preventDefault();
+
+        const formData = new FormData(this);
+        const submitBtn = this.querySelector('button[type="submit"]');
+        const originalText = submitBtn.innerHTML;
+
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Ajout...';
+
+        try {
+            const response = await fetch('/ajouter_type_chambre', {
+                method: 'POST',
+                body: formData
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                showToast(data.message, 'success');
+                setTimeout(() => location.reload(), 1000);
+            } else {
+                showToast(data.error, 'danger');
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = originalText;
+            }
+        } catch (error) {
+            showToast('Erreur lors de l\'ajout: ' + error.message, 'danger');
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = originalText;
+        }
+    });
+
+    // ========================================================================
+    // MODIFIER UN TYPE
+    // ========================================================================
+
+    async function openEditModal(idType) {
+        try {
+            const response = await fetch(`/api/get_type_chambre/${idType}`);
+            const data = await response.json();
+
+            if (!data.success) {
+                throw new Error(data.error || 'Erreur lors du chargement');
+            }
+
+            const type = data.type_chambre;
+
+            // Remplir le formulaire
+            document.getElementById('edit_nom_type').value = type.nom_type;
+            document.getElementById('edit_prix_unitaire').value = type.prix_unitaire;
+            document.getElementById('edit_capacite').value = type.capacite;
+            document.getElementById('edit_description').value = type.description || '';
+            document.getElementById('edit_est_standard').checked = type.est_standard === 1;
+            document.getElementById('edit_est_actif').checked = type.est_actif === 1;
+
+            // Définir l'action du formulaire
+            const form = document.getElementById('formModifierType');
+            form.dataset.typeId = idType;
+
+            // Ouvrir le modal
+            const modal = new bootstrap.Modal(document.getElementById('modalModifierType'));
+            modal.show();
+
+        } catch (error) {
+            showToast('Erreur: ' + error.message, 'danger');
+        }
+    }
+
+    document.getElementById('formModifierType').addEventListener('submit', async function (e) {
+        e.preventDefault();
+
+        const idType = this.dataset.typeId;
+        const formData = new FormData(this);
+        const submitBtn = this.querySelector('button[type="submit"]');
+        const originalText = submitBtn.innerHTML;
+
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Modification...';
+
+        try {
+            const response = await fetch(`/modifier_type_chambre/${idType}`, {
+                method: 'POST',
+                body: formData
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                showToast(data.message, 'success');
+                setTimeout(() => location.reload(), 1000);
+            } else {
+                showToast(data.error, 'danger');
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = originalText;
+            }
+        } catch (error) {
+            showToast('Erreur lors de la modification: ' + error.message, 'danger');
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = originalText;
+        }
+    });
+
+    // ========================================================================
+    // ACTIVER/DÉSACTIVER
+    // ========================================================================
+
+    async function toggleActif(idType) {
+        if (!confirm('Voulez-vous vraiment changer le statut de ce type?')) {
+            return;
+        }
+
+        try {
+            const response = await fetch(`/toggle_actif_type_chambre/${idType}`, {
+                method: 'POST'
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                showToast(data.message, 'success');
+                setTimeout(() => location.reload(), 1000);
+            } else {
+                showToast(data.error, 'danger');
+            }
+        } catch (error) {
+            showToast('Erreur: ' + error.message, 'danger');
+        }
+    }
+
+    // ========================================================================
+    // EVENT LISTENERS
+    // ========================================================================
+
+    document.addEventListener('DOMContentLoaded', function () {
+        // Recherche
+        const searchInput = document.getElementById('searchInput');
+        if (searchInput) {
+            searchInput.addEventListener('input', debouncedFilter);
+        }
+
+        // Filtres
+        const filterStatut = document.getElementById('filterStatut');
+        const filterType = document.getElementById('filterType');
+
+        if (filterStatut) {
+            filterStatut.addEventListener('change', filterTable);
+        }
+
+        if (filterType) {
+            filterType.addEventListener('change', filterTable);
+        }
+    });
+</script>
+{% endblock %}

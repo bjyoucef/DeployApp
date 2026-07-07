@@ -1,0 +1,222 @@
+{% extends 'layout.html' %}
+
+{% block content %}
+<!-- Bouton pour ouvrir le modal d'ajout -->
+<button class="btn btn-primary mb-4" data-bs-toggle="modal" data-bs-target="#addForfaitModal">Ajouter un Forfait
+</button>
+
+<!-- Modal d'ajout -->
+<div class="modal fade" id="addForfaitModal" tabindex="-1" aria-labelledby="addForfaitModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addForfaitModalLabel">Ajouter un Forfait</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
+            </div>
+            <form method="POST" action="{{ url_for('add_forfait') }}">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="name_forfait" class="form-label">Nom du Forfait</label>
+                        <input type="text" name="name_forfait" id="name_forfait" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="duree_forfait" class="form-label">Durée du Forfait (Minutes)</label>
+                        <input type="number" name="duree_forfait" id="duree_forfait" class="form-control">
+                    </div>
+                    <div class="mb-3">
+                        <label for="nbr_nuit" class="form-label">Nombre de Nuits</label>
+                        <input type="number" name="nbr_nuit" id="nbr_nuit" class="form-control">
+                    </div>
+                    <div class="mb-3">
+                        <label for="prix_forfait" class="form-label">Prix du Forfait (DZ)</label>
+                        <input type="number" name="prix_forfait" id="prix_forfait" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="specialty_forfait" class="form-label">Spécialité</label>
+                        <select class="form-select" id="specialty_forfait" name="specialty_forfait" required>
+                            <option value="" selected>Choisir une spécialité</option>
+                            {% for specialty in specialtys %}
+                            <option value="{{ specialty.id_specialty }}">{{ specialty.name_specialty }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fermer</button>
+                    <button type="submit" class="btn btn-primary">Ajouter</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Tableau des forfaits -->
+<table id="myTable" class="table table-hover">
+    <thead>
+    <tr>
+        <th>ID</th>
+        <th>Nom</th>
+        <th>Durée</th>
+        <th>Nuits</th>
+        <th>Prix</th>
+        <th>Spécialité</th>
+        <th>Actions</th>
+    </tr>
+    </thead>
+    <tbody>
+    {% for forfait in forfaits %}
+    <tr>
+        <td>{{ forfait.id_forfait }}</td>
+        <td>{{ forfait.name_forfait }}</td>
+        <td>{{ forfait.duree_forfait }}</td>
+        <td>{{ forfait.nbr_nuit }}</td>
+        <td>{{ forfait.prix_forfait }}</td>
+        <td>{{ forfait.name_specialty }}</td>
+        <td>
+            <!-- Bouton pour ouvrir le modal de Produits -->
+            <button class="btn btn-success btn-sm" data-bs-toggle="modal"
+                    data-bs-target="#produitForfaitModal{{ forfait.id_forfait }}">Produits
+            </button>
+
+            <!-- Modal Produits -->
+            <div class="modal fade" id="produitForfaitModal{{ forfait.id_forfait }}" tabindex="-1"
+                 aria-labelledby="produitForfaitModalLabel" aria-hidden="true">
+                <div class="modal-dialog modal-xl">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                <h5 class="modal-title" id="produitForfaitModalLabel">Produits inclus pour "{{ forfait.name_forfait }}"</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
+                        </div>
+                        <div class="modal-body">
+                <div class="row">
+                    <!-- Colonne gauche: Formulaire pour ajouter un produit -->
+                    <div class="col-md-6">
+                            <div class="form-section mb-4">
+                            <h6>Ajouter un produit :</h6>
+                            <form method="POST" action="{{ url_for('add_produit_to_forfait', id_forfait=forfait.id_forfait) }}">
+                                    <div class="form-group">
+                                        <label for="id_produit">Produit</label>
+                                        <select id="id_produit" name="id_produit" class="form-control" required>
+                                            {% for produit in produits %}
+                                            <option value="{{ produit.id_produit }}">{{ produit.description }}</option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="qte">Quantité</label>
+                                        <input type="number" name="qte" id="qte" class="form-control" min="1" required>
+                                    </div>
+                                    <button type="submit" class="btn btn-primary">Ajouter</button>
+                                </form>
+                            </div>
+                    </div>
+
+                    <!-- Colonne droite: Liste des produits inclus -->
+                    <div class="col-md-6">
+                            <div class="form-section">
+                                <h6>Produits inclus :</h6>
+                                <ul id="produits-list" class="list-group">
+                                    {% if forfait.produits_inclus %}
+                                    {% for produit in forfait.produits_inclus %}
+                                    <li class="list-group-item d-flex justify-content-between align-items-center" id="produit-{{ produit.id_produit }}">
+                                        <span>{{ produit.description }} (Quantité : {{ produit.qte }})</span>
+                                        <form method="POST"
+                                              action="{{ url_for('remove_produit_from_forfait', id_forfait=forfait.id_forfait, id_produit=produit.id_produit) }}"
+                                              class="d-inline">
+                                            <button type="submit" class="btn btn-danger btn-sm">Supprimer</button>
+                                        </form>
+                                    </li>
+                                    {% endfor %}
+                                    {% else %}
+                                    <li class="list-group-item">Aucun produit inclus.</li>
+                                    {% endif %}
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+    </div>
+</div>
+
+
+            <!-- Bouton pour ouvrir le modal de modification -->
+            <button class="btn btn-primary btn-sm" data-bs-toggle="modal"
+                    data-bs-target="#editForfaitModal{{ forfait.id_forfait }}">Modifier
+            </button>
+
+            <!-- Modal de modification -->
+            <div class="modal fade" id="editForfaitModal{{ forfait.id_forfait }}" tabindex="-1"
+                 aria-labelledby="editForfaitModalLabel{{ forfait.id_forfait }}" aria-hidden="true">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="editForfaitModalLabel{{ forfait.id_forfait }}">Modifier le
+                                Forfait</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"
+                                    aria-label="Fermer"></button>
+                        </div>
+                        <form method="POST" action="{{ url_for('update_forfait') }}">
+                            <div class="modal-body">
+                                <input type="hidden" name="id_forfait" value="{{ forfait.id_forfait }}">
+                                <div class="mb-3">
+                                    <label for="name_forfait_{{ forfait.id_forfait }}" class="form-label">Nom du
+                                        Forfait</label>
+                                    <input type="text" name="name_forfait" id="name_forfait_{{ forfait.id_forfait }}"
+                                           class="form-control" value="{{ forfait.name_forfait }}" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="duree_forfait_{{ forfait.id_forfait }}" class="form-label">Durée du
+                                        Forfait (Minutes)</label>
+                                    <input type="number" name="duree_forfait"
+                                           id="duree_forfait_{{ forfait.id_forfait }}"
+                                           class="form-control" value="{{ forfait.duree_forfait }}">
+                                </div>
+                                <div class="mb-3">
+                                    <label for="nbr_nuit_{{ forfait.id_forfait }}" class="form-label">Nombre de
+                                        Nuits</label>
+                                    <input type="number" name="nbr_nuit" id="nbr_nuit_{{ forfait.id_forfait }}"
+                                           class="form-control" value="{{ forfait.nbr_nuit }}">
+                                </div>
+                                <div class="mb-3">
+                                    <label for="prix_forfait_{{ forfait.id_forfait }}" class="form-label">Prix du
+                                        Forfait (DZ)</label>
+                                    <input type="number" name="prix_forfait" id="prix_forfait_{{ forfait.id_forfait }}"
+                                           class="form-control" value="{{ forfait.prix_forfait }}" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="specialty_forfait_{{ forfait.id_forfait }}" class="form-label">Spécialité</label>
+                                    <select class="form-select" id="specialty_forfait_{{ forfait.id_forfait }}"
+                                            name="specialty_forfait" required>
+                                        <option value="" selected>Choisir une spécialité</option>
+                                        {% for specialty in specialtys %}
+                                        <option value="{{ specialty.id_specialty }}"
+                                                {% if specialty.id_specialty== forfait.id_specialty %}selected{% endif
+                                                %}>
+                                            {{ specialty.name_specialty }}
+                                        </option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fermer</button>
+                                <button type="submit" class="btn btn-success">Enregistrer</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Formulaire de suppression -->
+            <form method="POST" action="{{ url_for('delete_forfait', id_forfait=forfait.id_forfait) }}"
+                  class="d-inline">
+                <button type="submit" class="btn btn-danger btn-sm">Supprimer</button>
+            </form>
+        </td>
+    </tr>
+    {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

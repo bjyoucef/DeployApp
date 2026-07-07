@@ -1,0 +1,282 @@
+{% extends "layout.html" %}
+
+{% block style %}
+<style>
+    :root {
+        --primary: #3b82f6;
+        --danger: #ef4444;
+    }
+
+    .page-header {
+        background: linear-gradient(135deg, var(--primary), #2563eb);
+        color: white;
+        padding: 2rem;
+        border-radius: 12px;
+        margin-bottom: 2rem;
+    }
+
+    .form-card {
+        background: white;
+        border-radius: 12px;
+        padding: 2rem;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .acte-checkbox {
+        display: none;
+    }
+
+    .acte-label {
+        background: white;
+        border: 2px solid #e5e7eb;
+        border-radius: 8px;
+        padding: 1rem;
+        margin-bottom: 0.75rem;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+    .acte-label:hover {
+        border-color: var(--primary);
+        background: #eff6ff;
+    }
+
+    .acte-checkbox:checked+.acte-label {
+        border-color: var(--primary);
+        background: #dbeafe;
+        border-width: 3px;
+    }
+
+    .summary-box {
+        position: sticky;
+        top: 20px;
+        background: linear-gradient(135deg, #dbeafe, #eff6ff);
+        border: 2px solid var(--primary);
+        border-radius: 12px;
+        padding: 1.5rem;
+    }
+
+    .summary-value {
+        font-size: 2rem;
+        font-weight: 700;
+        color: var(--primary);
+    }
+
+    .btn-submit {
+        background: linear-gradient(135deg, var(--primary), #2563eb);
+        color: white;
+        border: none;
+        padding: 1rem 2rem;
+        border-radius: 8px;
+        font-weight: 600;
+        font-size: 1.1rem;
+        width: 100%;
+    }
+
+    .btn-submit:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Header -->
+    <div class="page-header">
+        <nav aria-label="breadcrumb" class="mb-2">
+            <ol class="breadcrumb" style="--bs-breadcrumb-divider-color: rgba(255,255,255,0.5);">
+                <li class="breadcrumb-item">
+                    <a href="{{ url_for('medecin_interne_paiements_list') }}" class="text-white-50">Paiements</a>
+                </li>
+                <li class="breadcrumb-item active text-white">Nouvelle décharge</li>
+            </ol>
+        </nav>
+        <h1><i class="fas fa-file-invoice me-2"></i>Créer une décharge de paiement</h1>
+        <p class="mb-0 opacity-75">{{ medecin.nom_complet }}</p>
+    </div>
+
+    <form method="POST" id="formDecharge">
+        <div class="row">
+            <!-- Liste des actes -->
+            <div class="col-lg-8">
+                <div class="form-card">
+                    <h4 class="mb-4">
+                        <i class="fas fa-list-check me-2"></i>
+                        Sélectionner les actes à inclure ({{ actes|length }})
+                    </h4>
+
+                    {% if actes %}
+                    <div class="mb-3">
+                        <button type="button" class="btn btn-sm btn-outline-primary" onclick="toggleAll(true)">
+                            <i class="fas fa-check-square me-1"></i>Tout sélectionner
+                        </button>
+                        <button type="button" class="btn btn-sm btn-outline-secondary ms-2" onclick="toggleAll(false)">
+                            <i class="fas fa-square me-1"></i>Tout désélectionner
+                        </button>
+                    </div>
+
+                    {% for a in actes %}
+                    <input type="checkbox" class="acte-checkbox" id="acte_{{ a.id_acte }}" name="actes[]"
+                        value="{{ a.id_acte }}" data-montant="{{ a.part_medecin }}" onchange="updateSummary()" checked>
+                    <label for="acte_{{ a.id_acte }}" class="acte-label">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <div class="d-flex align-items-center mb-1">
+                                    <i class="fas fa-check-circle text-primary me-2"></i>
+                                    <strong>#{{ a.id_acte }}</strong>
+                                    <span class="mx-2">•</span>
+                                    <span>{{ a.patient }}</span>
+                                </div>
+                                <small class="text-muted">
+                                    <i class="fas fa-calendar me-1"></i>
+                                    {{ a.date_acte.strftime('%d/%m/%Y') }}
+                                    <span class="badge bg-info ms-2">{{ a.nom_acte or 'Acte médical' }}</span>
+                                </small>
+                            </div>
+                            <div class="text-end">
+                                <div class="text-muted small">Honoraires</div>
+                                <strong style="font-size: 1.2rem; color: var(--primary);">
+                                    {{ "{:,.2f}".format(a.part_medecin).replace(",", " ") }} DA
+                                </strong>
+                            </div>
+                        </div>
+                    </label>
+                    {% endfor %}
+                    {% else %}
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i>
+                        Aucun acte non payé pour cette période
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Formulaire et résumé -->
+            <div class="col-lg-4">
+                <div class="summary-box mb-3">
+                    <h5 class="mb-3"><i class="fas fa-calculator me-2"></i>Résumé</h5>
+
+                    <div class="mb-3">
+                        <div class="text-muted small">Actes sélectionnés</div>
+                        <div class="summary-value" id="nbActes">{{ actes|length }}</div>
+                    </div>
+
+                    <div class="mb-3">
+                        <div class="text-muted small">Montant total</div>
+                        <div class="summary-value" id="montantTotal">
+                            {{ "{:,.2f}".format(actes|sum(attribute='part_medecin')).replace(",", " ") }}
+                        </div>
+                        <small class="text-muted">DA</small>
+                    </div>
+                </div>
+
+                <div class="form-card">
+                    <h5 class="mb-3"><i class="fas fa-info-circle me-2"></i>Informations décharge</h5>
+
+                    <input type="hidden" name="id_doctor" value="{{ medecin.id }}">
+
+                    <div class="mb-3">
+                        <label class="form-label">Date de décharge</label>
+                        <input type="date" name="date_decharge" class="form-control"
+                            value="{{ datetime.now().strftime('%Y-%m-%d') }}" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Période</label>
+                        <div class="row g-2">
+                            <div class="col-6">
+                                <input type="date" name="periode_debut" class="form-control" value="{{ date_debut }}"
+                                    required>
+                            </div>
+                            <div class="col-6">
+                                <input type="date" name="periode_fin" class="form-control" value="{{ date_fin }}"
+                                    required>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Mode de paiement</label>
+                        <select name="mode_paiement" class="form-select" required>
+                            <option value="ESPECES">Espèces</option>
+                            <option value="CHEQUE">Chèque</option>
+                            <option value="VIREMENT">Virement</option>
+                            <option value="AUTRE">Autre</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Référence paiement</label>
+                        <input type="text" name="reference_paiement" class="form-control"
+                            placeholder="N° chèque, référence virement...">
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Observations</label>
+                        <textarea name="observations" class="form-control" rows="3"></textarea>
+                    </div>
+
+                    <button type="submit" class="btn btn-submit" id="btnSubmit">
+                        <i class="fas fa-save me-2"></i>Créer la décharge
+                    </button>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+
+<script>
+    function updateSummary() {
+        const checkboxes = document.querySelectorAll('.acte-checkbox:checked');
+        const nbActes = checkboxes.length;
+        let total = 0;
+
+        checkboxes.forEach(cb => {
+            total += parseFloat(cb.dataset.montant);
+        });
+
+        document.getElementById('nbActes').textContent = nbActes;
+        document.getElementById('montantTotal').textContent = total.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, " ");
+
+        document.getElementById('btnSubmit').disabled = nbActes === 0;
+    }
+
+    function toggleAll(checked) {
+        document.querySelectorAll('.acte-checkbox').forEach(cb => {
+            cb.checked = checked;
+        });
+        updateSummary();
+    }
+
+    // Validation du formulaire
+    document.getElementById('formDecharge').addEventListener('submit', function (e) {
+        const checkboxes = document.querySelectorAll('.acte-checkbox:checked');
+
+        if (checkboxes.length === 0) {
+            e.preventDefault();
+            showToast('⚠ Veuillez sélectionner au moins un acte', "warning");
+            return false;
+        }
+
+        // Afficher une confirmation
+        const montantTotal = document.getElementById('montantTotal').textContent.trim();
+        const confirmation = confirm(
+            `Confirmer la création de la décharge?\n\n` +
+            `• ${checkboxes.length} acte(s) sélectionné(s)\n` +
+            `• Montant total: ${montantTotal} DA\n\n` +
+            `Cette action va réserver ces actes pour cette décharge.`
+        );
+
+        if (!confirmation) {
+            e.preventDefault();
+            return false;
+        }
+
+        // Désactiver le bouton pour éviter les doubles soumissions
+        const btnSubmit = document.getElementById('btnSubmit');
+        btnSubmit.disabled = true;
+        btnSubmit.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Création en cours...';
+    });
+</script>
+{% endblock %}

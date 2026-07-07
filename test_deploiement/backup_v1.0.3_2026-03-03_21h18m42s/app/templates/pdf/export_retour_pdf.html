@@ -1,0 +1,27 @@
+{% extends "pdf/_base_pdf.html" %}
+{% block content %}
+            <p>Je soussigné(e),
+                <strong>{{ emprunts_info.nom_personne_recoit }} {{ emprunts_info.prenom_personne_recoit }}</strong>,
+                titulaire du poste de
+                <strong>{{ emprunts_info.role_personne_recoit }}</strong>
+                au sein de la clinique INAYA, certifie par la présente avoir reçu la clé numéro
+                <strong>{{ emprunts_info.numero_cle }}</strong> (clé de <strong>{{ emprunts_info.description }}</strong>),
+                retournée par
+                <strong>{{ emprunts_info.nom_personne_retourne }} {{ emprunts_info.prenom_personne_retourne }}</strong>
+                le
+                <strong>{{ emprunts_info.date_retour }}</strong>,
+                conformément aux règles de sécurité de la clinique.
+            </p>
+
+            <p>Cette déclaration vise à confirmer la réception de la clé mentionnée ci-dessus, afin de garantir le bon suivi et la sécurité des accès au sein de notre établissement. Je m'engage à utiliser cette clé conformément aux politiques de la clinique et à signaler immédiatement toute irrégularité concernant son utilisation.</p>
+
+            <p><strong>Informations :</strong></p>
+            <ul>
+                <li><strong>Nom du récepteur :</strong> {{ emprunts_info.nom_personne_recoit }} {{ emprunts_info.prenom_personne_recoit }}</li>
+                <li><strong>Numéro de clé :</strong> {{ emprunts_info.numero_cle }}</li>
+                <li><strong>Description de la clé :</strong> {{ emprunts_info.description }}</li>
+                <li><strong>Date de remise :</strong> {{ emprunts_info.date_emprunt }}</li>
+                <li><strong>Date de retour :</strong> {{ emprunts_info.date_retour }}</li>
+                <li><strong>Retournée par :</strong> {{ emprunts_info.nom_personne_retourne }} {{ emprunts_info.prenom_personne_retourne }}</li>
+            </ul>
+{% endblock %}

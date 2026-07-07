@@ -1,0 +1,13 @@
+Dynamic Permissions loaded.
+************************************************
+PG: OK Local
+Maria: OK Local
+************************************************
+location_bloc_dossier_patient: ['statut_paiement']
+accouchement_dossiers: ['statut_paiement', 'statut_medical', 'statut_financier', 'est_annule', 'motif_annulation', 'annule_par', 'annule_at']
+kt_dossier_patient: []
+medecin_interne_actes: ['statut_paiement', 'est_annule', 'motif_annulation', 'annule_par', 'annule_at']
+medecin_interne_anesthesie: ['est_annule', 'annule_par', 'annule_at', 'motif_annulation']
+location_bloc_dossier_anesthesie: []
+kt_dossier_anesthesie: []
+accouchement_dossier_anesthesie: []

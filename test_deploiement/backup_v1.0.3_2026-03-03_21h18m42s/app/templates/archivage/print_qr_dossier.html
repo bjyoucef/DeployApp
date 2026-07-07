@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+    <title>QR Dossier — {{ dossier.patient }}</title>
+    <style>
+        @page {
+            size: 40mm 40mm;
+            margin: 0;
+        }
+
+        body {
+            font-family: Helvetica, Arial, sans-serif;
+            color: #000;
+        }
+
+        .label {
+            width: 40mm;
+            height: 40mm;
+            padding: 1mm;
+            box-sizing: border-box;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .logo-img {
+            width: 18mm;
+            height: auto;
+            margin-bottom: 0;
+        }
+
+        .qr-img {
+            width: 20mm;
+            height: 20mm;
+        }
+
+        .patient-name {
+            font-size: 6pt;
+            font-weight: bold;
+            max-width: 36mm;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .module-name {
+            font-size: 5pt;
+            color: #555;
+        }
+
+        .doctor-name {
+            font-size: 5pt;
+            font-weight: bold;
+            color: #450A54;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="label">
+        <div>
+            <img src="data:image/png;base64,{{ logo_b64 }}" class="logo-img" alt="Logo">
+        </div>
+        <div class="module-name">{{ module_label }}</div>
+        <div class="doctor-name">{{ (dossier.doctor_id or '') }}: {{ (dossier.medecin or '')[:30] }} </div>
+        <div>
+            <img src="data:image/png;base64,{{ qr_b64 }}" class="qr-img" alt="QR Code">
+        </div>
+        <div class="patient-name">{{ (dossier.patient or '')[:30] }}</div>
+        <div class="doctor-name">{{ dossier.date_acte.strftime('%d/%m/%Y') if dossier.date_acte else '' }}</div>
+    </div>
+</body>
+
+</html>
+
+

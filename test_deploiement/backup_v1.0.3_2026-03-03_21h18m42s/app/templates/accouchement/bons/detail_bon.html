@@ -1,0 +1,481 @@
+{% extends "layout.html" %}
+
+{% block style %}
+<style>
+    :root {
+        --pink: #ec4899;
+        --pink-dark: #db2777;
+        --success: #10b981;
+        --warning: #f59e0b;
+        --danger: #ef4444;
+        --radius: 12px;
+        --shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+    }
+
+    .page-header {
+        background: linear-gradient(135deg, var(--pink), var(--pink-dark));
+        color: white;
+        padding: 2rem;
+        border-radius: var(--radius);
+        margin-bottom: 2rem;
+    }
+
+    .bon-card {
+        background: white;
+        border-radius: var(--radius);
+        box-shadow: var(--shadow);
+        padding: 2rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .qr-container {
+        text-align: center;
+        padding: 2rem;
+        background: #f9fafb;
+        border-radius: var(--radius);
+    }
+
+    .qr-container img {
+        max-width: 200px;
+        border: 4px solid white;
+        box-shadow: var(--shadow);
+    }
+
+    .status-badge {
+        padding: 0.5rem 1.25rem;
+        border-radius: 50px;
+        font-weight: 600;
+        font-size: 1rem;
+    }
+
+    .status-en-attente {
+        background: #fef3c7;
+        color: #92400e;
+    }
+
+    .status-paye-partiel {
+        background: #dbeafe;
+        color: #1e40af;
+    }
+
+    .status-paye-complet {
+        background: #d1fae5;
+        color: #065f46;
+    }
+
+    .status-annule {
+        background: #fee2e2;
+        color: #991b1b;
+    }
+
+    .montant-box {
+        background: linear-gradient(135deg, #fce7f3, #fdf2f8);
+        padding: 1.5rem;
+        border-radius: var(--radius);
+        margin: 1rem 0;
+        text-align: center;
+    }
+
+    .montant-box .label {
+        color: #6b7280;
+        font-size: 0.9rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .montant-box .value {
+        font-size: 2rem;
+        font-weight: 700;
+        color: var(--pink-dark);
+    }
+
+    .payment-form {
+        background: #f9fafb;
+        padding: 1.5rem;
+        border-radius: var(--radius);
+        border: 2px dashed var(--pink);
+    }
+
+    .table-paiements {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    .table-paiements thead {
+        background: var(--pink);
+    }
+
+    .table-paiements thead th {
+        color: white;
+        padding: 0.75rem;
+        font-size: 0.85rem;
+        text-transform: uppercase;
+    }
+
+    .table-paiements tbody td {
+        padding: 0.75rem;
+        border-bottom: 1px solid #e5e7eb;
+    }
+
+    .btn-action {
+        padding: 0.75rem 1.5rem;
+        border-radius: 8px;
+        font-weight: 600;
+        transition: all 0.2s;
+    }
+
+    .btn-pink {
+        background: linear-gradient(135deg, var(--pink), var(--pink-dark));
+        color: white;
+        border: none;
+    }
+
+    .btn-pink:hover {
+        color: white;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(236, 72, 153, 0.4);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Header -->
+    <div class="page-header">
+        <div class="d-flex justify-content-between align-items-start">
+            <div>
+                <h1><i class="fas fa-file-invoice-dollar me-2"></i>{{ bon.numero_bon }}</h1>
+                <div class="mt-2">
+                    <strong>Patient :</strong> {{ bon.patiente }} |
+                    <strong>Date émission :</strong> {{ bon.date_emission.strftime('%d/%m/%Y %H:%M') }}
+                </div>
+            </div>
+            <div>
+                {% if bon.statut == 'EN_ATTENTE' %}
+                <span class="status-badge status-en-attente">
+                    <i class="fas fa-clock me-1"></i>En attente
+                </span>
+                {% elif bon.statut == 'PAYE_PARTIEL' %}
+                <span class="status-badge status-paye-partiel">
+                    <i class="fas fa-hourglass-half me-1"></i>Payé partiellement
+                </span>
+                {% elif bon.statut == 'PAYE_COMPLET' %}
+                <span class="status-badge status-paye-complet">
+                    <i class="fas fa-check-circle me-1"></i>Payé intégralement
+                </span>
+                {% else %}
+                <span class="status-badge status-annule">
+                    <i class="fas fa-times-circle me-1"></i>Annulé
+                </span>
+                {% endif %}
+            </div>
+            <a href="{{ url_for('liste_bons_paiement') }}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left"></i> Liste des Bons
+            </a>
+
+            <div class="btn-group">
+                <!-- Lien vers dossier -->
+                <a href="{{ url_for('accouchement_detail', id_dossier=bon.id_dossier) }}" class="btn btn-info">
+                    <i class="fas fa-folder-open"></i> Voir Dossier
+                </a>
+
+                <!-- Imprimer -->
+                <a href="{{ url_for('imprimer_bon', id_bon=bon.id_bon) }}" class="btn btn-primary" target="_blank">
+                    <i class="fas fa-print"></i> Imprimer
+                </a>
+
+                <!-- Payer (si non soldé) -->
+                {% if bon.statut != 'PAYE_COMPLET' %}
+                <button class="btn btn-success" data-toggle="modal" data-target="#modalPaiement">
+                    <i class="fas fa-money-bill"></i> Payer
+                </button>
+                {% endif %}
+            </div>
+
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-8">
+            <!-- Informations du bon -->
+            <div class="bon-card">
+                <h4 class="mb-4"><i class="fas fa-info-circle me-2"></i>Informations</h4>
+
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="text-muted small">Type de bon</label>
+                            <div class="fw-bold">{{ bon.type_bon }}</div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="text-muted small">Dossier</label>
+                            <div>
+                                <a href="{{ url_for('accouchement_detail', id_dossier=bon.id_dossier) }}">
+                                    #{{ bon.id_dossier }}
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="text-muted small">Émis par</label>
+                            <div class="fw-bold">{{ bon.emis_par_nom or 'N/A' }}</div>
+                        </div>
+                        {% if bon.date_echeance %}
+                        <div class="mb-3">
+                            <label class="text-muted small">Date d'échéance</label>
+                            <div class="fw-bold">{{ bon.date_echeance.strftime('%d/%m/%Y') }}</div>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                {% if bon.description %}
+                <div class="alert alert-light">
+                    <strong><i class="far fa-comment-dots me-1"></i>Description :</strong>
+                    <p class="mb-0 mt-1">{{ bon.description }}</p>
+                </div>
+                {% endif %}
+
+                <!-- Montants -->
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="montant-box" style="background: linear-gradient(135deg, #e0e7ff, #eef2ff);">
+                            <div class="label">Montant à payer</div>
+                            <div class="value" style="color: #4f46e5;">{{
+                                "{:,.2f}".format(bon.montant_a_payer).replace(",", " ") }}</div>
+                            <div class="small text-muted">DA</div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="montant-box" style="background: linear-gradient(135deg, #d1fae5, #ecfdf5);">
+                            <div class="label">Déjà payé</div>
+                            <div class="value" style="color: #059669;">{{
+                                "{:,.2f}".format(bon.montant_paye).replace(",", " ") }}</div>
+                            <div class="small text-muted">DA</div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="montant-box">
+                            <div class="label">Reste à payer</div>
+                            <div class="value">{{ "{:,.2f}".format(bon.montant_restant).replace(",", " ") }}</div>
+                            <div class="small text-muted">DA</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Formulaire de paiement -->
+            {% if bon.statut not in ['PAYE_COMPLET', 'ANNULE'] %}
+            <div class="bon-card">
+                <h4 class="mb-4"><i class="fas fa-cash-register me-2"></i>Enregistrer un paiement</h4>
+
+                <form method="POST" action="{{ url_for('payer_bon', id_bon=bon.id_bon) }}" id="paymentForm">
+                    <div class="payment-form">
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Montant à encaisser (DA)</label>
+                                <input type="number" name="montant" class="form-control" step="0.01" min="0.01"
+                                    max="{{ bon.montant_restant }}" value="{{ bon.montant_restant }}" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Mode de paiement</label>
+                                <select name="mode_paiement" class="form-select" id="modePaiement" required>
+                                    <option value="ESPECES">Espèces</option>
+                                    <option value="CARTE">Carte bancaire</option>
+                                    <option value="CHEQUE">Chèque</option>
+                                    <option value="VIREMENT">Virement</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="row mb-3" id="detailsPaiement">
+                            <div class="col-md-6" id="referenceField" style="display:none;">
+                                <label class="form-label">Référence transaction</label>
+                                <input type="text" name="reference_transaction" class="form-control">
+                            </div>
+                            <div class="col-md-6" id="chequeFields" style="display:none;">
+                                <label class="form-label">Numéro de chèque</label>
+                                <input type="text" name="numero_cheque" class="form-control">
+                            </div>
+                            <div class="col-md-6" id="banqueField" style="display:none;">
+                                <label class="form-label">Banque</label>
+                                <input type="text" name="banque" class="form-control">
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Notes</label>
+                            <textarea name="notes" class="form-control" rows="2"></textarea>
+                        </div>
+
+                        <button type="submit" class="btn btn-action btn-pink">
+                            <i class="fas fa-cash-register me-1"></i>Enregistrer le paiement
+                        </button>
+                    </div>
+                </form>
+            </div>
+            {% endif %}
+
+            <!-- Historique des paiements -->
+            {% if paiements %}
+            <div class="bon-card">
+                <h4 class="mb-4"><i class="fas fa-history me-2"></i>Historique des paiements</h4>
+
+                <table class="table-paiements">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Montant</th>
+                            <th>Mode</th>
+                            <th>Encaissé par</th>
+                            <th>Référence</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for p in paiements %}
+                        <tr>
+                            <td>{{ p.date_paiement.strftime('%d/%m/%Y %H:%M') }}</td>
+                            <td><strong>{{ "{:,.2f}".format(p.montant).replace(",", " ") }} DA</strong></td>
+                            <td>
+                                {% if p.mode_paiement == 'ESPECES' %}
+                                <span class="badge bg-success">Espèces</span>
+                                {% elif p.mode_paiement == 'CARTE' %}
+                                <span class="badge bg-primary">Carte</span>
+                                {% elif p.mode_paiement == 'CHEQUE' %}
+                                <span class="badge bg-info">Chèque</span>
+                                {% else %}
+                                <span class="badge bg-secondary">Virement</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ p.encaisse_par_nom or 'N/A' }}</td>
+                            <td>
+                                <small>
+                                    {% if p.reference_transaction %}
+                                    {{ p.reference_transaction }}
+                                    {% elif p.numero_cheque %}
+                                    Chèque {{ p.numero_cheque }}
+                                    {% else %}
+                                    -
+                                    {% endif %}
+                                </small>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% endif %}
+        </div>
+
+        <div class="col-lg-4">
+            <!-- QR Code -->
+            <div class="bon-card">
+                <h4 class="mb-4"><i class="fas fa-qrcode me-2"></i>QR Code</h4>
+                <div class="qr-container">
+                    {% if bon.qr_code_data %}
+                    <img src="data:image/png;base64,{{ bon.qr_code_data }}" alt="QR Code">
+                    {% else %}
+                    <div class="text-muted">
+                        <i class="fas fa-qrcode" style="font-size: 4rem; opacity: 0.3;"></i>
+                        <p class="mt-2">QR Code non disponible</p>
+                    </div>
+                    {% endif %}
+                    <p class="small text-muted mt-3">
+                        Scanner pour paiement rapide
+                    </p>
+                </div>
+            </div>
+
+            <!-- Actions -->
+            <div class="bon-card">
+                <h4 class="mb-4"><i class="fas fa-cog me-2"></i>Actions</h4>
+                <div class="d-grid gap-2">
+                    <a href="{{ url_for('imprimer_bon', id_bon=bon.id_bon) }}"
+                        class="btn btn-action btn-outline-primary" target="_blank">
+                        <i class="fas fa-print me-1"></i>Imprimer
+                    </a>
+
+                    {% if bon.statut not in ['PAYE_COMPLET', 'ANNULE'] %}
+                    <button type="button" class="btn btn-action btn-outline-danger" onclick="annulerBon()">
+                        <i class="fas fa-times me-1"></i>Annuler le bon
+                    </button>
+                    {% endif %}
+
+                    <a href="{{ url_for('accouchement_detail', id_dossier=bon.id_dossier) }}"
+                        class="btn btn-action btn-outline-secondary">
+                        <i class="fas fa-arrow-left me-1"></i>Retour au dossier
+                    </a>
+                </div>
+            </div>
+
+            <!-- Détails du dossier -->
+            <div class="bon-card">
+                <h4 class="mb-4"><i class="fas fa-folder me-2"></i>Dossier</h4>
+                <div class="small">
+                    <div class="mb-2">
+                        <strong>Type :</strong> {{ 'Voie Basse' if bon.type_accouchement == 'VOIE_BASSE' else
+                        'Césarienne' }}
+                    </div>
+                    <div class="mb-2">
+                        <strong>Tarification :</strong> {{ 'Convention' if bon.type_tarification == 'CONVENTION' else
+                        'Payant' }}
+                    </div>
+                    <div class="mb-2">
+                        <strong>Gynéco :</strong> {{ bon.gyneco_name }}
+                    </div>
+                    <div class="mb-2">
+                        <strong>Total dossier :</strong> {{ "{:,.2f}".format(bon.prix_total).replace(",", " ") }} DA
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Gestion des champs selon le mode de paiement
+    document.getElementById('modePaiement').addEventListener('change', function () {
+        const mode = this.value;
+        document.getElementById('referenceField').style.display =
+            (mode === 'CARTE' || mode === 'VIREMENT') ? 'block' : 'none';
+        document.getElementById('chequeFields').style.display =
+            mode === 'CHEQUE' ? 'block' : 'none';
+        document.getElementById('banqueField').style.display =
+            (mode === 'CHEQUE' || mode === 'VIREMENT') ? 'block' : 'none';
+    });
+
+    // Annulation
+    function annulerBon() {
+        if (confirm('Êtes-vous sûr de vouloir annuler ce bon ?')) {
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = "{{ url_for('annuler_bon', id_bon=bon.id_bon) }}";
+            document.body.appendChild(form);
+            form.submit();
+        }
+    }
+
+    // Gestion paiement AJAX
+    document.getElementById('paymentForm').addEventListener('submit', function (e) {
+        e.preventDefault();
+
+        const formData = new FormData(this);
+
+        fetch(this.action, {
+            method: 'POST',
+            body: formData
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    window.location.reload();
+                } else {
+                    alert('Erreur : ' + data.error);
+                }
+            })
+            .catch(error => {
+                alert('Erreur : ' + error);
+            });
+    });
+</script>
+{% endblock %}

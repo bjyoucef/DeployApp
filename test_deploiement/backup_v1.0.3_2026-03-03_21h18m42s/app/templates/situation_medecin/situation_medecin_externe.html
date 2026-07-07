@@ -1,0 +1,622 @@
+{% extends 'layout.html' %}
+
+{% block title %}Situation Médecins Externes - {{ type_display }}{% endblock %}
+
+{% block style %}
+<style>
+    :root {
+        --muted: #6c757d;
+        --card-radius: 10px;
+    }
+
+    .type-tabs {
+        background: white;
+        border-radius: 10px;
+        padding: 0.5rem;
+        margin-bottom: 1.5rem;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    }
+
+    .type-tabs .nav-link {
+        border-radius: 8px;
+        padding: 0.75rem 1.5rem;
+        font-weight: 500;
+        transition: all 0.3s ease;
+    }
+
+    .type-tabs .nav-link.active {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+    }
+
+    .type-tabs .nav-link:not(.active):hover {
+        background: rgba(102, 126, 234, 0.1);
+    }
+
+    .card-doctor {
+        border-left: 6px solid;
+        border-radius: var(--card-radius);
+        overflow: hidden;
+        transition: transform .18s ease, box-shadow .18s ease;
+        margin-bottom: 1.5rem;
+    }
+
+    .card-doctor.type-bloc {
+        border-left-color: rgba(0, 123, 255, 0.5);
+    }
+
+    .card-doctor.type-accouchement {
+        border-left-color: rgba(220, 53, 69, 0.5);
+    }
+
+    .card-doctor:hover {
+        transform: translateY(-6px);
+        box-shadow: 0 14px 30px rgba(10, 30, 60, 0.06);
+    }
+
+    .doctor-header {
+        color: #fff;
+        padding: 1.25rem;
+    }
+
+    .doctor-header.type-bloc {
+        background: linear-gradient(135deg, #536DFE 0%, #7C4DFF 100%);
+    }
+
+    .doctor-header.type-accouchement {
+        background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+    }
+
+    .stat-card {
+        border-left: 6px solid transparent;
+        border-radius: 8px;
+        transition: transform .12s ease;
+    }
+
+    .stat-card:hover {
+        transform: translateX(6px);
+        box-shadow: 0 8px 18px rgba(10, 30, 60, 0.04);
+    }
+
+    .badge-type {
+        font-size: 0.75rem;
+        padding: 0.35rem 0.75rem;
+        border-radius: 20px;
+    }
+
+    .collapsed-transactions {
+        display: none;
+    }
+
+    .balance-positive {
+        color: #28a745;
+        font-weight: 600;
+    }
+
+    .balance-negative {
+        color: #dc3545;
+        font-weight: 600;
+    }
+
+    .muted-sm {
+        font-size: .9rem;
+        color: var(--muted);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Header avec onglets -->
+    <div class="row mb-3 align-items-center">
+        <div class="col-md-5">
+            <h2 class="mb-1">
+                <i class="fas fa-{{ 'hospital' if type_situation == 'BLOC' else 'heartbeat' }} me-2"></i>
+                Situation Médecins Externes
+            </h2>
+            <p class="muted-sm mb-0">
+                <span class="badge badge-type {{ 'bg-info' if type_situation == 'BLOC' else 'bg-danger' }}">
+                    <i class="fas fa-info-circle"></i> {{ type_display }}
+                </span>
+                Gestion des paiements, décharges et compensations
+            </p>
+        </div>
+        <div class="col-md-7 text-end">
+            <div class="d-flex justify-content-end gap-2 align-items-center flex-wrap">
+                <!-- Période -->
+                <div class="input-group input-group-sm" style="width: auto;">
+                    <span class="input-group-text bg-white"><i class="fas fa-calendar-alt text-secondary"></i></span>
+                    <input type="date" id="startDate" class="form-control form-control-sm" title="Date début">
+                    <input type="date" id="endDate" class="form-control form-control-sm" title="Date fin">
+                </div>
+
+                <!-- Recherche -->
+                <input id="searchInput" type="search" class="form-control form-control-sm" style="max-width: 200px;"
+                    placeholder="Rechercher...">
+
+                <!-- Filtre Solde -->
+                <select id="doctorFilter" class="form-select form-select-sm" style="width:140px;">
+                    <option value="all">Tous</option>
+                    <option value="positive">Solde positif</option>
+                    <option value="negative">Solde négatif</option>
+                </select>
+
+                <!-- Export -->
+                <a id="exportBtn" href="{{ url_for('export_situation_medecins_liste', type_situation=type_situation) }}"
+                    target="_blank" class="btn btn-sm btn-danger" title="Exporter la liste en PDF">
+                    <i class="fas fa-file-pdf"></i>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Onglets de navigation -->
+    <div class="type-tabs">
+        <ul class="nav nav-pills justify-content-center" role="tablist">
+            <li class="nav-item" role="presentation">
+                <a class="nav-link {{ 'active' if type_situation == 'BLOC' else '' }}"
+                    href="{{ url_for('situation_medecin_bloc') }}">
+                    <i class="fas fa-hospital me-2"></i>Location de Bloc
+                </a>
+            </li>
+            <li class="nav-item" role="presentation">
+                <a class="nav-link {{ 'active' if type_situation == 'ACCOUCHEMENT' else '' }}"
+                    href="{{ url_for('situation_accouchement_externe') }}">
+                    <i class="fas fa-heartbeat me-2"></i>Accouchements
+                </a>
+            </li>
+        </ul>
+    </div>
+
+    <!-- Quick links -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-3">
+            <a href="{{ url_for(route_prefix + '_list', type_operation='ENCAISSEMENT') }}"
+                class="btn btn-outline-danger w-100">
+                <i class="fas fa-money-bill me-1"></i> Bons d'encaissement
+            </a>
+        </div>
+        <div class="col-md-3">
+            <a href="{{ url_for(route_prefix + '_list', type_operation='DECHARGE') }}"
+                class="btn btn-outline-success w-100">
+                <i class="fas fa-wallet me-1"></i> Bons de décharge
+            </a>
+        </div>
+        <div class="col-md-3">
+            <a href="{{ url_for(route_prefix + '_list', type_operation='COMPENSATION') }}"
+                class="btn btn-outline-warning w-100">
+                <i class="fas fa-exchange-alt me-1"></i> Compensations
+            </a>
+        </div>
+    </div>
+
+    <!-- Global stats -->
+    <div class="row mb-4 g-3">
+        <div class="col-sm-6 col-md-3">
+            <div class="card stat-card border-primary shadow-sm h-100">
+                <div class="card-body d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="muted-sm mb-1">Total Médecins</h6>
+                        <h4 class="mb-0">{{ doctors|length }}</h4>
+                    </div>
+                    <i class="fas fa-users display-6 text-primary"></i>
+                </div>
+            </div>
+        </div>
+        <div class="col-sm-6 col-md-3">
+            <div class="card stat-card border-info shadow-sm h-100">
+                <div class="card-body d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="muted-sm mb-1">Total Dossiers</h6>
+                        <h4 class="mb-0">{{ doctors|sum(attribute='total_dossiers') }}</h4>
+                    </div>
+                    <i class="fas fa-folder display-6 text-info"></i>
+                </div>
+            </div>
+        </div>
+        <div class="col-sm-6 col-md-3">
+            <div class="card stat-card border-success shadow-sm h-100">
+                <div class="card-body d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="muted-sm mb-1">{{ 'Chiffre d\'Affaires' if type_situation == 'BLOC' else 'Honoraires'
+                            }}
+                        </h6>
+                        <h5 class="mb-0 text-success">{{ "{:,.2f}".format(doctors|sum(attribute='chiffre_affaire')) }}
+                            DA
+                        </h5>
+                    </div>
+                    <i class="fas fa-chart-line display-6 text-success"></i>
+                </div>
+            </div>
+        </div>
+        <div class="col-sm-6 col-md-3">
+            <div
+                class="card stat-card shadow-sm h-100 {{ 'border-danger' if total_balance_all < 0 else 'border-success' }}">
+                <div class="card-body d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="muted-sm mb-1">Balance Globale</h6>
+                        <h5 class="mb-0 {{ 'text-danger' if total_balance_all < 0 else 'text-success' }}">
+                            {{ "{:,.2f}".format(total_balance_all) }} DA
+                        </h5>
+                    </div>
+                    <i
+                        class="fas fa-{{ 'arrow-down-circle' if total_balance_all < 0 else 'arrow-up-circle' }} display-6"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- No results -->
+    <div id="noResultsDoctors" class="alert alert-warning text-center" style="display: none;">
+        <i class="fas fa-search me-1"></i> Aucun médecin correspondant à la recherche.
+    </div>
+
+    <!-- Doctors list -->
+    <div id="doctorsContainer">
+        {% if doctors %}
+        {% for doctor in doctors %}
+        <div class="card card-doctor type-{{ type_situation|lower }}"
+            data-doctor-id="{{ doctor.id_doctor if type_situation == 'BLOC' else doctor.id_gyneco }}"
+            data-doctor-name="{{ (doctor.nom_complet or '')|lower }}"
+            data-specialty="{{ (doctor.name_specialty or '')|lower }}"
+            data-balance="{{ '%.2f'|format(doctor.balance_globale) }}">
+
+            <div class="doctor-header type-{{ type_situation|lower }}">
+                <div class="row align-items-center">
+                    <div class="col-md-6">
+                        <h4>
+
+                            <i
+                                class="fas fa-{{ 'user-md' if type_situation == 'ACCOUCHEMENT' else 'id-badge' }} me-1"></i>
+                            Dr. {{ doctor.nom_complet }}
+                            <button class="btn btn-sm btn-light text-primary ms-2 border-0 p-0"
+                                onclick="MedecinInfoModal.open({{ doctor.id_doctor }})" title="Plus d'informations">
+                                <i class="fas fa-info-circle"></i>
+                            </button>
+                        </h4>
+
+                        <small class="text-light">
+                            <i class="fas fa-award me-1"></i>{{ doctor.name_specialty or 'N/A' }}
+                        </small>
+                    </div>
+                    <div class="col-md-6 text-end">
+                        <div class="d-inline-block me-3">
+                            <small class="d-block text-light">Dossiers</small>
+                            <h5 class="mb-0 text-light">{{ doctor.total_dossiers }}</h5>
+                        </div>
+                        <div class="d-inline-block">
+                            <small class="d-block text-light">Balance</small>
+                            <h5 class="mb-0 text-light">{{ "{:,.2f}".format(doctor.balance_globale) }} DA</h5>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card-body">
+                <!-- Stats financières -->
+                <div class="row mb-3">
+                    <div class="col-md-3">
+                        <div
+                            class="border-start border-3 border-{{ 'info' if type_situation == 'BLOC' else 'danger' }} ps-3">
+                            <small class="text-muted">{{ 'Chiffre d\'affaires' if type_situation == 'BLOC' else
+                                'Honoraires'
+                                }}</small>
+                            <div><strong>{{ "{:,.2f}".format(doctor.chiffre_affaire) }} DA</strong></div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="border-start border-3 border-success ps-3">
+                            <small class="text-muted">Décaissement</small>
+                            <div class="text-success">{{ "{:,.2f}".format(doctor.total_decaissement) }} DA</div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="border-start border-3 border-danger ps-3">
+                            <small class="text-muted">Encaissement</small>
+                            <div class="text-danger">{{ "{:,.2f}".format(doctor.total_encaissement) }} DA</div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="border-start border-3 border-warning ps-3">
+                            <small class="text-muted">Compensations</small>
+                            <div class="text-warning">{{ "{:,.2f}".format(doctor.total_compensation) }} DA</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Actions -->
+                <div class="d-flex gap-2">
+                    <a href="{{ url_for(route_detail, **{id_param: (doctor.id_doctor if type_situation == 'BLOC' else doctor.id_gyneco)}) }}"
+                        class="btn btn-sm btn-outline-{{ 'info' if type_situation == 'BLOC' else 'danger' }}">
+                        <i class="fas fa-eye me-1"></i>Détails
+                    </a>
+                    <button class="btn btn-sm btn-outline-secondary"
+                        onclick="toggleDossiersLazy({{ doctor.id_doctor if type_situation == 'BLOC' else doctor.id_gyneco }})">
+                        <i class="fas fa-chevron-down"
+                            id="chevron-{{ doctor.id_doctor if type_situation == 'BLOC' else doctor.id_gyneco }}"></i>
+                        Dossiers ({{ doctor.total_dossiers }})
+                    </button>
+                </div>
+
+                <!-- Container pour dossiers lazy -->
+                <div id="dossiers-{{ doctor.id_doctor if type_situation == 'BLOC' else doctor.id_gyneco }}"
+                    class="collapsed-transactions" data-loaded="false">
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+        {% else %}
+        <div class="card">
+            <div class="card-body text-center py-5">
+                <i class="fas fa-inbox display-1 text-muted"></i>
+                <h4 class="mt-3 text-muted">Aucun médecin enregistré</h4>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% include 'admin/includes/modal_medecin_info.html' %}
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/medecin_info.js') }}"></script>
+<script>
+    const TYPE_SITUATION = '{{ type_situation }}';
+    const API_ENDPOINT = TYPE_SITUATION === 'BLOC' ?
+        '/api/get_dossiers_medecin' :
+        '/api/get_dossiers_accouchement_externe';
+
+    // ========================================================================
+    // LAZY LOADING OPTIMISÉ
+    // ========================================================================
+
+    async function toggleDossiersLazy(idDoctor) {
+        const container = document.getElementById(`dossiers-${idDoctor}`);
+        const chevron = document.getElementById(`chevron-${idDoctor}`);
+
+        if (!container) return;
+
+        const isHidden = container.classList.contains('collapsed-transactions');
+
+        if (isHidden) {
+            container.classList.remove('collapsed-transactions');
+            container.style.display = 'block';
+            chevron?.classList.replace('fa-chevron-down', 'fa-chevron-up');
+
+            if (container.dataset.loaded !== 'true') {
+                await loadDossiers(idDoctor);
+            }
+        } else {
+            container.classList.add('collapsed-transactions');
+            container.style.display = 'none';
+            chevron?.classList.replace('fa-chevron-up', 'fa-chevron-down');
+        }
+    }
+
+    async function loadDossiers(idDoctor, page = 1) {
+        const container = document.getElementById(`dossiers-${idDoctor}`);
+        if (!container) return;
+
+        container.innerHTML = `
+        <div class="text-center py-4">
+            <div class="spinner-border text-${TYPE_SITUATION === 'BLOC' ? 'primary' : 'danger'}"></div>
+            <p class="mt-2 text-muted">Chargement...</p>
+        </div>`;
+
+        try {
+            const res = await fetch(`${API_ENDPOINT}/${idDoctor}?page=${page}&per_page=20`);
+            const data = await res.json();
+
+            if (!data.success) throw new Error(data.error || 'Erreur chargement');
+
+            container.innerHTML = renderDossiers(data.dossiers, data.pagination, idDoctor);
+            container.dataset.loaded = 'true';
+
+        } catch (error) {
+            container.innerHTML = `
+            <div class="alert alert-danger mt-3">
+                <i class="fas fa-exclamation-triangle"></i> ${error.message}
+            </div>`;
+        }
+    }
+
+    function renderDossiers(dossiers, pagination, idDoctor) {
+        if (!dossiers?.length) {
+            return '<div class="alert alert-info mt-3">Aucun dossier</div>';
+        }
+
+        const typeLabel = TYPE_SITUATION === 'BLOC' ? 'BLOC' : 'ACCOUCHEMENT';
+        const dateField = TYPE_SITUATION === 'BLOC' ? 'location_date' : 'date_accouchement';
+        const detailRoute = TYPE_SITUATION === 'BLOC' ? '/location_bloc/' : '/accouchement/';
+
+        let html = `<hr><h6 class="mb-3 mt-3"><i class="fas fa-folder-open"></i> Dossiers ${typeLabel}</h6>`;
+        html += '<div class="table-responsive"><table class="table table-sm table-hover">';
+        html += `
+        <thead class="table-light">
+            <tr>
+                <th>Patient</th>
+                <th>Date</th>
+                ${TYPE_SITUATION === 'ACCOUCHEMENT' ? '<th>Type</th>' : ''}
+                <th class="text-end">${TYPE_SITUATION === 'BLOC' ? 'Part Clinique' : 'Part Gynéco'}</th>
+                <th class="text-end">Balance</th>
+                <th class="text-end">Reste</th>
+                <th>Statut</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>`;
+
+        dossiers.forEach(d => {
+            const balanceClass = d.balance >= 0 ? 'balance-positive' : 'balance-negative';
+            const resteClass = d.reste >= 0 ? 'text-success' : 'text-danger';
+
+            let badge = '';
+            if (d.statut_paiement === 'EQUILIBRE') {
+                badge = '<span class="badge bg-success">Équilibré</span>';
+            } else if (d.statut_paiement.includes('CLINIQUE_DOIT')) {
+                badge = '<span class="badge bg-info">Clinique doit</span>';
+            } else {
+                badge = '<span class="badge bg-warning">Médecin doit</span>';
+            }
+
+            const typeInfo = TYPE_SITUATION === 'ACCOUCHEMENT' ?
+                `<td><small>${d.type_accouchement || ''}<br>${d.type_tarification || ''}</small></td>` : '';
+
+            html += `
+            <tr>
+                <td><strong>${escapeHtml(d.patient || d.patiente)}</strong></td>
+                <td><small class="text-muted">${d[dateField]}</small></td>
+                ${typeInfo}
+                <td class="text-end">${formatCurrency(d.part_clinique || d.part_gyneco)}</td>
+                <td class="text-end"><span class="${balanceClass}">${formatCurrency(d.balance)}</span></td>
+                <td class="text-end"><span class="${resteClass}">${formatCurrency(d.reste)}</span></td>
+                <td>${badge}</td>
+                <td>
+                    <a href="${detailRoute}${d.id_dossier || d.id}" class="btn btn-sm btn-outline-${TYPE_SITUATION === 'BLOC' ? 'info' : 'danger'}">
+                        <i class="fas fa-eye"></i>
+                    </a>
+                </td>
+            </tr>`;
+        });
+
+        html += '</tbody></table></div>';
+
+        if (pagination.total_pages > 1) {
+            html += renderPagination(pagination, idDoctor);
+        }
+
+        return html;
+    }
+
+    function renderPagination(pagination, idDoctor) {
+        let html = '<div class="d-flex justify-content-center gap-2 mt-3">';
+
+        if (pagination.page > 1) {
+            html += `<button class="btn btn-sm btn-outline-primary" onclick="loadDossiers(${idDoctor}, ${pagination.page - 1})">
+            <i class="fas fa-chevron-left"></i> Précédent
+        </button>`;
+        }
+
+        html += `<span class="align-self-center text-muted">
+        Page ${pagination.page} / ${pagination.total_pages}
+    </span>`;
+
+        if (pagination.page < pagination.total_pages) {
+            html += `<button class="btn btn-sm btn-outline-primary" onclick="loadDossiers(${idDoctor}, ${pagination.page + 1})">
+            Suivant <i class="fas fa-chevron-right"></i>
+        </button>`;
+        }
+
+        return html + '</div>';
+    }
+
+    // ========================================================================
+    // UTILITAIRES
+    // ========================================================================
+
+    function formatCurrency(value) {
+        return new Intl.NumberFormat('fr-DZ', {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
+        }).format(value) + ' DA';
+    }
+
+    function escapeHtml(text) {
+        const map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' };
+        return String(text || '').replace(/[&<>"']/g, m => map[m]);
+    }
+
+    // ========================================================================
+    // RECHERCHE ET FILTRES
+    // ========================================================================
+
+    // ========================================================================
+    // RECHERCHE ET FILTRES & EXPORT
+    // ========================================================================
+
+    (function () {
+        const searchInput = document.getElementById('searchInput');
+        const filter = document.getElementById('doctorFilter');
+        const startDate = document.getElementById('startDate');
+        const endDate = document.getElementById('endDate');
+        const exportBtn = document.getElementById('exportBtn');
+        const container = document.getElementById('doctorsContainer');
+        const noResults = document.getElementById('noResultsDoctors');
+
+        function updateExportLink() {
+            if (!exportBtn) return;
+            const url = new URL(exportBtn.href);
+
+            if (startDate.value) url.searchParams.set('start_date', startDate.value);
+            else url.searchParams.delete('start_date');
+
+            if (endDate.value) url.searchParams.set('end_date', endDate.value);
+            else url.searchParams.delete('end_date');
+
+            if (filter.value !== 'all') url.searchParams.set('filter_balance', filter.value);
+            else url.searchParams.delete('filter_balance');
+
+            exportBtn.href = url.toString();
+        }
+
+        function filterDoctors() {
+            if (!container) return;
+
+            const query = (searchInput?.value || '').toLowerCase();
+            const mode = filter?.value || 'all';
+            const cards = container.querySelectorAll('.card-doctor');
+
+            let shown = 0;
+            cards.forEach(card => {
+                let visible = true;
+
+                // Filtre texte
+                if (query) {
+                    const name = (card.dataset.doctorName || '').toLowerCase();
+                    const specialty = (card.dataset.specialty || '').toLowerCase();
+                    const text = card.innerText.toLowerCase();
+                    visible = name.includes(query) || specialty.includes(query) || text.includes(query);
+                }
+
+                // Filtre balance
+                if (visible && mode !== 'all') {
+                    const balance = parseFloat(card.dataset.balance || '0');
+                    if (mode === 'positive') visible = balance >= 0;
+                    if (mode === 'negative') visible = balance < 0;
+                }
+
+                card.style.display = visible ? '' : 'none';
+                if (visible) shown++;
+            });
+
+            if (noResults) noResults.style.display = shown === 0 ? 'block' : 'none';
+        }
+
+        function debounce(fn, wait) {
+            let t;
+            return function (...args) {
+                clearTimeout(t);
+                t = setTimeout(() => fn.apply(this, args), wait);
+            };
+        }
+
+        const debouncedFilter = debounce(filterDoctors, 200);
+
+        searchInput?.addEventListener('input', debouncedFilter);
+        filter?.addEventListener('change', () => { filterDoctors(); updateExportLink(); });
+        startDate?.addEventListener('change', updateExportLink);
+        endDate?.addEventListener('change', updateExportLink);
+
+        document.addEventListener('DOMContentLoaded', filterDoctors);
+    })();
+
+    // Messages flash
+    {% with messages = get_flashed_messages(with_categories = true) %}
+    {% if messages %}
+    {% for category, message in messages %}
+    showToast({{ message| tojson }}, "{{ category }}");
+    {% endfor %}
+    {% endif %}
+    {% endwith %}
+</script>
+{% endblock %}

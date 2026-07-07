@@ -1,0 +1,661 @@
+{% extends "layout.html" %}
+
+{% block style %}
+<style>
+    :root {
+        --primary: #6366f1;
+        --success: #10b981;
+        --warning: #f59e0b;
+        --danger: #ef4444;
+        --info: #3b82f6;
+        --dark: #1f2937;
+        --border: #e5e7eb;
+        --shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+        --shadow-lg: 0 20px 25px -5px rgb(0 0 0 / 0.1);
+        --radius: 12px;
+        --radius-lg: 16px;
+    }
+
+    body {
+        background: linear-gradient(135deg, #f5f7fa 0%, #e4e9f2 100%);
+    }
+
+    .paiements-container {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 2rem 1rem;
+    }
+
+    /* Header */
+    .page-header {
+        background: linear-gradient(135deg, var(--primary), #4f46e5);
+        border-radius: var(--radius-lg);
+        padding: 2.5rem;
+        margin-bottom: 2rem;
+        color: white;
+        box-shadow: var(--shadow-lg);
+    }
+
+    .header-title {
+        font-size: 2rem;
+        font-weight: 800;
+        margin-bottom: 0.5rem;
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+
+    /* Cards */
+    .modern-card {
+        background: white;
+        border-radius: var(--radius-lg);
+        box-shadow: var(--shadow);
+        padding: 2rem;
+        margin-bottom: 2rem;
+        border: 1px solid var(--border);
+    }
+
+    .card-title {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--dark);
+        margin-bottom: 1.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+
+    /* Résumé financier */
+    .summary-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+
+    .summary-card {
+        background: white;
+        border-radius: var(--radius-lg);
+        padding: 2rem;
+        box-shadow: var(--shadow);
+        border-left: 5px solid;
+        transition: all 0.3s;
+    }
+
+    .summary-card:hover {
+        transform: translateY(-4px);
+        box-shadow: var(--shadow-lg);
+    }
+
+    .summary-card.total {
+        border-left-color: var(--info);
+    }
+
+    .summary-card.paye {
+        border-left-color: var(--success);
+    }
+
+    .summary-card.reste {
+        border-left-color: var(--danger);
+    }
+
+    .summary-label {
+        font-size: 0.875rem;
+        color: #6b7280;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+    }
+
+    .summary-value {
+        font-size: 2rem;
+        font-weight: 800;
+        color: var(--dark);
+        margin-bottom: 0.5rem;
+    }
+
+    .summary-progress {
+        height: 8px;
+        background: #f3f4f6;
+        border-radius: 50px;
+        overflow: hidden;
+        margin-top: 1rem;
+    }
+
+    .summary-progress-bar {
+        height: 100%;
+        background: linear-gradient(90deg, var(--success), #059669);
+        border-radius: 50px;
+        transition: width 0.5s ease;
+    }
+
+    /* Table */
+    .modern-table {
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0;
+    }
+
+    .modern-table thead {
+        background: linear-gradient(135deg, var(--primary), #4f46e5);
+    }
+
+    .modern-table thead th {
+        color: white;
+        font-weight: 700;
+        padding: 1.25rem 1rem;
+        text-align: left;
+        font-size: 0.875rem;
+        text-transform: uppercase;
+    }
+
+    .modern-table tbody tr {
+        background: white;
+        transition: all 0.3s;
+        border-bottom: 1px solid var(--border);
+    }
+
+    .modern-table tbody tr:hover {
+        background: #f9fafb;
+        transform: scale(1.002);
+    }
+
+    .modern-table tbody tr.annule {
+        opacity: 0.5;
+        background: #fee;
+    }
+
+    .modern-table tbody td {
+        padding: 1.25rem 1rem;
+    }
+
+    /* Badges */
+    .badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.5rem 1rem;
+        border-radius: 50px;
+        font-size: 0.8rem;
+        font-weight: 700;
+        border: 2px solid transparent;
+    }
+
+    .badge-success {
+        background: linear-gradient(135deg, rgba(16, 185, 129, 0.15), rgba(5, 150, 105, 0.15));
+        color: #065f46;
+        border-color: rgba(16, 185, 129, 0.3);
+    }
+
+    .badge-danger {
+        background: linear-gradient(135deg, rgba(239, 68, 68, 0.15), rgba(220, 38, 38, 0.15));
+        color: #991b1b;
+        border-color: rgba(239, 68, 68, 0.3);
+    }
+
+    .badge-info {
+        background: linear-gradient(135deg, rgba(59, 130, 246, 0.15), rgba(37, 99, 235, 0.15));
+        color: #1e40af;
+        border-color: rgba(59, 130, 246, 0.3);
+    }
+
+    /* Buttons */
+    .btn {
+        border: none;
+        border-radius: var(--radius);
+        padding: 0.875rem 1.75rem;
+        font-weight: 600;
+        font-size: 0.95rem;
+        transition: all 0.3s;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        cursor: pointer;
+        text-decoration: none;
+    }
+
+    .btn:hover {
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-lg);
+    }
+
+    .btn-primary {
+        background: linear-gradient(135deg, var(--primary), #4f46e5);
+        color: white;
+    }
+
+    .btn-success {
+        background: linear-gradient(135deg, var(--success), #059669);
+        color: white;
+    }
+
+    .btn-danger {
+        background: linear-gradient(135deg, var(--danger), #dc2626);
+        color: white;
+    }
+
+    .btn-secondary {
+        background: linear-gradient(135deg, #6b7280, #4b5563);
+        color: white;
+    }
+
+    .btn-sm {
+        padding: 0.5rem 1rem;
+        font-size: 0.875rem;
+    }
+
+    /* Modal */
+    .modal-content {
+        border-radius: var(--radius-lg);
+        border: none;
+        box-shadow: var(--shadow-lg);
+    }
+
+    .modal-header {
+        background: linear-gradient(135deg, var(--primary), #4f46e5);
+        color: white;
+        border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+        padding: 1.5rem 2rem;
+    }
+
+    .modal-header .modal-title {
+        font-weight: 700;
+        font-size: 1.5rem;
+    }
+
+    .modal-body {
+        padding: 2rem;
+    }
+
+    /* Forms */
+    .form-label {
+        font-weight: 600;
+        color: var(--dark);
+        margin-bottom: 0.5rem;
+        font-size: 0.875rem;
+    }
+
+    .form-control,
+    .form-select {
+        border: 2px solid var(--border);
+        border-radius: var(--radius);
+        padding: 0.75rem 1rem;
+        transition: all 0.3s;
+        font-size: 0.95rem;
+    }
+
+    .form-control:focus,
+    .form-select:focus {
+        border-color: var(--primary);
+        box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
+        outline: none;
+    }
+
+    /* Empty state */
+    .empty-state {
+        text-align: center;
+        padding: 4rem 2rem;
+    }
+
+    .empty-icon {
+        font-size: 5rem;
+        color: var(--border);
+        margin-bottom: 1.5rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="paiements-container">
+    <!-- Header -->
+    <div class="page-header">
+        <div class="header-title">
+            <i class="fas fa-money-bill-wave"></i>
+            <div>
+                <h1>Gestion des Paiements</h1>
+                <p style="margin: 0; opacity: 0.9; font-size: 1rem;">
+                    Acte #A-{{ "%05d"|format(acte.id_acte) }} - Patient: {{ acte.patient }}
+                </p>
+            </div>
+        </div>
+        <div style="margin-top: 1rem;">
+            <a href="{{ url_for('medecin_interne_actes_detail', id_acte=acte.id_acte) }}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left"></i> Retour à l'acte
+            </a>
+        </div>
+    </div>
+
+    <!-- Résumé Financier -->
+    <div class="summary-grid">
+        <div class="summary-card total">
+            <div class="summary-label">
+                <i class="fas fa-calculator"></i> Montant Total
+            </div>
+            <div class="summary-value">{{ "{:,.2f}".format(summary.montant_total) }} DA</div>
+            <small class="text-muted">Montant à payer par le patient</small>
+        </div>
+
+        <div class="summary-card paye">
+            <div class="summary-label">
+                <i class="fas fa-check-circle"></i> Total Payé
+            </div>
+            <div class="summary-value" style="color: var(--success);">
+                {{ "{:,.2f}".format(summary.total_paye) }} DA
+            </div>
+            <small class="text-muted">{{ summary.nombre_paiements }} paiement(s)</small>
+            <div class="summary-progress">
+                <div class="summary-progress-bar" style="width: {{ summary.pourcentage_paye }}%;"></div>
+            </div>
+        </div>
+
+        <div class="summary-card reste">
+            <div class="summary-label">
+                <i class="fas fa-exclamation-circle"></i> Reste à Payer
+            </div>
+            <div class="summary-value"
+                style="color: {% if summary.reste_a_payer > 0 %}var(--danger){% else %}var(--success){% endif %};">
+                {{ "{:,.2f}".format(summary.reste_a_payer) }} DA
+            </div>
+            <small class="text-muted">
+                {% if summary.reste_a_payer <= 0 %} <i class="fas fa-check"></i> Paiement complet
+                    {% else %}
+                    {{ "{:.1f}".format(100 - summary.pourcentage_paye) }}% restant
+                    {% endif %}
+            </small>
+        </div>
+    </div>
+
+    <!-- Actions -->
+    {% if not acte.est_annule and summary.reste_a_payer > 0%}
+    <div class="modern-card">
+        <button type="button" class="btn btn-success btn-lg" data-bs-toggle="modal" data-bs-target="#addPaiementModal">
+            <i class="fas fa-plus-circle"></i>
+            Ajouter un Paiement
+        </button>
+    </div>
+    {% endif %}
+    <!-- Liste des Paiements -->
+    <div class="modern-card">
+        <h3 class="card-title">
+            <i class="fas fa-list"></i>
+            Historique des Paiements
+        </h3>
+
+        {% if paiements and paiements|length > 0 %}
+        <div style="overflow-x: auto;">
+            <table class="modern-table">
+                <thead>
+                    <tr>
+                        <th>N° Bon</th>
+                        <th>Date</th>
+                        <th>Mode</th>
+                        <th>Référence</th>
+                        <th class="text-end">Montant</th>
+                        <th>Créé par</th>
+                        <th>Statut</th>
+                        <th class="text-center">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for p in paiements %}
+                    <tr {% if p.est_annule %}class="annule" {% endif %}>
+                        <td>
+                            <strong style="color: var(--primary);">{{ p.numero_bon }}</strong>
+                        </td>
+                        <td>
+                            <div>{{ p.date_paiement.strftime('%d/%m/%Y') }}</div>
+                            <small class="text-muted">{{ p.date_paiement.strftime('%H:%M') }}</small>
+                        </td>
+                        <td>
+                            {% if p.mode_paiement == 'ESPECES' %}
+                            <span class="badge badge-success">
+                                <i class="fas fa-money-bill"></i> Espèces
+                            </span>
+                            {% elif p.mode_paiement == 'CHEQUE' %}
+                            <span class="badge badge-info">
+                                <i class="fas fa-money-check"></i> Chèque
+                            </span>
+                            {% elif p.mode_paiement == 'CARTE' %}
+                            <span class="badge badge-info">
+                                <i class="fas fa-credit-card"></i> Carte
+                            </span>
+                            {% elif p.mode_paiement == 'VIREMENT' %}
+                            <span class="badge badge-info">
+                                <i class="fas fa-exchange-alt"></i> Virement
+                            </span>
+                            {% else %}
+                            <span class="badge badge-info">{{ p.mode_paiement }}</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if p.reference_paiement %}
+                            <div><strong>{{ p.reference_paiement }}</strong></div>
+                            {% endif %}
+                            {% if p.nom_banque %}
+                            <small class="text-muted">{{ p.nom_banque }}</small>
+                            {% endif %}
+                        </td>
+                        <td class="text-end">
+                            <strong
+                                style="font-size: 1.1rem; {% if p.est_annule %}text-decoration: line-through;{% else %}color: var(--success);{% endif %}">
+                                {{ "{:,.2f}".format(p.montant_paye) }} DA
+                            </strong>
+                        </td>
+                        <td>{{ p.created_by_name or 'N/A' }}</td>
+                        <td>
+                            {% if p.est_annule %}
+                            <span class="badge badge-danger">
+                                <i class="fas fa-times-circle"></i> Annulé
+                            </span>
+                            <br>
+                            <small class="text-muted">{{ p.motif_annulation }}</small>
+                            {% else %}
+                            <span class="badge badge-success">
+                                <i class="fas fa-check-circle"></i> Validé
+                            </span>
+                            {% endif %}
+                        </td>
+                        <td class="text-center">
+                            <div style="display: flex; gap: 0.5rem; justify-content: center;">
+                                <a href="{{ url_for('medecin_interne_paiements_bon', id_paiement=p.id_paiement) }}"
+                                    class="btn btn-primary btn-sm" target="_blank" title="Imprimer le bon">
+                                    <i class="fas fa-print"></i>
+                                </a>
+                                {% if not p.est_annule %}
+                                <button type="button" class="btn btn-danger btn-sm"
+                                    onclick="annulerPaiement({{ p.id_paiement }})" title="Annuler">
+                                    <i class="fas fa-ban"></i>
+                                </button>
+                                {% endif %}
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <div class="empty-icon">
+                <i class="fas fa-receipt"></i>
+            </div>
+            <h3>Aucun paiement enregistré</h3>
+            <p>Commencez par ajouter le premier paiement pour cet acte.</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Modal Ajouter Paiement -->
+<div class="modal fade" id="addPaiementModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-plus-circle"></i>
+                    Ajouter un Paiement
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST" action="{{ url_for('medecin_interne_paiements_add', id_acte=acte.id_acte) }}">
+                <div class="modal-body">
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle"></i>
+                        <strong>Reste à payer: {{ "{:,.2f}".format(summary.reste_a_payer) }} DA</strong>
+                    </div>
+
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label">
+                                <i class="fas fa-money-bill-wave"></i>
+                                Montant à payer *
+                            </label>
+                            <input type="number" name="montant_paye" class="form-control" step="0.01" min="0.01"
+                                max="{{ summary.reste_a_payer }}" value="{{ summary.reste_a_payer }}" required>
+                            <small class="text-muted">Maximum: {{ "{:,.2f}".format(summary.reste_a_payer) }} DA</small>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label">
+                                <i class="fas fa-credit-card"></i>
+                                Mode de paiement *
+                            </label>
+                            <select name="mode_paiement" class="form-select" id="modePaiement" required>
+                                <option value="ESPECES">Espèces</option>
+                                <option value="CHEQUE">Chèque</option>
+                                <option value="CARTE">Carte bancaire</option>
+                                <option value="VIREMENT">Virement</option>
+                                <option value="TPE">Terminal de paiement</option>
+                            </select>
+                        </div>
+
+                        <div class="col-md-6" id="referenceField" style="display: none;">
+                            <label class="form-label">
+                                <i class="fas fa-hashtag"></i>
+                                Référence (N° chèque, transaction, etc.)
+                            </label>
+                            <input type="text" name="reference_paiement" class="form-control">
+                        </div>
+
+                        <div class="col-md-6" id="banqueField" style="display: none;">
+                            <label class="form-label">
+                                <i class="fas fa-university"></i>
+                                Nom de la banque
+                            </label>
+                            <input type="text" name="nom_banque" class="form-control">
+                        </div>
+
+                        <div class="col-md-6" id="echeanceField" style="display: none;">
+                            <label class="form-label">
+                                <i class="far fa-calendar-alt"></i>
+                                Date d'échéance
+                            </label>
+                            <input type="date" name="date_echeance" class="form-control">
+                        </div>
+
+                        <div class="col-md-12">
+                            <label class="form-label">
+                                <i class="far fa-comment-dots"></i>
+                                Observations
+                            </label>
+                            <textarea name="observations" class="form-control" rows="3"></textarea>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times"></i> Annuler
+                    </button>
+                    <button type="submit" class="btn btn-success">
+                        <i class="fas fa-check"></i> Enregistrer le Paiement
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Annuler Paiement -->
+<div class="modal fade" id="annulerPaiementModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header" style="background: linear-gradient(135deg, var(--danger), #dc2626);">
+                <h5 class="modal-title">
+                    <i class="fas fa-ban"></i>
+                    Annuler un Paiement
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST" id="annulerForm">
+                <div class="modal-body">
+                    <div class="alert alert-warning">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        Cette action est irréversible. Le paiement sera marqué comme annulé.
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">
+                            Motif d'annulation *
+                        </label>
+                        <textarea name="motif_annulation" class="form-control" rows="3" required
+                            placeholder="Ex: Erreur de saisie, chèque sans provision, etc."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times"></i> Annuler
+                    </button>
+                    <button type="submit" class="btn btn-danger">
+                        <i class="fas fa-ban"></i> Confirmer l'Annulation
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Afficher/masquer les champs selon le mode de paiement
+    document.getElementById('modePaiement').addEventListener('change', function () {
+        const mode = this.value;
+        const referenceField = document.getElementById('referenceField');
+        const banqueField = document.getElementById('banqueField');
+        const echeanceField = document.getElementById('echeanceField');
+
+        // Masquer tous les champs
+        referenceField.style.display = 'none';
+        banqueField.style.display = 'none';
+        echeanceField.style.display = 'none';
+
+        // Afficher selon le mode
+        if (mode === 'CHEQUE') {
+            referenceField.style.display = 'block';
+            banqueField.style.display = 'block';
+            echeanceField.style.display = 'block';
+        } else if (mode === 'VIREMENT') {
+            referenceField.style.display = 'block';
+            banqueField.style.display = 'block';
+        } else if (mode === 'CARTE' || mode === 'TPE') {
+            referenceField.style.display = 'block';
+        }
+    });
+
+    // Annuler un paiement
+    function annulerPaiement(idPaiement) {
+        const form = document.getElementById('annulerForm');
+        form.action = `/medecin_interne/paiements/${idPaiement}/annuler`;
+
+        const modal = new bootstrap.Modal(document.getElementById('annulerPaiementModal'));
+        modal.show();
+    }
+
+    // Auto-submit sur changement de mode (optionnel)
+    document.addEventListener('DOMContentLoaded', function () {
+        // Déclencher le changement initial
+        document.getElementById('modePaiement').dispatchEvent(new Event('change'));
+    });
+</script>
+{% endblock %}

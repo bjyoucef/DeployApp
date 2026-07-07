@@ -1,0 +1,356 @@
+{% extends 'layout.html' %}
+
+{% block style %}
+<!-- Choices.js CSS -->
+
+<style>
+    :root {
+        --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.08);
+        --border-radius: 12px;
+    }
+
+    .page-header {
+        background: var(--primary-gradient);
+        padding: 2rem;
+        border-radius: var(--border-radius);
+        margin-bottom: 2rem;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+        color: white;
+    }
+
+    .quick-nav {
+        background: white;
+        padding: 1rem;
+        border-radius: var(--border-radius);
+        box-shadow: var(--shadow-sm);
+        margin-bottom: 2rem;
+        display: flex;
+        gap: 1rem;
+        flex-wrap: wrap;
+    }
+
+    .quick-nav a {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.75rem 1.5rem;
+        border-radius: 10px;
+        text-decoration: none;
+        font-weight: 600;
+        transition: all 0.3s ease;
+    }
+
+    .quick-nav a.active {
+        background: var(--primary-gradient);
+        color: white;
+        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+    }
+
+    .quick-nav a:not(.active) {
+        background: #f8f9fa;
+        color: #495057;
+        border: 2px solid #dee2e6;
+    }
+
+    .quick-nav a:not(.active):hover {
+        background: #e9ecef;
+        transform: translateY(-2px);
+    }
+
+    /* Personnalisation Choices.js */
+    .choices__inner {
+        border-radius: 8px;
+        border: 1px solid #ced4da;
+        min-height: 38px;
+        padding: 4px 12px;
+        font-size: 1rem;
+    }
+
+    .choices__inner:focus-within {
+        border-color: #667eea;
+        box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+    }
+
+    .choices__list--dropdown {
+        border-radius: 8px;
+        border-color: #ced4da;
+    }
+
+    .choices__item--selectable.is-highlighted {
+        background-color: #667eea;
+    }
+
+    .choices[data-type*=select-one] .choices__inner {
+        padding-bottom: 4px;
+    }
+
+    .choices__list--single {
+        padding: 4px 0;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- En-tête -->
+    <div class="page-header">
+        <div class="row align-items-center">
+            <div class="col-md-4">
+                <h3>
+                    <i class="fas fa-file-invoice-dollar"></i> Décharges de Paiement KT
+                </h3>
+                <p class="mb-0 opacity-75">
+                    <i class="far fa-calendar-alt me-2"></i>
+                    Gestion des décharges et paiements médecins
+                </p>
+            </div>
+            <div class="col-md-8 text-end">
+                {% if 'CREER_DECHARGE_KT' in session.privileges %}
+                <a href="{{ url_for('kt_situation_medecin') }}" class="btn btn-light btn-lg">
+                    <i class="fas fa-plus"></i> Nouvelle Décharge
+                </a>
+                {% endif %}
+                <a href="{{ url_for('kt_situation_medecin') }}" class="btn btn-light btn-md">
+                    <i class="fas fa-user-md"></i>
+                    Situation Médecins
+                </a>
+                <a href="{{ url_for('kt_dossier_patient') }}" class="btn btn-light btn-md">
+                    <i class="fas fa-folder-open"></i>
+                    Dossiers Patients
+                </a>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- Filtres -->
+    <div class="mb-4">
+        <div class="card-body">
+            <form method="GET" id="filterForm" class="row g-3">
+                <div class="col-md-4">
+                    <label class="form-label">Statut</label>
+                    <select name="statut" id="statutSelect" class="form-select">
+                        <option value="all" {% if request.args.get('statut', 'all' )=='all' %}selected{% endif %}>
+                            Tous les statuts
+                        </option>
+                        <option value="EN_COURS" {% if request.args.get('statut')=='EN_COURS' %}selected{% endif %}>
+                            En cours
+                        </option>
+                        <option value="PARTIEL" {% if request.args.get('statut')=='PARTIEL' %}selected{% endif %}>
+                            Paiement partiel
+                        </option>
+                        <option value="SOLDE" {% if request.args.get('statut')=='SOLDE' %}selected{% endif %}>
+                            Soldé
+                        </option>
+                    </select>
+                </div>
+
+                <div class="col-md-4">
+                    <label class="form-label">Médecin</label>
+                    <select name="doctor" id="doctorSelect" class="form-select">
+                        <option value="all" {% if request.args.get('doctor', 'all' )=='all' %}selected{% endif %}>
+                            Tous les médecins
+                        </option>
+                        {% for doctor in doctors %}
+                        <option value="{{ doctor.id }}" {% if request.args.get('doctor')==doctor.id|string %}selected{%
+                            endif %}>
+                            {{ doctor.name }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="col-md-4 d-flex align-items-end">
+                    <a href="{{ url_for('kt_decharges') }}" class="btn btn-secondary">
+                        <i class="fas fa-redo"></i> Réinitialiser
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Statistiques -->
+    <div class="row mb-4">
+        {% set decharges_actives = decharges|rejectattr('statut', 'equalto', 'ANNULEE')|list %}
+        {% set stats = {
+        'total': decharges_actives|length,
+        'en_cours': decharges_actives|selectattr('statut', 'equalto', 'EN_COURS')|list|length,
+        'partiel': decharges_actives|selectattr('statut', 'equalto', 'PARTIEL')|list|length,
+        'solde': decharges_actives|selectattr('statut', 'equalto', 'SOLDE')|list|length,
+        'montant_total': decharges_actives|sum(attribute='montant_total')|float,
+        'montant_paye': decharges_actives|sum(attribute='montant_paye')|float,
+        'montant_restant': decharges_actives|sum(attribute='montant_restant')|float
+        } %}
+
+        <div class="col-md-4">
+            <div class="card text-center border-primary">
+                <div class="card-body">
+                    <h5 class="card-title text-primary">Total Décharges</h5>
+                    <h2 class="mb-0">{{ stats.total }}</h2>
+                    <small class="text-muted">Actives uniquement</small>
+                </div>
+            </div>
+        </div>
+
+
+        <div class="col-md-4">
+            <div class="card text-center border-success">
+                <div class="card-body">
+                    <h5 class="card-title text-success">Montant Payé</h5>
+                    <h2 class="mb-0">{{ stats.montant_paye|format_price }} DA</h2>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card text-center border-danger">
+                <div class="card-body">
+                    <h5 class="card-title text-danger">Montant Restant</h5>
+                    <h2 class="mb-0">{{ stats.montant_restant|format_price }} DA</h2>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tableau des décharges -->
+    <div class="card">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th>N° Décharge</th>
+                            <th>Date</th>
+                            <th>Médecin</th>
+                            <th>Dossiers</th>
+                            <th>Montant Total</th>
+                            <th>Montant Payé</th>
+                            <th>Montant Restant</th>
+                            <th>Tranches</th>
+                            <th>Statut</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% if decharges|length == 0 %}
+                        <tr>
+                            <td colspan="11" class="text-center py-4">
+                                <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
+                                <p class="text-muted">Aucune décharge trouvée</p>
+                            </td>
+                        </tr>
+                        {% else %}
+                        {% for decharge in decharges %}
+                        <tr>
+                            <td>
+                                <strong>{{ decharge.numero_decharge }}</strong>
+                            </td>
+                            <td>{{ decharge.date_decharge.strftime('%d/%m/%Y') }}</td>
+                            <td>
+                                <i class="fas fa-user-md text-primary"></i>
+                                {{ decharge.nom_medecin }}
+                                <br>
+                                <small class="text-muted">{{ decharge.name_specialty }}</small>
+                            </td>
+                            <td>
+                                <span class="badge bg-info">{{ decharge.nb_dossiers }}</span>
+                            </td>
+                            <td>
+                                <strong>{{ decharge.montant_total|format_price }} DA</strong>
+                            </td>
+                            <td>
+                                <span class="text-success">
+                                    {{ decharge.montant_paye|format_price }} DA
+                                </span>
+                            </td>
+                            <td>
+                                <span class="text-danger">
+                                    {{ decharge.montant_restant|format_price }} DA
+                                </span>
+                            </td>
+                            <td>
+                                {% if decharge.nb_tranches > 0 %}
+                                <span class="badge bg-secondary">{{ decharge.nb_tranches }}</span>
+                                {% else %}
+                                <span class="text-muted">-</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if decharge.statut == 'ANNULEE' %}
+                                <span class="badge bg-danger">Annulée</span>
+                                {% elif decharge.statut == 'SOLDE' %}
+                                <span class="badge bg-success">Soldé</span>
+                                {% elif decharge.statut == 'PARTIEL' %}
+                                <span class="badge bg-warning">Partiel</span>
+                                {% else %}
+                                <span class="badge bg-secondary">En cours</span>
+                                {% endif %}
+                            </td>
+
+                            <td>
+                                <div class="btn-group" role="group">
+                                    <a href="{{ url_for('kt_decharge_detail', id_decharge=decharge.id_decharge) }}"
+                                        class="btn btn-sm btn-primary" title="Voir détails">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                    <a href="{{ url_for('kt_decharge_pdf', id_decharge=decharge.id_decharge) }}"
+                                        class="btn btn-sm btn-danger" target="_blank" title="Export PDF">
+                                        <i class="fas fa-file-pdf"></i>
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<!-- Choices.js JS -->
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        // Initialisation de Choices.js sur le select Médecin
+        const doctorSelect = new Choices('#doctorSelect', {
+            searchEnabled: true,
+            searchPlaceholderValue: 'Rechercher un médecin...',
+            noResultsText: 'Aucun médecin trouvé',
+            itemSelectText: 'Cliquer pour sélectionner',
+            position: 'bottom',
+            removeItemButton: false,
+            shouldSort: false,
+            placeholder: true,
+            placeholderValue: 'Sélectionner un médecin',
+            searchResultLimit: 10,
+            fuseOptions: {
+                threshold: 0.3,
+                distance: 100
+            }
+        });
+
+        // Initialisation de Choices.js sur le select Statut (optionnel)
+        const statutSelect = new Choices('#statutSelect', {
+            searchEnabled: false,
+            position: 'bottom',
+            removeItemButton: false,
+            shouldSort: false,
+            itemSelectText: ''
+        });
+
+        // Soumettre le formulaire lors du changement
+        document.getElementById('doctorSelect').addEventListener('change', function () {
+            document.getElementById('filterForm').submit();
+        });
+
+        document.getElementById('statutSelect').addEventListener('change', function () {
+            document.getElementById('filterForm').submit();
+        });
+    });
+</script>
+{% endblock %}

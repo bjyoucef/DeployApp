@@ -1,0 +1,592 @@
+{% extends 'layout.html' %}
+{% block content %}
+
+<!-- Boutons d'action -->
+<div class="d-flex justify-content-between mb-3">
+    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addDossierModal">
+        Ajouter un Dossier
+    </button>
+    <button class="btn btn-primary" type="button" data-bs-toggle="offcanvas" data-bs-target="#staticBackdrop"
+            aria-controls="staticBackdrop">
+        Filtres
+    </button>
+</div>
+
+<!-- Offcanvas Filtres -->
+<div class="offcanvas offcanvas-end" data-bs-backdrop="static" tabindex="-1" id="staticBackdrop"
+     aria-labelledby="staticBackdropLabel">
+    <div class="offcanvas-header">
+        <h5 class="offcanvas-title" id="staticBackdropLabel">Filtres</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+    </div>
+    <div class="offcanvas-body">
+        <form method="GET" action="/dossier_patient">
+            <!-- Filtre médecin -->
+            <div class="mb-3">
+                <label for="doctorFilter" class="form-label">Médecin :</label>
+                <select name="doctor" id="doctorFilter" class="form-select" onchange="this.form.submit()">
+                    <option value="all" {% if request.args.get(
+                    'doctor') == 'all' %}selected{% endif %}>Tous les Médecins</option>
+                    {% for doctor in doctors %}
+                    <option value="{{ doctor.id }}" {% if request.args.get(
+                    'doctor') == doctor.id|string %}selected{% endif %}>
+                    {{ doctor.name }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <!-- Filtre date de début -->
+            <div class="mb-3">
+                <label for="start_date" class="form-label">Date de début :</label>
+                <input type="date" class="form-control" id="start_date" name="start_date" value="{{ start_date }}"
+                       onchange="this.form.submit()">
+            </div>
+            <!-- Filtre date de fin -->
+            <div class="mb-3">
+                <label for="end_date" class="form-label">Date de fin :</label>
+                <input type="date" class="form-control" id="end_date" name="end_date" value="{{ end_date }}"
+                       onchange="this.form.submit()">
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Tableau des dossiers -->
+<div class="table-responsive">
+    <table id="myTable" class="table table-hover">
+        <thead>
+        <tr>
+            <th>N°</th>
+            <th>Médecin</th>
+            <th>Patient</th>
+            <th>Acte</th>
+            <th>Date</th>
+            <th>Actions</th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for dossier in dossiers %}
+        <tr>
+            <td>{{ dossier.n_admission }}</td>
+            <td>{{ dossier.doctor_name }}</td>
+            <td>{{ dossier.patient_name }}</td>
+            <td>{{ dossier.act_name }}</td>
+            <td>{{ dossier.acte_date }}</td>
+            <td>
+                <a class="btn btn-primary btn-sm" href="#" data-bs-toggle="modal"
+                   data-bs-target="#detailModal{{ dossier.id_dossier }}">
+                    <i class="fas fa-info-circle"></i> Détails </a>
+            </td>
+        </tr>
+
+        <!-- Modal Détail du dossier -->
+        <div class="modal fade" id="detailModal{{ dossier.id_dossier }}" tabindex="-1"
+             aria-labelledby="detailModalLabel" aria-hidden="true">
+
+            <div class="modal-dialog modal-xl">
+                <div class="modal-content">
+
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="detailModalLabel">
+                            <i class="fas fa-folder-open"></i> Détails du Dossier
+                        </h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
+                    </div>
+
+                    <div class="modal-body">
+
+                        <div class="row">
+
+                            <!-- Colonne 1 -->
+                            <div class="col-md-4">
+                                <p><i class="fas fa-file-alt"></i> <strong>N° Dossier :</strong> {{ dossier.n_admission
+                                    or 'Non spécifié' }}</p>
+                                <p><i class="fas fa-user-md"></i> <strong>Médecin :</strong> {{ dossier.doctor_name or
+                                    'Non spécifié' }}</p>
+                                <p><i class="fas fa-user"></i> <strong>Patient :</strong> {{ dossier.patient_name or
+                                    'Non spécifié' }}</p>
+                                <p><i class="fas fa-procedures"></i> <strong>Acte :</strong> {{ dossier.act_name or
+                                    dossier.custom_acte or 'Non spécifié' }}</p>
+                                <p><i class="fas fa-calendar-alt"></i> <strong>Date Acte :</strong> {{ dossier.acte_date
+                                    or 'Non spécifiée' }}</p>
+                                <p><i class="fas fa-clock"></i> <strong>Durée de l'Acte :</strong> {{ dossier.duree_acte
+                                    or 'Non spécifiée' }} minutes</p>
+                                <p><i class="fas fa-hospital"></i> <strong>Nom du Bloc :</strong> {{ dossier.name_bloc
+                                    or 'Non spécifié' }}</p>
+                            </div>
+
+                            <!-- Colonne 2 -->
+                            <div class="col-md-4">
+                                {% if dossier.forfait %}
+                                <p><i class="fas fa-box"></i> <strong>Forfait :</strong> Oui</p>
+                                {% endif %}
+                                <p><i class="fas fa-file-contract"></i> <strong>Convention :</strong> {{ 'Oui' if
+                                    dossier.convention else 'Non' }}</p>
+                                <p><i class="fas fa-star"></i> <strong>VIP :</strong> {{ 'Oui' if dossier.vip else 'Non'
+                                    }}</p>
+                                <p><i class="fas fa-users"></i> <strong>Conjoint :</strong> {{ 'Oui' if dossier.conjoint
+                                    else 'Non' }}</p>
+                                <p><i class="fas fa-moon"></i> <strong>Nombre de Nuits :</strong> {{ dossier.nbr_nuite
+                                    or 0 }}</p>
+                                <p><i class="fas fa-bed"></i> <strong>Nombre de Nuits Conjoint :</strong> {{
+                                    dossier.nbr_nuite_conjoint or 0 }}</p>
+                            </div>
+
+                            <!-- Colonne 3 -->
+                            <div class="col-md-4">
+                                <p><i class="fas fa-plus-circle"></i> <strong>Extras :</strong> {{ dossier.extras |
+                                    format_price or '0.00' }} DA</p>
+                                <p><i class="fas fa-user-friends"></i> <strong>Prix Conjoint :</strong> {{
+                                    dossier.prix_conjoint | format_price or '0.00' }} DA</p>
+                                {% if dossier.forfait %}
+                                <p><i class="fas fa-box-open"></i> <strong>Prix Forfait :</strong> {{
+                                    dossier.prix_forfait | format_price or '0.00' }} DA</p>
+                                {% endif %}
+                                <p><i class="fas fa-cogs"></i> <strong>Prix Bloc :</strong> {{ dossier.prix_bloc |
+                                    format_price or '0.00' }} DA</p>
+                                <p><i class="fas fa-procedures"></i> <strong>Prix Hospitalisation :</strong> {{
+                                    dossier.prix_hospitalisation | format_price or '0.00' }} DA</p>
+                                <p><i class="fas fa-clinic-medical"></i> <strong>Part Clinique :</strong> {{
+                                    dossier.part_clinique | format_price or '0.00' }} DA</p>
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                            <i class="fas fa-times"></i> Fermer
+                        </button>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<!-- Modal Ajouter un dossier -->
+<div class="modal fade" id="addDossierModal" tabindex="-1" aria-labelledby="addDossierModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-fullscreen modal-dialog-scrollable">
+        <div class="modal-content">
+            <!-- En-tête -->
+            <div class="modal-header">
+                <h5 class="modal-title" id="addDossierModalLabel">Ajouter un Dossier</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
+            </div>
+            <!-- Corps -->
+            <div class="modal-body">
+                <form method="POST" action="{{ url_for('ajouter_dossier') }}">
+                    <div class="row">
+                        <!-- Colonne 1 : Informations de base du dossier -->
+                        <div class="col-md-4">
+
+                            <div class="mb-3">
+                                <label for="id_doctor" class="form-label">Médecin : *</label>
+                                <select class="form-select" id="id_doctor" name="id_doctor" required>
+                                    <option value="" selected>Choisir un médecin</option>
+                                    {% for doctor in doctors %}
+                                    <option value="{{ doctor.id }}">{{ doctor.name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+
+                            <div class="mb-3 position-relative">
+                                <label for="patient" class="form-label">Patient : *</label>
+                                <input type="text" class="form-control" id="patient" name="patient"
+                                       placeholder="Saisissez un nom de patient" autocomplete="off"
+                                       oninput="fetchSuggestions(this.value, 'patient')" required>
+                                <div id="suggestionsPatient" class="list-group mt-2"></div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="acte_date" class="form-label">Date de l'Acte : *</label>
+                                <input type="date" class="form-control" id="acte_date" name="acte_date" required>
+                            </div>
+                        </div>
+
+                        <!-- Colonne 2 : Informations sur le forfait et l'acte -->
+                        <div class="col-md-4">
+                            <div class="row">
+
+                                <div class="col-6">
+                                    <div class="mb-3 form-check">
+                                        <input type="checkbox" class="form-check-input" id="forfait" name="forfait"
+                                               value="1">
+                                        <label class="form-check-label" for="forfait">Forfait</label>
+                                    </div>
+                                </div>
+
+                                <div class="col-6">
+                                    <div class="mb-3 form-check">
+                                        <input type="checkbox" class="form-check-input" id="conventionCheckbox"
+                                               name="conventionCheckbox" value="1">
+                                        <label class="form-check-label" for="conventionCheckbox">Convention</label>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Affiché si "Forfait" est coché -->
+                            <div class="mb-3 d-none" id="type_acte_select">
+                                <label for="forfait_id" class="form-label">Acte Forfait : *</label>
+                                <select class="form-select" id="forfait_id" name="forfait_id">
+                                    <option value="" selected>Choisir un acte</option>
+                                    {% for act in acts %}
+                                    <option value="{{ act.id_forfait }}">{{ act.name_forfait }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+
+                            <div class="mb-3 d-none position-relative" id="type_acte_text">
+                                <label for="custom_acte" class="form-label">Acte : *</label>
+                                <input type="text" class="form-control" id="custom_acte" name="custom_acte"
+                                       placeholder="Entrez un type d'acte"
+                                       oninput="fetchSuggestions(this.value, 'acte')">
+                                <div id="suggestionsActe" class="list-group mt-2"></div>
+                            </div>
+
+                            <div class="mb-3 d-none position-relative" id="id_bloc_">
+                                <label for="id_bloc" class="form-label">Bloc : *</label>
+                                <select class="form-select" id="id_bloc" name="id_bloc">
+                                    <option value="" selected>Choisir un bloc</option>
+                                    {% for bloc in blocs %}
+                                    <option value="{{ bloc.id_bloc }}">{{ bloc.name_bloc }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+
+                            <div class="mb-3 d-none" id="duree_acte_">
+                                <label for="duree_acte" class="form-label">Durée de l'acte en Min : *</label>
+                                <input type="number" class="form-control" id="duree_acte" name="duree_acte"
+                                       placeholder="Entrez une durée">
+                            </div>
+
+                        </div>
+
+                        <!-- Colonne 3 : Informations complémentaires -->
+                        <div class="col-md-4">
+
+                            <div class="mb-3">
+                                <label for="nbr_nuite" class="form-label">Nombre de Nuits</label>
+                                <input type="number" class="form-control" id="nbr_nuite" name="nbr_nuite" min="0"
+                                       value="0">
+                            </div>
+                            <div class="mb-3 form-check" id="vip_container">
+                                <input type="checkbox" class="form-check-input" id="vip" name="vip" value="1">
+                                <label class="form-check-label" for="vip">VIP</label>
+                            </div>
+                            <div class="mb-3 form-check" id="conjoint_container">
+                                <input type="checkbox" class="form-check-input" id="conjoint" name="conjoint" value="1">
+                                <label class="form-check-label" for="conjoint">Conjoint</label>
+                            </div>
+                            <div class="mb-3" id="nbr_nuite_conjoint_container">
+                                <label for="nbr_nuite_conjoint" class="form-label">Nombre de Nuits pour le
+                                    Conjoint</label>
+                                <input type="number" class="form-control" id="nbr_nuite_conjoint"
+                                       name="nbr_nuite_conjoint" min="0" value="0">
+                            </div>
+                            <div class="mb-3">
+                                <label for="encaissement_patient" class="form-label">Encaissement (DA) : *</label>
+                                <input type="number" class="form-control" id="encaissement_patient"
+                                       name="encaissement_patient" step="1" min="0" value="0">
+                            </div>
+                            <div class="mb-3">
+                                <label for="extras" class="form-label">Extras (DA)</label>
+                                <input type="number" class="form-control" id="extras" name="extras" step="1" min="0"
+                                       value="0">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Section : Produits inclus dans le forfait (chargement AJAX) -->
+                    <div id="products_section" class="mt-3 d-none">
+                        <h5>Produits inclus dans le forfait</h5>
+                        <div id="forfait_products_container">
+                            <!-- Les produits seront chargés ici -->
+                        </div>
+                    </div>
+
+                    <!-- Section : Ajout manuel de produits consommés -->
+                    <div class="mt-3">
+                        <h6>Ajouter un produit consommé :</h6>
+                        <div class="row g-2 align-items-end">
+                            <div class="col-md-6">
+                                <label for="id_produit_manual" class="form-label">Produit</label>
+                                <select id="id_produit_manual" class="form-control">
+                                    <option value="" selected>Choisir un produit</option>
+                                    {% for produit in produits %}
+                                    <option value="{{ produit.id_produit }}">{{ produit.description }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <label for="qte_manual" class="form-label">Quantité</label>
+                                <input type="number" id="qte_manual" class="form-control" min="1">
+                            </div>
+                            <div class="col-md-2">
+                                <button type="button" id="add_product_btn" class="btn btn-primary">Ajouter</button>
+                            </div>
+                        </div>
+                        <!-- Container listant les produits ajoutés manuellement -->
+                        <div id="manual_products_container" class="mt-3">
+                            <!-- Chaque produit ajouté apparaîtra ici avec un champ caché pour le formulaire -->
+                        </div>
+                    </div>
+
+                    <!-- Pied de page -->
+                    <div class="modal-footer">
+                        <button type="submit" class="btn btn-primary">Ajouter</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- JavaScript -->
+<script>
+    // Afficher/masquer la section des produits inclus dans le forfait selon l'état de la case "Forfait"
+    document.getElementById('forfait').addEventListener('change', function() {
+        const productsSection = document.getElementById('products_section');
+        productsSection.classList.toggle('d-none', !this.checked);
+    });
+
+    // Charger dynamiquement les produits inclus lorsque l'acte forfait est sélectionné
+    document.getElementById('forfait_id').addEventListener('change', function() {
+        if (this.value) {
+            fetch(`/get_forfait_products?forfait_id=${this.value}`)
+                .then(response => response.json())
+                .then(products => {
+                const container = document.getElementById('forfait_products_container');
+                container.innerHTML = '';
+                products.forEach(prod => {
+                    const div = document.createElement('div');
+                    div.className = 'form-group mb-3';
+                    div.innerHTML = `
+<label class="form-label">
+${prod.description}
+<span class="text-muted">(Inclus: ${prod.qte_incluse}, Prix: ${prod.prix} DA)</span>
+</label>
+<div class="input-group">
+<input type="number"
+name="produit_${prod.id_produit}"
+class="form-control quantity-input"
+value="${prod.qte_incluse}"
+min="0"
+data-included="${prod.qte_incluse}"
+data-price="${prod.prix}"
+oninput="validateQuantity(this)">
+<span class="input-group-text">Unité(s)</span>
+</div>
+<div class="text-danger mt-1 d-none" id="error_${prod.id_produit}">
+Quantité dépassée! Supplément: <span class="supplement-value">0</span> DA
+</div>
+`;
+                    container.appendChild(div);
+                });
+            });
+        }
+    });
+
+    // Validation des quantités dans la section des produits inclus
+    function validateQuantity(input) {
+        const included = parseInt(input.dataset.included);
+        const currentValue = parseInt(input.value) || 0;
+        const price = parseInt(input.dataset.price);
+        const errorDiv = input.parentElement.nextElementSibling;
+        const supplementSpan = errorDiv.querySelector('.supplement-value');
+
+        if (currentValue > included) {
+            const supplement = (currentValue - included) * price;
+            supplementSpan.textContent = supplement;
+            errorDiv.classList.remove('d-none');
+        } else {
+            errorDiv.classList.add('d-none');
+        }
+    }
+
+    // Gestion de l'ajout manuel de produits consommés
+    document.getElementById('add_product_btn').addEventListener('click', function() {
+        const productSelect = document.getElementById('id_produit_manual');
+        const quantityInput = document.getElementById('qte_manual');
+        const productId = productSelect.value;
+        const productText = productSelect.options[productSelect.selectedIndex].text;
+        const quantity = quantityInput.value;
+
+        if (!productId || !quantity || quantity <= 0) {
+            alert("Veuillez sélectionner un produit et entrer une quantité valide.");
+            return;
+        }
+        // Vérifier si le produit a déjà été ajouté
+        const existing = document.querySelector(`#manual_products_container [data-product-id="${productId}"]`);
+        if (existing) {
+            alert("Ce produit a déjà été ajouté.");
+            return;
+        }
+        // Créer une ligne pour le produit ajouté manuellement
+        const row = document.createElement('div');
+        row.classList.add('d-flex', 'justify-content-between', 'align-items-center', 'mb-2');
+        row.dataset.productId = productId;
+        row.innerHTML = `
+<span>${productText} - Quantité: ${quantity}</span>
+<input type="hidden" name="manual_product_${productId}" value="${quantity}">
+<button type="button" class="btn btn-sm btn-danger remove-manual-product">Supprimer</button>
+`;
+        document.getElementById('manual_products_container').appendChild(row);
+    });
+
+    // Suppression d'un produit ajouté manuellement
+    document.getElementById('manual_products_container').addEventListener('click', function(e) {
+        if (e.target && e.target.classList.contains('remove-manual-product')) {
+            e.target.parentElement.remove();
+        }
+    });
+</script>
+
+
+<!-- Script consolidé -->
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // --- Initialisation de la date de l'acte ---
+        const acteDateInput = document.getElementById('acte_date');
+        if (acteDateInput) {
+            acteDateInput.value = new Date().toISOString().split('T')[0];
+        }
+
+        // --- Validation des dates filtres ---
+        const startDateInput = document.getElementById("start_date"),
+        endDateInput = document.getElementById("end_date");
+
+        function updateEndDateIfInvalid() {
+            const startDate = new Date(startDateInput.value),
+            endDate = new Date(endDateInput.value);
+            if (endDate < startDate) {
+                endDateInput.value = startDate.toISOString().split('T')[0];
+            }
+        }
+
+        function updateStartDateIfInvalid() {
+            const startDate = new Date(startDateInput.value),
+            endDate = new Date(endDateInput.value);
+            if (startDate > endDate) {
+                startDateInput.value = endDate.toISOString().split('T')[0];
+            }
+        }
+
+        if (startDateInput && endDateInput) {
+            startDateInput.addEventListener('change', updateEndDateIfInvalid);
+            endDateInput.addEventListener('change', updateStartDateIfInvalid);
+            updateEndDateIfInvalid();
+            updateStartDateIfInvalid();
+        }
+
+        // --- Gestion de l'affichage des champs en fonction des valeurs ---
+        function toggleFields() {
+            const nbrNuite = document.getElementById('nbr_nuite'),
+            vipContainer = document.getElementById('vip_container'),
+            conjointContainer = document.getElementById('conjoint_container'),
+            nbrNuiteConjointContainer = document.getElementById('nbr_nuite_conjoint_container'),
+            vipCheckbox = document.getElementById('vip'),
+            conjointCheckbox = document.getElementById('conjoint'),
+            nbrNuiteConjoint = document.getElementById('nbr_nuite_conjoint');
+
+            const isNuiteZero = nbrNuite.value == 0;
+            vipContainer.style.display = isNuiteZero ? 'none' : 'block';
+            conjointContainer.style.display = isNuiteZero ? 'none' : 'block';
+            nbrNuiteConjointContainer.style.display = (conjointCheckbox.checked && !isNuiteZero) ? 'block' : 'none';
+
+            if (isNuiteZero) {
+                vipCheckbox.checked = false;
+                conjointCheckbox.checked = false;
+                nbrNuiteConjoint.value = 0;
+            }
+            if (parseInt(nbrNuiteConjoint.value) > parseInt(nbrNuite.value)) {
+                nbrNuiteConjoint.value = nbrNuite.value;
+            }
+        }
+
+        function validateNbrNuiteConjoint() {
+            const nbrNuite = document.getElementById('nbr_nuite'),
+            nbrNuiteConjoint = document.getElementById('nbr_nuite_conjoint');
+            if (parseInt(nbrNuiteConjoint.value) > parseInt(nbrNuite.value)) {
+                nbrNuiteConjoint.value = nbrNuite.value;
+            }
+        }
+
+        function toggleTypeActe() {
+            const forfaitCheckbox = document.getElementById('forfait'),
+            typeActeSelect = document.getElementById('type_acte_select'),
+            typeActeText = document.getElementById('type_acte_text'),
+            idBloc = document.getElementById('id_bloc_'),
+            dureeActe = document.getElementById('duree_acte_');
+
+            if (forfaitCheckbox.checked) {
+                typeActeSelect.classList.remove('d-none');
+                typeActeText.classList.add('d-none');
+            } else {
+                typeActeSelect.classList.add('d-none');
+                typeActeText.classList.remove('d-none');
+            }
+            // Afficher toujours les champs Bloc et Durée si présents
+            if (idBloc) idBloc.classList.remove('d-none');
+            if (dureeActe) dureeActe.classList.remove('d-none');
+        }
+
+        // Ajout des écouteurs d'évènements
+        const nbrNuiteInput = document.getElementById('nbr_nuite');
+        if(nbrNuiteInput) {
+            nbrNuiteInput.addEventListener('input', toggleFields);
+        }
+        const conjointCheckbox = document.getElementById('conjoint');
+        if(conjointCheckbox) {
+            conjointCheckbox.addEventListener('change', toggleFields);
+        }
+        const nbrNuiteConjointInput = document.getElementById('nbr_nuite_conjoint');
+        if(nbrNuiteConjointInput) {
+            nbrNuiteConjointInput.addEventListener('input', validateNbrNuiteConjoint);
+        }
+        const forfaitCheckbox = document.getElementById('forfait'),
+        conventionCheckbox = document.getElementById('conventionCheckbox');
+        if(forfaitCheckbox) {
+            forfaitCheckbox.addEventListener('change', toggleTypeActe);
+        }
+        if(conventionCheckbox) {
+            conventionCheckbox.addEventListener('change', toggleTypeActe);
+        }
+
+        // Initialisation de l'affichage
+        toggleFields();
+        toggleTypeActe();
+    });
+
+    // --- Fonction de suggestions pour l'autocomplétion ---
+    // Cette fonction est accessible globalement
+    function fetchSuggestions(query, type) {
+        const suggestionsDiv = document.getElementById(type === 'patient' ? 'suggestionsPatient' : 'suggestionsActe');
+        suggestionsDiv.innerHTML = ''; // Réinitialiser les suggestions
+        if(query.length < 2) return; // Recherche déclenchée à partir de 2 caractères
+        const endpoint = `/autocomplete${type.charAt(0).toUpperCase() + type.slice(1)}?query=${encodeURIComponent(query)}`;
+        fetch(endpoint)
+            .then(response => response.json())
+            .then(data => {
+            data.forEach(item => {
+                const suggestion = document.createElement('div');
+                suggestion.classList.add('list-group-item');
+                suggestion.textContent = type === 'patient' ? item.patient : item.custom_acte;
+                suggestion.onclick = () => {
+                    document.getElementById(type === 'patient' ? 'patient' : 'custom_acte').value =
+                    type === 'patient' ? item.patient : item.custom_acte;
+                    suggestionsDiv.innerHTML = ''; // Effacer les suggestions
+                };
+                suggestionsDiv.appendChild(suggestion);
+            });
+        })
+            .catch(error => console.error(`Erreur lors de la récupération des suggestions ${type}:`, error));
+    }
+</script>
+
+{% endblock %}

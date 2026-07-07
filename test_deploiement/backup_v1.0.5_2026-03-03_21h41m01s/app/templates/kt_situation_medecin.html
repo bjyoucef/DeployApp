@@ -1,0 +1,379 @@
+{% extends 'layout.html' %}
+{% block content %}
+<!-- Button to open the modal for adding a new doctor -->
+<div class="row">
+
+    {% if 'ADD_DOCTORS_KT' in session.privileges %}
+    <div class="col-2">
+
+        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addDoctorModal"><i
+                class="fa-solid fa-user-md"></i> Ajouter un médecin
+        </button>
+
+        <!-- Modal for adding a new doctor -->
+        <div class="modal fade" id="addDoctorModal" tabindex="-1" aria-labelledby="addDoctorModalLabel"
+             aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="addDoctorModalLabel"><i class="fa-solid fa-user-md"></i> Ajouter un
+                            médecin</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <form method="POST" action="{{ url_for('add_doctors_kt') }}">  <!-- Corrected here -->
+                            <div class="mb-3">
+                                <label for="first_name" class="form-label">Prénom</label>
+                                <input type="text" name="first_name" class="form-control" placeholder="Prénom" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="last_name" class="form-label">Nom</label>
+                                <input type="text" name="last_name" class="form-control" placeholder="Nom" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="specialty" class="form-label">Spécialité</label>
+                                <select class="form-select" id="specialty" name="specialty" required>
+                                    <option value="" selected>Choisir une spécialité</option>
+                                    {% for specialty in specialties %}
+                                    <option value="{{ specialty.id_specialty }}">{{ specialty.name_specialty }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <button type="submit" class="btn btn-success">Ajouter</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+    {% endif %}
+
+    {% if 'AFFICHER_TOTAL_SOLDE_KT' in session.privileges %}
+
+    <div class="col-10">
+        <h3 class="mb-4 text-center">
+            Total Solde : <span id="totalSolde">{{ total_solde_all_doctors | format_price }} DA</span>
+        </h3>
+    </div>
+    <div class="form-switch-container mb-3 d-flex justify-content-center align-items-center">
+        <label class="form-switch">
+            <input type="checkbox" class="paymentCheckbox" id="payDoctorFilter" checked>
+            <span class="slider"></span>
+            <span class="label-text">Clinique doit payer</span>
+        </label>
+
+        <label class="form-switch">
+            <input type="checkbox" class="paymentCheckbox" id="noPaymentFilter" checked>
+            <span class="slider"></span>
+            <span class="label-text">Aucun paiement nécessaire</span>
+        </label>
+    </div>
+    {% endif %}
+
+</div>
+
+
+<div class="table-responsive" style="max-height: 70vh; overflow-y: auto;">
+    <table class="table table-hover" id="myTable">
+        <thead>
+        <tr>
+            <th><i class="fa-solid fa-user-md"></i> Nom</th>
+            <th>Spécialité</th>
+            <th>Solde</th>
+            <th>Actions</th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for doctor in kt_doctors %}
+        <tr class="{% if doctor.total_solde > 0 %}table-warning{% elif doctor.total_solde < 0 %}table-danger{% endif %}"
+            data-payment="{{ doctor.total_solde }}">
+            <td><i class="fa-solid fa-user-md"></i> {{ doctor.first_name }} {{ doctor.last_name }}</td>
+            <td>{{ doctor.name_specialty }}</td>
+            <td>
+                {% if doctor.total_solde > 0 %}
+                Clinique doit payer le médecin : {{ doctor.total_solde | format_price }} DA
+                {% else %}
+                Aucun paiement nécessaire
+                {% endif %}
+            </td>
+            <td class="d-flex gap-2">
+
+                <!-- Bouton Voir Détails -->
+                <button class="rounded btn btn-success btn-sm" data-bs-toggle="modal"
+                        data-bs-target="#detailsModal{{ doctor.id }}">
+                    <i class="fas fa-info-circle"></i> Détails
+                </button>
+
+                <!-- Modal Détails -->
+                <div class="modal fade" id="detailsModal{{ doctor.id }}" tabindex="-1" aria-hidden="true">
+                    <div class="modal-dialog modal-xl">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title">
+                                    <i class="fa-solid fa-user-md"></i> {{ doctor.first_name }} {{ doctor.last_name }} -
+                                    {% if doctor.total_solde > 0 %}
+                                    Clinique doit payer le médecin : {{ doctor.total_solde | format_price }} DA
+                                    {% else %}
+                                    Aucun paiement nécessaire
+                                    {% endif %}
+                                </h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal"
+                                        aria-label="Close"></button>
+                            </div>
+                            <div class="modal-body">
+                                <table class="table table-bordered align-middle">
+                                    <thead class="table-light">
+                                    <tr>
+                                        <th>Patient</th>
+                                        <th>Part Opérateur</th>
+                                        <th>Paiement</th>
+                                    </tr>
+                                    </thead>
+                                    <tbody>
+                                    {% for dossier in doctor.dossiers %}
+                                    <tr class="{% if dossier.part_operateur == dossier.payment %}table-success{% else %}table-danger{% endif %}">
+                                        <td>{{ dossier.patient_name }}</td>
+                                        <td>{{ dossier.part_operateur | format_price if dossier.part_operateur > 0 else
+                                            '-' }}
+                                        </td>
+                                        <td>{{ dossier.payment | format_price if dossier.payment != 0 else '-' }}</td>
+                                    </tr>
+                                    {% if dossier.transactions|length > 0 %}
+                                    <tr>
+                                        <td colspan="3">
+                                            <table class="table table-sm table-bordered">
+                                                <thead>
+                                                <tr>
+                                                    <th>Date</th>
+                                                    <th>Code</th>
+                                                    <th>Acte</th>
+                                                    <th>Urgence</th>
+                                                    <th>Paiement</th>
+                                                    <th>Part Opérateur</th>
+                                                </tr>
+                                                </thead>
+                                                <tbody>
+                                                {% for transaction in dossier.transactions %}
+                                                <tr>
+                                                    <td>{{ transaction.acte_date }}</td>
+                                                    <td>{{ transaction.code_cnas }}</td>
+                                                    <td>{{ transaction.name_acte_kt }}</td>
+                                                    <td>{{ 'Oui' if transaction.urgence else 'Non' }}</td>
+                                                    <td>{{ transaction.convention }}</td>
+                                                    <td>{{ transaction.part_operateur_acte | format_price }}</td>
+                                                </tr>
+                                                {% endfor %}
+                                                </tbody>
+                                            </table>
+                                        </td>
+                                    </tr>
+                                    {% endif %}
+                                    {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fermer</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {% if 'MODIFIER_DOCTORS_KT' in session.privileges %}
+                <!-- Bouton Modifier -->
+                <button class="rounded btn btn-warning btn-sm" data-bs-toggle="modal"
+                        data-bs-target="#editDoctorModal{{ doctor.id }}">
+                    <i class="fa fa-pencil-alt"></i> Modifier
+                </button>
+
+                <!-- Modal Modifier -->
+                <div class="modal fade" id="editDoctorModal{{ doctor.id }}" tabindex="-1" aria-hidden="true">
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title">Modifier les détails du médecin</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal"
+                                        aria-label="Close"></button>
+                            </div>
+                            <div class="modal-body">
+                                <form method="POST" action="{{ url_for('edit_doctor_kt', id_doctor=doctor.id) }}">
+                                    <div class="mb-3">
+                                        <label for="first_name" class="form-label">Prénom</label>
+                                        <input type="text" name="first_name" class="form-control"
+                                               value="{{ doctor.first_name }}" required>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="last_name" class="form-label">Nom</label>
+                                        <input type="text" name="last_name" class="form-control"
+                                               value="{{ doctor.last_name }}" required>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="specialty" class="form-label">Spécialité</label>
+                                        <select class="form-select" id="specialty" name="specialty" required>
+                                            <option value="">Choisir une spécialité</option>
+                                            {% for specialty in specialties %}
+                                            <option value="{{ specialty.id_specialty }}" {% if specialty.id_specialty==
+                                                    doctor.id_specialty %}selected{% endif %}>
+                                                {{ specialty.name_specialty }}
+                                            </option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                    <button type="submit" class="btn btn-warning">Mettre à jour</button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {% endif %}
+
+                {% if 'CREER_DECHARGE_KT' in session.privileges %}
+                <!-- Bouton Décharge -->
+                <button class="rounded btn btn-danger btn-sm" data-bs-toggle="modal"
+                        data-bs-target="#dechargeModal{{ doctor.id }}">
+                    Décharge
+                </button>
+
+                <!-- Modal Décharge -->
+                <div class="modal fade" id="dechargeModal{{ doctor.id }}" tabindex="-1" aria-hidden="true">
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title">Décharge pour {{ doctor.first_name }} {{ doctor.last_name
+                                    }}</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal"
+                                        aria-label="Close"></button>
+                            </div>
+                            <div class="modal-body">
+                                <form method="POST" action="/add_decharge_paiment_kt">
+                                    <input type="hidden" name="doctor_name"
+                                           value="{{ doctor.first_name }} {{ doctor.last_name }}">
+                                    <input type="hidden" name="id_doctor_kt" value="{{ doctor.id }}">
+
+                                    <!-- Champ Montant -->
+                                    <div class="mb-3">
+                                        <label for="amount" class="form-label">Montant</label>
+                                        <input type="number" id="amount" class="form-control" name="amount" required
+                                               step="0.01" value="{{ doctor.total_solde }}">
+                                    </div>
+
+                                    <!-- Champ Dossiers -->
+                                    <div class="mb-3">
+                                        <label for="dossiers" class="form-label">Noms des Dossiers :</label>
+                                        <label for="dossiers">Liste des dossiers :</label>
+                                        <textarea class="form-control improved-textarea" id="dossiers" name="dossiers"
+                                                  rows="6"
+                                                  placeholder="Exemple : HASSANI MALIKA&#10;HAMEL MOHAMED" required
+                                                  aria-describedby="dossiersHelp" readonly>
+    {%- for dossier in doctor.dossiers -%}
+        {%- if (dossier.part_operateur - dossier.payment) != 0 -%}
+            {{ "\n" }}{{- dossier.patient_name -}} : {{ dossier.part_operateur | format_price if dossier.part_operateur > 0 else '' }}  {{ - dossier.payment | format_price if dossier.payment != 0 else '' }}
+            {%- if dossier.transactions|length > 0 -%}
+                {%- for transaction in dossier.transactions -%}
+                    {{ "\n      - " }}{{ transaction.name_acte_kt }} {{ 'Urgence' if transaction.urgence }} {{ transaction.convention }}
+                {%- endfor -%}
+            {%- endif -%}
+        {%- endif -%}
+    {%- endfor -%}
+                                        </textarea>
+
+                                        <small id="dossiersHelp" class="form-text text-muted">Listez les dossiers
+                                            associés à cette décharge.</small>
+                                    </div>
+
+                                    <!-- Champ Date -->
+                                    <div class="mb-3">
+                                        <label for="date" class="form-label fw-semibold">Date de l'Acte : *</label>
+                                        <input type="date" class="form-control" id="date" name="date" required>
+                                    </div>
+
+                                    <!-- Bouton Valider -->
+                                    <button type="submit" class="btn btn-success w-100">Valider</button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+
+            </td>
+        </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        // Initialise la date par défaut dans le champ Date de l'Acte
+        document.getElementById('date').value = new Date().toISOString().split('T')[0];
+    });
+
+
+    // Fonction de calcul et mise à jour du total
+    function updateTotalSolde() {
+        let totalSolde = 0;
+
+        const rows = document.querySelectorAll('#myTable tbody tr');
+
+        rows.forEach(function (row) {
+            // Vérifier si la ligne est visible
+            if (row.style.display !== 'none') {
+                const payment = parseFloat(row.dataset.payment);
+
+                // Vérifier que la payment est un nombre valide
+                if (!isNaN(payment)) {
+                    totalSolde += payment;
+                }
+            }
+        });
+
+        // Mettre à jour le total sur la page
+        document.getElementById('totalSolde').innerText = totalSolde.toFixed(2) + ' DA';
+    }
+
+    // Fonction de filtrage des lignes du tableau
+    function filterTable() {
+        const payDoctorFilter = document.getElementById('payDoctorFilter').checked;
+        const noPaymentFilter = document.getElementById('noPaymentFilter').checked;
+
+        const rows = document.querySelectorAll('#myTable tbody tr');
+
+        rows.forEach(function (row) {
+            const payment = parseFloat(row.dataset.payment);
+
+            let showRow = false;
+
+            // Appliquer les filtres
+            if (payDoctorFilter && payment > 0) {
+                showRow = true;
+            }
+
+
+            if (noPaymentFilter && payment === 0) {
+                showRow = true;
+            }
+
+            if (payDoctorFilter && noPaymentFilter) {
+                showRow = true; // Si tous sont sélectionnés, afficher toutes les lignes
+            }
+
+            row.style.display = showRow ? '' : 'none';  // Afficher ou cacher la ligne
+        });
+
+        // Mettre à jour le total après chaque filtrage
+        updateTotalSolde();
+    }
+
+    // Ajouter des écouteurs d'événements aux cases à cocher pour filtrer le tableau
+    document.querySelectorAll('.paymentCheckbox').forEach(function (checkbox) {
+        checkbox.addEventListener('change', filterTable);
+    });
+
+    // Initialiser le calcul du total à l'ouverture de la page
+    updateTotalSolde();
+</script>
+
+{% endblock %}

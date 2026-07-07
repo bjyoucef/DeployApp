@@ -1,0 +1,736 @@
+{% extends "admin/admin_layout.html" %}
+
+{% block content %}
+<style>
+:root {
+    --admin-primary: #520091;
+    --admin-secondary: #390049;
+    --admin-success: #00b09b;
+    --admin-warning: #f39c12;
+    --admin-danger: #E8505B;
+    --admin-info: #3498db;
+}
+
+.admin-header {
+    background: linear-gradient(135deg, var(--admin-primary) 0%, var(--admin-secondary) 100%);
+    color: white;
+    padding: 2rem;
+    border-radius: 0.5rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.category-card {
+    transition: all 0.3s ease;
+    border: none;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    height: 100%;
+}
+
+.category-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.config-input {
+    transition: all 0.3s ease;
+}
+
+.config-input:focus {
+    border-color: var(--admin-primary);
+    box-shadow: 0 0 0 0.25rem rgba(82, 0, 145, 0.1);
+}
+
+.config-input.modified {
+    border-left: 4px solid var(--admin-warning);
+    background-color: #fff9e6;
+}
+
+.config-input:invalid {
+    border-color: var(--admin-danger);
+}
+
+.config-input[readonly] {
+    background-color: #f8f9fa;
+    cursor: not-allowed;
+}
+
+.badge-modifiable {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    z-index: 10;
+}
+
+.category-header {
+    border-bottom: 3px solid;
+    padding-bottom: 0.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.category-identite .card-header { background-color: rgba(82, 0, 145, 0.1) !important; border-left: 4px solid var(--admin-primary); }
+.category-coordonnees .card-header { background-color: rgba(0, 176, 155, 0.1) !important; border-left: 4px solid var(--admin-success); }
+.category-fiscal .card-header { background-color: rgba(232, 80, 91, 0.1) !important; border-left: 4px solid var(--admin-danger); }
+.category-bancaire .card-header { background-color: rgba(243, 156, 18, 0.1) !important; border-left: 4px solid var(--admin-warning); }
+.category-juridique .card-header { background-color: rgba(52, 152, 219, 0.1) !important; border-left: 4px solid var(--admin-info); }
+
+.input-icon {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--admin-success);
+    display: none;
+}
+
+.input-icon.show {
+    display: block;
+    animation: fadeIn 0.3s;
+}
+
+.preview-box {
+    background: white;
+    border: 2px solid #e9ecef;
+    border-radius: 0.375rem;
+    padding: 1rem;
+    font-family: 'Courier New', monospace;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+}
+
+.saving {
+    animation: pulse 1.5s ease-in-out infinite;
+}
+
+.validation-feedback {
+    display: none;
+    font-size: 0.875rem;
+    margin-top: 0.25rem;
+}
+
+.validation-feedback.show {
+    display: block;
+}
+
+.validation-feedback.invalid {
+    color: var(--admin-danger);
+}
+
+.validation-feedback.valid {
+    color: var(--admin-success);
+}
+</style>
+
+<div class="container-fluid">
+    <!-- En-tête -->
+    <div class="admin-header">
+        <div class="d-flex justify-content-between align-items-center flex-wrap">
+            <div class="mb-2 mb-md-0">
+                <h2 class="mb-2">
+                    <i class="fas fa-hospital"></i> Configuration de la Clinique
+                </h2>
+                <p class="mb-0 opacity-75">
+                    Gérez les informations administratives et commerciales de votre établissement
+                </p>
+            </div>
+            <div>
+                <a href="{{ url_for('admin_config_tva') }}" class="btn btn-light">
+                    <i class="fas fa-percentage"></i> Configuration TVA
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Alertes -->
+    <div class="alert alert-info alert-dismissible fade show" role="alert">
+        <i class="fas fa-info-circle"></i>
+        <strong>Information :</strong> Les modifications s'appliquent immédiatement et apparaîtront sur
+        toutes les nouvelles factures générées. La validation se fait automatiquement.
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+
+    <!-- Catégories de configuration -->
+    <div class="row">
+        {% set category_info = {
+            'identite': {
+                'icon': 'fa-id-card',
+                'title': 'Identité',
+                'color': 'primary',
+                'description': 'Nom et raison sociale de l\'établissement'
+            },
+            'coordonnees': {
+                'icon': 'fa-map-marker-alt',
+                'title': 'Coordonnées',
+                'color': 'success',
+                'description': 'Adresse, téléphone et contacts'
+            },
+            'fiscal': {
+                'icon': 'fa-file-invoice-dollar',
+                'title': 'Informations Fiscales',
+                'color': 'danger',
+                'description': 'NIF, NIS, RC et Article d\'imposition'
+            },
+            'bancaire': {
+                'icon': 'fa-university',
+                'title': 'Informations Bancaires',
+                'color': 'warning',
+                'description': 'Comptes bancaires et agences'
+            },
+            'juridique': {
+                'icon': 'fa-gavel',
+                'title': 'Informations Juridiques',
+                'color': 'info',
+                'description': 'Capital social et forme juridique'
+            }
+        } %}
+
+        {% for categorie, configs_list in configs.items() %}
+        {% set cat_info = category_info.get(categorie, {}) %}
+        <div class="col-lg-6 mb-4">
+            <div class="card category-card category-{{ categorie }}">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas {{ cat_info.get('icon', 'fa-cog') }}"></i>
+                        {{ cat_info.get('title', categorie|capitalize) }}
+                    </h5>
+                    <small class="text-muted">{{ cat_info.get('description', '') }}</small>
+                </div>
+
+                <div class="card-body">
+                    {% for config in configs_list %}
+                    <div class="mb-3 position-relative">
+                        <label class="form-label fw-bold">
+                            {{ config.libelle }}
+                            {% if not config.est_modifiable %}
+                            <span class="badge bg-secondary badge-modifiable">
+                                <i class="fas fa-lock"></i> Verrouillé
+                            </span>
+                            {% endif %}
+                        </label>
+
+                        <div class="position-relative">
+                            {% if config.type_donnee == 'email' %}
+                            <input type="email"
+                                   class="form-control config-input"
+                                   data-cle="{{ config.cle }}"
+                                   data-original="{{ config.valeur }}"
+                                   data-type="email"
+                                   value="{{ config.valeur }}"
+                                   placeholder="exemple@clinique.dz"
+                                   {% if not config.est_modifiable %}readonly{% endif %}>
+
+                            {% elif config.type_donnee == 'telephone' %}
+                            <input type="tel"
+                                   class="form-control config-input"
+                                   data-cle="{{ config.cle }}"
+                                   data-original="{{ config.valeur }}"
+                                   data-type="telephone"
+                                   value="{{ config.valeur }}"
+                                   placeholder="021-XX-XX-XX"
+                                   {% if not config.est_modifiable %}readonly{% endif %}>
+
+                            {% elif config.type_donnee == 'url' %}
+                            <input type="url"
+                                   class="form-control config-input"
+                                   data-cle="{{ config.cle }}"
+                                   data-original="{{ config.valeur }}"
+                                   data-type="url"
+                                   value="{{ config.valeur }}"
+                                   placeholder="https://www.exemple.com"
+                                   {% if not config.est_modifiable %}readonly{% endif %}>
+
+                            {% else %}
+                            <input type="text"
+                                   class="form-control config-input"
+                                   data-cle="{{ config.cle }}"
+                                   data-original="{{ config.valeur }}"
+                                   data-type="text"
+                                   value="{{ config.valeur }}"
+                                   {% if not config.est_modifiable %}readonly{% endif %}>
+                            {% endif %}
+
+                            <i class="fas fa-check-circle input-icon" id="icon_{{ config.cle }}"></i>
+                        </div>
+
+                        <div class="validation-feedback" id="feedback_{{ config.cle }}"></div>
+
+                        <small class="text-muted">
+                            <i class="fas fa-key"></i> Clé: <code>{{ config.cle }}</code>
+                        </small>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Boutons d'action -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card bg-light">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center flex-wrap">
+                        <div class="mb-2 mb-md-0">
+                            <h6 class="mb-0">
+                                <span id="modified-count" class="badge bg-warning" style="display: none;">
+                                    <i class="fas fa-exclamation-triangle"></i>
+                                    <span id="count-number">0</span> modification(s) en attente
+                                </span>
+                                <span id="saving-indicator" class="badge bg-info ms-2" style="display: none;">
+                                    <i class="fas fa-spinner fa-spin"></i> Enregistrement...
+                                </span>
+                            </h6>
+                        </div>
+                        <div>
+                            <button type="button"
+                                    class="btn btn-secondary"
+                                    onclick="resetAllChanges()"
+                                    id="btn-reset">
+                                <i class="fas fa-undo"></i> Annuler
+                            </button>
+                            <button type="button"
+                                    class="btn btn-success btn-lg"
+                                    onclick="saveAllConfigs()"
+                                    id="btn-save">
+                                <i class="fas fa-save"></i> Enregistrer tout
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Aperçu facture -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-dark text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-eye"></i> Aperçu en temps réel - Affichage sur factures
+                    </h5>
+                </div>
+                <div class="card-body bg-light">
+                    <div class="row">
+                        <div class="col-md-6 mb-3 mb-md-0">
+                            <h6 class="text-primary mb-3">
+                                <i class="fas fa-file-invoice"></i> En-tête de facture
+                            </h6>
+                            <div class="preview-box">
+                                <p class="mb-1 fw-bold fs-5" id="preview-nom">
+                                    {{ configs.get('identite', [])|selectattr('cle', 'equalto', 'NOM_CLINIQUE')|map(attribute='valeur')|first }}
+                                </p>
+                                <p class="mb-1" id="preview-adresse">
+                                    {{ configs.get('coordonnees', [])|selectattr('cle', 'equalto', 'ADRESSE')|map(attribute='valeur')|first }}
+                                </p>
+                                <p class="mb-0" id="preview-tel">
+                                    Tél: {{ configs.get('coordonnees', [])|selectattr('cle', 'equalto', 'TELEPHONE')|map(attribute='valeur')|first }}
+                                </p>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <h6 class="text-primary mb-3">
+                                <i class="fas fa-receipt"></i> Informations fiscales
+                            </h6>
+                            <div class="preview-box">
+                                <p class="mb-1" id="preview-nif">
+                                    <strong>NIF:</strong> {{ configs.get('fiscal', [])|selectattr('cle', 'equalto', 'NIF')|map(attribute='valeur')|first }}
+                                </p>
+                                <p class="mb-1" id="preview-nis">
+                                    <strong>NIS:</strong> {{ configs.get('fiscal', [])|selectattr('cle', 'equalto', 'NIS')|map(attribute='valeur')|first }}
+                                </p>
+                                <p class="mb-0" id="preview-rc">
+                                    <strong>RC:</strong> {{ configs.get('fiscal', [])|selectattr('cle', 'equalto', 'RC')|map(attribute='valeur')|first }}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// ============================================================================
+// GESTION DES CONFIGURATIONS - VERSION OPTIMISÉE
+// ============================================================================
+
+const ConfigManager = {
+    modifiedInputs: new Set(),
+    saveTimeout: null,
+    validationPatterns: {
+        email: /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/,
+        telephone: /^0\d{2,3}-\d{2}-\d{2}-\d{2}$/,
+        url: /^https?:\/\/[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}.*$/
+    },
+
+    /**
+     * Initialise les écouteurs d'événements
+     */
+    init() {
+        const inputs = document.querySelectorAll('.config-input:not([readonly])');
+
+        inputs.forEach(input => {
+            // Validation en temps réel avec debounce
+            input.addEventListener('input', this.debounce(() => {
+                this.handleInputChange(input);
+            }, 500));
+
+            // Sauvegarde automatique optionnelle (désactivée par défaut)
+            // input.addEventListener('blur', () => this.saveInput(input));
+        });
+
+        // Raccourcis clavier
+        document.addEventListener('keydown', (e) => {
+            if (e.ctrlKey && e.key === 's') {
+                e.preventDefault();
+                this.saveAllConfigs();
+            }
+        });
+    },
+
+    /**
+     * Debounce pour limiter les appels
+     */
+    debounce(func, wait) {
+        let timeout;
+        return function executedFunction(...args) {
+            const later = () => {
+                clearTimeout(timeout);
+                func(...args);
+            };
+            clearTimeout(timeout);
+            timeout = setTimeout(later, wait);
+        };
+    },
+
+    /**
+     * Gère le changement d'input
+     */
+    handleInputChange(input) {
+        const original = input.dataset.original;
+        const current = input.value;
+        const cle = input.dataset.cle;
+        const type = input.dataset.type;
+
+        // Marquer comme modifié
+        if (current !== original) {
+            input.classList.add('modified');
+            this.modifiedInputs.add(cle);
+
+            // Valider
+            const isValid = this.validateInput(input, type, current);
+            this.showValidationFeedback(cle, isValid, type);
+        } else {
+            input.classList.remove('modified');
+            this.modifiedInputs.delete(cle);
+            this.hideValidationFeedback(cle);
+        }
+
+        this.updateModifiedCount();
+        this.updatePreview(cle, current);
+    },
+
+    /**
+     * Valide un input selon son type
+     */
+    validateInput(input, type, value) {
+        if (!value && type !== 'text') {
+            return true; // Champ vide accepté sauf pour les types spéciaux
+        }
+
+        switch(type) {
+            case 'email':
+                return !value || this.validationPatterns.email.test(value);
+            case 'telephone':
+                return !value || this.validationPatterns.telephone.test(value);
+            case 'url':
+                return !value || this.validationPatterns.url.test(value);
+            default:
+                return true;
+        }
+    },
+
+    /**
+     * Affiche le feedback de validation
+     */
+    showValidationFeedback(cle, isValid, type) {
+        const feedback = document.getElementById(`feedback_${cle}`);
+        const icon = document.getElementById(`icon_${cle}`);
+
+        if (!feedback) return;
+
+        feedback.classList.add('show');
+
+        if (isValid) {
+            feedback.classList.remove('invalid');
+            feedback.classList.add('valid');
+            feedback.innerHTML = '<i class="fas fa-check"></i> Format valide';
+            if (icon) icon.classList.add('show');
+        } else {
+            feedback.classList.add('invalid');
+            feedback.classList.remove('valid');
+            feedback.innerHTML = this.getValidationMessage(type);
+            if (icon) icon.classList.remove('show');
+        }
+    },
+
+    /**
+     * Cache le feedback de validation
+     */
+    hideValidationFeedback(cle) {
+        const feedback = document.getElementById(`feedback_${cle}`);
+        const icon = document.getElementById(`icon_${cle}`);
+
+        if (feedback) feedback.classList.remove('show');
+        if (icon) icon.classList.remove('show');
+    },
+
+    /**
+     * Message de validation selon le type
+     */
+    getValidationMessage(type) {
+        const messages = {
+            email: '<i class="fas fa-times"></i> Format email invalide (ex: contact@clinique.dz)',
+            telephone: '<i class="fas fa-times"></i> Format téléphone invalide (ex: 021-82-72-71)',
+            url: '<i class="fas fa-times"></i> Format URL invalide (ex: https://www.exemple.com)'
+        };
+        return messages[type] || '<i class="fas fa-times"></i> Format invalide';
+    },
+
+    /**
+     * Met à jour le compteur de modifications
+     */
+    updateModifiedCount() {
+        const badge = document.getElementById('modified-count');
+        const count = document.getElementById('count-number');
+        const btnSave = document.getElementById('btn-save');
+        const btnReset = document.getElementById('btn-reset');
+
+        if (this.modifiedInputs.size > 0) {
+            badge.style.display = 'inline-block';
+            count.textContent = this.modifiedInputs.size;
+            btnSave.disabled = false;
+            btnReset.disabled = false;
+        } else {
+            badge.style.display = 'none';
+            btnSave.disabled = false;
+            btnReset.disabled = false;
+        }
+    },
+
+    /**
+     * Met à jour l'aperçu en temps réel
+     */
+    updatePreview(cle, valeur) {
+        const previewMap = {
+            'NOM_CLINIQUE': { id: 'preview-nom', format: val => val },
+            'ADRESSE': { id: 'preview-adresse', format: val => val },
+            'TELEPHONE': { id: 'preview-tel', format: val => `Tél: ${val}` },
+            'NIF': { id: 'preview-nif', format: val => `<strong>NIF:</strong> ${val}` },
+            'NIS': { id: 'preview-nis', format: val => `<strong>NIS:</strong> ${val}` },
+            'RC': { id: 'preview-rc', format: val => `<strong>RC:</strong> ${val}` }
+        };
+
+        const preview = previewMap[cle];
+        if (preview) {
+            const element = document.getElementById(preview.id);
+            if (element) {
+                element.innerHTML = preview.format(valeur);
+            }
+        }
+    },
+
+    /**
+     * Enregistre un input individuel
+     */
+    async saveInput(input) {
+        const cle = input.dataset.cle;
+        const valeur = input.value;
+        const type = input.dataset.type;
+
+        // Valider avant l'envoi
+        if (!this.validateInput(input, type, valeur)) {
+            showToast('Veuillez corriger les erreurs de validation', 'error');
+            return false;
+        }
+
+        try {
+            const response = await fetch('/admin/config/clinique/update', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+                body: new URLSearchParams({ cle, valeur })
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                input.dataset.original = valeur;
+                input.classList.remove('modified');
+                this.modifiedInputs.delete(cle);
+                this.updateModifiedCount();
+                return true;
+            } else {
+                showToast(data.message || 'Erreur lors de l\'enregistrement', 'error');
+                return false;
+            }
+        } catch (error) {
+            console.error('Erreur:', error);
+            showToast('Erreur réseau', 'error');
+            return false;
+        }
+    },
+
+    /**
+     * Enregistre toutes les configurations modifiées
+     */
+    async saveAllConfigs() {
+        const inputs = document.querySelectorAll('.config-input.modified');
+
+        if (inputs.length === 0) {
+            showToast('Aucune modification à enregistrer', 'info');
+            return;
+        }
+
+        // Vérifier la validation
+        let hasErrors = false;
+        inputs.forEach(input => {
+            const type = input.dataset.type;
+            if (!this.validateInput(input, type, input.value)) {
+                hasErrors = true;
+            }
+        });
+
+        if (hasErrors) {
+            showToast('Veuillez corriger les erreurs de validation avant d\'enregistrer', 'error');
+            return;
+        }
+
+        // Afficher l'indicateur de sauvegarde
+        const savingIndicator = document.getElementById('saving-indicator');
+        savingIndicator.style.display = 'inline-block';
+
+        const promises = Array.from(inputs).map(input =>
+            fetch('/admin/config/clinique/update', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+                body: new URLSearchParams({
+                    cle: input.dataset.cle,
+                    valeur: input.value
+                })
+            })
+        );
+
+        try {
+            const results = await Promise.all(promises);
+            const allSuccess = results.every(r => r.ok);
+
+            savingIndicator.style.display = 'none';
+
+            if (allSuccess) {
+                showToast(`${inputs.length} configuration(s) enregistrée(s) avec succès`, 'success');
+
+                // Réinitialiser
+                inputs.forEach(input => {
+                    input.dataset.original = input.value;
+                    input.classList.remove('modified');
+                    this.hideValidationFeedback(input.dataset.cle);
+                });
+
+                this.modifiedInputs.clear();
+                this.updateModifiedCount();
+
+                // Recharger après 1.5s
+                setTimeout(() => location.reload(), 1500);
+            } else {
+                showToast('Erreur lors de l\'enregistrement de certaines configurations', 'error');
+            }
+        } catch (error) {
+            savingIndicator.style.display = 'none';
+            console.error('Erreur:', error);
+            showToast('Erreur réseau lors de l\'enregistrement', 'error');
+        }
+    },
+
+    /**
+     * Annule toutes les modifications
+     */
+    resetAllChanges() {
+        if (this.modifiedInputs.size === 0) {
+            showToast('Aucune modification à annuler', 'info');
+            return;
+        }
+
+        if (!confirm(`Voulez-vous vraiment annuler ${this.modifiedInputs.size} modification(s) ?`)) {
+            return;
+        }
+
+        const inputs = document.querySelectorAll('.config-input.modified');
+        inputs.forEach(input => {
+            input.value = input.dataset.original;
+            input.classList.remove('modified');
+            this.hideValidationFeedback(input.dataset.cle);
+            this.updatePreview(input.dataset.cle, input.value);
+        });
+
+        this.modifiedInputs.clear();
+        this.updateModifiedCount();
+
+        showToast('Modifications annulées', 'info');
+    }
+};
+
+// Fonctions globales pour compatibilité avec les boutons
+function saveAllConfigs() {
+    ConfigManager.saveAllConfigs();
+}
+
+function resetAllChanges() {
+    ConfigManager.resetAllChanges();
+}
+
+/**
+ * Affiche un toast notification
+ */
+function showToast(message, type = 'info') {
+    const backgrounds = {
+        success: 'linear-gradient(to right, #00b09b, #96c93d)',
+        error: 'linear-gradient(to right, #f85032, #e73827)',
+        info: 'linear-gradient(to right, #2196F3, #1976D2)',
+        warning: 'linear-gradient(to right, #f39c12, #e67e22)'
+    };
+
+    Toastify({
+        text: message,
+        duration: 3000,
+        gravity: 'bottom',
+        position: 'right',
+        style: { background: backgrounds[type] || backgrounds.info }
+    }).showToast();
+}
+
+// Prévenir la perte de données
+window.addEventListener('beforeunload', function(e) {
+    if (ConfigManager.modifiedInputs.size > 0) {
+        e.preventDefault();
+        e.returnValue = 'Vous avez des modifications non enregistrées. Voulez-vous vraiment quitter ?';
+        return e.returnValue;
+    }
+});
+
+// Initialisation
+document.addEventListener('DOMContentLoaded', () => {
+    ConfigManager.init();
+});
+</script>
+{% endblock %}

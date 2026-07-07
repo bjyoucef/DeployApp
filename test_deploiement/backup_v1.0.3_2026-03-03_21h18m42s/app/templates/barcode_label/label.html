@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Impression Étiquette</title>
+    <style>
+        /* Reset et styles de base */
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Arial', sans-serif;
+            background-color: #f0f0f0;
+            /* Fond gris pour l'aperçu écran */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        /* Conteneur de l'étiquette (Simulation physique) */
+        .label-container {
+            width: 100mm;
+            height: 50mm;
+            background-color: #fff;
+            padding: 3mm;
+            box-sizing: border-box;
+            border: 1px solid #ffffff;
+            /* Bordure pointillée pour l'aperçu */
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            position: relative;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        /* En-tête */
+        .label-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid #000;
+            padding-bottom: 2px;
+            margin-bottom: 2px;
+        }
+
+        .product-name {
+            font-weight: 800;
+            font-size: 16pt;
+            text-transform: uppercase;
+        }
+
+        .brand-logo {
+            font-size: 8pt;
+            color: #555;
+            font-weight: bold;
+        }
+
+        /* Corps : Code-barres */
+        .label-body {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .barcode-img {
+            max-width: 95%;
+            height: 22mm;
+            object-fit: contain;
+        }
+
+        .barcode-text {
+            font-family: 'OCR-B', 'Courier New', monospace;
+            font-size: 8pt;
+            margin-top: 1px;
+            text-align: center;
+            letter-spacing: 1px;
+        }
+
+        /* Pied de page : Détails */
+        .label-footer {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1.5fr;
+            gap: 2mm;
+            border-top: 2px solid #000;
+            padding-top: 2px;
+            font-size: 9pt;
+        }
+
+        .footer-item {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .footer-label {
+            font-size: 6pt;
+            text-transform: uppercase;
+            color: #333;
+        }
+
+        .footer-value {
+            font-weight: bold;
+            font-size: 10pt;
+        }
+
+        /* Styles spécifiques pour l'impression */
+        @media print {
+            body {
+                background-color: #fff;
+                display: block;
+            }
+
+            .label-container {
+                border: none;
+                box-shadow: none;
+                page-break-inside: avoid;
+                margin: 0;
+                width: 100%;
+                height: 100%;
+            }
+
+            /* Optimisation pour les imprimantes thermiques */
+            .label-header,
+            .label-footer {
+                border-color: #000 !important;
+            }
+
+            @page {
+                size: 100mm 50mm;
+                /* Taille définie pour l'imprimante */
+                margin: 0;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="label-container">
+        <!-- En-tête -->
+        <div class="label-header">
+            <span class="product-name">{{ product_name }}</span>
+            <span class="brand-logo">'TORAY'</span>
+        </div>
+
+        <!-- Corps : Code-barres -->
+        <div class="label-body">
+            <!-- Image générée en base64 -->
+            <img src="data:image/png;base64,{{ barcode_image }}" alt="Barcode" class="barcode-img">
+            <!-- Texte Human Readable GS1 -->
+            <div class="barcode-text">{{ barcode_text }}</div>
+        </div>
+
+        <!-- Pied de page -->
+        <div class="label-footer">
+            <div class="footer-item">
+                <span class="footer-label">EXP Date</span>
+                <span class="footer-value">{{ exp_date }}</span>
+            </div>
+            <div class="footer-item">
+                <span class="footer-label">Lot</span>
+                <span class="footer-value">{{ lot }}</span>
+            </div>
+            {% if sn %}
+            <div class="footer-item">
+                <span class="footer-label">SN</span>
+                <span class="footer-value">{{ sn }}</span>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+</body>
+
+</html>

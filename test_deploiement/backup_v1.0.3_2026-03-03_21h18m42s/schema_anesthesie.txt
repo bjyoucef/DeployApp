@@ -1,0 +1,56 @@
+Tables anesthesie:
+{'Tables_in_dbsmart2026 (%anesthesie%)': 'accouchement_dossier_anesthesie'}
+{'Tables_in_dbsmart2026 (%anesthesie%)': 'anesthesie_intervenant_type'}
+{'Tables_in_dbsmart2026 (%anesthesie%)': 'anesthesie_personnel'}
+{'Tables_in_dbsmart2026 (%anesthesie%)': 'anesthesie_tarifs'}
+{'Tables_in_dbsmart2026 (%anesthesie%)': 'anesthesie_type_acte'}
+{'Tables_in_dbsmart2026 (%anesthesie%)': 'kt_dossier_anesthesie'}
+{'Tables_in_dbsmart2026 (%anesthesie%)': 'location_bloc_dossier_anesthesie'}
+{'Tables_in_dbsmart2026 (%anesthesie%)': 'medecin_interne_anesthesie'}
+
+Columns location_bloc_dossier_anesthesie:
+{'Field': 'id_dossier_anesthesie', 'Type': 'int(11)', 'Null': 'NO', 'Key': 'PRI', 'Default': None, 'Extra': 'auto_increment'}
+{'Field': 'id_dossier', 'Type': 'int(11)', 'Null': 'NO', 'Key': 'MUL', 'Default': None, 'Extra': ''}
+{'Field': 'id_acte_anesthesie', 'Type': 'int(11)', 'Null': 'NO', 'Key': 'MUL', 'Default': None, 'Extra': ''}
+{'Field': 'id_personnel_anesthesie', 'Type': 'int(11)', 'Null': 'NO', 'Key': 'MUL', 'Default': None, 'Extra': ''}
+{'Field': 'duree_reelle', 'Type': 'int(11)', 'Null': 'YES', 'Key': '', 'Default': None, 'Extra': ''}
+{'Field': 'honoraires_calcules', 'Type': 'decimal(10,2)', 'Null': 'NO', 'Key': '', 'Default': None, 'Extra': ''}
+{'Field': 'observations', 'Type': 'text', 'Null': 'YES', 'Key': '', 'Default': None, 'Extra': ''}
+{'Field': 'date_creation', 'Type': 'timestamp', 'Null': 'YES', 'Key': '', 'Default': 'current_timestamp()', 'Extra': ''}
+{'Field': 'created_by', 'Type': 'int(11)', 'Null': 'YES', 'Key': 'MUL', 'Default': None, 'Extra': ''}
+
+Columns accouchement_dossier_anesthesie:
+{'Field': 'id_dossier_anesthesie', 'Type': 'int(11)', 'Null': 'NO', 'Key': 'PRI', 'Default': None, 'Extra': 'auto_increment'}
+{'Field': 'id_dossier', 'Type': 'int(11)', 'Null': 'NO', 'Key': 'MUL', 'Default': None, 'Extra': ''}
+{'Field': 'id_acte_anesthesie', 'Type': 'int(11)', 'Null': 'NO', 'Key': 'MUL', 'Default': None, 'Extra': ''}
+{'Field': 'id_personnel_anesthesie', 'Type': 'int(11)', 'Null': 'NO', 'Key': 'MUL', 'Default': None, 'Extra': ''}
+{'Field': 'honoraires_calcules', 'Type': 'decimal(12,2)', 'Null': 'NO', 'Key': '', 'Default': '0.00', 'Extra': ''}
+{'Field': 'observations', 'Type': 'text', 'Null': 'YES', 'Key': '', 'Default': None, 'Extra': ''}
+{'Field': 'created_by', 'Type': 'int(11)', 'Null': 'YES', 'Key': 'MUL', 'Default': None, 'Extra': ''}
+{'Field': 'date_creation', 'Type': 'timestamp', 'Null': 'YES', 'Key': '', 'Default': 'current_timestamp()', 'Extra': ''}
+
+Columns kt_dossier_anesthesie:
+{'Field': 'id_dossier_anesthesie', 'Type': 'int(11)', 'Null': 'NO', 'Key': 'PRI', 'Default': None, 'Extra': 'auto_increment'}
+{'Field': 'id_dossier', 'Type': 'int(11)', 'Null': 'NO', 'Key': 'MUL', 'Default': None, 'Extra': ''}
+{'Field': 'id_acte_anesthesie', 'Type': 'int(11)', 'Null': 'NO', 'Key': 'MUL', 'Default': None, 'Extra': ''}
+{'Field': 'id_personnel_anesthesie', 'Type': 'int(11)', 'Null': 'NO', 'Key': 'MUL', 'Default': None, 'Extra': ''}
+{'Field': 'duree_reelle', 'Type': 'int(11)', 'Null': 'YES', 'Key': '', 'Default': None, 'Extra': ''}
+{'Field': 'honoraires_calcules', 'Type': 'decimal(10,2)', 'Null': 'YES', 'Key': '', 'Default': '0.00', 'Extra': ''}
+{'Field': 'observations', 'Type': 'text', 'Null': 'YES', 'Key': '', 'Default': None, 'Extra': ''}
+{'Field': 'date_creation', 'Type': 'timestamp', 'Null': 'YES', 'Key': 'MUL', 'Default': 'current_timestamp()', 'Extra': ''}
+
+Columns medecin_interne_anesthesie:
+{'Field': 'id_anesthesie', 'Type': 'int(11)', 'Null': 'NO', 'Key': 'PRI', 'Default': None, 'Extra': 'auto_increment'}
+{'Field': 'id_acte', 'Type': 'int(11)', 'Null': 'NO', 'Key': 'MUL', 'Default': None, 'Extra': ''}
+{'Field': 'id_acte_anesthesie', 'Type': 'int(11)', 'Null': 'NO', 'Key': 'MUL', 'Default': None, 'Extra': ''}
+{'Field': 'id_personnel_anesthesie', 'Type': 'int(11)', 'Null': 'NO', 'Key': 'MUL', 'Default': None, 'Extra': ''}
+{'Field': 'duree_reelle', 'Type': 'int(11)', 'Null': 'YES', 'Key': '', 'Default': '90', 'Extra': ''}
+{'Field': 'honoraires_calcules', 'Type': 'decimal(10,2)', 'Null': 'YES', 'Key': '', 'Default': '0.00', 'Extra': ''}
+{'Field': 'observations', 'Type': 'text', 'Null': 'YES', 'Key': '', 'Default': None, 'Extra': ''}
+{'Field': 'created_by', 'Type': 'int(11)', 'Null': 'YES', 'Key': 'MUL', 'Default': None, 'Extra': ''}
+{'Field': 'created_at', 'Type': 'timestamp', 'Null': 'YES', 'Key': '', 'Default': 'current_timestamp()', 'Extra': ''}
+{'Field': 'date_creation', 'Type': 'timestamp', 'Null': 'YES', 'Key': '', 'Default': 'current_timestamp()', 'Extra': ''}
+{'Field': 'est_annule', 'Type': 'tinyint(1)', 'Null': 'YES', 'Key': '', 'Default': '0', 'Extra': ''}
+{'Field': 'annule_par', 'Type': 'int(11)', 'Null': 'YES', 'Key': '', 'Default': None, 'Extra': ''}
+{'Field': 'annule_at', 'Type': 'datetime', 'Null': 'YES', 'Key': '', 'Default': None, 'Extra': ''}
+{'Field': 'motif_annulation', 'Type': 'text', 'Null': 'YES', 'Key': '', 'Default': None, 'Extra': ''}

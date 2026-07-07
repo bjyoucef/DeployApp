@@ -1,0 +1,257 @@
+{% extends 'layout.html' %}
+{% block content %}
+                                            {% if 'ADD_ACTES_KT' in session.privileges %}
+
+<!-- Bouton pour ouvrir le modal d'ajout -->
+<button class="btn btn-primary mb-4" data-bs-toggle="modal" data-bs-target="#add_acte_ktModal">
+    Ajouter un Acte
+</button>
+
+<!-- Modal d'ajout -->
+<div class="modal fade" id="add_acte_ktModal" tabindex="-1" aria-labelledby="addForfaitModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addForfaitModalLabel">Ajouter un Forfait</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
+            </div>
+            <form method="POST" action="{{ url_for('add_acte_kt') }}">
+                <div class="modal-body">
+                    <div class="row">
+                        <!-- Left Column -->
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="name_acte_kt" class="form-label">Nom de l'Acte</label>
+                                <input type="text" name="name_acte_kt" id="name_acte_kt" class="form-control" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="code_cnas" class="form-label">Code CNAS</label>
+                                <input type="text" name="code_cnas" id="code_cnas" class="form-control" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="nbr_nuit" class="form-label">Nombre de Nuits</label>
+                                <input type="number" name="nbr_nuit" id="nbr_nuit" class="form-control" min="0">
+                            </div>
+                            <div class="mb-3">
+                                <label for="specialty_acte_kt" class="form-label">Spécialité</label>
+                                <select class="form-select" id="specialty_acte_kt" name="id_specialty" required>
+                                    <option value="" selected>Choisir une spécialité</option>
+                                    {% for specialty in specialtys %}
+                                    <option value="{{ specialty.id_specialty }}">{{ specialty.name_specialty }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Right Column -->
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="prix_cnas_casnos" class="form-label">Prix CNAS / CASNOS</label>
+                                <input type="number" name="prix_cnas_casnos" id="prix_cnas_casnos" class="form-control"
+                                       min="0" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="prix_autre_convention" class="form-label">Prix AUTRE / CONVENTION</label>
+                                <input type="number" name="prix_autre_convention" id="prix_autre_convention"
+                                       class="form-control" min="0" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="prix_public" class="form-label">Prix public</label>
+                                <input type="number" name="prix_public" id="prix_public" class="form-control" min="0"
+                                       required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="prix_urgence" class="form-label">Prix Urgence</label>
+                                <input type="number" name="prix_urgence" id="prix_urgence" class="form-control" min="0"
+                                       required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="part_operateur_cnas_casnos" class="form-label">Part Opérateur CNAS /
+                                    CASNOS</label>
+                                <input type="number" name="part_operateur_cnas_casnos" id="part_operateur_cnas_casnos"
+                                       class="form-control" min="0" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="part_operateur_payante" class="form-label">Part Opérateur Payante</label>
+                                <input type="number" name="part_operateur_payante" id="part_operateur_payante"
+                                       class="form-control" min="0" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="part_operateur_urgence" class="form-label">Part Opérateur Urgence</label>
+                                <input type="number" name="part_operateur_urgence" id="part_operateur_urgence"
+                                       class="form-control" min="0" required>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fermer</button>
+                    <button type="submit" class="btn btn-primary">Ajouter</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+                                                        {% endif %}
+
+<!-- Tableau des actes -->
+<div class="table-responsive">
+    <table id="myTable" class="table table-hover">
+        <thead>
+        <tr>
+            <th>Code CNAS</th>
+            <th>Nom de l'Acte</th>
+            <th>Nombre de Nuits</th>
+            <th>Prix CNAS / CASNOS</th>
+            <th>Prix Autre Convention</th>
+            <th>Prix Public</th>
+            <th>Urgence</th>
+            <th>Part CNAS / CASNOS</th>
+            <th>Part Payante</th>
+            <th>Spécialité</th>
+                                            {% if 'MODIFIER_ACTES_KT' in session.privileges %}
+
+            <th>Actions</th>
+                                                        {% endif %}
+
+        </tr>
+        </thead>
+        <tbody>
+        {% for acte_kt in actes_kt %}
+        <tr>
+            <td>{{ acte_kt.code_cnas }}</td>
+            <td>{{ acte_kt.name_acte_kt }}</td>
+            <td>{{ acte_kt.nbr_nuit }}</td>
+            <td>{{ acte_kt.prix_cnas_casnos | format_price }}</td>
+            <td>{{ acte_kt.prix_autre_convention | format_price }}</td>
+            <td>{{ acte_kt.prix_public | format_price }}</td>
+            <td>{{ acte_kt.urgence | format_price }}</td>
+            <td>{{ acte_kt.part_operateur_cnas_casnos | format_price }}</td>
+            <td>{{ acte_kt.part_operateur_payante | format_price }}</td>
+            <td>{{ acte_kt.name_specialty }}</td>
+
+                                {% if 'MODIFIER_ACTES_KT' in session.privileges %}
+
+            <td>
+
+                <!-- Bouton Modifier -->
+                <button class="btn btn-primary btn-sm" data-bs-toggle="modal"
+                        data-bs-target="#editActeModal{{ acte_kt.id_acte }}">Modifier
+                </button>
+
+                <!-- Modal Modifier -->
+                <div class="modal fade" id="editActeModal{{ acte_kt.id_acte }}" tabindex="-1"
+                     aria-labelledby="editActeModalLabel{{ acte_kt.id_acte }}" aria-hidden="true">
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title" id="editActeModalLabel{{ acte_kt.id_acte }}">Modifier
+                                    l'Acte</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal"
+                                        aria-label="Fermer"></button>
+                            </div>
+                            <form method="POST" action="{{ url_for('update_acte_kt') }}">
+                                <div class="modal-body">
+                                    <input type="hidden" name="id_acte" value="{{ acte_kt.id_acte }}">
+                                    <div class="mb-3">
+                                        <label for="name_acte_kt_{{ acte_kt.id_acte }}" class="form-label">Nom de
+                                            l'Acte</label>
+                                        <input type="text" name="name_acte_kt" id="name_acte_kt_{{ acte_kt.id_acte }}"
+                                               class="form-control" value="{{ acte_kt.name_acte_kt }}" required>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="code_cnas_{{ acte_kt.id_acte }}" class="form-label">Code
+                                            CNAS</label>
+                                        <input type="text" name="code_cnas" id="code_cnas_{{ acte_kt.id_acte }}"
+                                               class="form-control" value="{{ acte_kt.code_cnas }}" required>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="nbr_nuit_{{ acte_kt.id_acte }}" class="form-label">Nombre de
+                                            Nuits</label>
+                                        <input type="number" name="nbr_nuit" id="nbr_nuit_{{ acte_kt.id_acte }}"
+                                               class="form-control" value="{{ acte_kt.nbr_nuit }}" min="0">
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <label for="specialty_acte_kt_{{ acte_kt.id_acte }}"
+                                               class="form-label">Spécialité</label>
+                                        <select class="form-select" id="specialty_acte_kt_{{ acte_kt.id_acte }}"
+                                                name="specialty_acte_kt" required>
+                                            {% for specialty in specialtys %}
+                                            <option value="{{ specialty.id_specialty }}"
+                                                    {% if specialty.id_specialty== acte_kt.id_specialty %}selected{%
+                                                    endif
+                                                    %}>
+                                                {{ specialty.name_specialty }}
+                                            </option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <label for="prix_cnas_casnos" class="form-label">Prix CNAS / CASNOS</label>
+                                        <input type="number" name="prix_cnas_casnos" id="prix_cnas_casnos"
+                                               class="form-control" value="{{ acte_kt.prix_cnas_casnos }}" min="0"
+                                               required>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="prix_autre_convention" class="form-label">Prix AUTRE /
+                                            CONVENTION</label>
+                                        <input type="number" name="prix_autre_convention" id="prix_autre_convention"
+                                               class="form-control" value="{{ acte_kt.prix_autre_convention }}" min="0"
+                                               required>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="prix_public" class="form-label">Prix public</label>
+                                        <input type="number" name="prix_public" id="prix_public" class="form-control"
+                                               value="{{ acte_kt.prix_public }}" min="0" required>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="prix_urgence" class="form-label">Prix Urgence</label>
+                                        <input type="number" name="prix_urgence" id="prix_urgence" class="form-control"
+                                               value="{{ acte_kt.urgence }}" min="0" required>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="part_operateur_cnas_casnos" class="form-label">Part Opérateur CNAS /
+                                            CASNOS</label>
+                                        <input type="number" name="part_operateur_cnas_casnos"
+                                               id="part_operateur_cnas_casnos" class="form-control"
+                                               value="{{ acte_kt.part_operateur_cnas_casnos }}" min="0" required>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="part_operateur_payante" class="form-label">Part Opérateur
+                                            Payante</label>
+                                        <input type="number" name="part_operateur_payante" id="part_operateur_payante"
+                                               class="form-control" value="{{ acte_kt.part_operateur_payante }}" min="0"
+                                               required>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="part_operateur_urgence" class="form-label">Part Opérateur
+                                            Urgence</label>
+                                        <input type="number" name="part_operateur_urgence" id="part_operateur_urgence"
+                                               class="form-control" value="{{ acte_kt.part_operateur_urgence }}" min="0"
+                                               required>
+                                    </div>
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fermer
+                                    </button>
+                                    <button type="submit" class="btn btn-success">Enregistrer</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+
+            </td>
+                                            {% endif %}
+
+        </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+{% endblock %}

@@ -1,0 +1,115 @@
+{% extends "admin/admin_layout.html" %}
+{% block content %}
+
+    <!-- Section des demandes -->
+    <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+        {% for demande in demandes %}
+            <div class="col">
+                <div class="card shadow-sm {{ 'border-success bg-light' if demande.time_terminee else 'border-info bg-white' }}"
+                     data-bs-toggle="modal" data-bs-target="#detailsDemandeModal{{ demande.id }}">
+                    <div class="card-header d-flex align-items-center">
+                        <i class="fas fa-user me-2"></i>
+                        <span>
+                {% if demande.personnel_nom %}
+                    {{ demande.personnel_nom }} {{ demande.personnel_prenom }}
+                {% else %}
+                    {{ demande.name }}
+                {% endif %}
+                </span>
+                    </div>
+                    <div class="card-body">
+                        <p class="card-text">{{ demande.details | truncate(100) }}</p>
+                    </div>
+                    <div class="card-footer d-flex justify-content-between align-items-center">
+                    <span class="badge bg-info"><i
+                            class="fas fa-clock me-1"></i> Envoyé le: {{ demande.time_send }}</span>
+                        <div>
+                            {% if demande.file_path %}
+                                <i class="fas fa-paperclip text-success me-2" title="Pièce jointe"></i>
+                            {% endif %}
+                            {% if demande.audio_path %}
+                                <i class="fas fa-volume-up text-warning me-2" title="Audio disponible"></i>
+                            {% endif %}
+
+                            {% if 'ACCES_AU_DEPARTEMENT_IT' and 'ACCES_AU_DEPARTEMENT_TECHNIQUE' and
+                    'ACCES_AU_DEPARTEMENT_APPROVISIONNEMENT' in session.privileges %}
+                                <span class="badge bg-secondary">{{ demande.type | e }}</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% if not demande.time_terminee %}
+                        <form action="{{ url_for('mark_terminee', demande_id=demande.id) }}" method="POST" class="mt-3">
+                            <input type="hidden" name="time_terminee" value="true"/>
+                            <button class="btn btn-danger btn-sm w-100" type="submit">Marquer comme terminée</button>
+                        </form>
+                    {% else %}
+                        <div class="mt-3 mb-3 text-center">
+                            <span class="badge bg-success"><i
+                                    class="fas fa-check-circle me-1"></i> Terminée le: {{ demande.time_terminee }}</span>
+                            <span class="badge bg-secondary"><strong>Par:</strong> {{ demande.terminee_par }}</span>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Modal des détails de la demande -->
+            <div class="modal fade" id="detailsDemandeModal{{ demande.id }}" tabindex="-1"
+                 aria-labelledby="detailsModalLabel{{ demande.id }}" aria-hidden="true" data-bs-keyboard="false">
+                <div class="modal-dialog modal-lg">
+                    <div class="modal-content">
+                        <div class="modal-header bg-primary text-white">
+                            <h5 class="modal-title" id="detailsModalLabel{{ demande.id }}">
+                                <i class="fas fa-info-circle me-2"></i> Détails de la demande
+                            </h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <ul class="list-group list-group-flush">
+                                <li class="list-group-item"><strong>Nom:</strong>
+                                    {% if demande.personnel_nom %}
+                                        {{ demande.personnel_nom }} {{ demande.personnel_prenom }}
+                                    {% else %}
+                                        {{ demande.name }}
+                                    {% endif %}
+                                </li>
+                                <li class="list-group-item"><strong>IP:</strong> {{ demande.ip_address }}</li>
+                                {% if 'ACCES_AU_DEPARTEMENT_IT' and 'ACCES_AU_DEPARTEMENT_TECHNIQUE' and
+                    'ACCES_AU_DEPARTEMENT_APPROVISIONNEMENT' in session.privileges %}
+                                    <li class="list-group-item"><strong>Type:</strong> {{ demande.type }}</li>
+                                {% endif %}
+
+                                <li class="list-group-item"><strong>Détails:</strong> {{ demande.details }}</li>
+                            </ul>
+
+                            {% if demande.file_path %}
+                                <h6 class="text-primary mt-3"><strong>📎 Pièce jointe:</strong></h6>
+                                <div class="d-flex flex-wrap mt-2">
+                                    {% for file in demande.file_path.split(',') %}
+                                        <a href="{{ url_for('download_file', filename=file.strip()) }}"
+                                           class="btn btn-outline-primary btn-sm m-1">
+                                            <i class="fas fa-download me-1"></i> Fichier {{ loop.index }}
+                                        </a>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                            {% if demande.audio_path %}
+                                <div class="mt-3">
+                                    <h6 class="text-primary"><strong>🎤 Enregistrement vocal:</strong></h6>
+                                    <audio controls class="w-100 mt-2">
+                                        <source src="{{ url_for('download_file', filename=demande.audio_path) }}"
+                                                type="audio/wav">
+                                        Votre navigateur ne prend pas en charge l'audio.
+                                    </audio>
+                                </div>
+                            {% endif %}
+                        </div>
+                        <div class="modal-footer">
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+
+{% endblock content %}

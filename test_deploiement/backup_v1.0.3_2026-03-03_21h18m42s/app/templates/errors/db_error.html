@@ -1,0 +1,113 @@
+{% extends 'layout.html' %}
+{% block content %}
+<style>
+    :root {
+        --bg-card: #ffffff;
+        --text-main: #212529;
+        --bg-code: #f8f9fa;
+        --text-code: #212529;
+        --btn-refresh-color: #212529;
+        --btn-refresh-border: #212529;
+        --btn-refresh-hover-bg: #212529;
+        --btn-refresh-hover-text: #fff;
+    }
+
+    [data-theme="dark"] {
+        --bg-card: #1e1e1e;
+        --text-main: #e0e0e0;
+        --bg-code: #2d2d2d;
+        --text-code: #f8f9fa;
+        --btn-refresh-color: #f8f9fa;
+        --btn-refresh-border: #f8f9fa;
+        --btn-refresh-hover-bg: #f8f9fa;
+        --btn-refresh-hover-text: #212529;
+    }
+
+    .card-error {
+        background-color: var(--bg-card);
+        color: var(--text-main);
+    }
+
+    .card-footer-custom {
+        background-color: rgba(0, 0, 0, 0.03);
+        color: rgba(33, 37, 41, 0.75);
+    }
+
+    [data-theme="dark"] .card-footer-custom {
+        background-color: rgba(255, 255, 255, 0.05);
+        color: rgba(255, 255, 255, 0.6);
+    }
+
+    .code-block {
+        background-color: var(--bg-code) !important;
+        color: var(--text-code) !important;
+        border: 1px solid rgba(0, 0, 0, 0.1);
+    }
+
+    [data-theme="dark"] .code-block {
+        border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .btn-refresh {
+        color: var(--btn-refresh-color);
+        border-color: var(--btn-refresh-border);
+    }
+
+    .btn-refresh:hover {
+        background-color: var(--btn-refresh-hover-bg);
+        color: var(--btn-refresh-hover-text);
+        border-color: var(--btn-refresh-border);
+    }
+</style>
+<div class="container mt-5">
+    <div class="card card-error border-dark shadow-lg">
+        <div class="card-header bg-dark text-white">
+            <h3 class="mb-0">
+                <i class="fas fa-database me-2"></i>
+                {{ error_title }}
+            </h3>
+        </div>
+        <div class="card-body">
+            <div class="alert alert-danger d-flex align-items-center" role="alert">
+                <i class="fas fa-exclamation-circle me-3 fa-2x"></i>
+                <div>
+                    <h4 class="alert-heading">Problème de connexion à la base de données</h4>
+                    <p class="mb-0">Nous rencontrons des difficultés pour accéder ou mettre à jour les données.</p>
+                </div>
+            </div>
+
+            <p class="lead">Message d'erreur : <code>{{ error_message }}</code></p>
+
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <button class="btn btn-outline-secondary btn-sm" type="button" data-bs-toggle="collapse"
+                    data-bs-target="#dbDetails" aria-expanded="false" aria-controls="dbDetails">
+                    Voir les logs techniques
+                </button>
+                <small class="text-muted">Chemin : {{ path }}</small>
+            </div>
+
+            <div class="collapse" id="dbDetails">
+                <div class="card card-body code-block mb-3">
+                    <pre class="mb-0 text-danger"
+                        style="white-space: pre-wrap; font-size: 0.8rem;">{{ error_details }}</pre>
+                </div>
+            </div>
+
+            <hr>
+
+            <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                <a href="{{ request.referrer }}" class="btn btn-refresh btn-lg">
+                    <i class="fas fa-sync-alt me-2"></i>Réessayer
+                </a>
+                <a href="/" class="btn btn-primary btn-lg">
+                    <i class="fas fa-home me-2"></i>Retour à l'accueil
+                </a>
+            </div>
+        </div>
+        <div class="card-footer card-footer-custom">
+            <small>Utilisateur : {{ user.nom if user else 'Anonyme' }} | Date : {{ datetime.now().strftime('%Y-%m-%d
+                %H:%M:%S') }}</small>
+        </div>
+    </div>
+</div>
+{% endblock %}

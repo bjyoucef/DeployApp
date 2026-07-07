@@ -1,0 +1,248 @@
+{% extends "layout.html" %}
+
+{% block style %}
+<style>
+    :root {
+        --pink: #ec4899;
+        --pink-dark: #db2777;
+        --pink-light: #fce7f3;
+        --success: #10b981;
+        --warning: #f59e0b;
+        --info: #3b82f6;
+        --dark: #1f2937;
+        --border: #e5e7eb;
+        --radius: 12px;
+        --shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+    }
+
+    body {
+        background: linear-gradient(135deg, #fdf2f8 0%, #fce7f3 100%);
+        min-height: 100vh;
+    }
+
+    .page-header {
+        background: linear-gradient(135deg, var(--pink), var(--pink-dark));
+        color: white;
+        padding: 1.5rem 2rem;
+        border-radius: var(--radius);
+        margin-bottom: 1.5rem;
+        box-shadow: var(--shadow);
+    }
+
+    .tarif-card {
+        background: white;
+        border-radius: var(--radius);
+        box-shadow: var(--shadow);
+        overflow: hidden;
+        margin-bottom: 1.5rem;
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .tarif-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 12px 30px -8px rgb(0 0 0 / 0.15);
+    }
+
+    .tarif-header {
+        padding: 1.25rem 1.5rem;
+        border-bottom: 1px solid var(--border);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .tarif-header.convention {
+        background: linear-gradient(135deg, #d1fae5, #ecfdf5);
+    }
+
+    .tarif-header.payant {
+        background: linear-gradient(135deg, #fef3c7, #fffbeb);
+    }
+
+    .tarif-type-badge {
+        padding: 0.5rem 1rem;
+        border-radius: 50px;
+        font-weight: 700;
+        font-size: 0.85rem;
+    }
+
+    .badge-convention {
+        background: var(--success);
+        color: white;
+    }
+
+    .badge-payant {
+        background: var(--warning);
+        color: white;
+    }
+
+    .badge-voie-basse {
+        background: var(--pink);
+        color: white;
+    }
+
+    .badge-cesarienne {
+        background: var(--info);
+        color: white;
+    }
+
+    .tarif-body {
+        padding: 1.5rem;
+    }
+
+    .tarif-row {
+        display: flex;
+        justify-content: space-between;
+        padding: 0.75rem 0;
+        border-bottom: 1px dashed var(--border);
+    }
+
+    .tarif-row:last-child {
+        border-bottom: none;
+    }
+
+    .tarif-label {
+        color: #6b7280;
+        font-size: 0.9rem;
+    }
+
+    .tarif-value {
+        font-weight: 700;
+        color: var(--dark);
+        font-family: 'JetBrains Mono', monospace;
+    }
+
+    .tarif-footer {
+        padding: 1rem 1.5rem;
+        background: #f9fafb;
+        border-top: 1px solid var(--border);
+    }
+
+    .btn {
+        border-radius: 8px;
+        padding: 0.5rem 1rem;
+        font-weight: 600;
+        transition: all 0.2s;
+    }
+
+    .btn-pink {
+        background: linear-gradient(135deg, var(--pink), var(--pink-dark));
+        color: white;
+        border: none;
+    }
+
+    .btn-pink:hover {
+        color: white;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(236, 72, 153, 0.4);
+    }
+
+    .status-active {
+        color: var(--success);
+    }
+
+    .status-inactive {
+        color: #9ca3af;
+    }
+
+    .info-card {
+        background: white;
+        border-radius: var(--radius);
+        padding: 1.5rem;
+        box-shadow: var(--shadow);
+        border-left: 4px solid var(--info);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="page-header">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h1><i class="fas fa-cog me-2"></i>{{ title }}</h1>
+                <small class="opacity-75">Configuration des tarifs d'accouchement</small>
+            </div>
+            <a href="{{ url_for('accouchement_list') }}" class="btn btn-light btn-sm">
+                <i class="fas fa-arrow-left me-1"></i>Retour
+            </a>
+        </div>
+    </div>
+
+    <div class="info-card mb-4">
+        <h5><i class="fas fa-info-circle text-info me-2"></i>À propos des tarifs</h5>
+        <p class="mb-0 text-muted">
+            Les tarifs configurés ici sont utilisés automatiquement lors de la création des dossiers d'accouchement.
+            Modifiez-les avec précaution car ils affectent tous les nouveaux dossiers.
+        </p>
+    </div>
+
+    <div class="row">
+        {% for tarif in tarifs %}
+        <div class="col-lg-6 mb-4">
+            <div class="tarif-card">
+                <div class="tarif-header {{ 'convention' if tarif.type_tarification == 'CONVENTION' else 'payant' }}">
+                    <div>
+                        <span
+                            class="tarif-type-badge {{ 'badge-convention' if tarif.type_tarification == 'CONVENTION' else 'badge-payant' }}">
+                            {{ 'Convention' if tarif.type_tarification == 'CONVENTION' else 'Payant' }}
+                        </span>
+                        <span
+                            class="tarif-type-badge ms-2 {{ 'badge-voie-basse' if tarif.type_accouchement == 'VOIE_BASSE' else 'badge-cesarienne' }}">
+                            {{ 'Voie Basse' if tarif.type_accouchement == 'VOIE_BASSE' else 'Césarienne' }}
+                        </span>
+                    </div>
+                    <span class="{{ 'status-active' if tarif.est_actif else 'status-inactive' }}">
+                        <i class="fas {{ 'fa-check-circle' if tarif.est_actif else 'fa-times-circle' }} me-1"></i>
+                        {{ 'Actif' if tarif.est_actif else 'Inactif' }}
+                    </span>
+                </div>
+
+                <div class="tarif-body">
+                    {% if tarif.type_tarification == 'CONVENTION' %}
+                    <div class="tarif-row">
+                        <span class="tarif-label"><i class="fas fa-tag me-2"></i>Forfait supplément</span>
+                        <span class="tarif-value">{{ "{:,.2f}".format(tarif.forfait_supplement or 0).replace(",", " ")
+                            }} DA</span>
+                    </div>
+                    <div class="tarif-row">
+                        <span class="tarif-label"><i class="fas fa-user-md me-2"></i>Part gynéco externe</span>
+                        <span class="tarif-value">{{ "{:,.2f}".format(tarif.part_gyneco_externe or 0).replace(",", " ")
+                            }} DA</span>
+                    </div>
+                    {% else %}
+                    <div class="tarif-row">
+                        <span class="tarif-label"><i class="fas fa-tag me-2"></i>Prix de base</span>
+                        <span class="tarif-value">{{ "{:,.2f}".format(tarif.prix_base or 0).replace(",", " ") }}
+                            DA</span>
+                    </div>
+                    <div class="tarif-row">
+                        <span class="tarif-label"><i class="fas fa-hospital me-2"></i>Part clinique base</span>
+                        <span class="tarif-value">{{ "{:,.2f}".format(tarif.part_clinique_base or 0).replace(",", " ")
+                            }} DA</span>
+                    </div>
+                    {% endif %}
+
+                    <div class="tarif-row">
+                        <span class="tarif-label"><i class="fas fa-user-tie me-2"></i>Honoraires gynéco interne</span>
+                        <span class="tarif-value">{{ "{:,.2f}".format(tarif.honoraires_gyneco_interne or 0).replace(",",
+                            " ") }} DA</span>
+                    </div>
+                    <div class="tarif-row">
+                        <span class="tarif-label"><i class="fas fa-bed me-2"></i>Nuitées incluses</span>
+                        <span class="tarif-value">{{ tarif.nuitees_incluses or 0 }}</span>
+                    </div>
+                </div>
+
+                <div class="tarif-footer text-end">
+                    <a href="{{ url_for('accouchement_tarif_edit', id_tarif=tarif.id_tarif) }}"
+                        class="btn btn-pink btn-sm">
+                        <i class="fas fa-edit me-1"></i>Modifier
+                    </a>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,83 @@
+{% extends "layout.html" %}
+{% block content %}
+<div class="d-flex justify-content-center">
+
+        <a href="{{ url_for('bloc') }}" class="btn btn-secondary {% if request.path == '/bloc' %}Cles_active{% endif %}">Bloc</a>
+        <a href="{{ url_for('videos') }}" class="btn btn-secondary {% if request.path == '/videos' %}Cles_active{% endif %}">Vidéos</a>
+        <a href="{{ url_for('live') }}" class="btn btn-secondary {% if request.path == '/live' %}Cles_active{% endif %}">Live</a>
+    </div>
+
+<div class="container">
+    <div class="row mb-4">
+        <div class="col-md-12 text-center">
+            <label for="liveStreamSelect">Choisissez un flux en direct:</label>
+            <select id="liveStreamSelect" class="form-control">
+                <option value="">Sélectionner un flux</option>
+                {% for live in lives %}
+                    <option value="{{ live.ip_adresse }}">{{ live.nom_equipement }}</option>
+                {% endfor %}
+            </select>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-12">
+            <div class="video-container text-center">
+                <img id="liveStreamImage" class="img-fluid" src="" alt="Flux en direct" hidden>
+                <div id="image-placeholder" class="loading-spinner">
+                    <p>Chargement...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const liveStreamSelect = document.getElementById('liveStreamSelect');
+        const liveStreamImage = document.getElementById('liveStreamImage');
+        const placeholder = document.getElementById('image-placeholder');
+
+        liveStreamSelect.addEventListener('change', function () {
+            const selectedIp = this.value;
+            if (selectedIp) {
+                liveStreamImage.src = `https://${selectedIp}:1515`; // Assuming you have MJPEG stream
+                liveStreamImage.hidden = false; // Show the image
+                placeholder.classList.remove('d-none'); // Show loading placeholder
+
+                // Show image when it's loaded
+                liveStreamImage.onload = () => {
+                    placeholder.classList.add('d-none'); // Hide loading placeholder
+                };
+
+                // Display error message if the image fails to load
+                liveStreamImage.onerror = () => {
+                    placeholder.classList.remove('d-none');
+                    placeholder.innerHTML = "<p>Erreur de connexion. Veuillez réessayer.</p>";
+                };
+            } else {
+                liveStreamImage.src = ""; // Clear source if no selection
+                liveStreamImage.hidden = true; // Hide image
+                placeholder.classList.add('d-none'); // Hide loading placeholder
+            }
+        });
+
+        // Fullscreen functionality on double click
+        liveStreamImage.addEventListener('dblclick', () => {
+            if (document.fullscreenElement) {
+                document.exitFullscreen(); // Exit fullscreen
+            } else {
+                if (liveStreamImage.requestFullscreen) {
+                    liveStreamImage.requestFullscreen();
+                } else if (liveStreamImage.mozRequestFullScreen) { // Firefox
+                    liveStreamImage.mozRequestFullScreen();
+                } else if (liveStreamImage.webkitRequestFullscreen) { // Chrome, Safari and Opera
+                    liveStreamImage.webkitRequestFullscreen();
+                } else if (liveStreamImage.msRequestFullscreen) { // IE/Edge
+                    liveStreamImage.msRequestFullscreen();
+                }
+            }
+        });
+    });
+</script>
+{% endblock content %}

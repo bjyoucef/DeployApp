@@ -1,0 +1,20 @@
+/* noanimations.css
+   Overrides to disable all animations/transitions globally. Included last in templates.
+*/
+*, *::before, *::after {
+    -webkit-animation: none !important;
+    -moz-animation: none !important;
+    -o-animation: none !important;
+    animation: none !important;
+    -webkit-transition: none !important;
+    -moz-transition: none !important;
+    -o-transition: none !important;
+    transition: none !important;
+}
+html, body { scroll-behavior: auto !important; }
+.animated, .fade, .collapse, .collapsing, .show, .toast, .toastify, .choices__list--dropdown {
+    -webkit-animation: none !important; animation: none !important;
+    -webkit-transition: none !important; transition: none !important;
+    opacity: 1 !important; transform: none !important;
+}
+.loading-spinner:before, .dot { -webkit-animation: none !important; animation: none !important; }

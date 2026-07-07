@@ -1,0 +1,30 @@
+-- Migration Script to convert old montant_paye_caisse to medecin_interne_paiements entries
+
+-- 1. Create missing payment entries in medecin_interne_paiements
+INSERT INTO medecin_interne_paiements (id_acte, montant_paye, mode_paiement, created_by, observations)
+SELECT 
+    a.id_acte, 
+    a.montant_paye_caisse, 
+    'ESPECES', 
+    1, -- Fallback created_by (admin)
+    'Encaissement initial à la création (Migration Automatique)'
+FROM medecin_interne_actes a
+LEFT JOIN medecin_interne_paiements p 
+    ON p.id_acte = a.id_acte AND p.observations = 'Encaissement initial à la création (Migration Automatique)'
+WHERE a.montant_paye_caisse > 0 
+  AND a.est_annule = FALSE
+  AND p.id_paiement IS NULL;
+
+-- 2. Verify all situations match 
+INSERT INTO medecin_interne_situations (id_doctor, id_acte, encaissement_patient, created_by)
+SELECT 
+    a.id_doctor,
+    a.id_acte,
+    a.montant_paye_caisse,
+    1
+FROM medecin_interne_actes a
+LEFT JOIN medecin_interne_situations s
+    ON s.id_acte = a.id_acte AND s.encaissement_patient = a.montant_paye_caisse
+WHERE a.montant_paye_caisse > 0
+  AND a.est_annule = FALSE
+  AND s.id_situation IS NULL;

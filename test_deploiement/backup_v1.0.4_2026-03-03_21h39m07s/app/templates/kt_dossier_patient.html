@@ -1,0 +1,352 @@
+{% extends 'layout.html' %}
+{% block content %}
+
+{% if 'ADD_DOSSIERS_PATIENTS_KT' in session.privileges %}
+
+<!-- Bouton pour ouvrir le modal d'ajout -->
+<button type="button" class="btn btn-primary " data-bs-toggle="modal" data-bs-target="#addDossierModal">
+    Ajouter un Dossier
+</button>
+
+<!-- Modal pour Ajouter un Dossier -->
+<div class="modal fade" id="addDossierModal" tabindex="-1" aria-labelledby="addDossierModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-scrollable">
+        <div class="modal-content shadow-lg">
+            <!-- En-tête de la modal -->
+            <div class="modal-header">
+                <h5 class="modal-title" id="addDossierModalLabel"><i class="bi bi-folder-plus"></i> Ajouter un Dossier
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                        aria-label="Close"></button>
+            </div>
+
+            <!-- Corps de la modal -->
+            <div class="modal-body">
+                <form method="POST" action="{{ url_for('ajouter_dossier_kt') }}">
+                    <div class="row g-3">
+                        <!-- Colonne Médecin et Patient -->
+                        <div class="col-md-6">
+                            <!-- Médecin -->
+                            <div class="mb-3">
+                                <label for="id_doctor" class="form-label fw-semibold">Médecin : *</label>
+                                <select class="form-select" id="id_doctor" name="id_doctor" required>
+                                    <option value="" selected>Choisir un médecin</option>
+                                    {% for doctor in kt_doctors %}
+                                    <option value="{{ doctor.id }}">{{ doctor.name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+
+                            <!-- Patient -->
+                            <div class="mb-3 position-relative">
+                                <label for="patient" class="form-label fw-semibold">Patient : *</label>
+                                <input type="text" id="patient" name="patient" class="form-control"
+                                       placeholder="Saisissez un nom de patient" autocomplete="off"
+                                       oninput="fetchSuggestions(this.value)" required>
+                                <div id="suggestionsPatient" class="list-group mt-2 shadow-sm"></div>
+                            </div>
+
+                            <!-- Date de l'Acte -->
+                            <div class="mb-3">
+                                <label for="acte_date" class="form-label fw-semibold">Date de l'Acte : *</label>
+                                <input type="date" class="form-control" id="acte_date" name="acte_date" required>
+                            </div>
+
+
+                            <!-- Nombre de Nuits -->
+                            <div class=" mb-3">
+                                <div class="row align-items-center">
+
+                                    <div class="col-8">
+                                        <label for="nbr_nuite" class="form-label fw-semibold">Nombre de Nuits</label>
+                                    </div>
+
+                                    <!-- VIP -->
+                                    <div class="col-2 form-check">
+                                        <input type="checkbox" class="form-check-input" id="vip" name="vip" value="1">
+                                        <label class="form-check-label fw-semibold text-warning" for="vip">
+                                            <i class="bi bi-star-fill"></i> VIP
+                                        </label>
+                                    </div>
+                                    <div>
+                                        <input type="number" class="form-control" id="nbr_nuite" name="nbr_nuite"
+                                               min="0"
+                                               value="0">
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- Nombre de Nuits pour le Conjoint -->
+                            <div class="mb-3">
+                                <label for="nbr_nuite_conjoint" class="form-label fw-semibold">Nombre de Nuits pour
+                                    le
+                                    Conjoint</label>
+                                <input type="number" class="form-control" id="nbr_nuite_conjoint"
+                                       name="nbr_nuite_conjoint" min="0" value="0">
+                            </div>
+                            <div class="mb-3">
+                                <div class="row align-items-center">
+
+                                    <div class="col-8">
+                                        <label for="extras" class="form-label fw-semibold">Extras (DA)</label>
+                                    </div>
+
+                                    <div class="col-2 form-check">
+                                        <input class="form-check-input" type="radio" name="extraPercentage"
+                                               id="extra20"
+                                               value="20">
+                                        <label class="form-check-label" for="extra20">20%</label>
+                                    </div>
+
+                                    <div class="col-2 form-check">
+                                        <input class="form-check-input" type="radio" name="extraPercentage"
+                                               id="extra50"
+                                               value="50">
+                                        <label class="form-check-label" for="extra50">50%</label>
+                                    </div>
+                                </div>
+                                <input type="number" class="form-control" id="extras" name="extras" step="1" min="0"
+                                       value="0">
+                            </div>
+                        </div>
+
+                        <!-- Colonne Type d'Acte et Urgence -->
+
+                        <div class="col-md-6">
+                            <div class="mb-3">
+
+                                <!-- Urgence -->
+                                <div class="row align-items-center">
+                                    <div class="col-9">
+                                        <button type="button" class="btn btn-outline-primary mb-2"
+                                                id="addActeBtn">
+                                            <i class="bi bi-plus-circle"></i> Ajouter un acte
+                                        </button>
+                                    </div>
+
+
+                                    <div class=" col-3 form-check">
+                                        <input class="form-check-input" type="checkbox" id="urgenceCheck"
+                                               name="urgenceCheck"
+                                               value="1">
+                                        <label class="form-check-label fw-semibold text-danger d-flex align-items-center"
+                                               for="urgenceCheck">
+                                            <i class="fas fa-exclamation-triangle me-2"></i> Urgence
+                                        </label>
+
+                                    </div>
+                                </div>
+                                <!-- Ajouter un Acte -->
+
+                                <div class="mb-3" id="acteContainer"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Footer de la modal -->
+                    <div class="modal-footer">
+                        <button type="submit" class="btn btn-success"><i class="bi bi-check-circle"></i> Ajouter
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endif %}
+
+
+<button class="btn btn-primary" type="button" data-bs-toggle="offcanvas" data-bs-target="#staticBackdrop"
+        aria-controls="staticBackdrop">
+    Filtres
+</button>
+<div class="offcanvas offcanvas-end" data-bs-backdrop="static" tabindex="-1" id="staticBackdrop"
+     aria-labelledby="staticBackdropLabel">
+    <div class="offcanvas-header">
+        <h5 class="offcanvas-title" id="staticBackdropLabel">Filtres</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+    </div>
+    <div class="offcanvas-body">
+        <form method="GET" action="/kt_dossier_patient">
+
+            <!-- Filtre médecin -->
+            <div class="mb-3">
+                <label class="form-label" for="doctorFilter">Médecin :</label>
+                <select name="doctor" id="doctorFilter" class="form-select" onchange="this.form.submit()">
+                    <option value="all" {% if request.args.get(
+                    'doctor') == 'all' %}selected{% endif %}>Tous les Médecins</option>
+                    {% for doctor in kt_doctors %}
+                    <option value="{{ doctor.id }}"
+                            {% if request.args.get(
+                    'doctor') == doctor.id|string %}selected{% endif %}> {{ doctor.name }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <!-- Filtre date de début -->
+            <div class="mb-3">
+                <label class="form-label" for="start_date">Date de début :</label>
+                <input type="date" class="form-control" id="start_date" name="start_date"
+                       value="{{ start_date }}" onchange="this.form.submit()">
+            </div>
+            <!-- Filtre date de fin -->
+            <div class="mb-3">
+                <label class="form-label" for="end_date">Date de fin :</label>
+                <input type="date" class="form-control" id="end_date" name="end_date"
+                       value="{{ end_date }}" onchange="this.form.submit()">
+            </div>
+
+        </form>
+
+    </div>
+</div>
+
+<div class="row">
+    <div class="table-responsive">
+        <table id="myTable" class="table table-hover">
+            <thead>
+            <tr>
+                <th>N°</th>
+                <th>Médecin</th>
+                <th>Patient</th>
+                <th>Date</th>
+                <th>Code</th>
+                <th>Nom</th>
+                <th>Convention</th>
+                {% if 'DELETE_DOSSIERS_PATIENTS_KT' in session.privileges %}
+                <th>Actions</th>
+                {% endif %}
+                <th>Part Opérateur</th>
+                <th>Part Opérateur Extra</th>
+                <th>Total ESP</th>
+            </tr>
+            </thead>
+            <tbody>
+        {% for dossier in dossiers %}
+            <tr>
+            <td>{{ dossier.id_dossier }}</td>
+            <td>{{ dossier.doctor_name }}</td>
+            <td>{{ dossier.patient_name }}</td>
+            <td>{{ dossier.acte_date }}</td>
+                <td>{{ dossier.code_cnas }}</td>
+                <td>{{ dossier.name_acte_kt }}</td>
+                <td>{{ dossier.convention }}</td>
+                {% if 'DELETE_DOSSIERS_PATIENTS_KT' in session.privileges %}
+                <td>
+                    <form method="POST" action="{{ url_for('supprimer_dossier_kt') }}"
+                          onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer ce dossier?');">
+                        <input type="hidden" name="id_dossier" value="{{ dossier.id_dossier }}">
+                        <button type="submit" class="btn btn-danger btn-sm">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </form>
+                </td>
+                {% endif %}
+                <td style="text-align: end; {% if dossier.urgence %} color: red; {% endif %}">
+                    {{ dossier.part_operateur_acte | format_price }}
+                </td>
+            <td style="text-align: end; {% if dossier.urgence %} color: red; {% endif %}">
+                <strong>{{ dossier.part_operateur_extrat | format_price }}</strong>
+            </td>
+
+            <td style="text-align: end; {% if dossier.urgence %} color: red; {% endif %}">
+                <strong>{{ dossier.prix_dossier_esp | format_price }}</strong>
+            </td>
+            </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+    // Obtenir la date actuelle au format YYYY-MM-DD
+    const today = new Date().toISOString().split('T')[0];
+    document.getElementById('acte_date').value = today;
+</script>
+
+<script>
+    function fetchSuggestions(query) {
+        const suggestionsDiv = document.getElementById('suggestionsPatient');
+        suggestionsDiv.innerHTML = ''; // Clear previous suggestions
+
+        if (query.length < 2) return; // Skip if query is too short
+
+        fetch(`/autocompletekt?query=${encodeURIComponent(query)}`)
+            .then(response => response.json())
+            .then(data => {
+            if (data.length === 0) {
+                suggestionsDiv.innerHTML = '<div class="list-group-item">Aucune suggestion trouvée</div>';
+            } else {
+                data.forEach(item => {
+                    const suggestion = document.createElement('div');
+                    suggestion.classList.add('list-group-item');
+                    suggestion.textContent = item.patient; // Use 'patient' from the response
+                    suggestion.onclick = () => {
+                        document.getElementById('patient').value = item.patient; // Set the input value
+                        suggestionsDiv.innerHTML = ''; // Clear suggestions
+                    };
+                    suggestionsDiv.appendChild(suggestion);
+                });
+            }
+        })
+            .catch(error => console.error('Erreur lors de la récupération des suggestions :', error));
+    }
+
+
+
+
+    document.addEventListener('DOMContentLoaded', () => {
+        // Initialise la date par défaut dans le champ Date de l'Acte
+        document.getElementById('acte_date').value = new Date().toISOString().split('T')[0];
+
+        // Gestion de l'ajout d'un nouvel acte
+        document.getElementById('addActeBtn').addEventListener('click', () => {
+            const container = document.getElementById("acteContainer");
+            const count = container.children.length;
+            const newActe = `
+            <div id="acte_${count}" class="border rounded p-2 mb-2">
+            <select class="form-select mb-2" name="id_acte_${count}" required>
+<option value="" selected>Choisir un acte</option>
+{% for act_kt in acts_kt %}
+<option value="{{ act_kt.id_acte }}">{{ act_kt.name_acte_kt }}</option>
+{% endfor %}
+</select>
+<div class="row mb-2">
+<div class="col-3">
+<input type="radio" class="form-check-input" id="payante_acte_kt_${count}" name="convention_acte_kt_${count}" value="payante">
+<label class="form-check-label" for="payante_acte_kt_${count}">Payante</label>
+</div>
+<div class="col-3">
+<input type="radio" class="form-check-input" id="cnas_acte_kt_${count}" name="convention_acte_kt_${count}" value="cnas">
+<label class="form-check-label" for="cnas_acte_kt_${count}">CNAS</label>
+</div>
+<div class="col-3">
+<input type="radio" class="form-check-input" id="casnos_acte_kt_${count}" name="convention_acte_kt_${count}" value="casnos">
+<label class="form-check-label" for="casnos_acte_kt_${count}">CASNOS</label>
+</div>
+<div class="col-3">
+<input type="radio" class="form-check-input" id="convention_acte_kt_${count}" name="convention_acte_kt_${count}" value="autre" required>
+<label class="form-check-label" for="convention_acte_kt_${count}">AUTRE</label>
+</div>
+</div>
+            <button type="button" class="btn btn-danger btn-sm" onclick="removeActe(${count})">Supprimer</button>
+                </div>`;
+            container.insertAdjacentHTML('beforeend', newActe);
+        });
+    });
+    // Fonction pour supprimer un acte
+    function removeActe(index) {
+        const acte = document.getElementById(`acte_${index}`);
+        if (acte) {
+            acte.remove();
+        }
+    }
+    // Fonction pour sélectionner une suggestion
+    function selectSuggestion(patientName) {
+        document.getElementById('patient').value = patientName;
+        document.getElementById('suggestionsPatient').innerHTML = ''; // Vide les suggestions après sélection
+    }
+</script>
+
+{% endblock %}

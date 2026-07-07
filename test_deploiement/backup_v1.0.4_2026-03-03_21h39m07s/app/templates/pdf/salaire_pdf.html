@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Fiche de Paie</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+
+            padding: 2px;
+
+        }
+
+        .header-info {
+            text-align: center;
+        }
+
+        h1 {
+            font-size: 16px;
+        }
+
+        h3 {
+            font-size: 14px;
+        }
+        p {
+            font-size: 12px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        th, td {
+            padding: 2px;
+            text-align: left;
+            border: 1px solid #ddd;
+        }
+
+        th {
+            background-color: #2980b9;
+            color: #fff;
+        }
+
+        .total {
+            font-weight: bold;
+            background-color: #ecf0f1;
+        }
+
+        .total td {
+            font-size: 16px;
+            text-align: right;
+        }
+
+    </style>
+</head>
+<body>
+
+    <div class="header-info">
+        <h1>Fiche de Paie Période : {{ start_date }} - {{ end_date }} </h1>
+        <h3>{{ employe['nom'] }} {{ employe['prenom'] }} ({{ employe['role'] }})</h3>
+    </div>
+
+    <table>
+        <thead>
+
+            <tr>
+                <th>Date</th>
+                <th>Type de Shift</th>
+                <th>Service</th>
+                <th>Gardes (DZ)</th>
+                <th>Actes</th>
+                <th>Nombre</th>
+                <th>Pu Actes (DZ)</th>
+                <th>Actes (DZ)</th>
+                <th>Salaire (DZ)</th>
+
+            </tr>
+
+        </thead>
+        <tbody>
+            {% for shift in shifts %}
+                {% set salaire_acte = (shift['prix_acte'])*(shift['nbr_actes']) %}
+
+            <tr>
+                <td>{{ shift['date_pointage'] }}</td>
+                <td>{{ shift['shift_type'] }}</td>
+                <td>{{ shift['service_name'] }}</td>
+                <td>{{ '{:,.2f}'.format(shift['prix']).replace(',', ' ') }}</td>
+
+                <td>{{ shift['name_acte'] }}</td>
+                <td>{{ " " if shift['nbr_actes'] == 0 else shift['nbr_actes'] }}</td>
+                <td>{{ " " if shift['prix_acte'] == 0 else shift['prix_acte'] }}</td>
+                <td>{{ " " if salaire_acte == 0 else '{:,.2f}'.format(salaire_acte).replace(',', ' ') }}</td>
+
+            <td>
+                {% set salaire_max = [salaire_acte, shift['prix']] | max %}
+                {{ '{:,.2f}'.format(salaire_max).replace(',', ' ') }}
+            </td>
+            </tr>
+
+            {% endfor %}
+
+            <tr>
+                <td colspan="8" class="total">Total</td>
+                <td class="total">{{ '{:,.2f}'.format(total_salaire).replace(',', ' ') }} DZ</td>
+            </tr>
+
+        </tbody>
+
+    </table>
+
+    <!-- Section de Décharge de Paiement -->
+    <div>
+        <h3>Décharge de Paiement</h3>
+        <p>Je soussigné(e), <strong>{{ employe['nom'] }} {{ employe['prenom'] }}</strong>,
+            occupant le poste de <strong>{{ employe['role'] }}</strong>,<br />
+            reconnais avoir reçu un montant total de <strong>{{ '{:,.2f}'.format(total_salaire).replace(',', ' ') }} DZ</strong><br />
+            pour la période allant du <strong>{{ start_date }}</strong> au <strong>{{ end_date }}</strong>.<br />
+            Ce montant correspond aux paiements effectués en conformité avec les informations détaillées sur cette fiche de paie.<br />
+
+            Je confirme avoir pris connaissance des détails de cette fiche de paie et accepte l’exactitude des informations fournies.<br />
+        Cette fiche de paie a été générée automatiquement par le système de gestion des ressources humaines.
+        Je reconnais également que la réception de ce document constitue une preuve de paiement pour la période spécifiée.<br /><br /></p>
+    </div>
+
+    <div class="signature">
+        <p>Date : ____________________<br /></p>
+        <p>Signature : ____________________<br /></p>
+    </div>
+
+
+</body>
+</html>

@@ -1,0 +1,1302 @@
+{% extends "layout.html" %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block style %}
+<style>
+    .config-hero {
+        background: linear-gradient(135deg, rgba(69, 10, 84, 0.85) 0%, rgba(123, 45, 142, 0.85) 50%, rgba(168, 85, 247, 0.85) 100%);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        color: white;
+        padding: 1.5rem 2rem;
+        border-radius: 1rem;
+        margin-bottom: 1.5rem;
+        box-shadow: 0 8px 32px rgba(69, 10, 84, 0.3);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .config-hero h2 {
+        font-weight: 700;
+        margin-bottom: 0.25rem;
+    }
+
+    .config-hero p {
+        opacity: 0.8;
+        margin-bottom: 0;
+    }
+
+    /* Custom Nav Tabs */
+    .config-tabs .nav-link {
+        color: #666;
+        border: none;
+        padding: 0.75rem 1.5rem;
+        font-weight: 600;
+        border-radius: 0.75rem 0.75rem 0 0;
+        transition: all 0.3s;
+    }
+
+    .config-tabs .nav-link.active {
+        background: #450A54;
+        color: white;
+        border: none;
+    }
+
+    .config-tabs .nav-link:hover:not(.active) {
+        background: rgba(69, 10, 84, 0.1);
+        color: #450A54;
+    }
+
+    /* Table Card */
+    .config-card {
+        background: var(--bg-card, rgba(255, 255, 255, 0.7));
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        border-radius: 1rem;
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+    }
+
+    .config-card .card-header-custom {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1rem;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+    }
+
+    .config-card h5 {
+        font-weight: 600;
+        margin-bottom: 0;
+    }
+
+    /* Table */
+    .config-table {
+        font-size: 0.9rem;
+    }
+
+    .config-table th {
+        background: rgba(69, 10, 84, 0.05);
+        font-weight: 600;
+        font-size: 0.8rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        border-bottom: 2px solid #450A54;
+    }
+
+    .config-table td {
+        vertical-align: middle;
+    }
+
+    /* Badge hospitalier */
+    .badge-hosp {
+        background: #450A54;
+    }
+
+    .badge-non-hosp {
+        background: #ccc;
+        color: #666;
+    }
+
+    /* Toggle switch */
+    .form-check-input:checked {
+        background-color: #450A54;
+        border-color: #450A54;
+    }
+
+    /* Stat inline */
+    .stat-inline {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.25rem;
+        padding: 0.2rem 0.5rem;
+        background: rgba(69, 10, 84, 0.08);
+        border-radius: 0.4rem;
+        font-size: 0.8rem;
+        font-weight: 600;
+    }
+
+    /* Actions buttons */
+    .btn-action {
+        width: 32px;
+        height: 32px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 0.5rem;
+        padding: 0;
+        font-size: 0.85rem;
+        transition: all 0.2s;
+    }
+
+    .btn-action:hover {
+        transform: scale(1.1);
+    }
+
+    /* Dark mode */
+    [data-theme="dark"] .config-card {
+        background: var(--bg-card, rgba(30, 30, 46, 0.7));
+        border-color: rgba(255, 255, 255, 0.05);
+    }
+
+    [data-theme="dark"] .config-table th {
+        background: rgba(69, 10, 84, 0.2);
+        color: #ddd;
+    }
+
+    [data-theme="dark"] .config-tabs .nav-link {
+        color: #aaa;
+    }
+
+    [data-theme="dark"] .config-tabs .nav-link:hover:not(.active) {
+        background: rgba(69, 10, 84, 0.2);
+        color: #ccc;
+    }
+
+    [data-theme="dark"] .stat-inline {
+        background: rgba(69, 10, 84, 0.15);
+        color: #ddd;
+    }
+
+    [data-theme="dark"] .modal-content {
+        background: #1e1e2e;
+        color: #ddd;
+    }
+
+    [data-theme="dark"] .modal-header {
+        border-color: #444;
+    }
+
+    [data-theme="dark"] .form-control,
+    [data-theme="dark"] .form-select {
+        background: #2a2a3a;
+        color: #ddd;
+        border-color: #444;
+    }
+</style>
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" />
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-3">
+
+    <!-- Hero -->
+    <div class="config-hero">
+        <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+            <div class="d-flex align-items-center gap-3">
+                <a href="{{ url_for('hospitalisation_services') }}" class="text-white text-decoration-none opacity-75"
+                    style="transition:opacity 0.2s;" onmouseover="this.style.opacity=1"
+                    onmouseout="this.style.opacity=0.75">
+                    <i class="fas fa-arrow-left fa-lg"></i>
+                </a>
+                <div>
+                    <h2><i class="fas fa-cogs me-2"></i>Configuration Hospitalisation</h2>
+                    <p>Gestion des services, chambres et lits</p>
+                </div>
+            </div>
+            <div class="d-flex gap-2 flex-wrap">
+                <span class="badge bg-white text-dark fs-6 px-3 py-2">
+                    <i class="fas fa-building me-1"></i> {{ services|selectattr('est_hospitalier')|list|length }}
+                    services actifs
+                </span>
+                <span class="badge bg-white text-dark fs-6 px-3 py-2">
+                    <i class="fas fa-door-open me-1"></i> {{ chambres|length }} chambres
+                </span>
+                <span class="badge bg-white text-dark fs-6 px-3 py-2">
+                    <i class="fas fa-bed me-1"></i> {{ lits|length }} lits
+                </span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tabs -->
+    <ul class="nav nav-tabs config-tabs mb-3" role="tablist">
+        <li class="nav-item">
+            <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#tab-services" type="button">
+                <i class="fas fa-hospital me-1"></i> Services
+            </button>
+        </li>
+        <li class="nav-item">
+            <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-chambres" type="button">
+                <i class="fas fa-door-open me-1"></i> Chambres
+            </button>
+        </li>
+        <li class="nav-item">
+            <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-lits" type="button">
+                <i class="fas fa-bed me-1"></i> Lits
+            </button>
+        </li>
+    </ul>
+
+    <div class="tab-content">
+
+        <!-- ========== TAB: SERVICES ========== -->
+        <div class="tab-pane fade show active" id="tab-services">
+            <div class="config-card">
+                <div class="card-header-custom">
+                    <h5><i class="fas fa-hospital me-2 text-primary"></i>Services</h5>
+                </div>
+                <div class="table-responsive">
+                    <table class="table config-table table-hover mb-0">
+                        <thead>
+                            <tr>
+                                <th>Service</th>
+                                <th class="text-center">Hospitalier</th>
+                                <th>Tarif fixe (court)</th>
+                                <th>Seuil (heures)</th>
+                                <th class="text-center">Chambres</th>
+                                <th class="text-center">Lits</th>
+                                <th class="text-center">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for s in services %}
+                            <tr id="service-row-{{ s.id_service }}">
+                                <td>
+                                    <strong>{{ s.service_name }}</strong>
+                                    {% if s.est_hospitalier %}
+                                    <span class="badge badge-hosp ms-1">Hospitalier</span>
+                                    {% endif %}
+                                </td>
+                                <td class="text-center">
+                                    <div class="form-check form-switch d-flex justify-content-center">
+                                        <input class="form-check-input" type="checkbox" id="hosp-{{ s.id_service }}"
+                                            {{ 'checked' if s.est_hospitalier }}
+                                            onchange="toggleServiceHosp({{ s.id_service }}, this.checked)">
+                                    </div>
+                                </td>
+                                <td>
+                                    <input type="number" class="form-control form-control-sm" style="width:120px;"
+                                        id="tarif-{{ s.id_service }}" value="{{ s.tarif_fixe_sejour_court or 0 }}"
+                                        step="0.01" min="0">
+                                </td>
+                                <td>
+                                    <input type="number" class="form-control form-control-sm" style="width:80px;"
+                                        id="seuil-{{ s.id_service }}" value="{{ s.seuil_sejour_court_heures or 24 }}"
+                                        min="1">
+                                </td>
+                                <td class="text-center">
+                                    <span class="stat-inline"><i class="fas fa-door-open"></i> {{ s.nb_chambres or 0
+                                        }}</span>
+                                </td>
+                                <td class="text-center">
+                                    <span class="stat-inline"><i class="fas fa-bed"></i> {{ s.nb_lits or 0 }}</span>
+                                </td>
+                                <td class="text-center">
+                                    <button class="btn btn-sm btn-outline-secondary btn-action me-1"
+                                        onclick="openProduitsInclusModal({{ s.id_service }}, null, 'Service {{ s.service_name|replace("'", "\\'") }}')" title="Produits inclus">
+                                        <i class="fas fa-box-open"></i>
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-primary btn-action"
+                                        onclick="saveServiceConfig({{ s.id_service }})" title="Enregistrer">
+                                        <i class="fas fa-save"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- ========== TAB: CHAMBRES ========== -->
+        <div class="tab-pane fade" id="tab-chambres">
+            <div class="config-card">
+                <div class="card-header-custom">
+                    <h5><i class="fas fa-door-open me-2 text-primary"></i>Chambres</h5>
+                    <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#addChambreModal">
+                        <i class="fas fa-plus me-1"></i> Nouvelle chambre
+                    </button>
+                </div>
+                <div class="table-responsive">
+                    <table class="table config-table table-hover mb-0">
+                        <thead>
+                            <tr>
+                                <th>N°</th>
+                                <th>Service</th>
+                                <th>Type</th>
+                                <th>Prix/nuit</th>
+                                <th>Étage</th>
+                                <th class="text-center">Lits</th>
+                                <th class="text-center">Occupés</th>
+                                <th class="text-center">Active</th>
+                                <th class="text-center">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for c in chambres %}
+                            <tr id="chambre-row-{{ c.id_chambre }}" class="{{ 'table-secondary' if not c.est_active }}">
+                                <td><strong>{{ c.numero_chambre }}</strong></td>
+                                <td>{{ c.service_name }}</td>
+                                <td><span class="badge bg-info">{{ c.nom_type }}</span></td>
+                                <td>{{ "%.2f"|format(c.prix_nuit or 0) }} DA</td>
+                                <td>{{ c.etage or '-' }}</td>
+                                <td class="text-center">
+                                    <span class="stat-inline"><i class="fas fa-bed"></i> {{ c.nb_lits }}</span>
+                                </td>
+                                <td class="text-center">
+                                    {% if c.nb_occupes > 0 %}
+                                    <span class="badge bg-danger">{{ c.nb_occupes }}</span>
+                                    {% else %}
+                                    <span class="badge bg-success">0</span>
+                                    {% endif %}
+                                </td>
+                                <td class="text-center">
+                                    <div class="form-check form-switch d-flex justify-content-center">
+                                        <input class="form-check-input" type="checkbox" {{ 'checked' if c.est_active }}
+                                            onchange="toggleChambre({{ c.id_chambre }})">
+                                    </div>
+                                </td>
+                                <td class="text-center">
+                                    <button class="btn btn-sm btn-outline-secondary btn-action me-1"
+                                        onclick="openProduitsInclusModal({{ c.id_service }}, {{ c.id_chambre }}, 'Chambre {{ c.numero_chambre|replace("'", "\\'") }} (Surcharge)')" title="Produits inclus (Surcharge)">
+                                        <i class="fas fa-box-open"></i>
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-info btn-action me-1"
+                                        onclick="editChambre({{ c|safe_tojson }})" title="Modifier">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-success btn-action me-1"
+                                        onclick="openBatchLitsModal({{ c.id_chambre }}, '{{ c.numero_chambre }}')"
+                                        title="Ajouter lits">
+                                        <i class="fas fa-plus-circle"></i>
+                                    </button>
+                                    {% if c.nb_occupes == 0 %}
+                                    <button class="btn btn-sm btn-outline-danger btn-action"
+                                        onclick="deleteChambre({{ c.id_chambre }}, '{{ c.numero_chambre }}')"
+                                        title="Supprimer">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                            {% if chambres|length == 0 %}
+                            <tr>
+                                <td colspan="9" class="text-center text-muted py-4">
+                                    <i class="fas fa-inbox fa-2x mb-2 d-block"></i>Aucune chambre configurée
+                                </td>
+                            </tr>
+                            {% endif %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- ========== TAB: LITS ========== -->
+        <div class="tab-pane fade" id="tab-lits">
+            <div class="config-card">
+                <div class="card-header-custom">
+                    <h5><i class="fas fa-bed me-2 text-primary"></i>Lits</h5>
+                    <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#addLitModal">
+                        <i class="fas fa-plus me-1"></i> Nouveau lit
+                    </button>
+                </div>
+
+                <!-- Filtres -->
+                <div class="row g-2 mb-3">
+                    <div class="col-md-4">
+                        <input type="text" id="filterLits" class="form-control form-control-sm"
+                            placeholder="Rechercher...">
+                    </div>
+                    <div class="col-md-3">
+                        <select id="filterLitsService" class="form-select form-select-sm">
+                            <option value="">Tous les services</option>
+                            {% for s in services %}
+                            {% if s.est_hospitalier %}
+                            <option value="{{ s.service_name }}">{{ s.service_name }}</option>
+                            {% endif %}
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+
+                <div class="table-responsive">
+                    <table class="table config-table table-hover mb-0" id="litsTable">
+                        <thead>
+                            <tr>
+                                <th>N° Lit</th>
+                                <th>Chambre</th>
+                                <th>Service</th>
+                                <th class="text-center">Occupé</th>
+                                <th class="text-center">Actif</th>
+                                <th class="text-center">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for l in lits %}
+                            <tr id="lit-row-{{ l.id_lit }}" class="{{ 'table-secondary' if not l.est_actif }}"
+                                data-service="{{ l.service_name }}">
+                                <td><strong>{{ l.numero_lit }}</strong></td>
+                                <td>{{ l.numero_chambre }}</td>
+                                <td>{{ l.service_name }}</td>
+                                <td class="text-center">
+                                    {% if l.est_occupe %}
+                                    <span class="badge bg-danger"><i class="fas fa-user me-1"></i>Occupé</span>
+                                    {% else %}
+                                    <span class="badge bg-success">Libre</span>
+                                    {% endif %}
+                                </td>
+                                <td class="text-center">
+                                    <div class="form-check form-switch d-flex justify-content-center">
+                                        <input class="form-check-input" type="checkbox" {{ 'checked' if l.est_actif }}
+                                            {{ 'disabled' if l.est_occupe }} onchange="toggleLit({{ l.id_lit }})">
+                                    </div>
+                                </td>
+                                <td class="text-center">
+                                    {% if not l.est_occupe %}
+                                    <button class="btn btn-sm btn-outline-danger btn-action"
+                                        onclick="deleteLit({{ l.id_lit }}, '{{ l.numero_lit }}')" title="Supprimer">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                            {% if lits|length == 0 %}
+                            <tr>
+                                <td colspan="6" class="text-center text-muted py-4">
+                                    <i class="fas fa-inbox fa-2x mb-2 d-block"></i>Aucun lit configuré
+                                </td>
+                            </tr>
+                            {% endif %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<!-- ========== MODAL: Nouvelle Chambre ========== -->
+<div class="modal fade" id="addChambreModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header" style="background:linear-gradient(135deg,#450A54,#7B2D8E);color:white;">
+                <h5 class="modal-title"><i class="fas fa-door-open me-2"></i>Nouvelle Chambre</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="chambreForm">
+                    <div class="mb-3">
+                        <label class="form-label">Service <span class="text-danger">*</span></label>
+                        <select id="chambre-service" class="form-select" required>
+                            <option value="">-- Choisir --</option>
+                            {% for s in services %}
+                            {% if s.est_hospitalier %}
+                            <option value="{{ s.id_service }}">{{ s.service_name }}</option>
+                            {% endif %}
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="row g-3">
+                        <div class="col-6">
+                            <label class="form-label">N° Chambre <span class="text-danger">*</span></label>
+                            <input type="text" id="chambre-numero" class="form-control" placeholder="Ex: 101" required>
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label">Type <span class="text-danger">*</span></label>
+                            <select id="chambre-type" class="form-select" required>
+                                <option value="">-- Choisir --</option>
+                                {% for tc in types_chambre %}
+                                <option value="{{ tc.id_type_chambre }}" data-prix="{{ tc.prix_unitaire }}">
+                                    {{ tc.nom_type }} ({{ "%.2f"|format(tc.prix_unitaire) }} DA)
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    <div class="row g-3 mt-1">
+                        <div class="col-6">
+                            <label class="form-label">Prix/nuit (DA)</label>
+                            <input type="number" id="chambre-prix" class="form-control" value="0" step="0.01" min="0">
+                            <small class="text-muted">Laisser 0 = prix du type</small>
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label">Étage</label>
+                            <input type="text" id="chambre-etage" class="form-control" placeholder="Ex: 2">
+                        </div>
+                    </div>
+                    <div class="mt-3">
+                        <label class="form-label">Notes</label>
+                        <textarea id="chambre-notes" class="form-control" rows="2"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                <button type="button" class="btn btn-primary" onclick="saveChambre()">
+                    <i class="fas fa-save me-1"></i>Enregistrer
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ========== MODAL: Modifier Chambre ========== -->
+<div class="modal fade" id="editChambreModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header" style="background:linear-gradient(135deg,#450A54,#7B2D8E);color:white;">
+                <h5 class="modal-title"><i class="fas fa-edit me-2"></i>Modifier la Chambre</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="edit-chambre-id">
+                <div class="row g-3">
+                    <div class="col-6">
+                        <label class="form-label">N° Chambre</label>
+                        <input type="text" id="edit-chambre-numero" class="form-control">
+                    </div>
+                    <div class="col-6">
+                        <label class="form-label">Type</label>
+                        <select id="edit-chambre-type" class="form-select">
+                            {% for tc in types_chambre %}
+                            <option value="{{ tc.id_type_chambre }}">{{ tc.nom_type }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+                <div class="row g-3 mt-1">
+                    <div class="col-6">
+                        <label class="form-label">Prix/nuit (DA)</label>
+                        <input type="number" id="edit-chambre-prix" class="form-control" step="0.01" min="0">
+                    </div>
+                    <div class="col-6">
+                        <label class="form-label">Étage</label>
+                        <input type="text" id="edit-chambre-etage" class="form-control">
+                    </div>
+                </div>
+                <div class="mt-3">
+                    <label class="form-label">Notes</label>
+                    <textarea id="edit-chambre-notes" class="form-control" rows="2"></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                <button type="button" class="btn btn-primary" onclick="updateChambre()">
+                    <i class="fas fa-save me-1"></i>Enregistrer
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ========== MODAL: Nouveau Lit ========== -->
+<div class="modal fade" id="addLitModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header" style="background:linear-gradient(135deg,#450A54,#7B2D8E);color:white;">
+                <h5 class="modal-title"><i class="fas fa-bed me-2"></i>Nouveau Lit</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label class="form-label">Chambre <span class="text-danger">*</span></label>
+                    <select id="lit-chambre" class="form-select" required>
+                        <option value="">-- Choisir --</option>
+                        {% for c in chambres %}
+                        {% if c.est_active %}
+                        <option value="{{ c.id_chambre }}">{{ c.service_name }} — Chambre {{ c.numero_chambre }} ({{
+                            c.nom_type }})</option>
+                        {% endif %}
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">N° Lit <span class="text-danger">*</span></label>
+                    <input type="text" id="lit-numero" class="form-control" placeholder="Ex: A, B, 1, 2..." required>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Notes</label>
+                    <textarea id="lit-notes" class="form-control" rows="2"></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                <button type="button" class="btn btn-primary" onclick="saveLit()">
+                    <i class="fas fa-save me-1"></i>Enregistrer
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ========== MODAL: Batch Lits ========== -->
+<div class="modal fade" id="batchLitsModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header" style="background:linear-gradient(135deg,#450A54,#7B2D8E);color:white;">
+                <h5 class="modal-title"><i class="fas fa-layer-group me-2"></i>Ajouter plusieurs lits</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p id="batchLitsInfo" class="text-muted mb-3"></p>
+                <input type="hidden" id="batch-chambre-id">
+                <div class="row g-3">
+                    <div class="col-4">
+                        <label class="form-label">Préfixe</label>
+                        <input type="text" id="batch-prefix" class="form-control" value="Lit" placeholder="Lit">
+                    </div>
+                    <div class="col-4">
+                        <label class="form-label">Nombre</label>
+                        <input type="number" id="batch-count" class="form-control" value="2" min="1" max="20">
+                    </div>
+                    <div class="col-4">
+                        <label class="form-label">Commencer à</label>
+                        <input type="number" id="batch-start" class="form-control" value="1" min="1">
+                    </div>
+                </div>
+                <div class="mt-3 p-3 bg-light rounded text-dark">
+                    <small class="text-muted">Aperçu: <strong id="batchPreview"></strong></small>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                <button type="button" class="btn btn-success" onclick="saveBatchLits()">
+                    <i class="fas fa-check me-1"></i>Créer les lits
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ========== MODAL: Confirmation globale personnalisée (remplace native confirm) ========== -->
+<div class="modal fade" id="customConfirmModal" tabindex="-1" data-bs-backdrop="static">
+    <div class="modal-dialog modal-dialog-centered modal-sm">
+        <div class="modal-content" style="background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); border-radius: 1rem;">
+            <div class="modal-body text-center p-4">
+                <div class="mb-3 text-warning">
+                    <i class="fas fa-exclamation-triangle fa-3x"></i>
+                </div>
+                <h5 class="mb-3" id="customConfirmMessage">Êtes-vous sûr ?</h5>
+                <div class="d-flex justify-content-center gap-2 mt-4">
+                    <button type="button" class="btn btn-light px-4" data-bs-dismiss="modal">Annuler</button>
+                    <button type="button" class="btn btn-primary px-4" id="customConfirmBtn">Confirmer</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ========== MODAL: Configuration Produits Inclus ========== -->
+<div class="modal fade" id="produitsInclusModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title"><i class="fas fa-box-open me-2"></i>Configuration des Produits Inclus</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle me-2"></i> Configuration pour le <strong id="piLevelName">Service X</strong>
+                    <input type="hidden" id="piServiceId">
+                    <input type="hidden" id="piChambreId">
+                </div>
+                <div class="row align-items-end mb-4">
+                    <div class="col-md-6">
+                        <label class="form-label">Ajouter un produit</label>
+                        <select class="form-control" id="piProductSelect"></select>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Qté incluse / nuit</label>
+                        <input type="number" class="form-control" id="piQuantity" value="1" min="1">
+                    </div>
+                    <div class="col-md-3">
+                        <button class="btn btn-primary w-100" onclick="addProduitInclusRow()"><i class="fas fa-plus"></i> Ajouter</button>
+                    </div>
+                </div>
+                
+                <table class="table table-sm table-hover align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Produit</th>
+                            <th>Qté par Nuit</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="piTableBody">
+                        <!-- Lignes ajoutées dynamiquement -->
+                    </tbody>
+                </table>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                <button type="button" class="btn btn-success" onclick="saveProduitsInclus()">
+                    <i class="fas fa-save me-1"></i>Enregistrer
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<script>
+    // ========== HELPERS ==========
+    function showMsg(msg, type) {
+        if (typeof Toastify !== 'undefined') {
+            const colors = {
+                'success': 'linear-gradient(to right, #00b09b, #96c93d)',
+                'danger': 'linear-gradient(to right, #f85032, #e73827)',
+                'warning': 'linear-gradient(to right, #f7971e, #ffd200)'
+            };
+            Toastify({ text: msg, duration: 4000, style: { background: colors[type] || colors['success'] } }).showToast();
+        } else { showToast(msg, "warning"); }
+    }
+
+    // Custom confirm logic
+    function showCustomConfirm(message, onConfirmCallback) {
+        const modalEl = document.getElementById('customConfirmModal');
+        const modal = new bootstrap.Modal(modalEl);
+        document.getElementById('customConfirmMessage').innerText = message;
+        
+        const confirmBtn = document.getElementById('customConfirmBtn');
+        // Clear previous event listeners
+        const newConfirmBtn = confirmBtn.cloneNode(true);
+        confirmBtn.parentNode.replaceChild(newConfirmBtn, confirmBtn);
+        
+        newConfirmBtn.addEventListener('click', () => {
+            modal.hide();
+            if(onConfirmCallback) onConfirmCallback();
+        });
+        
+        modal.show();
+    }
+
+    async function apiCall(url, method, body) {
+        const opts = { method, headers: { 'Content-Type': 'application/json' } };
+        if (body) opts.body = JSON.stringify(body);
+        const res = await fetch(url, opts);
+        return res.json();
+    }
+
+    // Counter helpers
+    function updateHeroCounters() {
+        const badges = document.querySelectorAll('.config-hero .badge');
+        if (badges[1]) badges[1].innerHTML = `<i class="fas fa-door-open me-1"></i> ${document.querySelectorAll('#tab-chambres tbody tr:not(.empty-row)').length} chambres`;
+        if (badges[2]) badges[2].innerHTML = `<i class="fas fa-bed me-1"></i> ${document.querySelectorAll('#tab-lits #litsTable tbody tr:not(.empty-row)').length} lits`;
+    }
+
+    // ========== SERVICES ==========
+    async function saveServiceConfig(id) {
+        const est_hospitalier = document.getElementById(`hosp-${id}`).checked ? 1 : 0;
+        const tarif_fixe = parseFloat(document.getElementById(`tarif-${id}`).value) || 0;
+        const seuil = parseInt(document.getElementById(`seuil-${id}`).value) || 24;
+
+        const data = await apiCall(`/hospitalisation/api/config/service/${id}`, 'POST', {
+            est_hospitalier, tarif_fixe_sejour_court: tarif_fixe, seuil_sejour_court_heures: seuil
+        });
+
+        if (data.success) {
+            showMsg(data.message, 'success');
+            // Update badge
+            const row = document.getElementById(`service-row-${id}`);
+            const badge = row.querySelector('.badge-hosp, .badge-non-hosp');
+            if (est_hospitalier) {
+                if (badge) { badge.className = 'badge badge-hosp ms-1'; badge.textContent = 'Hospitalier'; }
+                else row.querySelector('td strong').insertAdjacentHTML('afterend', ' <span class="badge badge-hosp ms-1">Hospitalier</span>');
+            } else {
+                if (badge) badge.remove();
+            }
+        } else {
+            showMsg(data.error, 'danger');
+        }
+    }
+
+    function toggleServiceHosp(id, checked) { saveServiceConfig(id); }
+
+    // ========== CHAMBRES ==========
+    function buildChambreRow(c) {
+        const typesMap = {};
+        document.querySelectorAll('#chambre_type option').forEach(o => {
+            if (o.value) typesMap[o.value] = o.textContent.split('(')[0].trim();
+        });
+        const typeName = typesMap[c.id_type_chambre] || c.type_name || '';
+        const prix = parseFloat(c.prix_nuit || 0).toFixed(2);
+
+        return `<tr id="chambre-row-${c.id_chambre}">
+            <td><strong>${c.numero_chambre}</strong></td>
+            <td>${c.service_name || ''}</td>
+            <td><span class="badge bg-info">${typeName}</span></td>
+            <td>${prix} DA</td>
+            <td>${c.etage || '-'}</td>
+            <td class="text-center"><span class="stat-inline"><i class="fas fa-bed"></i> 0</span></td>
+            <td class="text-center"><span class="badge bg-success">0</span></td>
+            <td class="text-center">
+                <div class="form-check form-switch d-flex justify-content-center">
+                    <input class="form-check-input" type="checkbox" checked onchange="toggleChambre(${c.id_chambre})">
+                </div>
+            </td>
+            <td class="text-center">
+                <button class="btn btn-sm btn-outline-info btn-action me-1" onclick="editChambreById(${c.id_chambre})" title="Modifier"><i class="fas fa-edit"></i></button>
+                <button class="btn btn-sm btn-outline-success btn-action me-1" onclick="openBatchLitsModal(${c.id_chambre}, '${c.numero_chambre}')" title="Ajouter lits"><i class="fas fa-plus-circle"></i></button>
+                <button class="btn btn-sm btn-outline-danger btn-action" onclick="deleteChambre(${c.id_chambre}, '${c.numero_chambre}')" title="Supprimer"><i class="fas fa-trash"></i></button>
+            </td>
+        </tr>`;
+    }
+
+    async function saveChambre() {
+        const id_service = document.getElementById('chambre-service').value;
+        const numero_chambre = document.getElementById('chambre-numero').value.trim();
+        const id_type_chambre = document.getElementById('chambre-type').value;
+        const prix_nuit = parseFloat(document.getElementById('chambre-prix').value) || 0;
+        const etage = document.getElementById('chambre-etage').value.trim();
+        const notes = document.getElementById('chambre-notes').value.trim();
+        const serviceName = document.getElementById('chambre-service').selectedOptions[0]?.text || '';
+
+        if (!id_service || !numero_chambre || !id_type_chambre) {
+            showMsg('Veuillez remplir les champs obligatoires', 'warning');
+            return;
+        }
+
+        const data = await apiCall('/hospitalisation/api/config/chambre', 'POST', {
+            id_service, id_type_chambre, numero_chambre, prix_nuit, etage, notes
+        });
+
+        if (data.success) {
+            showMsg(data.message, 'success');
+            bootstrap.Modal.getInstance(document.getElementById('addChambreModal')).hide();
+
+            // Remove empty row if present
+            document.querySelector('#tab-chambres .empty-row')?.closest('tr')?.remove();
+
+            // Add new row
+            const tbody = document.querySelector('#tab-chambres tbody');
+            tbody.insertAdjacentHTML('beforeend', buildChambreRow({
+                id_chambre: data.id_chambre, numero_chambre, id_type_chambre,
+                prix_nuit, etage, notes, service_name: serviceName
+            }));
+
+            // Also add to lit modal dropdown
+            const litSelect = document.getElementById('lit-chambre');
+            const typeName = document.getElementById('chambre-type').selectedOptions[0]?.text.split('(')[0].trim() || '';
+            litSelect.insertAdjacentHTML('beforeend',
+                `<option value="${data.id_chambre}">${serviceName} — Chambre ${numero_chambre} (${typeName})</option>`);
+
+            // Reset form
+            document.getElementById('chambreForm').reset();
+            updateHeroCounters();
+        } else {
+            showMsg(data.error, 'danger');
+        }
+    }
+
+    function editChambre(c) {
+        document.getElementById('edit-chambre-id').value = c.id_chambre;
+        document.getElementById('edit-chambre-numero').value = c.numero_chambre;
+        document.getElementById('edit-chambre-type').value = c.id_type_chambre;
+        document.getElementById('edit-chambre-prix').value = c.prix_nuit || 0;
+        document.getElementById('edit-chambre-etage').value = c.etage || '';
+        document.getElementById('edit-chambre-notes').value = c.notes || '';
+        new bootstrap.Modal(document.getElementById('editChambreModal')).show();
+    }
+
+    // Fallback for rows that don't have inline JSON
+    function editChambreById(id) {
+        const row = document.getElementById(`chambre-row-${id}`);
+        if (!row) return;
+        const cells = row.querySelectorAll('td');
+        document.getElementById('edit-chambre-id').value = id;
+        document.getElementById('edit-chambre-numero').value = cells[0]?.textContent.trim() || '';
+        document.getElementById('edit-chambre-prix').value = parseFloat(cells[3]?.textContent) || 0;
+        document.getElementById('edit-chambre-etage').value = cells[4]?.textContent.trim() === '-' ? '' : cells[4]?.textContent.trim();
+        document.getElementById('edit-chambre-notes').value = '';
+        new bootstrap.Modal(document.getElementById('editChambreModal')).show();
+    }
+
+    async function updateChambre() {
+        const id = document.getElementById('edit-chambre-id').value;
+        const numero = document.getElementById('edit-chambre-numero').value.trim();
+        const type_id = document.getElementById('edit-chambre-type').value;
+        const prix = parseFloat(document.getElementById('edit-chambre-prix').value) || 0;
+        const etage = document.getElementById('edit-chambre-etage').value.trim();
+        const notes = document.getElementById('edit-chambre-notes').value.trim();
+
+        const data = await apiCall(`/hospitalisation/api/config/chambre/${id}`, 'PUT', {
+            numero_chambre: numero, id_type_chambre: type_id, prix_nuit: prix, etage, notes
+        });
+
+        if (data.success) {
+            showMsg(data.message, 'success');
+            bootstrap.Modal.getInstance(document.getElementById('editChambreModal')).hide();
+
+            // Update row inline
+            const row = document.getElementById(`chambre-row-${id}`);
+            if (row) {
+                const cells = row.querySelectorAll('td');
+                cells[0].innerHTML = `<strong>${numero}</strong>`;
+                const typeName = document.getElementById('edit-chambre-type').selectedOptions[0]?.text || '';
+                cells[2].innerHTML = `<span class="badge bg-info">${typeName}</span>`;
+                cells[3].textContent = prix.toFixed(2) + ' DA';
+                cells[4].textContent = etage || '-';
+            }
+        } else {
+            showMsg(data.error, 'danger');
+        }
+    }
+
+    async function toggleChambre(id) {
+        const data = await apiCall(`/hospitalisation/api/config/chambre/${id}/toggle`, 'POST');
+        if (data.success) {
+            showMsg(data.message, 'success');
+            const row = document.getElementById(`chambre-row-${id}`);
+            if (row) row.classList.toggle('table-secondary');
+        } else {
+            showMsg(data.error, 'danger');
+        }
+    }
+    function deleteChambre(id, numero) {
+        showCustomConfirm(`Supprimer la chambre ${numero} ?`, async () => {
+        const data = await apiCall(`/hospitalisation/api/config/chambre/${id}`, 'DELETE');
+        if (data.success) {
+            showMsg(data.message, 'success');
+            document.getElementById(`chambre-row-${id}`)?.remove();
+            updateHeroCounters();
+        } else {
+            showMsg(data.error, 'danger');
+        }
+        });
+    }
+
+    // ========== LITS ==========
+    function buildLitRow(l) {
+        return `<tr id="lit-row-${l.id_lit}" data-service="${l.service_name || ''}">
+            <td><strong>${l.numero_lit}</strong></td>
+            <td>${l.numero_chambre || ''}</td>
+            <td>${l.service_name || ''}</td>
+            <td class="text-center"><span class="badge bg-success">Libre</span></td>
+            <td class="text-center">
+                <div class="form-check form-switch d-flex justify-content-center">
+                    <input class="form-check-input" type="checkbox" checked onchange="toggleLit(${l.id_lit})">
+                </div>
+            </td>
+            <td class="text-center">
+                <button class="btn btn-sm btn-outline-danger btn-action" onclick="deleteLit(${l.id_lit}, '${l.numero_lit}')" title="Supprimer"><i class="fas fa-trash"></i></button>
+            </td>
+        </tr>`;
+    }
+
+    async function saveLit() {
+        const id_chambre = document.getElementById('lit-chambre').value;
+        const numero_lit = document.getElementById('lit-numero').value.trim();
+        const notes = document.getElementById('lit-notes').value.trim();
+
+        if (!id_chambre || !numero_lit) {
+            showMsg('Remplissez les champs obligatoires', 'warning');
+            return;
+        }
+
+        // Get chambre info from dropdown text
+        const chambreOpt = document.getElementById('lit-chambre').selectedOptions[0];
+        const chambreText = chambreOpt?.text || '';
+        const parts = chambreText.split('—');
+        const serviceName = parts[0]?.trim() || '';
+        const numeroChambre = parts[1]?.match(/Chambre\s+(\S+)/)?.[1] || '';
+
+        const data = await apiCall('/hospitalisation/api/config/lit', 'POST', { id_chambre, numero_lit, notes });
+        if (data.success) {
+            showMsg(data.message, 'success');
+            bootstrap.Modal.getInstance(document.getElementById('addLitModal')).hide();
+
+            document.querySelector('#tab-lits .empty-row')?.closest('tr')?.remove();
+
+            const tbody = document.querySelector('#litsTable tbody');
+            tbody.insertAdjacentHTML('beforeend', buildLitRow({
+                id_lit: data.id_lit, numero_lit, numero_chambre: numeroChambre, service_name: serviceName
+            }));
+
+            // Update chambre lits count
+            document.querySelectorAll('#tab-chambres tbody tr').forEach(row => {
+                const chambreNum = row.querySelector('td:first-child strong')?.textContent;
+                if (chambreNum === numeroChambre) {
+                    const statEl = row.querySelector('td:nth-child(6) .stat-inline');
+                    if (statEl) {
+                        const current = parseInt(statEl.textContent.trim()) || 0;
+                        statEl.innerHTML = `<i class="fas fa-bed"></i> ${current + 1}`;
+                    }
+                }
+            });
+
+            // Reset
+            document.getElementById('lit-numero').value = '';
+            document.getElementById('lit-notes').value = '';
+            updateHeroCounters();
+        } else {
+            showMsg(data.error, 'danger');
+        }
+    }
+
+    async function toggleLit(id) {
+        const data = await apiCall(`/hospitalisation/api/config/lit/${id}/toggle`, 'POST');
+        if (data.success) {
+            showMsg(data.message, 'success');
+            const row = document.getElementById(`lit-row-${id}`);
+            if (row) row.classList.toggle('table-secondary');
+        } else {
+            showMsg(data.error, 'danger');
+        }
+    }
+
+    function deleteLit(id, numero) {
+        showCustomConfirm(`Supprimer le lit ${numero} ?`, async () => {
+        const data = await apiCall(`/hospitalisation/api/config/lit/${id}`, 'DELETE');
+        if (data.success) {
+            showMsg(data.message, 'success');
+            document.getElementById(`lit-row-${id}`)?.remove();
+            updateHeroCounters();
+        } else {
+            showMsg(data.error, 'danger');
+        }
+        });
+    }
+
+    // ========== BATCH LITS ==========
+    function openBatchLitsModal(chambreId, chambreNumero) {
+        document.getElementById('batchLitsInfo').innerHTML = `Création en lot pour la chambre <strong>${chambreNumero}</strong>`;
+        document.getElementById('batch-chambre-id').value = chambreId;
+        document.getElementById('batch-prefix').value = `Lit-${chambreNumero}`;
+        updateBatchPreview();
+        new bootstrap.Modal(document.getElementById('batchLitsModal')).show();
+    }
+
+    function updateBatchPreview() {
+        const prefix = document.getElementById('batch-prefix').value.trim();
+        const count = parseInt(document.getElementById('batch-count').value) || 0;
+        const start = parseInt(document.getElementById('batch-start').value) || 1;
+
+        if (count > 0) {
+            const examples = [];
+            for (let i = 0; i < Math.min(count, 3); i++) {
+                examples.push(prefix ? `${prefix} ${start + i}` : (start + i));
+        }
+            let text = examples.join(', ');
+            if (count > 3) text += ' ...';
+            document.getElementById('batchPreview').textContent = text;
+        } else {
+            document.getElementById('batchPreview').textContent = '-';
+        }
+    }
+
+    // Attach preview events
+    ['batch-prefix', 'batch-count', 'batch-start'].forEach(id => {
+        document.getElementById(id).addEventListener('input', updateBatchPreview);
+    });
+
+    async function saveBatchLits() {
+        const id_chambre = document.getElementById('batch-chambre-id').value;
+        const prefix = document.getElementById('batch-prefix').value.trim();
+        const count = parseInt(document.getElementById('batch-count').value) || 2;
+        const start_from = parseInt(document.getElementById('batch-start').value) || 1;
+
+        const data = await apiCall(`/hospitalisation/api/config/chambre/${id_chambre}/batch_lits`, 'POST', {
+            prefix, count, start_from
+        });
+
+        if (data.success) {
+            showMsg(data.message, 'success');
+            bootstrap.Modal.getInstance(document.getElementById('batchLitsModal')).hide();
+
+            // Get chambre info
+            const chambreRow = document.querySelector(`#tab-chambres tbody tr[id]`);
+            let serviceName = '', numeroChambre = '';
+            document.querySelectorAll('#tab-chambres tbody tr').forEach(row => {
+                // Find chambre by matching button onclick
+                if (row.innerHTML.includes(`openBatchLitsModal(${id_chambre},`)) {
+                    serviceName = row.querySelector('td:nth-child(2)')?.textContent.trim() || '';
+                    numeroChambre = row.querySelector('td:first-child strong')?.textContent.trim() || '';
+                }
+            });
+
+            document.querySelector('#tab-lits .empty-row')?.closest('tr')?.remove();
+            const tbody = document.querySelector('#litsTable tbody');
+
+            // Add rows for created lits (we don't have IDs, so use negative temp IDs)
+            for (let i = start_from; i < start_from + data.created; i++) {
+                const numero = prefix ? `${prefix} ${i}` : `${i}`;
+                const tempId = Date.now() + i;
+                tbody.insertAdjacentHTML('beforeend', buildLitRow({
+                    id_lit: tempId, numero_lit: numero, numero_chambre: numeroChambre, service_name: serviceName
+                }));
+            }
+
+            // Update chambre lits count
+            document.querySelectorAll('#tab-chambres tbody tr').forEach(row => {
+                if (row.innerHTML.includes(`openBatchLitsModal(${id_chambre},`)) {
+                    const statEl = row.querySelector('td:nth-child(6) .stat-inline');
+                    if (statEl) {
+                        const current = parseInt(statEl.textContent.trim()) || 0;
+                        statEl.innerHTML = `<i class="fas fa-bed"></i> ${current + data.created}`;
+                    }
+                }
+            });
+
+            updateHeroCounters();
+        } else {
+            showMsg(data.error, 'danger');
+        }
+    }
+
+    // ========== CONFIGURATION DES INCLUSIONS ==========
+    let piList = [];
+    
+    async function openProduitsInclusModal(idService, idChambre, levelName) {
+        document.getElementById('piLevelName').textContent = levelName;
+        document.getElementById('piServiceId').value = idService || '';
+        document.getElementById('piChambreId').value = idChambre || '';
+        document.getElementById('piQuantity').value = '1';
+        piList = [];
+        renderPiTable();
+        
+        // Init Select2 for products only
+        const selectEl = $('#piProductSelect');
+        if (selectEl.hasClass("select2-hidden-accessible")) selectEl.select2('destroy');
+        selectEl.empty();
+        selectEl.select2({
+            theme: 'bootstrap-5',
+            dropdownParent: $('#produitsInclusModal'),
+            placeholder: 'Rechercher un produit...',
+            minimumInputLength: 2,
+            ajax: {
+                url: '{{ url_for("hospitalisation_search_items_for_billing") }}',
+                dataType: 'json',
+                delay: 250,
+                data: function (params) { return { q: params.term, type: 'produit' }; },
+                processResults: function (data) { return { results: data.results }; }
+            }
+        });
+        
+        try {
+            let url = '{{ url_for("hospitalisation_produits_inclus") }}' + `?id_service=${idService || ''}&id_chambre=${idChambre || ''}`;
+            const res = await fetch(url);
+            const data = await res.json();
+            if(data.success) {
+                piList = data.produits.map(p => ({
+                    id_produit: p.id_produit,
+                    nom_produit: p.nom_produit,
+                    quantite_par_nuit: p.quantite_par_nuit
+                }));
+                renderPiTable();
+            }
+        } catch(e) { console.error(e); }
+        
+        const modal = new bootstrap.Modal(document.getElementById('produitsInclusModal'));
+        modal.show();
+    }
+    
+    function addProduitInclusRow() {
+        const selectData = $('#piProductSelect').select2('data');
+        if(!selectData || selectData.length === 0) { showMsg("Sélectionnez un produit", "warning"); return; }
+        
+        const id_produit = parseInt(selectData[0].id);
+        const nom_produit = selectData[0].text;
+        const quantite = parseInt(document.getElementById('piQuantity').value) || 1;
+        
+        if(piList.find(p => p.id_produit === id_produit)) {
+            showMsg("Ce produit est déjà dans la liste", "warning"); return;
+        }
+        
+        piList.push({ id_produit: id_produit, nom_produit: nom_produit, quantite_par_nuit: quantite });
+        renderPiTable();
+        // Clear select
+        $('#piProductSelect').val(null).trigger('change');
+    }
+    
+    function removeProduitInclusRow(index) {
+        piList.splice(index, 1);
+        renderPiTable();
+    }
+    
+    function renderPiTable() {
+        const tbody = document.getElementById('piTableBody');
+        tbody.innerHTML = piList.map((p, idx) => `
+            <tr>
+                <td>${p.nom_produit}</td>
+                <td>
+                    <input type="number" class="form-control form-control-sm w-50" value="${p.quantite_par_nuit}" 
+                           onchange="piList[${idx}].quantite_par_nuit = parseInt(this.value) || 1">
+                </td>
+                <td>
+                    <button class="btn btn-sm btn-outline-danger" onclick="removeProduitInclusRow(${idx})"><i class="fas fa-trash"></i></button>
+                </td>
+            </tr>
+        `).join('') || `<tr><td colspan="3" class="text-center text-muted">Aucun produit configuré</td></tr>`;
+    }
+    
+    async function saveProduitsInclus() {
+        const id_service = document.getElementById('piServiceId').value;
+        const id_chambre = document.getElementById('piChambreId').value;
+        
+        try {
+            const res = await fetch('{{ url_for("hospitalisation_save_produits_inclus") }}', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    id_service: id_service ? parseInt(id_service) : null,
+                    id_chambre: id_chambre ? parseInt(id_chambre) : null,
+                    produits: piList.map(p => ({ id_produit: p.id_produit, quantite_par_nuit: p.quantite_par_nuit }))
+                })
+            });
+            const data = await res.json();
+            if(data.success) {
+                showMsg("Configuration enregistrée", "success");
+                bootstrap.Modal.getInstance(document.getElementById('produitsInclusModal'))?.hide();
+            } else {
+                showMsg(data.error, "danger");
+            }
+        } catch(e) { console.error(e); showMsg("Erreur serveur", "danger"); }
+    }
+
+    // ========== INIT ==========
+    document.addEventListener('DOMContentLoaded', function () {
+        // --- Tab persistence ---
+        const TAB_KEY = 'hosp_config_active_tab';
+        const savedTab = localStorage.getItem(TAB_KEY);
+        if (savedTab) {
+            const tabBtn = document.querySelector(`.config-tabs .nav-link[data-bs-target="${savedTab}"]`);
+            if (tabBtn) new bootstrap.Tab(tabBtn).show();
+        }
+        document.querySelectorAll('.config-tabs .nav-link').forEach(btn => {
+            btn.addEventListener('shown.bs.tab', function () {
+                localStorage.setItem(TAB_KEY, this.getAttribute('data-bs-target'));
+            });
+        });
+
+        // Auto-fill prix from type
+        document.getElementById('chambre-type')?.addEventListener('change', function () {
+            const prix = this.options[this.selectedIndex].dataset.prix || 0;
+            document.getElementById('chambre-prix').value = prix;
+        });
+
+        // Batch preview
+        ['batch-prefix', 'batch-count', 'batch-start'].forEach(id => {
+            document.getElementById(id)?.addEventListener('input', updateBatchPreview);
+        });
+
+        // Lits text filter
+        document.getElementById('filterLits')?.addEventListener('input', function () {
+            const term = this.value.toLowerCase();
+            document.querySelectorAll('#litsTable tbody tr').forEach(row => {
+                row.style.display = row.textContent.toLowerCase().includes(term) ? '' : 'none';
+            });
+        });
+
+        // Lits service filter
+        document.getElementById('filterLitsService')?.addEventListener('change', function () {
+            const service = this.value;
+            document.querySelectorAll('#litsTable tbody tr').forEach(row => {
+                row.style.display = (!service || row.dataset.service === service) ? '' : 'none';
+            });
+        });
+    });
+</script>
+{% endblock %}

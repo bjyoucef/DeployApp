@@ -1,0 +1,582 @@
+{% extends "layout.html" %}
+
+{% block style %}
+<style>
+    :root {
+        --warning: #f59e0b;
+        --warning-dark: #d97706;
+        --warning-light: #fef3c7;
+        --pink: #ec4899;
+        --pink-dark: #db2777;
+        --success: #10b981;
+        --danger: #ef4444;
+        --dark: #1f2937;
+        --border: #e5e7eb;
+        --radius: 12px;
+        --shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+    }
+
+    body {
+        background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
+        min-height: 100vh;
+    }
+
+    .page-header {
+        background: linear-gradient(135deg, var(--warning), var(--warning-dark));
+        color: white;
+        padding: 1.5rem 2rem;
+        border-radius: var(--radius);
+        margin-bottom: 1.5rem;
+        box-shadow: var(--shadow);
+    }
+
+    .page-header h1 {
+        margin: 0;
+        font-size: 1.5rem;
+        font-weight: 700;
+    }
+
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .stat-card {
+        background: white;
+        border-radius: var(--radius);
+        padding: 1.25rem;
+        box-shadow: var(--shadow);
+        border-left: 4px solid var(--warning);
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .stat-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px -5px rgb(0 0 0 / 0.1);
+    }
+
+    .stat-card.danger {
+        border-left-color: var(--danger);
+    }
+
+    .stat-value {
+        font-size: 1.75rem;
+        font-weight: 700;
+        color: var(--dark);
+    }
+
+    .stat-label {
+        font-size: 0.85rem;
+        color: #6b7280;
+        margin-top: 0.25rem;
+    }
+
+    .table-card {
+        background: white;
+        border-radius: var(--radius);
+        box-shadow: var(--shadow);
+        overflow: hidden;
+    }
+
+    .table-modern {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    .table-modern thead {
+        background: linear-gradient(135deg, var(--warning), var(--warning-dark));
+    }
+
+    .table-modern thead th {
+        color: white;
+        font-weight: 600;
+        padding: 1rem;
+        font-size: 0.8rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        text-align: left;
+    }
+
+    .table-modern tbody td {
+        padding: 1rem;
+        border-bottom: 1px solid var(--border);
+        vertical-align: middle;
+    }
+
+    .table-modern tbody tr:hover {
+        background: #fffbeb;
+    }
+
+    .table-modern tbody tr:last-child td {
+        border-bottom: none;
+    }
+
+    .badge-mode {
+        padding: 0.35rem 0.75rem;
+        border-radius: 50px;
+        font-size: 0.75rem;
+        font-weight: 600;
+    }
+
+    .badge-via-gyneco {
+        background: #fef3c7;
+        color: #92400e;
+    }
+
+    .badge-differe {
+        background: #dbeafe;
+        color: #1e40af;
+    }
+
+    .badge-urgent {
+        padding: 0.35rem 0.75rem;
+        border-radius: 50px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        animation: pulse 2s infinite;
+    }
+
+    .badge-urgent-high {
+        background: #fee2e2;
+        color: #991b1b;
+    }
+
+    .badge-urgent-medium {
+        background: #fed7aa;
+        color: #9a3412;
+    }
+
+    .badge-urgent-low {
+        background: #fef3c7;
+        color: #92400e;
+    }
+
+    @keyframes pulse {
+
+        0%,
+        100% {
+            opacity: 1;
+        }
+
+        50% {
+            opacity: 0.7;
+        }
+    }
+
+    .amount {
+        font-family: 'JetBrains Mono', monospace;
+        font-weight: 600;
+    }
+
+    .amount.negative {
+        color: var(--danger);
+    }
+
+    .btn {
+        border-radius: 8px;
+        padding: 0.5rem 1rem;
+        font-weight: 600;
+        font-size: 0.875rem;
+        transition: all 0.2s;
+    }
+
+    .btn:hover {
+        transform: translateY(-1px);
+    }
+
+    .btn-warning-custom {
+        background: linear-gradient(135deg, var(--warning), var(--warning-dark));
+        color: white;
+        border: none;
+    }
+
+    .btn-warning-custom:hover {
+        color: white;
+        box-shadow: 0 4px 12px rgba(245, 158, 11, 0.4);
+    }
+
+    .action-btn {
+        width: 32px;
+        height: 32px;
+        padding: 0;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 6px;
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 4rem 2rem;
+        color: #9ca3af;
+    }
+
+    .empty-state i {
+        font-size: 4rem;
+        margin-bottom: 1rem;
+        opacity: 0.5;
+    }
+
+    .modal-content {
+        border-radius: var(--radius);
+        border: none;
+    }
+
+    .modal-header {
+        background: linear-gradient(135deg, var(--warning), var(--warning-dark));
+        color: white;
+        border-radius: var(--radius) var(--radius) 0 0;
+    }
+
+    .modal-header .btn-close {
+        filter: brightness(0) invert(1);
+    }
+
+    .form-control:focus,
+    .form-select:focus {
+        border-color: var(--warning);
+        box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.1);
+    }
+
+    .alert-info-custom {
+        background: #dbeafe;
+        border-left: 4px solid #3b82f6;
+        color: #1e40af;
+        padding: 1rem;
+        border-radius: 8px;
+        margin-bottom: 1rem;
+    }
+
+    .gyneco-name {
+        font-weight: 600;
+        color: var(--dark);
+    }
+
+    .info-row {
+        display: flex;
+        justify-content: space-between;
+        padding: 0.5rem 0;
+        border-bottom: 1px solid var(--border);
+    }
+
+    .info-row:last-child {
+        border-bottom: none;
+    }
+
+    .info-label {
+        color: #6b7280;
+        font-weight: 500;
+    }
+
+    .info-value {
+        font-weight: 600;
+        color: var(--dark);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Header -->
+    <div class="page-header">
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+            <div>
+                <h1><i class="fas fa-clock me-2"></i>{{ title }}</h1>
+                <small class="opacity-75">Dossiers avec paiement en attente</small>
+            </div>
+            <div>
+                <a href="{{ url_for('accouchement_list') }}" class="btn btn-light">
+                    <i class="fas fa-arrow-left me-1"></i>Retour à la liste
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistiques rapides -->
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-value">{{ dossiers|length }}</div>
+            <div class="stat-label"><i class="fas fa-hourglass-half me-1"></i>Dossiers en attente</div>
+        </div>
+        <div class="stat-card danger">
+            <div class="stat-value">
+                {{ "{:,.0f}".format(dossiers|sum(attribute='prix_total')|default(0) -
+                dossiers|sum(attribute='montant_paye')|default(0)).replace(",", " ") }}
+            </div>
+            <div class="stat-label"><i class="fas fa-money-bill-wave me-1"></i>Total à encaisser (DA)</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value">
+                {{ dossiers|selectattr('jours_attente', 'gt', 30)|list|length }}
+            </div>
+            <div class="stat-label"><i class="fas fa-exclamation-triangle me-1"></i>+ de 30 jours</div>
+        </div>
+    </div>
+
+    <!-- Tableau -->
+    <div class="table-card">
+        {% if dossiers %}
+        <div class="table-responsive">
+            <table class="table-modern">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Date Accouchement</th>
+                        <th>Patiente</th>
+                        <th>Gynécologue</th>
+                        <th>Mode Paiement</th>
+                        <th class="text-end">Montant Total</th>
+                        <th class="text-end">Déjà Payé</th>
+                        <th class="text-end">Reste à Payer</th>
+                        <th class="text-center">Jours d'Attente</th>
+                        <th class="text-center">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for d in dossiers %}
+                    {% set reste = (d.prix_total or 0) - (d.montant_paye or 0) %}
+                    <tr>
+                        <td><strong>#{{ d.id_dossier }}</strong></td>
+                        <td>
+                            <i class="far fa-calendar-alt text-muted me-1"></i>
+                            {{ d.date_accouchement.strftime('%d/%m/%Y') }}
+                        </td>
+                        <td><strong>{{ d.patiente }}</strong></td>
+                        <td>
+                            <span class="gyneco-name">{{ d.gyneco_name }}</span>
+                        </td>
+                        <td>
+                            {% if d.mode_paiement == 'VIA_GYNECO' %}
+                            <span class="badge-mode badge-via-gyneco">
+                                <i class="fas fa-user-md me-1"></i>Via Gynéco
+                            </span>
+                            {% else %}
+                            <span class="badge-mode badge-differe">
+                                <i class="fas fa-hourglass-half me-1"></i>Différé
+                            </span>
+                            {% endif %}
+                        </td>
+                        <td class="text-end">
+                            <span class="amount">{{ "{:,.2f}".format(d.prix_total or 0).replace(",", " ") }}</span>
+                        </td>
+                        <td class="text-end">
+                            <span class="amount">{{ "{:,.2f}".format(d.montant_paye or 0).replace(",", " ") }}</span>
+                        </td>
+                        <td class="text-end">
+                            <span class="amount negative">{{ "{:,.2f}".format(reste).replace(",", " ") }}</span>
+                        </td>
+                        <td class="text-center">
+                            {% if d.jours_attente > 60 %}
+                            <span class="badge-urgent badge-urgent-high">
+                                <i class="fas fa-exclamation-circle me-1"></i>{{ d.jours_attente }} jours
+                            </span>
+                            {% elif d.jours_attente > 30 %}
+                            <span class="badge-urgent badge-urgent-medium">
+                                <i class="fas fa-exclamation-triangle me-1"></i>{{ d.jours_attente }} jours
+                            </span>
+                            {% else %}
+                            <span class="badge-urgent badge-urgent-low">
+                                {{ d.jours_attente }} jours
+                            </span>
+                            {% endif %}
+                        </td>
+                        <td class="text-center">
+                            <div class="d-flex gap-1 justify-content-center">
+                                <a href="{{ url_for('accouchement_detail', id_dossier=d.id_dossier) }}"
+                                    class="btn btn-sm btn-outline-primary action-btn" title="Voir détails">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                                <button type="button" class="btn btn-sm btn-warning action-btn"
+                                    onclick="showPaymentModal({{ d.id_dossier }}, '{{ d.patiente }}', '{{ d.gyneco_name }}', {{ reste }}, '{{ d.mode_paiement }}')"
+                                    title="Enregistrer paiement">
+                                    <i class="fas fa-dollar-sign"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <i class="fas fa-check-circle text-success"></i>
+            <h4>Aucun paiement en attente</h4>
+            <p class="text-muted">Tous les dossiers sont à jour !</p>
+            <a href="{{ url_for('accouchement_list') }}" class="btn btn-warning-custom mt-3">
+                <i class="fas fa-arrow-left me-1"></i>Retour à la liste
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Modal Enregistrement Paiement -->
+<div class="modal fade" id="paymentModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header border-0">
+                <h5 class="modal-title">
+                    <i class="fas fa-dollar-sign me-2"></i>Enregistrer un Paiement
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div id="paymentInfo" class="alert-info-custom mb-3">
+                    <!-- Informations du dossier seront insérées ici -->
+                </div>
+
+                <div class="info-row">
+                    <span class="info-label">Patiente :</span>
+                    <span class="info-value" id="modalPatientName"></span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Gynécologue :</span>
+                    <span class="info-value" id="modalGynecoName"></span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Reste à payer :</span>
+                    <span class="info-value amount negative" id="modalRestant"></span>
+                </div>
+
+                <hr class="my-3">
+
+                <form id="paymentForm">
+                    <input type="hidden" id="dossierId" name="dossier_id">
+
+                    <div class="mb-3">
+                        <label for="montantPaiement" class="form-label">
+                            <i class="fas fa-money-bill-wave me-1"></i>Montant du paiement (DA) <span
+                                class="text-danger">*</span>
+                        </label>
+                        <input type="number" class="form-control" id="montantPaiement" name="montant" step="0.01"
+                            min="0" required>
+                        <div class="form-text">Entrez le montant payé par le gynécologue</div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="observationsPaiement" class="form-label">
+                            <i class="fas fa-comment me-1"></i>Observations
+                        </label>
+                        <textarea class="form-control" id="observationsPaiement" name="observations" rows="3"
+                            placeholder="Notes complémentaires..."></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer border-0">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-1"></i>Annuler
+                </button>
+                <button type="button" class="btn btn-warning-custom" onclick="submitPayment()">
+                    <i class="fas fa-check me-1"></i>Enregistrer le paiement
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    let currentModal = null;
+
+    function showPaymentModal(dossierId, patiente, gyneco, restant, modePaiement) {
+        document.getElementById('dossierId').value = dossierId;
+        document.getElementById('modalPatientName').textContent = patiente;
+        document.getElementById('modalGynecoName').textContent = gyneco;
+        document.getElementById('modalRestant').textContent = formatAmount(restant) + ' DA';
+
+        // Pré-remplir le montant avec le reste à payer
+        document.getElementById('montantPaiement').value = restant.toFixed(2);
+
+        // Message d'info selon le mode de paiement
+        const infoDiv = document.getElementById('paymentInfo');
+        if (modePaiement === 'VIA_GYNECO') {
+            infoDiv.innerHTML = '<i class="fas fa-info-circle me-2"></i><strong>Mode Via Gynéco :</strong> Le patient a payé le gynécologue. Enregistrez le montant que le gynécologue reverse à la clinique.';
+        } else {
+            infoDiv.innerHTML = '<i class="fas fa-info-circle me-2"></i><strong>Paiement Différé :</strong> Enregistrez le montant payé par le patient ou le gynécologue.';
+        }
+
+        // Reset observations
+        document.getElementById('observationsPaiement').value = '';
+
+        currentModal = new bootstrap.Modal(document.getElementById('paymentModal'));
+        currentModal.show();
+    }
+
+    async function submitPayment() {
+        const dossierId = document.getElementById('dossierId').value;
+        const montant = parseFloat(document.getElementById('montantPaiement').value);
+        const observations = document.getElementById('observationsPaiement').value;
+
+        if (!montant || montant <= 0) {
+            showAlert('danger', 'Veuillez entrer un montant valide');
+            return;
+        }
+
+        try {
+            const response = await fetch(`/accouchement/${dossierId}/paiement-differe`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    montant: montant,
+                    observations: observations
+                })
+            });
+
+            const result = await response.json();
+
+            if (result.success) {
+                showAlert('success', result.message);
+                currentModal.hide();
+
+                // Recharger la page après 1 seconde
+                setTimeout(() => {
+                    window.location.reload();
+                }, 1000);
+            } else {
+                showAlert('danger', result.error || 'Erreur lors de l\'enregistrement');
+            }
+        } catch (error) {
+            console.error('Erreur:', error);
+            showAlert('danger', 'Erreur de communication avec le serveur');
+        }
+    }
+
+    function formatAmount(amount) {
+        return new Intl.NumberFormat('fr-DZ', {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
+        }).format(amount).replace(/,/g, ' ');
+    }
+
+    function showAlert(type, message) {
+        // Créer une alerte Bootstrap dynamique
+        const alertDiv = document.createElement('div');
+        alertDiv.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
+        alertDiv.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+        alertDiv.innerHTML = `
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+        document.body.appendChild(alertDiv);
+
+        // Auto-suppression après 5 secondes
+        setTimeout(() => {
+            alertDiv.remove();
+        }, 5000);
+    }
+
+    // Permettre la soumission du formulaire avec Entrée
+    document.getElementById('montantPaiement').addEventListener('keypress', function (e) {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            submitPayment();
+        }
+    });
+</script>
+{% endblock %}

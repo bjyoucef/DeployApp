@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Étiquettes A4</title>
+    <link rel="icon" href="{{ url_for('static', filename='icon/favicon.ico') }}" />
+    <style>
+        @page {
+            size: A4;
+            margin: 0;
+        }
+
+        body {
+            font-family: Helvetica, sans-serif;
+            margin: 0;
+            padding: 0;
+            color: #1a1a1a;
+            background: #fff;
+        }
+
+        /* ====== FULL-PAGE 2x2 GRID via TABLE ====== */
+        table.grid {
+            width: 210mm;
+            height: 297mm;
+            border-collapse: collapse;
+            table-layout: fixed;
+            padding: 5px;
+        }
+
+        table.grid td {
+            width: 50%;
+            height: 148.5mm;
+            padding: 0;
+            vertical-align: middle;
+            text-align: center;
+        }
+
+        /* ====== INDIVIDUAL LABEL (centred inside its quadrant) ====== */
+        .label-container {
+            width: 80mm;
+            margin: 0 auto;
+            padding: 4mm 3mm;
+            text-align: center;
+            page-break-inside: avoid;
+        }
+
+        /* --- Logo (horizontal banner) --- */
+        .logo-img {
+            width: 65mm;
+            height: auto;
+            margin-bottom: 3mm;
+        }
+
+        /* --- Divider line --- */
+        .divider {
+            border: 0;
+            border-top: 2px solid #450A54;
+            margin: 2mm 0;
+        }
+
+        .divider-thin {
+            border: 0;
+            margin: 1.5mm 0;
+        }
+
+        /* --- Archive title badge --- */
+        .box-ref {
+            font-size: 32px;
+            font-weight: bold;
+            letter-spacing: 1px;
+            color: #450A54;
+            padding: 2mm 0;
+            margin: 0;
+        }
+
+        /* --- Details block --- */
+        .details {
+            font-size: 16px;
+            line-height: 1;
+            text-align: center;
+            margin: 2mm 0;
+        }
+
+        .details strong {
+            color: #450A54;
+        }
+
+        /* --- QR Code --- */
+        .qr-section {
+            margin-top: 2mm;
+        }
+
+        .qr-img {
+            width: auto;
+            height: auto;
+        }
+
+        /* --- Footer --- */
+        .footer-info {
+            font-size: 10px;
+            color: #999;
+            margin-top: 2mm;
+        }
+
+        /* Prevent breaking rows in the middle */
+        tr {
+            page-break-inside: avoid;
+        }
+    </style>
+</head>
+
+<body>
+    <table class="grid">
+        {% for row in boites|batch(2) %}
+        <tr>
+            {% for boite_data in row %}
+            <td>
+                <div class="label-container">
+                    <!-- Logo Clinique -->
+                    <img src="data:image/png;base64,{{ logo_b64 }}" class="logo-img" alt="Clinique INAYA">
+
+                    <hr class="divider">
+
+                    <!-- Référence Archive -->
+                    <div class="box-ref">{{ boite_data.boite.numero_archive }}</div>
+
+                    <hr class="divider-thin">
+
+                    <!-- Détails -->
+                    <div class="details">
+                        <div><strong>Médecin :</strong> {{ (boite_data.boite.doctor_name or 'Non assigné')[:30] }}</div>
+                        {% if boite_data.boite.specialite_nom %}
+                        <div><strong>Spécialité :</strong> {{ boite_data.boite.specialite_nom[:30] }}</div>
+                        {% endif %}
+                    </div>
+
+                    <hr class="divider-thin">
+
+                    <!-- QR Code -->
+                    <div class="qr-section">
+                        <img src="data:image/png;base64,{{ boite_data.qr_b64 }}" class="qr-img" />
+                    </div>
+                    
+                    <hr class="divider">
+
+                    <!-- Pied -->
+                    <div class="footer-info">
+                        Créée le {{ boite_data.boite.date_creation.strftime('%d/%m/%Y') }}
+                    </div>
+                </div>
+            </td>
+            {% endfor %}
+            {% if row|length == 1 %}
+            <td><!-- Cellule vide --></td>
+            {% endif %}
+        </tr>
+        {% endfor %}
+    </table>
+</body>
+
+</html>

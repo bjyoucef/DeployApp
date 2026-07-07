@@ -1,0 +1,398 @@
+<!-- Modal Ajouter Ligne de Facturation -->
+<div class="modal fade" id="ajouterLigneModal" tabindex="-1" aria-labelledby="ajouterLigneModalLabel"
+     aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content">
+            <!-- Header -->
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="ajouterLigneModalLabel">
+                    <i class="fas fa-plus-circle"></i> Ajouter une Ligne de Facturation
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                        aria-label="Fermer"></button>
+            </div>
+
+            <!-- Body -->
+            <div class="modal-body">
+                <form id="ajouterLigneForm" method="POST" action="{{ url_for('ajouter_ligne_facture') }}">
+                    <input type="hidden" name="facture_id" value="{{ facture.id }}">
+                    <input type="hidden" name="type_ligne" id="type_ligne_hidden">
+                    <!-- Type de prestation -->
+                    <div class="mb-4">
+                        <label class="form-label fw-bold">
+                            Type de prestation <span class="text-danger">*</span>
+                        </label>
+                        <select name="designation" id="designation_select" class="form-select form-select-lg" required>
+                            <option value="">Sélectionner le type de prestation...</option>
+
+                        {% for tva in taux_tva_disponibles if tva.est_actif %}
+                            {% if tva.code == 'DEBOURS' %}
+                                <option value="{{ tva.libelle }}"
+                                        data-type="debours"
+                                        data-tva="0"
+                                        data-code="{{ tva.code }}"
+                                        data-template="{{ tva.template_description or '' }}">
+                                    📋 {{ tva.libelle }} (SANS TVA)
+                                </option>
+                            {% else %}
+                                {% set emoji = '' %}
+                                {% if tva.code == 'ACTE_MEDICAL' %}
+                                    {% set emoji = '🩺' %}
+                                {% elif tva.code == 'HOSPITALISATION' %}
+                                    {% set emoji = '🏥' %}
+                                {% elif tva.code == 'CONSULTATION' %}
+                                    {% set emoji = '👨‍⚕️' %}
+                                {% elif tva.code == 'ANALYSES' %}
+                                    {% set emoji = '🔬' %}
+                                {% elif tva.code == 'IMAGERIE' %}
+                                    {% set emoji = '📡' %}
+                                {% elif tva.code == 'SOINS' %}
+                                    {% set emoji = '💊' %}
+                                {% else %}
+                                    {% set emoji = '📌' %}
+                                {% endif %}
+
+                                <option value="{{ tva.libelle }}"
+                                        data-type="prestation"
+                                        data-tva="{{ tva.taux_tva }}"
+                                        data-code="{{ tva.code }}"
+                                        data-template="{{ tva.template_description or '' }}">
+                                    {{ emoji }} {{ tva.libelle }} (TVA {{ tva.taux_tva }}%)
+                                </option>
+                            {% endif %}
+                        {% endfor %}
+
+                        <!-- Option personnalisée -->
+                        <option value="Autre"
+                                data-type="autre"
+                                data-tva="0"
+                                data-code="AUTRE"
+        data-template="{{ (taux_tva_disponibles | selectattr('code', 'equalto', 'AUTRE') | list | first).template_description or '' | tojson }}">
+                            ➕ Autre (TVA personnalisée)
+                        </option>
+                        </select>
+                        <small class="form-text text-muted">
+                            Les taux de TVA sont configurables dans les paramètres système
+                        </small>
+                    </div>
+
+                    <!-- Alertes info conditionnelles -->
+                    <div id="debours_info" class="alert alert-warning alert-dismissible fade show"
+                         style="display: none;" role="alert">
+                        <h6 class="alert-heading">
+                            <i class="fas fa-exclamation-triangle"></i> Important - Débours
+                        </h6>
+                        <ul class="mb-0 small">
+                            <li>Un débours = dépense payée au nom du patient avec justificatif à son nom</li>
+                            <li><strong>AUCUNE TVA</strong> ne s'applique sur un débours</li>
+                            <li>Le droit de timbre s'applique sur le total incluant les débours</li>
+                        </ul>
+                    </div>
+
+                    <div id="autre_info" class="alert alert-info" style="display: none;" role="alert">
+                        <i class="fas fa-info-circle"></i>
+                        Pour "Autre", vous pouvez choisir le taux de TVA ci-dessous.
+                    </div>
+
+                    <!-- Description détaillée avec bouton de rechargement -->
+                    <div class="mb-3">
+                        <label class="form-label d-flex justify-content-between align-items-center">
+                            <span>
+                                <i class="fas fa-align-left"></i> Description détaillée
+                            </span>
+                            <button type="button"
+                                    class="btn btn-sm btn-outline-secondary"
+                                    id="btn_recharger_template"
+                                    style="display: none;"
+                                    title="Recharger le template de description">
+                                <i class="fas fa-sync-alt"></i> Recharger template
+                            </button>
+                        </label>
+                        <textarea name="description"
+                                  id="description_textarea"
+                                  class="form-control"
+                                  rows="5"
+                                  placeholder="Sélectionnez un type de prestation pour charger un template..."></textarea>
+                        <small class="form-text text-muted">
+                            <i class="fas fa-info-circle"></i>
+                            <span id="description_hint">Cette description apparaîtra sur la facture sous la désignation</span>
+                        </small>
+                    </div>
+
+                    <!-- Référence justificatif (débours uniquement) -->
+                    <div class="mb-3" id="reference_justificatif_group" style="display: none;">
+                        <label class="form-label">
+                            <i class="fas fa-receipt"></i> Référence du justificatif
+                            <span class="text-danger">*</span>
+                        </label>
+                        <input type="text" name="reference_justificatif" id="reference_justificatif"
+                               class="form-control" placeholder="N° facture ou référence du justificatif">
+                        <small class="form-text text-muted">
+                            Obligatoire pour les débours (facture du fournisseur au nom du patient)
+                        </small>
+                    </div>
+
+                    <!-- Quantité et Mode de saisie -->
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label">
+                                <i class="fas fa-calculator"></i> Quantité
+                                <span class="text-danger">*</span>
+                            </label>
+                            <input type="number" name="quantite" id="quantite"
+                                   class="form-control form-control-lg" step="0.01" value="1" required min="0.01">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">
+                                <i class="fas fa-percentage"></i> Mode de saisie du prix
+                            </label>
+                            <div class="btn-group w-100" role="group" aria-label="Mode de saisie prix">
+                                <input type="radio" class="btn-check" name="mode_prix" id="mode_ht" value="ht" checked
+                                       autocomplete="off">
+                                <label class="btn btn-outline-primary" for="mode_ht">
+                                    <i class="fas fa-calculator"></i> Prix HT
+                                </label>
+
+                                <input type="radio" class="btn-check" name="mode_prix" id="mode_ttc" value="ttc"
+                                       autocomplete="off">
+                                <label class="btn btn-outline-success" for="mode_ttc">
+                                    <i class="fas fa-money-bill-wave"></i> Prix TTC
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Prix HT et TTC -->
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label">
+                                <i class="fas fa-tag"></i> Prix Unitaire HT (DA)
+                                <span class="text-danger">*</span>
+                            </label>
+                            <div class="input-group input-group-lg">
+                                <input type="number" id="prix_ht" class="form-control"
+                                       step="0.01" required min="0" placeholder="0.00">
+                                <span class="input-group-text">DA</span>
+                            </div>
+                            <input type="hidden" name="prix_unitaire" id="prix_unitaire_hidden">
+                            <input type="hidden" name="montant_ttc_calcule" id="montant_ttc_hidden">
+                            <input type="hidden" name="montant_tva_calcule" id="montant_tva_hidden">
+                            <input type="hidden" name="mode_calcul" id="mode_calcul_hidden">
+                        </div>
+                        <div class="col-md-6">
+        <label class="form-label d-flex justify-content-between align-items-center">
+            <span>
+                                <i class="fas fa-money-bill-alt"></i> Prix Unitaire TTC (DA)
+                                <span class="text-muted">(calculé)</span>
+            </span>
+            <button type="button"
+                    class="btn btn-sm btn-success btn-coller-reste"
+                    onclick="collerResteAFacturer()"
+                    title="Coller le reste à facturer"
+                    id="btn_coller_reste">
+                <i class="fas fa-paste"></i> Reste à facturer
+            </button>
+                            </label>
+                            <div class="input-group input-group-lg">
+                                <input type="number" id="prix_ttc" class="form-control"
+                                       step="0.01" min="0" placeholder="0.00">
+                                <span class="input-group-text">DA</span>
+                            </div>
+                                    <small class="text-muted mt-1 d-block" id="reste_info" style="display: none;">
+            <i class="fas fa-info-circle"></i>
+            <span id="reste_montant_text"></span>
+        </small>
+                        </div>
+                    </div>
+
+                    <!-- TVA -->
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <label class="form-label">
+                                <i class="fas fa-percent"></i> Taux TVA (%)
+                            </label>
+
+        <!-- Select pour type "Autre" (SANS name) -->
+        <select id="taux_tva_select" class="form-select form-select-lg"
+                                    style="display: none;">
+                                <option value="0">Exonéré (0%)</option>
+                                {% for tva in taux_tva_disponibles if tva.est_actif and tva.code != 'DEBOURS' %}
+                                    <option value="{{ tva.taux_tva }}">
+                                        {{ tva.libelle }} - {{ tva.taux_tva }}%
+                                    </option>
+                                {% endfor %}
+                            </select>
+
+        <!-- Input readonly pour les autres types (SANS name) -->
+                            <div class="input-group input-group-lg" id="taux_tva_input_group">
+            <input type="number" id="taux_tva_input"
+                   class="form-control" step="1" value="0" min="0" max="100" readonly>
+                                <span class="input-group-text">%</span>
+                            </div>
+
+        <!-- ✅ CHAMP CACHÉ QUI SERA SOUMIS -->
+        <input type="hidden" name="taux_tva" id="taux_tva_hidden" value="0">
+
+                            <small class="text-muted">
+                                <i class="fas fa-info-circle"></i>
+                                <span id="tva_info_text">TVA appliquée automatiquement selon le type</span>
+                            </small>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">
+                                <i class="fas fa-eye"></i> Aperçu du montant
+                            </label>
+                            <div class="alert alert-light border mb-0">
+                                <div class="d-flex justify-content-between mb-1">
+                                    <small><strong>Montant HT :</strong></small>
+                                    <small><span id="preview_ht">0.00</span> DA</small>
+                                </div>
+                                <div class="d-flex justify-content-between mb-1">
+                                    <small><strong>TVA :</strong></small>
+                                    <small><span id="preview_tva">0.00</span> DA</small>
+                                </div>
+                                <hr class="my-2">
+                                <div class="d-flex justify-content-between">
+                                    <strong>Total TTC :</strong>
+                                    <strong class="text-primary fs-5"><span id="preview_ttc">0.00</span> DA</strong>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Footer -->
+            <div class="modal-footer bg-light">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times"></i> Annuler
+                </button>
+                <button type="submit" form="ajouterLigneForm" class="btn btn-primary btn-lg" id="btn_ajouter_ligne">
+                    <i class="fas fa-plus"></i> Ajouter la ligne
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    /* Styles spécifiques pour le modal */
+    #ajouterLigneModal .form-select-lg,
+    #ajouterLigneModal .form-control-lg {
+        font-size: 1rem;
+    }
+
+    #ajouterLigneModal .alert {
+        border-left-width: 4px;
+    }
+
+    #ajouterLigneModal .btn-group label {
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+
+    #ajouterLigneModal .btn-group label:hover {
+        transform: translateY(-1px);
+    }
+
+    #ajouterLigneModal .form-check-input:checked + .form-check-label {
+        font-weight: 600;
+        color: var(--bs-primary);
+    }
+
+    /* Animation pour les alertes */
+    #ajouterLigneModal .alert {
+        animation: slideDown 0.3s ease-out;
+    }
+
+    @keyframes slideDown {
+        from {
+            opacity: 0;
+            transform: translateY(-10px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    /* Highlight pour le preview */
+    #ajouterLigneModal .alert-light {
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        transition: all 0.3s ease;
+    }
+
+    #ajouterLigneModal .alert-light:hover {
+        box-shadow: 0 0.125rem 0.5rem rgba(0, 0, 0, 0.1);
+        transform: translateY(-2px);
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+        #ajouterLigneModal .modal-dialog {
+            margin: 0.5rem;
+        }
+
+        #ajouterLigneModal .row > div {
+            margin-bottom: 1rem;
+        }
+    }
+    /* Bouton coller reste à facturer */
+.btn-coller-reste {
+    font-size: 0.75rem;
+    padding: 0.25rem 0.625rem;
+    border-radius: 0.375rem;
+    background: linear-gradient(135deg, #00b09b 0%, #96c93d 100%);
+    border: none;
+    color: white;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 8px rgba(0, 176, 155, 0.25);
+}
+
+.btn-coller-reste:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 176, 155, 0.4);
+    background: linear-gradient(135deg, #96c93d 0%, #00b09b 100%);
+}
+
+.btn-coller-reste:active {
+    transform: translateY(0);
+}
+
+.btn-coller-reste:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.btn-coller-reste i {
+    margin-right: 0.375rem;
+    animation: pulse-paste 2s ease-in-out infinite;
+}
+
+@keyframes pulse-paste {
+    0%, 100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+    50% {
+        transform: scale(1.1);
+        opacity: 0.8;
+    }
+}
+
+#reste_info {
+    animation: fadeInUp 0.4s ease-out;
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+</style>

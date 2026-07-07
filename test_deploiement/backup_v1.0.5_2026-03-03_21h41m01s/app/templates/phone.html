@@ -1,0 +1,206 @@
+{% extends "layout.html" %}
+{% block content %}
+
+{% if 'AJOUTER_TELEPHONE' in session.privileges %}
+<div class="d-flex justify-content-center">
+    <button type="button"
+            class="btn btn-primary btn-lg shadow mb-3"
+            data-bs-toggle="modal"
+            data-bs-target="#addContactModal">
+        <i class="fas fa-plus me-2"></i>Ajouter un contact
+    </button>
+</div>
+<!-- Modal pour ajouter un contact -->
+<div class="modal fade" id="addContactModal" tabindex="-1" aria-labelledby="addContactModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-scrollable">
+        <div class="modal-content shadow-lg">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addContactModalLabel">Ajouter un Contact</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form action="{{ url_for('add_or_edit_phone') }}" method="POST">
+                    <div class="mb-3">
+                        <label for="modalName" class="form-label">Nom</label>
+                        <input type="text" class="form-control" name="name" id="modalName" placeholder="Entrez le nom"
+                               required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="modalDepartment" class="form-label">Poste</label>
+                        <input type="text" class="form-control" name="department" id="modalDepartment"
+                               placeholder="Entrez le Poste" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="modalPhone" class="form-label">Numéro</label>
+                        <input type="text" class="form-control" name="phone" id="modalPhone"
+                               placeholder="Entrez le numéro" required>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="submit" class="btn btn-primary">Enregistrer</button>
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+
+        <!-- Table des contacts -->
+
+            <table id="myTable"
+                   class="table table-hover">
+                <thead>
+                <tr>
+                    <th>
+                        <i class="fas fa-user"></i>
+                        Nom
+                    </th>
+                    <th>
+                        <i class="fas fa-building"></i>
+                       Poste
+                    </th>
+                    <th>
+                        <i class="fas fa-phone"></i>
+                        Numéro
+                    </th>
+                    {% if 'MODIFIER_TELEPHONE' in session.privileges or 'DESACTIVER_TELEPHONE' in session.privileges %}
+                    <th>
+                        <i class="fas fa-user-plus"></i>
+                        Personne Add Phone
+                    </th>
+                    <th>
+                        <i class="fas fa-cogs"></i>
+                        Actions
+                    </th>
+                    {% endif %}
+                </tr>
+                </thead>
+                <tbody>
+                {% for contact in contacts %}
+                <tr>
+                    <td>{{ contact['nom'] }}</td>
+                    <td>{{ contact['Poste'] }}</td>
+                    <td>{{ contact['numero'] }}</td>
+
+
+                    {% if 'MODIFIER_TELEPHONE' in session.privileges or 'DESACTIVER_TELEPHONE' in session.privileges %}
+                    <td>{{ contact['nom_personne_add'] }}</td>
+                    <td class="d-flex justify-content-between">
+
+                        <!-- Modifier le contact -->
+                        {% if 'MODIFIER_TELEPHONE' in session.privileges %}
+
+                        <button class="btn btn-success btn-sm me-2" data-bs-toggle="modal"
+                                data-bs-target="#contactModal{{ contact.id }}">
+                            <ion-icon name="pencil-outline"></ion-icon>
+                            Modifier
+                        </button>
+                        {% endif %}
+
+                        <!-- Modal pour éditer le contact -->
+                        <div class="modal fade" id="contactModal{{ contact.id }}" tabindex="-1"
+                             aria-labelledby="contactModalLabel{{ contact.id }}" aria-hidden="true">
+                            <div class="modal-dialog">
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <h5 class="modal-title" id="contactModalLabel{{ contact.id }}">Modifier un
+                                            Contact</h5>
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal"
+                                                aria-label="Close"></button>
+                                    </div>
+                                    <div class="modal-body">
+                                        <form action="{{ url_for('add_or_edit_phone', id=contact.id) }}" method="POST">
+                                            <input type="hidden" name="id" value="{{ contact.id }}">
+                                            <div class="mb-3">
+                                                <label for="editModalName{{ contact.id }}"
+                                                       class="form-label">Nom</label>
+                                                <input type="text" class="form-control" name="name"
+                                                       id="editModalName{{ contact.id }}" value="{{ contact.nom }}"
+                                                       required>
+                                            </div>
+                                            <div class="mb-3">
+                                                <label for="editModalDepartment{{ contact.id }}"
+                                                       class="form-label">Poste</label>
+                                                <input type="text" class="form-control" name="department"
+                                                       id="editModalDepartment{{ contact.id }}"
+                                                       value="{{ contact.Poste }}"
+                                                       required>
+                                            </div>
+                                            <div class="mb-3">
+                                                <label for="editModalPhone{{ contact.id }}"
+                                                       class="form-label">Numéro</label>
+                                                <input type="text" class="form-control" name="phone"
+                                                       id="editModalPhone{{ contact.id }}" value="{{ contact.numero }}"
+                                                       required>
+                                            </div>
+                                            <div class="modal-footer">
+                                                <button type="submit" class="btn btn-primary">Enregistrer</button>
+                                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                                                    Annuler
+                                                </button>
+                                            </div>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {% if 'DESACTIVER_TELEPHONE' in session.privileges %}
+
+                        <!-- Activer/Désactiver le statut du téléphone -->
+                        <form action="{{ url_for('change_status_phone') }}" method="POST" style="display:inline-block;">
+                            <input type="hidden" name="id" value="{{ contact.id }}">
+                            {% if contact['status_phone'] %}
+                            <input type="hidden" name="change_status_phone_contact" value=0>
+                            <button type="submit" class="btn btn-danger btn-sm">Désactiver</button>
+                            {% else %}
+                            <input type="hidden" name="change_status_phone_contact" value=1>
+                            <button type="submit" class="btn btn-success btn-sm">Activer</button>
+                            {% endif %}
+                        </form>
+                        {% endif %}
+                    </td>
+                    {% endif %}
+
+                </tr>
+                {% endfor %}
+
+                <!-- Gestion du statut du personnel -->
+                {% for contact2 in contacts2 %}
+                {% if contact2['telephone'] %}
+                <tr>
+                    <td>{{ contact2['nom'] }} {{ contact2['prenom'] }}</td>
+                    <td>{{ contact2['role'] }}</td>
+                    <td>{{ contact2['telephone'] }}</td>
+                    <td>-</td>
+                        {% if 'DESACTIVER_TELEPHONE' in session.privileges %}
+                    <td class="d-flex justify-content-between">
+                        <form action="{{ url_for('change_status_phone') }}" method="POST" style="display:inline-block;">
+                            <input type="hidden" name="id_personnel" value="{{ contact2.id_personnel }}">
+                            {% if contact2['status_phone'] %}
+                            <input type="hidden" name="change_status_phone_personnel" value=0>
+                            <button type="submit" class="btn btn-danger btn-sm">Désactiver</button>
+                            {% else %}
+                            <input type="hidden" name="change_status_phone_personnel" value=1>
+                            <button type="submit" class="btn btn-success btn-sm">Activer</button>
+                            {% endif %}
+                        </form>
+                    </td>
+                    {% endif %}
+                </tr>
+                {% endif %}
+
+                {% endfor %}
+                </tbody>
+            </table>
+
+
+
+{% endblock %}
+
+
+
+
+

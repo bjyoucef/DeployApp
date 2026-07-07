@@ -1,0 +1,492 @@
+INFO:werkzeug:[31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on https://127.0.0.1:8080
+ * Running on https://192.168.50.132:8080
+INFO:werkzeug:[33mPress CTRL+C to quit[0m
+INFO:werkzeug: * Restarting with stat
+WARNING:werkzeug: * Debugger is active!
+INFO:werkzeug: * Debugger PIN: 563-805-448
+INFO:werkzeug:127.0.0.1 - - [29/Dec/2025 11:55:24] "[32mGET /forfait/1/configure?id_produit=75&qte=1 HTTP/1.1[0m" 302 -
+INFO:werkzeug:127.0.0.1 - - [29/Dec/2025 11:55:24] "GET /?message=Vous+devez+être+connecté+pour+accéder+à+cette+page&category=danger HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [29/Dec/2025 11:55:24] "[36mGET /static/css/bootstrap-icons.css HTTP/1.1[0m" 304 -
+INFO:werkzeug:127.0.0.1 - - [29/Dec/2025 11:55:24] "[36mGET /static/css/bootstrap.min.css HTTP/1.1[0m" 304 -
+INFO:werkzeug:127.0.0.1 - - [29/Dec/2025 11:55:24] "[36mGET /static/css/fontawesome.css HTTP/1.1[0m" 304 -
+INFO:werkzeug:127.0.0.1 - - [29/Dec/2025 11:55:24] "[36mGET /static/css/toastify.css HTTP/1.1[0m" 304 -
+INFO:werkzeug:127.0.0.1 - - [29/Dec/2025 11:55:24] "[36mGET /static/css/styles.css HTTP/1.1[0m" 304 -
+INFO:werkzeug:127.0.0.1 - - [29/Dec/2025 11:55:24] "[36mGET /static/css/datatables.css HTTP/1.1[0m" 304 -
+INFO:werkzeug:127.0.0.1 - - [29/Dec/2025 11:55:24] "[36mGET /static/css/datatables.min.css HTTP/1.1[0m" 304 -
+INFO:werkzeug:127.0.0.1 - - [29/Dec/2025 11:55:24] "[36mGET /static/css/choices.min.css HTTP/1.1[0m" 304 -
+INFO:werkzeug:127.0.0.1 - - [29/Dec/2025 11:55:24] "[36mGET /static/js/jquery-3.7.1.min.js HTTP/1.1[0m" 304 -
+INFO:werkzeug:127.0.0.1 - - [29/Dec/2025 11:55:24] "[36mGET /static/js/bootstrap.bundle.min.js HTTP/1.1[0m" 304 -
+INFO:werkzeug:127.0.0.1 - - [29/Dec/2025 11:55:24] "[36mGET /static/js/datatables.js HTTP/1.1[0m" 304 -
+INFO:werkzeug:127.0.0.1 - - [29/Dec/2025 11:55:24] "[36mGET /static/js/datatables.min.js HTTP/1.1[0m" 304 -
+INFO:werkzeug:127.0.0.1 - - [29/Dec/2025 11:55:24] "[36mGET /static/js/toastify-js.js HTTP/1.1[0m" 304 -
+INFO:werkzeug:127.0.0.1 - - [29/Dec/2025 11:55:24] "[36mGET /static/js/custom.js HTTP/1.1[0m" 304 -
+INFO:werkzeug:127.0.0.1 - - [29/Dec/2025 11:55:24] "[36mGET /static/js/choices.min.js HTTP/1.1[0m" 304 -
+INFO:werkzeug:127.0.0.1 - - [29/Dec/2025 11:55:50] "[32mPOST /login HTTP/1.1[0m" 302 -
+INFO:werkzeug:127.0.0.1 - - [29/Dec/2025 11:55:50] "GET /?message=Bonjour+badjadi+youcef,+vous+êtes+connecté.&category=success HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [29/Dec/2025 11:55:50] "[36mGET /static/css/bootstrap.min.css HTTP/1.1[0m" 304 -
+INFO:werkzeug:127.0.0.1 - - [29/Dec/2025 11:55:50] "[36mGET /static/css/fontawesome.css HTTP/1.1[0m" 304 -
+INFO:werkzeug:127.0.0.1 - - [29/Dec/2025 11:55:50] "[36mGET /static/css/datatables.css HTTP/1.1[0m" 304 -
+INFO:werkzeug:127.0.0.1 - - [29/Dec/2025 11:55:50] "[36mGET /static/css/toastify.css HTTP/1.1[0m" 304 -
+INFO:werkzeug:127.0.0.1 - - [29/Dec/2025 11:55:50] "[36mGET /static/css/styles.css HTTP/1.1[0m" 304 -
+INFO:werkzeug:127.0.0.1 - - [29/Dec/2025 11:55:50] "[36mGET /static/css/bootstrap-icons.css HTTP/1.1[0m" 304 -
+INFO:werkzeug:127.0.0.1 - - [29/Dec/2025 11:55:50] "[36mGET /static/css/datatables.min.css HTTP/1.1[0m" 304 -
+INFO:werkzeug:127.0.0.1 - - [29/Dec/2025 11:55:50] "[36mGET /static/css/choices.min.css HTTP/1.1[0m" 304 -
+INFO:werkzeug:127.0.0.1 - - [29/Dec/2025 11:55:50] "[36mGET /static/js/jquery-3.7.1.min.js HTTP/1.1[0m" 304 -
+INFO:werkzeug:127.0.0.1 - - [29/Dec/2025 11:55:50] "[36mGET /static/js/bootstrap.bundle.min.js HTTP/1.1[0m" 304 -
+INFO:werkzeug:127.0.0.1 - - [29/Dec/2025 11:55:50] "[36mGET /static/js/datatables.js HTTP/1.1[0m" 304 -
+INFO:werkzeug:127.0.0.1 - - [29/Dec/2025 11:55:50] "[36mGET /static/js/datatables.min.js HTTP/1.1[0m" 304 -
+INFO:werkzeug:127.0.0.1 - - [29/Dec/2025 11:55:50] "[36mGET /static/js/toastify-js.js HTTP/1.1[0m" 304 -
+INFO:werkzeug:127.0.0.1 - - [29/Dec/2025 11:55:50] "[36mGET /static/js/custom.js HTTP/1.1[0m" 304 -
+INFO:werkzeug:127.0.0.1 - - [29/Dec/2025 11:55:50] "[36mGET /static/js/choices.min.js HTTP/1.1[0m" 304 -
+INFO:werkzeug:127.0.0.1 - - [29/Dec/2025 11:55:50] "[36mGET /static/icon/favicon.ico HTTP/1.1[0m" 304 -
+INFO:werkzeug:127.0.0.1 - - [29/Dec/2025 11:55:56] "GET /admin HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [29/Dec/2025 11:55:56] "[36mGET /static/css/styles.css HTTP/1.1[0m" 304 -
+INFO:werkzeug:127.0.0.1 - - [29/Dec/2025 11:55:56] "[36mGET /static/css/bootstrap.min.css HTTP/1.1[0m" 304 -
+INFO:werkzeug:127.0.0.1 - - [29/Dec/2025 11:55:56] "[36mGET /static/css/fontawesome.css HTTP/1.1[0m" 304 -
+INFO:werkzeug:127.0.0.1 - - [29/Dec/2025 11:55:56] "[36mGET /static/js/jquery-3.7.1.min.js HTTP/1.1[0m" 304 -
+INFO:werkzeug:127.0.0.1 - - [29/Dec/2025 11:55:56] "[36mGET /static/js/datatables.js HTTP/1.1[0m" 304 -
+INFO:werkzeug:127.0.0.1 - - [29/Dec/2025 11:55:56] "[36mGET /static/js/bootstrap.bundle.min.js HTTP/1.1[0m" 304 -
+INFO:werkzeug:127.0.0.1 - - [29/Dec/2025 11:55:56] "[36mGET /static/css/datatables.css HTTP/1.1[0m" 304 -
+INFO:werkzeug:127.0.0.1 - - [29/Dec/2025 11:55:56] "[36mGET /static/css/toastify.css HTTP/1.1[0m" 304 -
+INFO:werkzeug:127.0.0.1 - - [29/Dec/2025 11:55:56] "[36mGET /static/js/datatables.min.js HTTP/1.1[0m" 304 -
+INFO:werkzeug:127.0.0.1 - - [29/Dec/2025 11:55:56] "[36mGET /static/css/datatables.min.css HTTP/1.1[0m" 304 -
+INFO:werkzeug:127.0.0.1 - - [29/Dec/2025 11:55:56] "[36mGET /static/js/custom.js HTTP/1.1[0m" 304 -
+INFO:werkzeug:127.0.0.1 - - [29/Dec/2025 11:55:56] "[36mGET /static/js/toastify-js.js HTTP/1.1[0m" 304 -
+INFO:werkzeug:127.0.0.1 - - [29/Dec/2025 11:55:56] "[36mGET /static/js/select2.js HTTP/1.1[0m" 304 -
+INFO:werkzeug:127.0.0.1 - - [29/Dec/2025 11:55:59] "GET /forfait HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [29/Dec/2025 11:56:00] "[36mGET /static/css/styles.css HTTP/1.1[0m" 304 -
+INFO:werkzeug:127.0.0.1 - - [29/Dec/2025 11:56:00] "[36mGET /static/css/bootstrap.min.css HTTP/1.1[0m" 304 -
+INFO:werkzeug:127.0.0.1 - - [29/Dec/2025 11:56:00] "[36mGET /static/css/datatables.css HTTP/1.1[0m" 304 -
+INFO:werkzeug:127.0.0.1 - - [29/Dec/2025 11:56:00] "[36mGET /static/css/toastify.css HTTP/1.1[0m" 304 -
+INFO:werkzeug:127.0.0.1 - - [29/Dec/2025 11:56:00] "[36mGET /static/css/fontawesome.css HTTP/1.1[0m" 304 -
+INFO:werkzeug:127.0.0.1 - - [29/Dec/2025 11:56:00] "[36mGET /static/css/datatables.min.css HTTP/1.1[0m" 304 -
+INFO:werkzeug:127.0.0.1 - - [29/Dec/2025 11:56:00] "[36mGET /static/js/bootstrap.bundle.min.js HTTP/1.1[0m" 304 -
+INFO:werkzeug:127.0.0.1 - - [29/Dec/2025 11:56:00] "[36mGET /static/js/datatables.js HTTP/1.1[0m" 304 -
+INFO:werkzeug:127.0.0.1 - - [29/Dec/2025 11:56:00] "[36mGET /static/js/datatables.min.js HTTP/1.1[0m" 304 -
+INFO:werkzeug:127.0.0.1 - - [29/Dec/2025 11:56:00] "[36mGET /static/js/toastify-js.js HTTP/1.1[0m" 304 -
+INFO:werkzeug:127.0.0.1 - - [29/Dec/2025 11:56:00] "[36mGET /static/js/custom.js HTTP/1.1[0m" 304 -
+INFO:werkzeug:127.0.0.1 - - [29/Dec/2025 11:56:00] "[36mGET /static/js/jquery-3.7.1.min.js HTTP/1.1[0m" 304 -
+INFO:werkzeug:127.0.0.1 - - [29/Dec/2025 11:56:00] "[36mGET /static/js/select2.js HTTP/1.1[0m" 304 -
+INFO:werkzeug:127.0.0.1 - - [29/Dec/2025 11:56:08] "GET /forfait/1/configure HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [29/Dec/2025 11:56:08] "[36mGET /static/css/bootstrap.min.css HTTP/1.1[0m" 304 -
+INFO:werkzeug:127.0.0.1 - - [29/Dec/2025 11:56:08] "[36mGET /static/css/datatables.css HTTP/1.1[0m" 304 -
+INFO:werkzeug:127.0.0.1 - - [29/Dec/2025 11:56:08] "[36mGET /static/css/styles.css HTTP/1.1[0m" 304 -
+INFO:werkzeug:127.0.0.1 - - [29/Dec/2025 11:56:08] "[36mGET /static/css/toastify.css HTTP/1.1[0m" 304 -
+INFO:werkzeug:127.0.0.1 - - [29/Dec/2025 11:56:08] "[36mGET /static/css/datatables.min.css HTTP/1.1[0m" 304 -
+INFO:werkzeug:127.0.0.1 - - [29/Dec/2025 11:56:08] "[36mGET /static/css/fontawesome.css HTTP/1.1[0m" 304 -
+INFO:werkzeug:127.0.0.1 - - [29/Dec/2025 11:56:08] "[36mGET /static/js/jquery-3.7.1.min.js HTTP/1.1[0m" 304 -
+INFO:werkzeug:127.0.0.1 - - [29/Dec/2025 11:56:08] "[36mGET /static/js/toastify-js.js HTTP/1.1[0m" 304 -
+INFO:werkzeug:127.0.0.1 - - [29/Dec/2025 11:56:08] "[36mGET /static/js/custom.js HTTP/1.1[0m" 304 -
+INFO:werkzeug:127.0.0.1 - - [29/Dec/2025 11:56:08] "[36mGET /static/js/datatables.min.js HTTP/1.1[0m" 304 -
+INFO:werkzeug:127.0.0.1 - - [29/Dec/2025 11:56:08] "[36mGET /static/js/bootstrap.bundle.min.js HTTP/1.1[0m" 304 -
+INFO:werkzeug:127.0.0.1 - - [29/Dec/2025 11:56:08] "[36mGET /static/js/datatables.js HTTP/1.1[0m" 304 -
+INFO:werkzeug:127.0.0.1 - - [29/Dec/2025 11:56:08] "[36mGET /static/js/select2.js HTTP/1.1[0m" 304 -
+INFO:werkzeug:127.0.0.1 - - [29/Dec/2025 11:56:17] "GET /forfait/1/configure?id_produit=77&qte=1 HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [29/Dec/2025 11:56:17] "[36mGET /static/css/styles.css HTTP/1.1[0m" 304 -
+INFO:werkzeug:127.0.0.1 - - [29/Dec/2025 11:56:17] "[36mGET /static/css/fontawesome.css HTTP/1.1[0m" 304 -
+INFO:werkzeug:127.0.0.1 - - [29/Dec/2025 11:56:17] "[36mGET /static/js/jquery-3.7.1.min.js HTTP/1.1[0m" 304 -
+INFO:werkzeug:127.0.0.1 - - [29/Dec/2025 11:56:17] "[36mGET /static/css/toastify.css HTTP/1.1[0m" 304 -
+INFO:werkzeug:127.0.0.1 - - [29/Dec/2025 11:56:17] "[36mGET /static/css/bootstrap.min.css HTTP/1.1[0m" 304 -
+INFO:werkzeug:127.0.0.1 - - [29/Dec/2025 11:56:17] "[36mGET /static/css/datatables.css HTTP/1.1[0m" 304 -
+INFO:werkzeug:127.0.0.1 - - [29/Dec/2025 11:56:17] "[36mGET /static/css/datatables.min.css HTTP/1.1[0m" 304 -
+INFO:werkzeug:127.0.0.1 - - [29/Dec/2025 11:56:17] "[36mGET /static/js/bootstrap.bundle.min.js HTTP/1.1[0m" 304 -
+INFO:werkzeug:127.0.0.1 - - [29/Dec/2025 11:56:17] "[36mGET /static/js/datatables.js HTTP/1.1[0m" 304 -
+INFO:werkzeug:127.0.0.1 - - [29/Dec/2025 11:56:17] "[36mGET /static/js/datatables.min.js HTTP/1.1[0m" 304 -
+INFO:werkzeug:127.0.0.1 - - [29/Dec/2025 11:56:17] "[36mGET /static/js/custom.js HTTP/1.1[0m" 304 -
+INFO:werkzeug:127.0.0.1 - - [29/Dec/2025 11:56:17] "[36mGET /static/js/select2.js HTTP/1.1[0m" 304 -
+INFO:werkzeug:127.0.0.1 - - [29/Dec/2025 11:56:17] "[36mGET /static/js/toastify-js.js HTTP/1.1[0m" 304 -
+INFO:werkzeug:127.0.0.1 - - [29/Dec/2025 11:56:32] "GET /forfait/1/configure?id_acte=15 HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [29/Dec/2025 11:56:32] "[36mGET /static/css/bootstrap.min.css HTTP/1.1[0m" 304 -
+INFO:werkzeug:127.0.0.1 - - [29/Dec/2025 11:56:32] "[36mGET /static/css/fontawesome.css HTTP/1.1[0m" 304 -
+INFO:werkzeug:127.0.0.1 - - [29/Dec/2025 11:56:32] "[36mGET /static/css/styles.css HTTP/1.1[0m" 304 -
+INFO:werkzeug:127.0.0.1 - - [29/Dec/2025 11:56:32] "[36mGET /static/css/toastify.css HTTP/1.1[0m" 304 -
+INFO:werkzeug:127.0.0.1 - - [29/Dec/2025 11:56:32] "[36mGET /static/js/bootstrap.bundle.min.js HTTP/1.1[0m" 304 -
+INFO:werkzeug:127.0.0.1 - - [29/Dec/2025 11:56:32] "[36mGET /static/js/jquery-3.7.1.min.js HTTP/1.1[0m" 304 -
+INFO:werkzeug:127.0.0.1 - - [29/Dec/2025 11:56:32] "[36mGET /static/js/datatables.js HTTP/1.1[0m" 304 -
+INFO:werkzeug:127.0.0.1 - - [29/Dec/2025 11:56:32] "[36mGET /static/js/datatables.min.js HTTP/1.1[0m" 304 -
+INFO:werkzeug:127.0.0.1 - - [29/Dec/2025 11:56:32] "[36mGET /static/css/datatables.min.css HTTP/1.1[0m" 304 -
+INFO:werkzeug:127.0.0.1 - - [29/Dec/2025 11:56:32] "[36mGET /static/css/datatables.css HTTP/1.1[0m" 304 -
+INFO:werkzeug:127.0.0.1 - - [29/Dec/2025 11:56:32] "[36mGET /static/js/toastify-js.js HTTP/1.1[0m" 304 -
+INFO:werkzeug:127.0.0.1 - - [29/Dec/2025 11:56:32] "[36mGET /static/js/custom.js HTTP/1.1[0m" 304 -
+INFO:werkzeug:127.0.0.1 - - [29/Dec/2025 11:56:32] "[36mGET /static/js/select2.js HTTP/1.1[0m" 304 -
+INFO:waitress:Serving on http://0.0.0.0:8080
+WARNING:waitress.queue:Task queue depth is 1
+WARNING:waitress.queue:Task queue depth is 2
+WARNING:waitress.queue:Task queue depth is 1
+WARNING:waitress.queue:Task queue depth is 1
+WARNING:waitress.queue:Task queue depth is 2
+WARNING:waitress.queue:Task queue depth is 1
+WARNING:waitress.queue:Task queue depth is 2
+WARNING:waitress.queue:Task queue depth is 1
+WARNING:waitress.queue:Task queue depth is 2
+WARNING:waitress.queue:Task queue depth is 2
+WARNING:waitress.queue:Task queue depth is 1
+WARNING:waitress.queue:Task queue depth is 2
+WARNING:waitress.queue:Task queue depth is 2
+WARNING:waitress.queue:Task queue depth is 2
+ERROR:app:Exception on /admin [GET]
+Traceback (most recent call last):
+  File "C:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\flask\app.py", line 1511, in wsgi_app
+    response = self.full_dispatch_request()
+  File "C:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\flask\app.py", line 919, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+  File "C:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\flask\app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "C:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\flask\app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+  File "C:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\app\routes.py", line 12, in index_admin
+    return render_template('admin/index_admin.html', title='Admin Home', user=g.user)
+  File "C:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\flask\templating.py", line 150, in render_template
+    return _render(app, template, context)
+  File "C:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\flask\templating.py", line 131, in _render
+    rv = template.render(context)
+  File "C:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\jinja2\environment.py", line 1295, in render
+    self.environment.handle_exception()
+  File "C:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\jinja2\environment.py", line 942, in handle_exception
+    raise rewrite_traceback_stack(source=source)
+  File "C:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\app\templates\admin\index_admin.html", line 1, in top-level template code
+    {% extends "admin/admin_layout.html" %}
+  File "C:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\app\templates\admin\admin_layout.html", line 301, in top-level template code
+    <a class="nav-link mb-1 me-2 {% if request.path == url_for(item.route) %}active{% endif %}"
+  File "C:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\flask\app.py", line 1121, in url_for
+    return self.handle_url_build_error(error, endpoint, values)
+  File "C:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\flask\app.py", line 1110, in url_for
+    rv = url_adapter.build(  # type: ignore[union-attr]
+  File "C:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\werkzeug\routing\map.py", line 924, in build
+    raise BuildError(endpoint, values, method, self)
+werkzeug.routing.exceptions.BuildError: Could not build url for endpoint 'admin_accouchements_tarifs'. Did you mean 'api_accouchement_tarifs' instead?
+WARNING:waitress.queue:Task queue depth is 1
+WARNING:waitress.queue:Task queue depth is 2
+WARNING:waitress.queue:Task queue depth is 2
+WARNING:waitress.queue:Task queue depth is 2
+WARNING:waitress.queue:Task queue depth is 2
+WARNING:waitress.queue:Task queue depth is 2
+WARNING:waitress.queue:Task queue depth is 2
+WARNING:waitress.queue:Task queue depth is 2
+WARNING:waitress.queue:Task queue depth is 1
+WARNING:waitress.queue:Task queue depth is 1
+WARNING:waitress.queue:Task queue depth is 2
+WARNING:waitress.queue:Task queue depth is 2
+WARNING:waitress.queue:Task queue depth is 1
+WARNING:waitress.queue:Task queue depth is 1
+WARNING:waitress.queue:Task queue depth is 2
+WARNING:waitress.queue:Task queue depth is 1
+WARNING:waitress.queue:Task queue depth is 2
+WARNING:waitress.queue:Task queue depth is 1
+WARNING:waitress.queue:Task queue depth is 2
+WARNING:waitress.queue:Task queue depth is 2
+WARNING:waitress.queue:Task queue depth is 2
+WARNING:waitress.queue:Task queue depth is 2
+WARNING:waitress.queue:Task queue depth is 2
+WARNING:waitress.queue:Task queue depth is 2
+WARNING:waitress.queue:Task queue depth is 1
+WARNING:waitress.queue:Task queue depth is 2
+WARNING:waitress.queue:Task queue depth is 2
+WARNING:waitress.queue:Task queue depth is 2
+WARNING:waitress.queue:Task queue depth is 1
+WARNING:waitress.queue:Task queue depth is 2
+WARNING:waitress.queue:Task queue depth is 1
+WARNING:waitress.queue:Task queue depth is 2
+WARNING:waitress.queue:Task queue depth is 2
+WARNING:waitress.queue:Task queue depth is 2
+WARNING:waitress.queue:Task queue depth is 3
+WARNING:waitress.queue:Task queue depth is 2
+WARNING:waitress.queue:Task queue depth is 1
+WARNING:waitress.queue:Task queue depth is 2
+WARNING:waitress.queue:Task queue depth is 2
+WARNING:waitress.queue:Task queue depth is 1
+WARNING:waitress.queue:Task queue depth is 2
+WARNING:waitress.queue:Task queue depth is 1
+WARNING:waitress.queue:Task queue depth is 2
+WARNING:waitress.queue:Task queue depth is 2
+WARNING:waitress.queue:Task queue depth is 2
+WARNING:waitress.queue:Task queue depth is 1
+WARNING:waitress.queue:Task queue depth is 2
+WARNING:waitress.queue:Task queue depth is 2
+WARNING:waitress.queue:Task queue depth is 1
+WARNING:waitress.queue:Task queue depth is 2
+WARNING:waitress.queue:Task queue depth is 2
+WARNING:waitress.queue:Task queue depth is 2
+WARNING:waitress.queue:Task queue depth is 1
+WARNING:waitress.queue:Task queue depth is 2
+WARNING:waitress.queue:Task queue depth is 2
+WARNING:waitress.queue:Task queue depth is 2
+WARNING:waitress.queue:Task queue depth is 2
+WARNING:waitress.queue:Task queue depth is 2
+WARNING:waitress.queue:Task queue depth is 3
+WARNING:waitress.queue:Task queue depth is 1
+WARNING:waitress.queue:Task queue depth is 2
+WARNING:waitress.queue:Task queue depth is 2
+WARNING:waitress.queue:Task queue depth is 1
+WARNING:waitress.queue:Task queue depth is 1
+WARNING:waitress.queue:Task queue depth is 2
+WARNING:waitress.queue:Task queue depth is 2
+WARNING:waitress.queue:Task queue depth is 1
+WARNING:waitress.queue:Task queue depth is 2
+WARNING:waitress.queue:Task queue depth is 2
+WARNING:waitress.queue:Task queue depth is 1
+WARNING:waitress.queue:Task queue depth is 2
+WARNING:waitress.queue:Task queue depth is 2
+WARNING:waitress.queue:Task queue depth is 2
+WARNING:waitress.queue:Task queue depth is 2
+WARNING:waitress.queue:Task queue depth is 2
+WARNING:waitress.queue:Task queue depth is 2
+WARNING:waitress.queue:Task queue depth is 2
+WARNING:waitress.queue:Task queue depth is 2
+WARNING:waitress.queue:Task queue depth is 2
+WARNING:waitress.queue:Task queue depth is 2
+WARNING:waitress.queue:Task queue depth is 1
+WARNING:waitress.queue:Task queue depth is 2
+WARNING:waitress.queue:Task queue depth is 2
+WARNING:waitress.queue:Task queue depth is 2
+WARNING:waitress.queue:Task queue depth is 3
+WARNING:waitress.queue:Task queue depth is 2
+WARNING:waitress.queue:Task queue depth is 2
+WARNING:waitress.queue:Task queue depth is 2
+WARNING:waitress.queue:Task queue depth is 2
+WARNING:waitress.queue:Task queue depth is 2
+WARNING:waitress.queue:Task queue depth is 2
+WARNING:waitress.queue:Task queue depth is 2
+INFO:waitress:Serving on http://0.0.0.0:8080
+WARNING:waitress.queue:Task queue depth is 1
+WARNING:waitress.queue:Task queue depth is 2
+WARNING:waitress.queue:Task queue depth is 1
+WARNING:waitress.queue:Task queue depth is 2
+WARNING:waitress.queue:Task queue depth is 2
+WARNING:waitress.queue:Task queue depth is 1
+WARNING:waitress.queue:Task queue depth is 2
+WARNING:waitress.queue:Task queue depth is 2
+WARNING:waitress.queue:Task queue depth is 1
+WARNING:waitress.queue:Task queue depth is 2
+WARNING:waitress.queue:Task queue depth is 2
+WARNING:waitress.queue:Task queue depth is 2
+WARNING:waitress.queue:Task queue depth is 2
+WARNING:waitress.queue:Task queue depth is 2
+WARNING:waitress.queue:Task queue depth is 2
+WARNING:waitress.queue:Task queue depth is 1
+WARNING:waitress.queue:Task queue depth is 2
+WARNING:waitress.queue:Task queue depth is 1
+WARNING:waitress.queue:Task queue depth is 2
+WARNING:waitress.queue:Task queue depth is 2
+WARNING:waitress.queue:Task queue depth is 2
+WARNING:waitress.queue:Task queue depth is 2
+WARNING:waitress.queue:Task queue depth is 2
+WARNING:waitress.queue:Task queue depth is 2
+WARNING:waitress.queue:Task queue depth is 1
+WARNING:waitress.queue:Task queue depth is 2
+WARNING:waitress.queue:Task queue depth is 2
+WARNING:waitress.queue:Task queue depth is 2
+WARNING:waitress.queue:Task queue depth is 2
+WARNING:waitress.queue:Task queue depth is 2
+WARNING:waitress.queue:Task queue depth is 1
+WARNING:waitress.queue:Task queue depth is 2
+WARNING:waitress.queue:Task queue depth is 2
+WARNING:waitress.queue:Task queue depth is 1
+WARNING:waitress.queue:Task queue depth is 2
+WARNING:waitress.queue:Task queue depth is 1
+WARNING:waitress.queue:Task queue depth is 2
+WARNING:waitress.queue:Task queue depth is 1
+WARNING:waitress.queue:Task queue depth is 2
+WARNING:waitress.queue:Task queue depth is 2
+WARNING:waitress.queue:Task queue depth is 2
+WARNING:waitress.queue:Task queue depth is 2
+WARNING:waitress.queue:Task queue depth is 2
+WARNING:waitress.queue:Task queue depth is 2
+WARNING:waitress.queue:Task queue depth is 1
+WARNING:waitress.queue:Task queue depth is 2
+WARNING:waitress.queue:Task queue depth is 2
+WARNING:waitress.queue:Task queue depth is 2
+WARNING:waitress.queue:Task queue depth is 2
+WARNING:waitress.queue:Task queue depth is 2
+WARNING:waitress.queue:Task queue depth is 2
+WARNING:waitress.queue:Task queue depth is 1
+WARNING:waitress.queue:Task queue depth is 2
+WARNING:waitress.queue:Task queue depth is 1
+WARNING:waitress.queue:Task queue depth is 2
+WARNING:waitress.queue:Task queue depth is 1
+WARNING:waitress.queue:Task queue depth is 2
+WARNING:waitress.queue:Task queue depth is 2
+WARNING:waitress.queue:Task queue depth is 1
+WARNING:waitress.queue:Task queue depth is 2
+WARNING:waitress.queue:Task queue depth is 2
+WARNING:waitress.queue:Task queue depth is 2
+WARNING:waitress.queue:Task queue depth is 2
+WARNING:waitress.queue:Task queue depth is 1
+WARNING:waitress.queue:Task queue depth is 2
+WARNING:waitress.queue:Task queue depth is 1
+WARNING:waitress.queue:Task queue depth is 1
+WARNING:waitress.queue:Task queue depth is 2
+WARNING:waitress.queue:Task queue depth is 2
+WARNING:waitress.queue:Task queue depth is 1
+WARNING:waitress.queue:Task queue depth is 2
+WARNING:waitress.queue:Task queue depth is 2
+WARNING:waitress.queue:Task queue depth is 1
+WARNING:waitress.queue:Task queue depth is 2
+WARNING:waitress.queue:Task queue depth is 2
+WARNING:waitress.queue:Task queue depth is 2
+WARNING:waitress.queue:Task queue depth is 2
+WARNING:waitress.queue:Task queue depth is 1
+WARNING:waitress.queue:Task queue depth is 2
+WARNING:waitress.queue:Task queue depth is 2
+WARNING:waitress.queue:Task queue depth is 2
+WARNING:waitress.queue:Task queue depth is 2
+WARNING:waitress.queue:Task queue depth is 2
+WARNING:waitress.queue:Task queue depth is 2
+WARNING:waitress.queue:Task queue depth is 2
+WARNING:waitress.queue:Task queue depth is 2
+WARNING:waitress.queue:Task queue depth is 2
+WARNING:waitress.queue:Task queue depth is 2
+WARNING:waitress.queue:Task queue depth is 1
+WARNING:waitress.queue:Task queue depth is 2
+WARNING:waitress.queue:Task queue depth is 1
+WARNING:waitress.queue:Task queue depth is 2
+WARNING:waitress.queue:Task queue depth is 2
+WARNING:waitress.queue:Task queue depth is 2
+WARNING:waitress.queue:Task queue depth is 2
+WARNING:waitress.queue:Task queue depth is 2
+WARNING:waitress.queue:Task queue depth is 2
+WARNING:waitress.queue:Task queue depth is 2
+WARNING:waitress.queue:Task queue depth is 2
+WARNING:waitress.queue:Task queue depth is 1
+WARNING:waitress.queue:Task queue depth is 2
+WARNING:waitress.queue:Task queue depth is 1
+WARNING:waitress.queue:Task queue depth is 2
+WARNING:waitress.queue:Task queue depth is 2
+WARNING:waitress.queue:Task queue depth is 2
+WARNING:waitress.queue:Task queue depth is 2
+WARNING:waitress.queue:Task queue depth is 2
+WARNING:waitress.queue:Task queue depth is 2
+WARNING:waitress.queue:Task queue depth is 2
+WARNING:waitress.queue:Task queue depth is 2
+WARNING:waitress.queue:Task queue depth is 1
+WARNING:waitress.queue:Task queue depth is 2
+WARNING:waitress.queue:Task queue depth is 2
+WARNING:waitress.queue:Task queue depth is 1
+WARNING:waitress.queue:Task queue depth is 2
+WARNING:waitress.queue:Task queue depth is 2
+WARNING:waitress.queue:Task queue depth is 2
+WARNING:waitress.queue:Task queue depth is 1
+WARNING:waitress.queue:Task queue depth is 2
+WARNING:waitress.queue:Task queue depth is 2
+WARNING:waitress.queue:Task queue depth is 1
+WARNING:waitress.queue:Task queue depth is 1
+WARNING:waitress.queue:Task queue depth is 2
+WARNING:waitress.queue:Task queue depth is 1
+WARNING:waitress.queue:Task queue depth is 1
+WARNING:waitress.queue:Task queue depth is 2
+WARNING:waitress.queue:Task queue depth is 2
+WARNING:waitress.queue:Task queue depth is 1
+WARNING:waitress.queue:Task queue depth is 2
+WARNING:waitress.queue:Task queue depth is 2
+WARNING:waitress.queue:Task queue depth is 2
+WARNING:waitress.queue:Task queue depth is 2
+WARNING:waitress.queue:Task queue depth is 1
+WARNING:waitress.queue:Task queue depth is 2
+WARNING:waitress.queue:Task queue depth is 2
+WARNING:waitress.queue:Task queue depth is 2
+WARNING:waitress.queue:Task queue depth is 2
+WARNING:waitress.queue:Task queue depth is 2
+WARNING:waitress.queue:Task queue depth is 2
+WARNING:waitress.queue:Task queue depth is 2
+WARNING:waitress.queue:Task queue depth is 2
+WARNING:waitress.queue:Task queue depth is 2
+WARNING:waitress.queue:Task queue depth is 2
+WARNING:waitress.queue:Task queue depth is 1
+ERROR:app:Exception on /kt_decharges [GET]
+Traceback (most recent call last):
+  File "C:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\flask\app.py", line 1511, in wsgi_app
+    response = self.full_dispatch_request()
+  File "C:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\flask\app.py", line 919, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+  File "C:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\flask\app.py", line 915, in full_dispatch_request
+    rv = self.preprocess_request()
+  File "C:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\flask\app.py", line 1291, in preprocess_request
+    rv = self.ensure_sync(before_func)()
+  File "C:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\app\__init__.py", line 34, in load_user
+    g.user = get_user_by_id( session[ 'user_id' ] )
+  File "C:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\app\__init__.py", line 19, in get_user_by_id
+    cursor = get_db_connection().cursor()
+AttributeError: 'NoneType' object has no attribute 'cursor'
+ERROR:app:Exception on /favicon.ico [GET]
+Traceback (most recent call last):
+  File "C:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\flask\app.py", line 1511, in wsgi_app
+    response = self.full_dispatch_request()
+  File "C:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\flask\app.py", line 919, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+  File "C:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\flask\app.py", line 915, in full_dispatch_request
+    rv = self.preprocess_request()
+  File "C:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\flask\app.py", line 1291, in preprocess_request
+    rv = self.ensure_sync(before_func)()
+  File "C:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\app\__init__.py", line 34, in load_user
+    g.user = get_user_by_id( session[ 'user_id' ] )
+  File "C:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\app\__init__.py", line 19, in get_user_by_id
+    cursor = get_db_connection().cursor()
+AttributeError: 'NoneType' object has no attribute 'cursor'
+WARNING:waitress.queue:Task queue depth is 1
+WARNING:waitress.queue:Task queue depth is 2
+WARNING:waitress.queue:Task queue depth is 2
+WARNING:waitress.queue:Task queue depth is 1
+WARNING:waitress.queue:Task queue depth is 2
+WARNING:waitress.queue:Task queue depth is 2
+WARNING:waitress.queue:Task queue depth is 1
+WARNING:waitress.queue:Task queue depth is 1
+WARNING:waitress.queue:Task queue depth is 2
+WARNING:waitress.queue:Task queue depth is 2
+WARNING:waitress.queue:Task queue depth is 1
+WARNING:waitress.queue:Task queue depth is 2
+WARNING:waitress.queue:Task queue depth is 2
+WARNING:waitress.queue:Task queue depth is 2
+WARNING:waitress.queue:Task queue depth is 2
+WARNING:waitress.queue:Task queue depth is 1
+WARNING:waitress.queue:Task queue depth is 2
+WARNING:waitress.queue:Task queue depth is 2
+WARNING:waitress.queue:Task queue depth is 1
+WARNING:waitress.queue:Task queue depth is 2
+WARNING:waitress.queue:Task queue depth is 2
+WARNING:waitress.queue:Task queue depth is 1
+WARNING:waitress.queue:Task queue depth is 2
+WARNING:waitress.queue:Task queue depth is 1
+WARNING:waitress.queue:Task queue depth is 2
+WARNING:waitress.queue:Task queue depth is 2
+WARNING:waitress.queue:Task queue depth is 2
+WARNING:waitress.queue:Task queue depth is 2
+WARNING:waitress.queue:Task queue depth is 1
+WARNING:waitress.queue:Task queue depth is 2
+WARNING:waitress.queue:Task queue depth is 2
+WARNING:waitress.queue:Task queue depth is 2
+WARNING:waitress.queue:Task queue depth is 1
+WARNING:waitress.queue:Task queue depth is 2
+WARNING:waitress.queue:Task queue depth is 2
+WARNING:waitress.queue:Task queue depth is 2
+WARNING:waitress.queue:Task queue depth is 1
+WARNING:waitress.queue:Task queue depth is 2
+WARNING:waitress.queue:Task queue depth is 2
+WARNING:waitress.queue:Task queue depth is 1
+WARNING:waitress.queue:Task queue depth is 2
+WARNING:waitress.queue:Task queue depth is 2
+WARNING:waitress.queue:Task queue depth is 2
+WARNING:waitress.queue:Task queue depth is 1
+WARNING:waitress.queue:Task queue depth is 2
+WARNING:waitress.queue:Task queue depth is 1
+WARNING:waitress.queue:Task queue depth is 2
+WARNING:waitress.queue:Task queue depth is 1
+WARNING:waitress.queue:Task queue depth is 2
+WARNING:waitress.queue:Task queue depth is 2
+WARNING:waitress.queue:Task queue depth is 2
+WARNING:waitress.queue:Task queue depth is 1
+WARNING:waitress.queue:Task queue depth is 2
+WARNING:waitress.queue:Task queue depth is 2
+WARNING:waitress.queue:Task queue depth is 1
+WARNING:waitress.queue:Task queue depth is 2
+WARNING:waitress.queue:Task queue depth is 2
+WARNING:waitress.queue:Task queue depth is 1
+WARNING:waitress.queue:Task queue depth is 2
+WARNING:waitress.queue:Task queue depth is 2
+WARNING:waitress.queue:Task queue depth is 2
+WARNING:waitress.queue:Task queue depth is 2
+WARNING:waitress.queue:Task queue depth is 1
+WARNING:waitress.queue:Task queue depth is 2
+WARNING:waitress.queue:Task queue depth is 1
+INFO:waitress:Serving on http://0.0.0.0:8080

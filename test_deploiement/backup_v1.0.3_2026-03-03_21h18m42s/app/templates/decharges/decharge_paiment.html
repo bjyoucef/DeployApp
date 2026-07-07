@@ -1,0 +1,754 @@
+{% extends 'layout.html' %}
+
+{% block style %}
+<style>
+    :root {
+        --primary: #536DFE;
+        --primary-hover: #3a56fd;
+        --success: #28a745;
+        --danger: #dc3545;
+        --warning: #ffc107;
+        --info: #17a2b8;
+    }
+
+    /* Layout */
+    .page-header {
+        background: linear-gradient(135deg, var(--primary) 0%, #7C4DFF 100%);
+        color: white;
+        padding: 1.5rem;
+        border-radius: 10px;
+        margin-bottom: 1.5rem;
+    }
+
+    /* Filters */
+    .filters-section {
+        background: #f8f9fa;
+        padding: 1.2rem;
+        border-radius: 8px;
+        margin-bottom: 1.5rem;
+        border: 1px solid #e9ecef;
+    }
+
+    /* Table optimizations */
+    .table-container {
+        position: relative;
+        min-height: 400px;
+    }
+
+    .table-responsive {
+        overflow-x: auto;
+        border-radius: 8px;
+        border: 1px solid #dee2e6;
+    }
+
+    .table-hover tbody tr:hover {
+        background-color: rgba(83, 109, 254, 0.05);
+        cursor: pointer;
+    }
+
+    /* Style spécifique pour les décharges */
+
+    /* Badges */
+
+    /* Loading spinner */
+    .loading-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(255, 255, 255, 0.9);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        z-index: 10;
+        border-radius: 8px;
+    }
+
+    /* Pagination */
+    .pagination-container {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-top: 1rem;
+        flex-wrap: wrap;
+        gap: 1rem;
+        padding: 1rem 0;
+    }
+
+    .pagination-info {
+        color: #6c757d;
+        font-size: 0.9rem;
+        font-weight: 500;
+    }
+
+    /* Stats cards */
+
+    /* Dossiers list */
+
+    /* Actions buttons */
+    .actions-cell {
+        min-width: 180px;
+    }
+
+
+    /* Modal improvements */
+    .modal-header {
+        background: linear-gradient(135deg, var(--primary) 0%, #7C4DFF 100%);
+        color: white;
+        border-bottom: none;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+        .table-responsive {
+            font-size: 0.85rem;
+            border: none;
+        }
+
+        .table th,
+        .table td {
+            padding: 0.5rem;
+        }
+
+
+        .filters-section .col-md-3,
+        .filters-section .col-md-2 {
+            margin-bottom: 0.75rem;
+        }
+
+        .pagination-container {
+            flex-direction: column;
+            text-align: center;
+            gap: 0.5rem;
+        }
+    }
+
+    @media (max-width: 576px) {
+        .page-header {
+            padding: 1rem;
+        }
+
+        .page-header h2 {
+            font-size: 1.5rem;
+        }
+
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Header -->
+    <div class="page-header">
+        <div class="row align-items-center">
+            <div class="col-md-6">
+                <h2 class="mb-1"><i class="fas fa-file-invoice me-2"></i>Gestion des Décharges</h2>
+                <p class="mb-0 opacity-75">Suivi et gestion des paiements</p>
+            </div>
+            <div class="col-md-6 text-end">
+                {% if 'CREER_DECHARGE' in session.privileges %}
+                <button type="button" class="btn btn-light" data-bs-toggle="modal" data-bs-target="#addDossierModal">
+                    <i class="fas fa-plus me-1"></i>Ajouter une Décharge
+                </button>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+
+    <!-- Filters Section -->
+    <div class="filters-section">
+        <form id="filtersForm" class="row g-3 align-items-end">
+            <div class="col-md-3">
+                <label class="form-label small mb-1">Recherche</label>
+                <input type="text" class="form-control form-control-sm" id="searchInput" name="search"
+                    value="{{ search_query }}" placeholder="Docteur, dossier, créé par...">
+            </div>
+            <div class="col-md-2">
+                <label class="form-label small mb-1">Date début</label>
+                <input type="date" class="form-control form-control-sm" id="dateFrom" name="date_from"
+                    value="{{ date_from }}">
+            </div>
+            <div class="col-md-2">
+                <label class="form-label small mb-1">Date fin</label>
+                <input type="date" class="form-control form-control-sm" id="dateTo" name="date_to"
+                    value="{{ date_to }}">
+            </div>
+            <div class="col-md-2">
+                <label class="form-label small mb-1">Par page</label>
+                <select class="form-select form-select-sm" id="perPageSelect" name="per_page">
+                    <option value="10" {% if pagination.per_page==10 %}selected{% endif %}>10</option>
+                    <option value="20" {% if pagination.per_page==20 %}selected{% endif %}>20</option>
+                    <option value="50" {% if pagination.per_page==50 %}selected{% endif %}>50</option>
+                    <option value="100" {% if pagination.per_page==100 %}selected{% endif %}>100</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <div class="d-flex align-items-center mb-0" style="height: 38px;">
+                    <input class="form-check-input" type="checkbox" role="switch" id="payDoctorFilter"
+                        name="payDoctorFilter" {% if filter_paid %}checked{% endif %} value="on"
+                        aria-label="Filtrer les décharges réglées uniquement">
+                    <label class="form-check-label ms-2 fw-semibold" for="payDoctorFilter">
+                        Réglées uniquement
+                    </label>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <!-- Table Container -->
+    <div class="card border-0 shadow-sm">
+        <div class="card-body p-0">
+            <div class="table-container">
+                <!-- Loading Overlay -->
+                <div class="loading-overlay" id="loadingOverlay">
+                    <div class="text-center">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Chargement...</span>
+                        </div>
+                        <p class="mt-2 text-muted">Chargement des données...</p>
+                    </div>
+                </div>
+
+                <!-- Table -->
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0" id="dechargesTable">
+                        <thead class="table-primary">
+                            <tr>
+                                <th>Date</th>
+                                <th>Docteur</th>
+                                <th class="text-end">Montant</th>
+                                <th class="text-end">Reste</th>
+                                <th>Créé par</th>
+                                <th>Dossiers</th>
+                                <th class="text-center actions-cell">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="dechargesTableBody">
+                            {% include 'decharges/decharges_rows.html' %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Pagination -->
+            <div class="pagination-container p-3 border-top bg-light">
+                <div class="pagination-info" id="paginationInfo">
+                    Affichage de <strong>{{ ((pagination.page - 1) * pagination.per_page + 1) }}</strong>
+                    à <strong>{{ [pagination.page * pagination.per_page, pagination.total]|min }}</strong>
+                    sur <strong>{{ pagination.total }}</strong> décharges
+                </div>
+                <nav aria-label="Pagination">
+                    <ul class="pagination pagination-sm mb-0" id="paginationNav">
+                        <!-- Généré dynamiquement -->
+                    </ul>
+                </nav>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Ajouter Décharge -->
+<div class="modal fade" id="addDossierModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="fas fa-plus me-2"></i>Nouvelle Décharge de Paiement</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form action="/add_decharge_paiment" method="post">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="doctor_name" class="form-label">Nom du Docteur <span
+                                class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="doctor_name" name="doctor_name" required>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="amount" class="form-label">Montant (DA) <span
+                                    class="text-danger">*</span></label>
+                            <input type="number" class="form-control" id="amount" name="amount" step="0.01" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="date" class="form-label">Date <span class="text-danger">*</span></label>
+                            <input type="date" class="form-control" id="date" name="date" value="{{ current_date }}"
+                                required>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="dossiers" class="form-label">Noms des Dossiers <span
+                                class="text-danger">*</span></label>
+                        <textarea class="form-control" id="dossiers" name="dossiers" rows="4"
+                            placeholder="Un dossier par ligne&#10;Exemple:&#10;HASSANI MALIKA&#10;HAMEL MOHAMED"
+                            required></textarea>
+                        <small class="text-muted">Listez les dossiers associés, un par ligne</small>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save me-1"></i>Enregistrer
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Éditer Décharge -->
+<div class="modal fade" id="editDossierModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="fas fa-edit me-2"></i>Modifier la Décharge</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="editDechargeForm" method="POST">
+                <div class="modal-body">
+                    <div id="editModalContent">
+                        <!-- Chargé dynamiquement -->
+                        <div class="text-center py-4">
+                            <div class="spinner-border text-primary" role="status"></div>
+                            <p class="mt-2 text-muted">Chargement...</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save me-1"></i>Sauvegarder
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // ========================================================================
+    // CONFIGURATION
+    // ========================================================================
+
+    const config = {
+        currentPage: {{ pagination.page }},
+    perPage: {{ pagination.per_page }},
+    totalPages: {{ pagination.total_pages }},
+    filterPaid: {{ 'true' if filter_paid else 'false' }},
+    apiBaseUrl: '/api/decharges'
+};
+
+    // ========================================================================
+    // PAGINATION
+    // ========================================================================
+
+    function renderPagination() {
+        const nav = document.getElementById('paginationNav');
+        if (!nav) return;
+
+        let html = '';
+
+        // Bouton Précédent
+        html += `
+        <li class="page-item ${config.currentPage === 1 ? 'disabled' : ''}">
+            <a class="page-link" href="#" onclick="goToPage(${config.currentPage - 1}); return false;">
+                <i class="fas fa-chevron-left"></i>
+            </a>
+        </li>
+    `;
+
+        // Pages
+        const maxVisible = 5;
+        let startPage = Math.max(1, config.currentPage - 2);
+        let endPage = Math.min(config.totalPages, startPage + maxVisible - 1);
+
+        if (endPage - startPage < maxVisible - 1) {
+            startPage = Math.max(1, endPage - maxVisible + 1);
+        }
+
+        if (startPage > 1) {
+            html += `
+            <li class="page-item">
+                <a class="page-link" href="#" onclick="goToPage(1); return false;">1</a>
+            </li>
+        `;
+            if (startPage > 2) {
+                html += '<li class="page-item disabled"><span class="page-link">...</span></li>';
+            }
+        }
+
+        for (let i = startPage; i <= endPage; i++) {
+            html += `
+            <li class="page-item ${i === config.currentPage ? 'active' : ''}">
+                <a class="page-link" href="#" onclick="goToPage(${i}); return false;">${i}</a>
+            </li>
+        `;
+        }
+
+        if (endPage < config.totalPages) {
+            if (endPage < config.totalPages - 1) {
+                html += '<li class="page-item disabled"><span class="page-link">...</span></li>';
+            }
+            html += `
+            <li class="page-item">
+                <a class="page-link" href="#" onclick="goToPage(${config.totalPages}); return false;">${config.totalPages}</a>
+            </li>
+        `;
+        }
+
+        // Bouton Suivant
+        html += `
+        <li class="page-item ${config.currentPage === config.totalPages ? 'disabled' : ''}">
+            <a class="page-link" href="#" onclick="goToPage(${config.currentPage + 1}); return false;">
+                <i class="fas fa-chevron-right"></i>
+            </a>
+        </li>
+    `;
+
+        nav.innerHTML = html;
+    }
+
+    function goToPage(page) {
+        if (page < 1 || page > config.totalPages || page === config.currentPage) return;
+        config.currentPage = page;
+        loadDecharges();
+    }
+
+    // ========================================================================
+    // CHARGEMENT DES DÉCHARGES (AJAX)
+    // ========================================================================
+
+    async function loadDecharges() {
+        const overlay = document.getElementById('loadingOverlay');
+        const tbody = document.getElementById('dechargesTableBody');
+        const checkbox = document.getElementById('payDoctorFilter');
+
+        if (overlay) overlay.classList.add('active');
+        if (checkbox) checkbox.disabled = true;
+
+        try {
+            const params = new URLSearchParams({
+                page: config.currentPage,
+                per_page: config.perPage,
+                filter_paid: config.filterPaid ? 'true' : 'false',
+                search: document.getElementById('searchInput')?.value || '',
+                date_from: document.getElementById('dateFrom')?.value || '',
+                date_to: document.getElementById('dateTo')?.value || ''
+            });
+
+            const response = await fetch(`${config.apiBaseUrl}/search?${params}`);
+            const data = await response.json();
+
+            if (!data.success) {
+                throw new Error(data.error || 'Erreur de chargement');
+            }
+
+            // Mettre à jour la configuration
+            config.totalPages = data.pagination.total_pages;
+            config.currentPage = data.pagination.page;
+
+            // Générer les lignes du tableau
+            tbody.innerHTML = renderDechargesRows(data.decharges);
+
+            // Mettre à jour la pagination
+            renderPagination();
+
+            // Mettre à jour l'info de pagination
+            updatePaginationInfo(data.pagination);
+
+        } catch (error) {
+            console.error('Erreur:', error);
+            showToast('Erreur lors du chargement des données', 'danger');
+            tbody.innerHTML = `
+            <tr>
+                <td colspan="7" class="text-center py-5">
+                    <i class="fas fa-exclamation-triangle fa-2x text-danger mb-3 d-block"></i>
+                    <p class="text-danger">Erreur de chargement des données</p>
+                </td>
+            </tr>
+        `;
+        } finally {
+            if (overlay) overlay.classList.remove('active');
+            if (checkbox) checkbox.disabled = false;
+        }
+    }
+
+    function renderDechargesRows(decharges) {
+        if (!decharges || decharges.length === 0) {
+            return `
+            <tr>
+                <td colspan="7" class="text-center py-5">
+                    <i class="fas fa-inbox fa-3x text-muted mb-3 d-block"></i>
+                    <p class="text-muted">Aucune décharge trouvée</p>
+                </td>
+            </tr>
+        `;
+        }
+
+        return decharges.map(d => {
+            const isPaid = d.reste === 0;
+            const rowClass = isPaid ? 'decharge-paid' : 'decharge-pending';
+            const badgeClass = isPaid ? 'success' : 'warning';
+            const badgeText = isPaid ? 'Réglé' : 'En attente';
+
+            // Formater les dossiers
+            let dossiersHtml = '';
+            if (d.dossiers) {
+                const dossiersArray = Array.isArray(d.dossiers) ? d.dossiers : d.dossiers.split('\n');
+                const validDossiers = dossiersArray.filter(dossier => dossier.trim());
+
+                if (validDossiers.length > 0) {
+                    dossiersHtml = `
+                    <div class="dossiers-list">
+                        <ul class="mb-0 small">
+                            ${validDossiers.map(dossier => `<li>${dossier.trim()}</li>`).join('')}
+                        </ul>
+                    </div>
+                `;
+                }
+            }
+
+            return `
+            <tr class="${rowClass}">
+                <td><small class="text-muted">${formatDate(d.date)}</small></td>
+                <td><strong>${escapeHtml(d.doctor_name)}</strong></td>
+                <td class="text-end fw-semibold">${formatCurrency(d.amount)}</td>
+                <td class="text-end">
+                    <span class="badge badge-reste bg-${badgeClass}">
+                        <span class="status-indicator status-${isPaid ? 'paid' : 'pending'}"></span>
+                        ${formatCurrency(d.reste)}
+                    </span>
+                </td>
+                <td><small>${escapeHtml(d.created_par || '-')}</small></td>
+                <td>${dossiersHtml || '<small class="text-muted">-</small>'}</td>
+                <td class="text-center actions-cell">
+                    <div class="btn-group btn-group-sm" role="group">
+                        {% if 'MODIFIER_DECHARGE' in session.privileges %}
+                        <button class="btn btn-warning" onclick="openEditModal(${d.id})" title="Modifier">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        {% endif %}
+
+                        {% if 'EXPORTER_DECHARGE_PDF' in session.privileges %}
+                        <a href="/decharge/${d.id}/export_pdf" class="btn btn-primary" title="PDF">
+                            <i class="fas fa-file-pdf"></i>
+                        </a>
+                        {% endif %}
+
+                        {% if 'SUPPRIMER_DECHARGE' in session.privileges %}
+                        <button class="btn btn-danger" onclick="confirmDelete(${d.id})" title="Supprimer">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                        {% endif %}
+                    </div>
+
+                    ${isPaid ? `
+                        <div class="mt-2">
+                            <span class="badge bg-success">
+                                <i class="fas fa-check-circle me-1"></i>
+                                Réglé le ${formatDate(d.time_payment || '')}
+                            </span>
+                        </div>
+                    ` : `
+                        {% if 'AJOUTER_PAYMENT_DECHARGE' in session.privileges %}
+                        <form action="/add_payment_decharges/${d.id}" method="POST" class="mt-2" onsubmit="return confirmPayment(event, ${d.reste})">
+                            <div class="input-group input-group-sm">
+                                <input type="number" name="payment_amount" step="0.01" min="0" max="${d.reste}"
+                                       class="form-control" placeholder="Montant" required />
+                                <button class="btn btn-success" type="submit">
+                                    <i class="fas fa-check me-1"></i>Régler
+                                </button>
+                            </div>
+                        </form>
+                        {% endif %}
+                    `}
+                </td>
+            </tr>
+        `;
+        }).join('');
+    }
+
+    // ========================================================================
+    // MODAL ÉDITION
+    // ========================================================================
+
+    async function openEditModal(id) {
+        const modal = new bootstrap.Modal(document.getElementById('editDossierModal'));
+        const form = document.getElementById('editDechargeForm');
+        const content = document.getElementById('editModalContent');
+
+        // Afficher le loader
+        content.innerHTML = `
+        <div class="text-center py-4">
+            <div class="spinner-border text-primary" role="status"></div>
+            <p class="mt-2 text-muted">Chargement...</p>
+        </div>
+    `;
+
+        modal.show();
+
+        try {
+            const response = await fetch(`/api/decharge/${id}`);
+            const data = await response.json();
+
+            if (!data.success) {
+                throw new Error(data.error || 'Erreur');
+            }
+
+            const d = data.decharge;
+
+            // Remplir le formulaire
+            form.action = `/decharge/${id}/edit`;
+            content.innerHTML = `
+            <div class="mb-3">
+                <label class="form-label">Nom du Docteur <span class="text-danger">*</span></label>
+                <input type="text" class="form-control" name="doctor_name" value="${escapeHtml(d.doctor_name)}" required>
+            </div>
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">Montant (DA) <span class="text-danger">*</span></label>
+                    <input type="number" class="form-control" name="amount" value="${d.amount}" step="0.01" required>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">Date <span class="text-danger">*</span></label>
+                    <input type="date" class="form-control" name="date" value="${d.date}" required>
+                </div>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Dossiers <span class="text-danger">*</span></label>
+                <textarea class="form-control" name="dossiers" rows="4" required>${escapeHtml(d.dossiers || '')}</textarea>
+                <small class="text-muted">Un dossier par ligne</small>
+            </div>
+        `;
+
+        } catch (error) {
+            console.error('Erreur:', error);
+            content.innerHTML = `
+            <div class="alert alert-danger">
+                <i class="fas fa-exclamation-triangle me-2"></i>
+                Erreur: ${error.message}
+            </div>
+        `;
+        }
+    }
+
+    // ========================================================================
+    // HELPERS
+    // ========================================================================
+
+    function formatCurrency(value) {
+        return new Intl.NumberFormat('fr-DZ', {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
+        }).format(value) + ' DA';
+    }
+
+    function formatDate(dateString) {
+        if (!dateString) return '';
+        const date = new Date(dateString);
+        return date.toLocaleDateString('fr-FR');
+    }
+
+    function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+
+
+    function updatePaginationInfo(pagination) {
+        const start = (pagination.page - 1) * pagination.per_page + 1;
+        const end = Math.min(pagination.page * pagination.per_page, pagination.total);
+        document.getElementById('paginationInfo').innerHTML = `
+        Affichage de <strong>${start}</strong> à <strong>${end}</strong> sur <strong>${pagination.total}</strong> décharges
+    `;
+    }
+
+    function confirmDelete(id) {
+        if (confirm('Êtes-vous sûr de vouloir supprimer cette décharge ? Cette action est irréversible.')) {
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = `/decharge/${id}/delete`;
+            document.body.appendChild(form);
+            form.submit();
+        }
+    }
+
+    function confirmPayment(event, reste) {
+        const input = event.target.querySelector('input[name="payment_amount"]');
+        const amount = parseFloat(input.value);
+
+        if (isNaN(amount) || amount <= 0) {
+            alert('Veuillez entrer un montant valide.');
+            return false;
+        }
+
+        if (amount > reste) {
+            alert(`Le montant ne peut pas dépasser le reste à payer (${formatCurrency(reste)})`);
+            return false;
+        }
+
+        return confirm(`Confirmer le paiement de ${formatCurrency(amount)} ?`);
+    }
+
+    function showToast(message, category = 'info') {
+        // Utiliser votre système de toast existant
+        if (typeof Toastify !== 'undefined') {
+            Toastify({
+                text: message,
+                duration: 3000,
+                gravity: "top",
+                position: "right",
+                backgroundColor: category === 'danger' ? "#dc3545" :
+                    category === 'success' ? "#28a745" : "#007bff",
+            }).showToast();
+        } else {
+            alert(message);
+        }
+    }
+
+    // ========================================================================
+    // EVENT LISTENERS
+    // ========================================================================
+
+    document.addEventListener('DOMContentLoaded', function () {
+        // Pagination initiale
+        renderPagination();
+
+        // Recherche avec debounce
+        let searchTimeout;
+        document.getElementById('searchInput')?.addEventListener('input', function () {
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(() => {
+                config.currentPage = 1;
+                loadDecharges();
+            }, 500);
+        });
+
+        // Filtres de date
+        ['dateFrom', 'dateTo'].forEach(id => {
+            document.getElementById(id)?.addEventListener('change', () => {
+                config.currentPage = 1;
+                loadDecharges();
+            });
+        });
+
+        // Switch payé/non payé
+        document.getElementById('payDoctorFilter')?.addEventListener('change', function () {
+            config.filterPaid = this.checked;
+            config.currentPage = 1;
+            loadDecharges();
+        });
+
+        // Par page
+        document.getElementById('perPageSelect')?.addEventListener('change', function () {
+            config.perPage = parseInt(this.value);
+            config.currentPage = 1;
+            loadDecharges();
+        });
+
+    });
+</script>
+{% endblock %}

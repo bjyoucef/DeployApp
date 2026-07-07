@@ -1,0 +1,329 @@
+{% extends "admin/admin_layout.html" %}
+
+{% block style %}
+<style>
+    .stat-card {
+        border-left: 4px solid;
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .stat-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+    }
+
+    .stat-card.primary {
+        border-left-color: #0d6efd;
+    }
+
+    .stat-card.success {
+        border-left-color: #198754;
+    }
+
+    .stat-card.warning {
+        border-left-color: #ffc107;
+    }
+
+    .stat-card.danger {
+        border-left-color: #dc3545;
+    }
+
+    .stat-icon {
+        width: 60px;
+        height: 60px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.8rem;
+    }
+
+    .table-actions {
+        white-space: nowrap;
+    }
+
+    .badge-status {
+        padding: 0.5rem 1rem;
+        font-weight: 500;
+        font-size: 0.875rem;
+    }
+
+    .price-badge {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 0.5rem 1rem;
+        border-radius: 2rem;
+        font-weight: 600;
+    }
+
+    .action-btn {
+        transition: all 0.2s ease;
+    }
+
+    .action-btn:hover {
+        transform: scale(1.05);
+    }
+
+    .table-hover tbody tr {
+        transition: background-color 0.15s ease-in-out;
+    }
+
+    .inactive-row {
+        opacity: 0.6;
+    }
+
+    .bloc-card {
+        border: none;
+        border-radius: 12px;
+        overflow: hidden;
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .bloc-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+    }
+
+    .bloc-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 1.5rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- En-tête -->
+    <div class="row mb-4">
+        <div class="col">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h2 class="mb-1">
+                        <i class="fas fa-hospital text-primary"></i>
+                        Gestion des Blocs Opératoires
+                    </h2>
+                    <p class="text-muted mb-0">Gérez vos blocs opératoires et leurs configurations</p>
+                </div>
+
+                <!-- Remplacer le bouton "Nouveau Bloc" par ce groupe de boutons -->
+                <div class="btn-group shadow-sm" role="group">
+                    <a href="{{ url_for('nouveau_bloc') }}" class="btn btn-primary btn-lg">
+                        <i class="fas fa-plus me-2"></i>Nouveau Bloc
+                    </a>
+                    <a href="{{ url_for('copier_produits_page') }}" class="btn btn-info btn-lg">
+                        <i class="fas fa-copy me-2"></i>Copier Produits
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistiques -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-3">
+            <div class="card stat-card primary shadow-sm">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <p class="text-muted mb-1 small">Total Blocs</p>
+                            <h3 class="mb-0 fw-bold">{{ blocs|length }}</h3>
+                        </div>
+                        <div class="stat-icon bg-primary bg-opacity-10 text-primary">
+                            <i class="fas fa-hospital"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card stat-card success shadow-sm">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <p class="text-muted mb-1 small">Blocs Actifs</p>
+                            <h3 class="mb-0 fw-bold">{{ blocs|selectattr('est_actif', 'equalto', 1)|list|length }}</h3>
+                        </div>
+                        <div class="stat-icon bg-success bg-opacity-10 text-success">
+                            <i class="fas fa-check-circle"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card stat-card warning shadow-sm">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <p class="text-muted mb-1 small">Blocs Inactifs</p>
+                            <h3 class="mb-0 fw-bold">{{ blocs|selectattr('est_actif', 'equalto', 0)|list|length }}</h3>
+                        </div>
+                        <div class="stat-icon bg-warning bg-opacity-10 text-warning">
+                            <i class="fas fa-pause-circle"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card stat-card danger shadow-sm">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <p class="text-muted mb-1 small">Produits Inclus</p>
+                            <h3 class="mb-0 fw-bold">
+                                {% set total_produits = namespace(value=0) %}
+                                {% for bloc in blocs %}
+                                {% set total_produits.value = total_produits.value + bloc.produits_inclus|length %}
+                                {% endfor %}
+                                {{ total_produits.value }}
+                            </h3>
+                        </div>
+                        <div class="stat-icon bg-danger bg-opacity-10 text-danger">
+                            <i class="fas fa-box"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Liste des blocs -->
+    <div class="card shadow-sm border-0">
+        <div class="card-header bg-white border-0 pt-4 pb-3">
+            <h5 class="mb-0">
+                <i class="fas fa-list me-2"></i>Liste des Blocs Opératoires
+            </h5>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0" id="blocsTable">
+                    <thead class="table-light">
+                        <tr>
+                            <th class="text-center" style="width: 60px;">
+                                <i class="fas fa-hashtag"></i>
+                            </th>
+                            <th>Bloc</th>
+                            <th class="text-center">Tarification</th>
+                            <th class="text-center">Configuration</th>
+                            <th class="text-center">Produits</th>
+                            <th class="text-center">Statut</th>
+                            <th class="text-center" style="width: 280px;">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for bloc in blocs %}
+                        <tr class="{% if not bloc.est_actif %}inactive-row{% endif %}">
+                            <td class="text-center fw-bold text-muted">
+                                #{{ bloc.id_bloc }}
+                            </td>
+                            <td>
+                                <div>
+                                    <div class="fw-bold text-dark">{{ bloc.name_bloc }}</div>
+                                    {% if bloc.description %}
+                                    <small class="text-muted d-block mt-1">
+                                        <i class="fas fa-info-circle me-1"></i>{{ bloc.description[:60] }}
+                                        {% if bloc.description|length > 60 %}...{% endif %}
+                                    </small>
+                                    {% endif %}
+                                </div>
+                            </td>
+                            <td class="text-center">
+                                <div class="d-flex flex-column gap-1 align-items-center">
+                                    <span class="price-badge">
+                                        {{ "%.2f"|format(bloc.prix) }} DA
+                                    </span>
+                                    <small class="text-muted">
+                                        <i class="fas fa-plus-circle"></i> {{ "%.2f"|format(bloc.prix_supplement_30min)
+                                        }}
+                                        DA/30min
+                                    </small>
+                                </div>
+                            </td>
+                            <td class="text-center">
+                                <div class="d-flex flex-column gap-1">
+                                    <span class="badge bg-info">
+                                        <i class="fas fa-clock me-1"></i>{{ bloc.duree_base }} min
+                                    </span>
+                                    {% if bloc.ipserver %}
+                                    <small class="text-muted">
+                                        <i class="fas fa-server"></i>
+                                        {{ bloc.ipserver }}{% if bloc.port %}:{{ bloc.port }}{% endif %}
+                                    </small>
+                                    {% endif %}
+                                </div>
+                            </td>
+                            <td class="text-center">
+                                <span class="badge bg-secondary fs-6">
+                                    <i class="fas fa-box me-1"></i>{{ bloc.produits_inclus|length }}
+                                </span>
+                            </td>
+                            <td class="text-center">
+                                {% if bloc.est_actif %}
+                                <span class="badge badge-status bg-success">
+                                    <i class="fas fa-check-circle me-1"></i>Actif
+                                </span>
+                                {% else %}
+                                <span class="badge badge-status bg-secondary">
+                                    <i class="fas fa-pause-circle me-1"></i>Inactif
+                                </span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <div class="d-flex gap-1 justify-content-center table-actions">
+                                    <!-- Bouton Produits -->
+                                    <a href="{{ url_for('gerer_produits_bloc', id_bloc=bloc.id_bloc) }}"
+                                        class="btn btn-info btn-sm action-btn" title="Gérer les produits">
+                                        <i class="fas fa-box"></i>
+                                    </a>
+
+                                    <!-- Bouton Modifier -->
+                                    <a href="{{ url_for('modifier_bloc', id_bloc=bloc.id_bloc) }}"
+                                        class="btn btn-warning btn-sm action-btn" title="Modifier">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+
+                                    <!-- Bouton Activer/Désactiver -->
+                                    <form method="POST"
+                                        action="{{ url_for('toggle_bloc_status', id_bloc=bloc.id_bloc) }}"
+                                        class="d-inline">
+                                        <button type="submit"
+                                            class="btn btn-{% if bloc.est_actif %}secondary{% else %}success{% endif %} btn-sm action-btn"
+                                            title="{% if bloc.est_actif %}Désactiver{% else %}Activer{% endif %}">
+                                            <i class="fas fa-power-off"></i>
+                                        </button>
+                                    </form>
+
+                                    <!-- Bouton Supprimer -->
+                                    <form method="POST" action="{{ url_for('delete_bloc', id_bloc=bloc.id_bloc) }}"
+                                        class="d-inline"
+                                        onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer le bloc {{ bloc.name_bloc }} ?');">
+                                        <button type="submit" class="btn btn-danger btn-sm action-btn"
+                                            title="Supprimer">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Initialiser DataTables si nécessaire
+    $(document).ready(function () {
+        $('#blocsTable').DataTable({
+            pageLength: 25,
+            order: [[1, 'asc']]
+        });
+    });
+</script>
+{% endblock %}

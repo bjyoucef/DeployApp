@@ -1,0 +1,722 @@
+{% extends "layout.html" %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block style %}
+<style>
+    :root {
+        --anes-primary: #450A54;
+        --anes-primary-light: #6d28d9;
+        --anes-gradient: linear-gradient(135deg, #450A54 0%, #6d28d9 100%);
+    }
+
+    /* ─── Hero Banner ─── */
+    .hero-banner {
+        background: var(--anes-gradient);
+        border-radius: 1rem;
+        padding: 2rem 2.5rem;
+        color: white;
+        position: relative;
+        overflow: hidden;
+        margin-bottom: 2rem;
+    }
+
+    .hero-banner::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -10%;
+        width: 300px;
+        height: 300px;
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 50%;
+        pointer-events: none;
+        z-index: 1;
+    }
+
+    .hero-banner>div {
+        position: relative;
+        z-index: 2;
+    }
+
+    .hero-banner h1 {
+        font-weight: 800;
+        font-size: 1.75rem;
+        margin-bottom: 0.25rem;
+    }
+
+    .hero-actions .btn {
+        border-radius: 0.5rem;
+        font-weight: 600;
+        font-size: 0.85rem;
+        transition: all 0.2s;
+    }
+
+    .hero-actions .btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    }
+
+    /* ─── Info Card (Summary) ─── */
+    .info-card {
+        background: var(--anes-gradient);
+        color: white;
+        border-radius: 1rem;
+        padding: 2rem;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .info-card::before {
+        content: '';
+        position: absolute;
+        top: -30%;
+        right: -10%;
+        width: 200px;
+        height: 200px;
+        background: rgba(255, 255, 255, 0.04);
+        border-radius: 50%;
+    }
+
+    .info-card .label {
+        opacity: 0.75;
+        font-size: 0.78rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        font-weight: 600;
+    }
+
+    .info-card .value {
+        font-size: 1.1rem;
+        font-weight: 700;
+    }
+
+    .progress-bar-custom {
+        height: 8px;
+        border-radius: 4px;
+        background: rgba(255, 255, 255, 0.15);
+    }
+
+    .progress-bar-custom .fill {
+        height: 100%;
+        border-radius: 4px;
+        background: linear-gradient(90deg, #4ade80, #22d3ee);
+        transition: width 0.6s ease;
+    }
+
+    /* ─── Table Card ─── */
+    .table-card {
+        background: white;
+        border-radius: 1rem;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.07);
+        border: none;
+        overflow: hidden;
+        margin-bottom: 1.5rem;
+    }
+
+    [data-theme="dark"] .table-card {
+        background: var(--bg-card, #1e1e2e);
+    }
+
+    .table-card .card-header-custom {
+        background: var(--anes-gradient);
+        color: white;
+        font-weight: 700;
+        padding: 0.875rem 1.25rem;
+        font-size: 0.95rem;
+    }
+
+    .table-card .card-header-dark {
+        background: linear-gradient(135deg, #1e293b, #334155);
+        color: white;
+        font-weight: 700;
+        padding: 0.875rem 1.25rem;
+        font-size: 0.95rem;
+    }
+
+    .table-card .table th {
+        background: #f8fafc;
+        font-weight: 700;
+        font-size: 0.78rem;
+        text-transform: uppercase;
+        letter-spacing: 0.3px;
+        color: #64748b;
+        border-bottom: 2px solid #e2e8f0;
+        padding: 0.75rem;
+    }
+
+    [data-theme="dark"] .table-card .table th {
+        background: #1a1a2e;
+        color: #94a3b8;
+        border-color: #2a2a3e;
+    }
+
+    .table-card .table td {
+        padding: 0.7rem 0.75rem;
+        vertical-align: middle;
+        font-size: 0.875rem;
+        border-color: #f1f5f9;
+    }
+
+    [data-theme="dark"] .table-card .table td {
+        border-color: #2a2a3e;
+        color: #e2e8f0;
+    }
+
+    /* ─── Tranche Form Card ─── */
+    .tranche-form-card {
+        background: white;
+        border-radius: 1rem;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.07);
+        border: 1px solid rgba(0, 0, 0, 0.05);
+        overflow: hidden;
+    }
+
+    [data-theme="dark"] .tranche-form-card {
+        background: var(--bg-card, #1e1e2e);
+        border-color: var(--border, #2a2a3e);
+    }
+
+    .tranche-form-card .card-header-custom {
+        background: var(--anes-gradient);
+        color: white;
+        font-weight: 700;
+        padding: 0.875rem 1.25rem;
+        font-size: 0.95rem;
+    }
+
+    /* ─── Badges ─── */
+    .badge-statut {
+        font-size: 0.85rem;
+        padding: 0.4em 0.85em;
+        border-radius: 8px;
+        font-weight: 600;
+    }
+
+    .badge-source {
+        font-size: 0.72rem;
+        padding: 0.35em 0.65em;
+        border-radius: 6px;
+        font-weight: 600;
+    }
+
+    .tranche-annulee {
+        opacity: 0.5;
+        text-decoration: line-through;
+    }
+
+    /* ─── Traçabilité ─── */
+    .trace-card {
+        background: white;
+        border-radius: 1rem;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.07);
+        border: none;
+        overflow: hidden;
+    }
+
+    [data-theme="dark"] .trace-card {
+        background: var(--bg-card, #1e1e2e);
+    }
+
+    /* ─── Animations ─── */
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .animate-in {
+        animation: fadeInUp 0.4s ease forwards;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Hero Banner -->
+    <div class="hero-banner animate-in">
+        <div class="d-flex justify-content-between align-items-start flex-wrap gap-3">
+            <div>
+                <h1><i class="fas fa-file-invoice me-2"></i>{{ decharge.numero_decharge }}</h1>
+                <div class="d-flex align-items-center gap-2 mt-2">
+                    {% if decharge.statut == 'BROUILLON' %}
+                    <span class="badge badge-statut bg-secondary">Brouillon</span>
+                    {% elif decharge.statut == 'VALIDE' %}
+                    <span class="badge badge-statut bg-primary">Validé</span>
+                    {% elif decharge.statut == 'PAIEMENT_PARTIEL' %}
+                    <span class="badge badge-statut bg-warning">Paiement Partiel</span>
+                    {% elif decharge.statut == 'PAYE' %}
+                    <span class="badge badge-statut bg-success">Payé</span>
+                    {% elif decharge.statut == 'ANNULE' %}
+                    <span class="badge badge-statut bg-danger">Annulé</span>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="hero-actions d-flex gap-2 flex-wrap">
+                {% if decharge.statut == 'BROUILLON' %}
+                <button class="btn btn-success shadow-sm" onclick="validerDecharge()">
+                    <i class="fas fa-check me-1"></i> Valider
+                </button>
+                {% endif %}
+                {% if decharge.statut not in ['ANNULE', 'PAYE'] %}
+                <button class="btn btn-danger shadow-sm" data-bs-toggle="modal" data-bs-target="#modalAnnulerDecharge">
+                    <i class="fas fa-ban me-1"></i> Annuler
+                </button>
+                {% endif %}
+                <a href="{{ url_for('anesthesie_decharge_pdf', id_decharge=decharge.id_decharge) }}"
+                    class="btn btn-light text-danger fw-bold shadow-sm">
+                    <i class="fas fa-file-pdf me-1"></i> PDF
+                </a>
+                <a href="{{ url_for('anesthesie_decharges_list') }}"
+                    class="btn btn-light text-secondary fw-bold shadow-sm">
+                    <i class="fas fa-arrow-left me-1"></i> Retour
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Info Card + Tranche Form -->
+    <div class="row mb-4">
+        <div class="col-lg-8 animate-in">
+            <div class="info-card">
+                <div class="row">
+                    <div class="col-md-4 mb-3">
+                        <div class="label">Personnel</div>
+                        <div class="value">{{ decharge.personnel_name }}</div>
+                        <span class="badge mt-1
+                            {% if decharge.type_intervenant == 'REANIMATEUR' %}bg-success{% else %}bg-info{% endif %}">
+                            {{ decharge.type_intervenant }}
+                        </span>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <div class="label">Date Décharge</div>
+                        <div class="value">{{ decharge.date_decharge.strftime('%d/%m/%Y') if decharge.date_decharge else
+                            'N/A' }}</div>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <div class="label">Période</div>
+                        <div class="value">
+                            {{ decharge.periode_debut.strftime('%d/%m/%Y') if decharge.periode_debut else '...' }}
+                            → {{ decharge.periode_fin.strftime('%d/%m/%Y') if decharge.periode_fin else '...' }}
+                        </div>
+                    </div>
+                </div>
+                <hr style="border-color: rgba(255,255,255,0.15);">
+                <div class="row text-center">
+                    <div class="col-4">
+                        <div class="label">Montant Total</div>
+                        <div class="value" style="font-size:1.4rem;">{{ "%.2f"|format(decharge.montant_total) }} DA
+                        </div>
+                    </div>
+                    <div class="col-4">
+                        <div class="label">Payé</div>
+                        <div class="value" style="font-size:1.4rem; color:#4ade80;">
+                            {{ "%.2f"|format(decharge.montant_paye_total or 0) }} DA
+                        </div>
+                    </div>
+                    <div class="col-4">
+                        <div class="label">Solde Restant</div>
+                        <div class="value" style="font-size:1.4rem; color:#fbbf24;">
+                            {{ "%.2f"|format(decharge.solde_restant or 0) }} DA
+                        </div>
+                    </div>
+                </div>
+                {% set pct = ((decharge.montant_paye_total or 0) / decharge.montant_total * 100) if
+                decharge.montant_total > 0 else 0 %}
+                <div class="progress-bar-custom mt-3">
+                    <div class="fill" style="width: {{ pct|round(0) }}%;"></div>
+                </div>
+                <div class="text-center mt-1" style="font-size:0.85rem; opacity:0.7;">
+                    {{ pct|round(1) }}% payé
+                </div>
+            </div>
+        </div>
+
+        <!-- Tranche form -->
+        <div class="col-lg-4 animate-in">
+            {% if decharge.statut not in ['ANNULE', 'PAYE'] %}
+            <div class="tranche-form-card h-100">
+                <div class="card-header-custom">
+                    <i class="fas fa-plus-circle me-2"></i> Ajouter une Tranche
+                </div>
+                <div class="p-3">
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold" style="font-size:0.85rem;">Date *</label>
+                        <input type="date" id="tranche_date" class="form-control"
+                            value="{{ now().strftime('%Y-%m-%d') if now is defined else '' }}">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold" style="font-size:0.85rem;">Montant (DA) *</label>
+                        <input type="number" id="tranche_montant" class="form-control" step="0.01" min="0.01"
+                            max="{{ decharge.solde_restant or 0 }}" placeholder="0.00">
+                        <div class="form-text">Max: {{ "%.2f"|format(decharge.solde_restant or 0) }} DA</div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold" style="font-size:0.85rem;">Mode</label>
+                        <select id="tranche_mode" class="form-select">
+                            <option value="ESPECES">Espèces</option>
+                            <option value="CHEQUE">Chèque</option>
+                            <option value="VIREMENT">Virement</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold" style="font-size:0.85rem;">Référence</label>
+                        <input type="text" id="tranche_ref" class="form-control" placeholder="N° chèque...">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold" style="font-size:0.85rem;">Observations</label>
+                        <textarea id="tranche_obs" class="form-control" rows="2"></textarea>
+                    </div>
+                    <button class="btn btn-primary w-100 rounded-pill shadow-sm" onclick="ajouterTranche()"
+                        style="background: var(--anes-gradient); border: none;">
+                        <i class="fas fa-save me-2"></i> Enregistrer Tranche
+                    </button>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Actes -->
+    <div class="table-card animate-in">
+        <div class="card-header-custom">
+            <i class="fas fa-list me-2"></i> Actes ({{ actes|length }})
+        </div>
+        <div class="table-responsive">
+            <table class="table table-hover table-sm mb-0">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Patient</th>
+                        <th>Acte</th>
+                        <th>Source</th>
+                        <th class="text-end">Honoraires</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for a in actes %}
+                    <tr>
+                        <td class="fw-semibold">{{ a.date_intervention.strftime('%d/%m/%Y') if a.date_intervention else
+                            'N/A' }}</td>
+                        <td>{{ a.patient }}</td>
+                        <td><small>{{ a.nom_acte }}</small></td>
+                        <td>
+                            {% if a.source_acte == 'BLOC' %}
+                            <span class="badge badge-source bg-info-subtle text-info">Bloc</span>
+                            {% elif a.source_acte == 'ACCOUCHEMENT' %}
+                            <span class="badge badge-source bg-danger-subtle text-danger">Acc.</span>
+                            {% elif a.source_acte == 'KT' %}
+                            <span class="badge badge-source bg-warning-subtle text-warning">KT</span>
+                            {% elif a.source_acte == 'MEDECIN_INTERNE' %}
+                            <span class="badge badge-source bg-secondary-subtle text-secondary">MI</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-end fw-semibold" style="color: var(--anes-primary);">{{
+                            "%.2f"|format(a.montant_honoraires) }} DA</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+                <tfoot>
+                    <tr style="background:#f8fafc;">
+                        <td colspan="4" class="text-end fw-bold">Total:</td>
+                        <td class="text-end fw-bold text-success">{{ "%.2f"|format(decharge.montant_total) }} DA</td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+    </div>
+
+    <!-- Tranches -->
+    <div class="table-card animate-in">
+        <div class="card-header-custom">
+            <i class="fas fa-money-check-alt me-2"></i> Tranches de Paiement ({{ tranches|length }})
+        </div>
+        <div class="table-responsive">
+            <table class="table table-hover table-sm mb-0">
+                <thead>
+                    <tr>
+                        <th>N° Tranche</th>
+                        <th>Date</th>
+                        <th class="text-end">Montant</th>
+                        <th>Mode</th>
+                        <th>Référence</th>
+                        <th>Par</th>
+                        <th>Observations</th>
+                        <th class="text-center">Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for t in tranches %}
+                    <tr class="{% if t.est_annule %}tranche-annulee{% endif %}">
+                        <td class="fw-semibold">{{ t.numero_tranche }}</td>
+                        <td>{{ t.date_paiement.strftime('%d/%m/%Y') if t.date_paiement else '' }}</td>
+                        <td class="text-end fw-bold">{{ "%.2f"|format(t.montant_paye) }} DA</td>
+                        <td>{{ t.mode_paiement }}</td>
+                        <td>{{ t.reference_paiement or '—' }}</td>
+                        <td>{{ t.created_by_name or '—' }}</td>
+                        <td><small class="text-muted">{{ t.observations or '' }}</small></td>
+                        <td class="text-center">
+                            {% if not t.est_annule and decharge.statut != 'ANNULE' %}
+                            <button class="btn btn-sm btn-light rounded-circle"
+                                onclick="annulerTranche({{ t.id_tranche }})" title="Annuler"
+                                style="width:30px;height:30px;padding:0;display:inline-flex;align-items:center;justify-content:center;">
+                                <i class="fas fa-ban" style="font-size:0.75rem;color:#dc3545;"></i>
+                            </button>
+                            {% elif t.est_annule %}
+                            <span class="badge bg-danger-subtle text-danger" style="font-size:0.7rem;">Annulé</span>
+                            {% if t.motif_annulation %}
+                            <br><small class="text-muted">{{ t.motif_annulation }}</small>
+                            {% endif %}
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="8" class="text-center text-muted py-4">
+                            Aucune tranche de paiement enregistrée
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Traçabilité -->
+    <div class="trace-card animate-in">
+        <div class="card-header-dark">
+            <i class="fas fa-history me-2"></i> Traçabilité
+        </div>
+        <div class="p-3">
+            <div class="row">
+                <div class="col-md-4">
+                    <strong>Créé par:</strong> {{ decharge.created_by_name or '—' }}<br>
+                    <small class="text-muted">{{ decharge.created_at.strftime('%d/%m/%Y %H:%M') if decharge.created_at
+                        else '' }}</small>
+                </div>
+                <div class="col-md-4">
+                    <strong>Validé par:</strong> {{ decharge.validated_by_name or '—' }}<br>
+                    <small class="text-muted">{{ decharge.validated_at.strftime('%d/%m/%Y %H:%M') if
+                        decharge.validated_at else '' }}</small>
+                </div>
+                <div class="col-md-4">
+                    {% if decharge.est_annule %}
+                    <strong class="text-danger">Annulé par:</strong> {{ decharge.annule_by_name or '—' }}<br>
+                    <small class="text-muted">{{ decharge.annule_le.strftime('%d/%m/%Y %H:%M') if decharge.annule_le
+                        else '' }}</small><br>
+                    <small class="text-danger">Motif: {{ decharge.motif_annulation }}</small>
+                    {% elif decharge.paid_by_name %}
+                    <strong class="text-success">Payé par:</strong> {{ decharge.paid_by_name }}<br>
+                    <small class="text-muted">{{ decharge.paid_at.strftime('%d/%m/%Y %H:%M') if decharge.paid_at else ''
+                        }}</small>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Annuler Décharge -->
+<div class="modal fade" id="modalAnnulerDecharge" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content" style="border-radius:1rem;overflow:hidden;">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title"><i class="fas fa-ban me-2"></i> Annuler la Décharge</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-warning">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    Cette action libérera tous les actes liés à cette décharge.
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Motif d'annulation *</label>
+                    <textarea id="motifAnnulationDecharge" class="form-control" rows="3"
+                        placeholder="Saisissez le motif de l'annulation..." required></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fermer</button>
+                <button type="button" class="btn btn-danger" onclick="confirmerAnnulerDecharge()">
+                    <i class="fas fa-ban me-2"></i> Confirmer l'annulation
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Annuler Tranche -->
+<div class="modal fade" id="modalAnnulerTranche" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content" style="border-radius:1rem;overflow:hidden;">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title"><i class="fas fa-ban me-2"></i> Annuler la Tranche</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Motif d'annulation *</label>
+                    <textarea id="motifAnnulationTranche" class="form-control" rows="3"
+                        placeholder="Saisissez le motif..." required></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fermer</button>
+                <button type="button" class="btn btn-danger" id="btnConfirmAnnulerTranche">
+                    <i class="fas fa-ban me-2"></i> Confirmer
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    const ID_DECHARGE = {{ decharge.id_decharge }};
+
+    function validerDecharge() {
+        if (!confirm('Valider cette décharge ?')) return;
+        fetch(`/anesthesie/honoraires/decharge/${ID_DECHARGE}/valider`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' }
+        })
+            .then(r => r.json())
+            .then(data => {
+                if (data.success) {
+                    Toastify({
+                        text: data.message, duration: 3000,
+                        style: { background: "linear-gradient(to right, #00b09b, #96c93d)" }
+                    }).showToast();
+                    setTimeout(() => location.reload(), 1000);
+                } else {
+                    Toastify({
+                        text: data.error, duration: 5000,
+                        style: { background: "linear-gradient(to right, #f85032, #e73827)" }
+                    }).showToast();
+                }
+            });
+    }
+
+    function ajouterTranche() {
+        const date = document.getElementById('tranche_date').value;
+        const montant = document.getElementById('tranche_montant').value;
+        const mode = document.getElementById('tranche_mode').value;
+        const ref = document.getElementById('tranche_ref').value;
+        const obs = document.getElementById('tranche_obs').value;
+
+        if (!date || !montant || parseFloat(montant) <= 0) {
+            Toastify({
+                text: "Date et montant requis", duration: 3000,
+                style: { background: "linear-gradient(to right, #f85032, #e73827)" }
+            }).showToast();
+            return;
+        }
+
+        fetch(`/anesthesie/honoraires/decharge/${ID_DECHARGE}/tranche`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                date_paiement: date,
+                montant_paye: montant,
+                mode_paiement: mode,
+                reference_paiement: ref,
+                observations: obs
+            })
+        })
+            .then(r => r.json())
+            .then(data => {
+                if (data.success) {
+                    Toastify({
+                        text: data.message, duration: 3000,
+                        style: { background: "linear-gradient(to right, #00b09b, #96c93d)" }
+                    }).showToast();
+                    setTimeout(() => location.reload(), 1000);
+                } else {
+                    Toastify({
+                        text: data.error, duration: 5000,
+                        style: { background: "linear-gradient(to right, #f85032, #e73827)" }
+                    }).showToast();
+                }
+            });
+    }
+
+    let trancheIdToCancel = null;
+
+    function annulerTranche(id) {
+        trancheIdToCancel = id;
+        document.getElementById('motifAnnulationTranche').value = '';
+        new bootstrap.Modal(document.getElementById('modalAnnulerTranche')).show();
+    }
+
+    document.getElementById('btnConfirmAnnulerTranche').addEventListener('click', () => {
+        const motif = document.getElementById('motifAnnulationTranche').value.trim();
+        if (!motif) {
+            Toastify({
+                text: "Motif obligatoire", duration: 3000,
+                style: { background: "linear-gradient(to right, #f85032, #e73827)" }
+            }).showToast();
+            return;
+        }
+
+        fetch(`/anesthesie/honoraires/decharge/tranche/${trancheIdToCancel}/annuler`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ motif: motif })
+        })
+            .then(r => r.json())
+            .then(data => {
+                if (data.success) {
+                    Toastify({
+                        text: 'Tranche annulée', duration: 3000,
+                        style: { background: "linear-gradient(to right, #00b09b, #96c93d)" }
+                    }).showToast();
+                    setTimeout(() => location.reload(), 1000);
+                } else {
+                    Toastify({
+                        text: data.error, duration: 5000,
+                        style: { background: "linear-gradient(to right, #f85032, #e73827)" }
+                    }).showToast();
+                }
+            });
+    });
+
+    function confirmerAnnulerDecharge() {
+        const motif = document.getElementById('motifAnnulationDecharge').value.trim();
+        if (!motif) {
+            Toastify({
+                text: "Motif obligatoire", duration: 3000,
+                style: { background: "linear-gradient(to right, #f85032, #e73827)" }
+            }).showToast();
+            return;
+        }
+
+        fetch(`/anesthesie/honoraires/decharge/${ID_DECHARGE}/annuler`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ motif: motif })
+        })
+            .then(r => r.json())
+            .then(data => {
+                if (data.success) {
+                    Toastify({
+                        text: 'Décharge annulée', duration: 3000,
+                        style: { background: "linear-gradient(to right, #00b09b, #96c93d)" }
+                    }).showToast();
+                    setTimeout(() => location.reload(), 1000);
+                } else {
+                    Toastify({
+                        text: data.error, duration: 5000,
+                        style: { background: "linear-gradient(to right, #f85032, #e73827)" }
+                    }).showToast();
+                }
+            });
+    }
+</script>
+{% endblock %}

@@ -1,0 +1,77 @@
+{% if decharges %}
+    {% for decharge in decharges %}
+        <tr>
+            <td><small class="text-muted">{{ decharge.date }}</small></td>
+            <td><strong>{{ decharge.doctor_name }}</strong></td>
+            <td class="text-end">{{ decharge.amount | format_price }}</td>
+            <td class="text-end">
+                {% if decharge.reste == 0 %}
+                    <span class="badge badge-reste bg-success">{{ decharge.reste | format_price }}</span>
+                {% else %}
+                    <span class="badge badge-reste bg-warning">{{ decharge.reste | format_price }}</span>
+                {% endif %}
+            </td>
+            <td><small>{{ decharge.created_par }}</small></td>
+            <td>
+                <div class="dossiers-list">
+                    <ul class="mb-0 small">
+                        {% for dossier in decharge.dossiers.splitlines() %}
+                            <li>{{ dossier }}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </td>
+            <td class="text-center">
+                <div class="btn-group btn-group-sm" role="group">
+                    {% if 'MODIFIER_DECHARGE' in session.privileges %}
+                        <button class="btn btn-warning" onclick="openEditModal({{ decharge.id }})" title="Modifier">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                    {% endif %}
+
+                    {% if 'EXPORTER_DECHARGE_PDF' in session.privileges %}
+                        <a href="{{ url_for('export_decharge_pdf', id=decharge.id) }}" class="btn btn-primary"
+                           title="Exporter PDF">
+                            <i class="fas fa-file-pdf"></i>
+                        </a>
+                    {% endif %}
+
+                    {% if 'SUPPRIMER_DECHARGE' in session.privileges %}
+                        <button class="btn btn-danger" onclick="confirmDelete({{ decharge.id }})" title="Supprimer">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    {% endif %}
+                </div>
+
+                {% if decharge.reste == 0 %}
+                    <div class="mt-2">
+                <span class="badge bg-success">
+                    <i class="fas fa-check-circle me-1"></i>
+                    Réglé le : {{ decharge.time_payment.strftime('%d/%m/%Y') if decharge.time_payment else '-' }}
+                </span>
+                    </div>
+                {% else %}
+                    {% if 'AJOUTER_PAYMENT_DECHARGE' in session.privileges %}
+                        <form action="{{ url_for('add_payment_decharges', id=decharge.id) }}" method="POST"
+                              class="mt-2" onsubmit="return confirmPayment(event, {{ decharge.reste }})">
+                            <div class="input-group input-group-sm">
+                                <input type="number" name="payment_amount" step="0.01" min="0"
+                                       max="{{ decharge.reste }}" class="form-control" placeholder="Montant" required/>
+                                <button class="btn btn-success" type="submit">
+                                    <i class="fas fa-check me-1"></i>Régler
+                                </button>
+                            </div>
+                        </form>
+                    {% endif %}
+                {% endif %}
+            </td>
+        </tr>
+    {% endfor %}
+{% else %}
+    <tr>
+        <td colspan="7" class="text-center py-5">
+            <i class="fas fa-inbox fa-3x text-muted mb-3 d-block"></i>
+            <p class="text-muted">Aucune décharge trouvée</p>
+        </td>
+    </tr>
+{% endif %}

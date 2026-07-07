@@ -1,0 +1,173 @@
+{% extends "layout.html" %}
+{% block content %}
+<h1>Journal des Événements IT</h1>
+<button type="button" class="btn btn-primary mb-3" data-bs-toggle="modal" data-bs-target="#addEventModal">
+  Ajouter un événement
+</button>
+
+    <table class="table" id="myTable">
+    <thead>
+    <tr>
+        <th>Épingler</th>
+        <th>Date</th>
+        <th>Créé par</th>
+        <th>Titre</th>
+        <th>Type</th>
+        <th>Statut</th>
+      <th>Description</th>
+        <th>Actions</th>
+    </tr>
+    </thead>
+    <tbody>
+    {% for event in events %}
+    <tr>
+<td>
+    <form method="post" action="{{ url_for('pin_event') }}" style="display:inline;">
+        <input type="hidden" name="id" value="{{ event.id }}">
+        <button type="submit" class="btn btn-outline-primary btn-sm">
+            {{ event.pinned }} -
+            {% if event.pinned %}
+            📌
+            {% else %}
+            🔝
+            {% endif %}
+        </button>
+    </form>
+</td>
+
+        <td>{{ event.created_at }}</td>
+        <td>{{ event.created_par }}</td>
+        <td>{{ event.title }}</td>
+        <td>{{ event.event_type }}</td>
+        <td>{{ event.status }}</td>
+        <td>{{ event.description }}</td>
+        <td>
+        <button type="button" class="btn btn-warning btn-sm" data-bs-toggle="modal" data-bs-target="#editEventModal{{ event.id }}">
+          Modifier
+        </button>
+                <button type="button" class="btn btn-danger btn-sm" data-bs-toggle="modal" data-bs-target="#deleteEventModal{{ event.id }}">
+                   Supprimer
+                </button>
+        </td>
+    </tr>
+
+    <!-- Modal d'édition -->
+    <div class="modal fade" id="editEventModal{{ event.id }}" tabindex="-1" aria-labelledby="editEventModalLabel{{ event.id }}" aria-hidden="true">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <form method="post" action="{{ url_for('edit_it_event', id=event.id) }}">
+            <div class="modal-header">
+              <h5 class="modal-title" id="editEventModalLabel{{ event.id }}">Modifier l'Événement</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
+            </div>
+            <div class="modal-body">
+              <div class="mb-3">
+                  <label for="title{{ event.id }}" class="form-label">Titre</label>
+                  <input type="text" name="title" class="form-control" id="title{{ event.id }}" value="{{ event.title }}" required>
+              </div>
+              <div class="mb-3">
+                  <label for="description{{ event.id }}" class="form-label">Description</label>
+                  <textarea name="description" class="form-control" id="description{{ event.id }}" rows="3" required>{{ event.description }}</textarea>
+              </div>
+              <div class="mb-3">
+                  <label for="event_type{{ event.id }}" class="form-label">Type</label>
+                  <select name="event_type" class="form-select" id="event_type{{ event.id }}">
+                  <option value="server" {% if event.event_type == 'server' %}selected{% endif %}>Serveur</option>
+                  <option value="reseau" {% if event.event_type == 'reseau' %}selected{% endif %}>Réseau</option>
+                  <option value="maintenance" {% if event.event_type == 'maintenance' %}selected{% endif %}>Maintenance</option>
+                  <option value="incident" {% if event.event_type == 'incident' %}selected{% endif %}>Incident</option>
+                </select>
+              </div>
+              <div class="mb-3">
+                  <label for="status{{ event.id }}" class="form-label">Statut</label>
+                  <select name="status" class="form-select" id="status{{ event.id }}">
+                  <option value="ouvert" {% if event.status == 'ouvert' %}selected{% endif %}>Ouvert</option>
+                  <option value="en_cours" {% if event.status == 'en_cours' %}selected{% endif %}>En cours</option>
+                  <option value="resolu" {% if event.status == 'resolu' %}selected{% endif %}>Résolu</option>
+                </select>
+              </div>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+              <button type="submit" class="btn btn-primary">Mettre à jour</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal de suppression -->
+        <div class="modal fade" id="deleteEventModal{{ event.id }}" tabindex="-1" aria-labelledby="deleteEventModalLabel{{ event.id }}" aria-hidden="true">
+          <div class="modal-dialog">
+            <div class="modal-content">
+              <div class="modal-header">
+                <h5 class="modal-title" id="deleteEventModalLabel{{ event.id }}">Confirmer la suppression</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
+              </div>
+              <div class="modal-body">
+                Voulez-vous vraiment supprimer l'événement "<strong>{{ event.title }}</strong>" ?
+              </div>
+              <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+        <form method="POST" action="{{ url_for('delete_it_event', id=event.id) }}">
+          <button type="submit" class="btn btn-danger">Supprimer</button>
+        </form>
+              </div>
+            </div>
+          </div>
+        </div>
+        {% else %}
+        <tr>
+            <td colspan="5">Aucun événement enregistré.</td>
+    </tr>
+    {% endfor %}
+    </tbody>
+</table>
+
+<!-- Modal pour ajouter un événement -->
+<div class="modal fade" id="addEventModal" tabindex="-1" aria-labelledby="addEventModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+<form method="post" action="{{ url_for('add_it_event') }}">
+        <div class="modal-header">
+          <h5 class="modal-title" id="addEventModalLabel">Ajouter un Événement</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
+        </div>
+        <div class="modal-body">
+            <div class="mb-3">
+            <label for="title_new" class="form-label">Titre</label>
+            <input type="text" name="title" class="form-control" id="title_new" required>
+            </div>
+            <div class="mb-3">
+            <label for="description_new" class="form-label">Description</label>
+            <textarea name="description" class="form-control" id="description_new" rows="3" required></textarea>
+            </div>
+            <div class="mb-3">
+            <label for="event_type_new" class="form-label">Type</label>
+            <select name="event_type" class="form-select" id="event_type_new">
+                <option value="server">Serveur</option>
+                <option value="reseau">Réseau</option>
+                <option value="maintenance">Maintenance</option>
+                <option value="incident">Incident</option>
+            </select>
+            </div>
+            <div class="mb-3">
+            <label for="status_new" class="form-label">Statut</label>
+            <select name="status" class="form-select" id="status_new">
+                <option value="ouvert">Ouvert</option>
+                <option value="en_cours">En cours</option>
+                <option value="resolu">Résolu</option>
+            </select>
+            </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+          <button type="submit" class="btn btn-primary">Enregistrer</button>
+        </div>
+</form>
+    </div>
+  </div>
+</div>
+
+
+{% endblock content %}

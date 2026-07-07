@@ -1,0 +1,99 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<!-- Bouton d'ouverture du Modal pour ajouter un privilège -->
+<button type="button" class="btn btn-primary mb-4" data-bs-toggle="modal" data-bs-target="#modalAjouterPrivilege">
+    Ajouter un Privilège
+</button>
+<!-- Modal Ajouter un Privilège -->
+<div class="modal fade" id="modalAjouterPrivilege" tabindex="-1" aria-labelledby="modalAjouterPrivilegeLabel"
+     aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <!-- Header de la modal -->
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="modalAjouterPrivilegeLabel">Ajouter un Privilège</h5>
+                <button type="button" class="btn-close text-white" data-bs-dismiss="modal" aria-label="Fermer"></button>
+            </div>
+
+            <!-- Corps de la modal -->
+            <div class="modal-body">
+                <form method="POST" action="{{ url_for('privileges') }}">
+                    <!-- Nom du privilège -->
+                    <div class="mb-3">
+                        <label for="nom_privilege" class="form-label">Nom du privilège :</label>
+                        <input type="text" id="nom_privilege" name="nom_privilege" class="form-control"
+                               placeholder="Ex : Gestion des utilisateurs" required>
+                    </div>
+
+                    <!-- Type de privilège -->
+                    <div class="mb-3">
+                        <label for="type_privilege" class="form-label">Type de privilège :</label>
+                        <select id="type_privilege" name="type_privilege" class="form-select" required>
+                            <option value="" disabled selected>Choisissez un type</option>
+
+                            <option value="DECHARGE">DECHARGE</option>
+                            <option value="DOSSIERS_PATIENTS">DOSSIERS_PATIENTS</option>
+                            <option value="SITUATION_MEDECIN">SITUATION_MEDECIN</option>
+                            <option value="FORFAITS">FORFAITS</option>
+
+                            <option value="DOSSIERS_PATIENTS_kt">DOSSIERS_PATIENTS_kt</option>
+                            <option value="SITUATION_MEDECIN_kt">SITUATION_MEDECIN_kt</option>
+                            <option value="EQUIPEMENTS">EQUIPEMENTS</option>
+
+                            <option value="PERSONNEL">PERSONNEL</option>
+                            <option value="PLANNINGS">PLANNINGS</option>
+                            <option value="POINTAGES">POINTAGES</option>
+                            <option value="SALAIRE">SALAIRE</option>
+                            <option value="SERVICE">SERVICE</option>
+
+                            <option value="STOCKS">STOCKS</option>
+
+                            <option value="TELEPHONE">TELEPHONE</option>
+                            <option value="BLOCS_OPERATOIRES">BLOCS_OPERATOIRES</option>
+                            <option value="CLES">CLES</option>
+                            <option value="RAPPORTS">RAPPORTS</option>
+
+                        </select>
+                    </div>
+
+                    <!-- Boutons d'action -->
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                            <i class="bi bi-x-circle"></i> Fermer
+                        </button>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-check-circle"></i> Ajouter
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<!-- Liste des privilèges -->
+<table id="myTable" class="table table-hover">
+    <thead>
+    <tr>
+        <th>ID</th>
+        <th>Nom du privilège</th>
+        <th>Type</th>
+    </tr>
+    </thead>
+    <tbody>
+    {% for privilege in privileges %}
+    <tr>
+        <td>{{ privilege.id_privilege }}</td>
+        <td>{{ privilege.nom_privilege }}</td>
+        <td>{{ privilege.type_privilege }}</td>
+    </tr>
+    {% endfor %}
+    </tbody>
+</table>
+
+
+{% endblock %}
+
+

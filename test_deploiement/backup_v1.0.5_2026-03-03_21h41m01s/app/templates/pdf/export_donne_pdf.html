@@ -1,0 +1,28 @@
+{% extends "pdf/_base_pdf.html" %}
+{% block content %}
+        <p>Je soussigné(e),
+            <strong>{{ emprunts_info.nom_personne_prend }} {{ emprunts_info.prenom_personne_prend }}</strong>,
+            titulaire du poste de
+            <strong>{{ emprunts_info.role_personne_prend }}</strong>
+            au sein de la clinique INAYA, reconnais par la présente avoir reçu la clé numéro
+            <strong>{{ emprunts_info.numero_cle }}</strong> (clé de <strong>{{ emprunts_info.description }}</strong> ),
+            remise par
+            <strong>{{ emprunts_info.nom_personne_donne }} {{ emprunts_info.prenom_personne_donne }}</strong>, titulaire du poste de
+            <strong>{{ emprunts_info.role_personne_donne }}</strong>,
+            le
+            <strong>{{ emprunts_info.date_emprunt }}</strong>,
+            conformément aux règles de sécurité de la clinique. Cette clé est essentielle pour l'accès à certaines zones sensibles de la clinique, et je m'engage à en faire un usage responsable et sécurisé.</p>
+
+        <p>Je comprends que toute perte ou utilisation abusive de cette clé pourrait entraîner des mesures disciplinaires, et je m'engage à signaler immédiatement toute anomalie concernant son utilisation.</p>
+
+        <p><strong>Informations :</strong></p>
+        <p>
+            <strong>Nom :</strong> {{ emprunts_info.nom_personne_prend }} {{ emprunts_info.prenom_personne_prend }}<br>
+            <strong>Numéro de clé :</strong> {{ emprunts_info.numero_cle }}<br>
+            <strong>Description de la clé :</strong> {{ emprunts_info.description }}<br>
+            <strong>Date de remise :</strong> {{ emprunts_info.date_emprunt }}<br>
+            <strong>Remis par :</strong> {{ emprunts_info.nom_personne_donne }} {{ emprunts_info.prenom_personne_donne
+            }}<br><br>
+        </p>
+
+{% endblock %}

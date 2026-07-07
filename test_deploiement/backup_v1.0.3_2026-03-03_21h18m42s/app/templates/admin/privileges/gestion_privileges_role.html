@@ -1,0 +1,190 @@
+{% extends "admin/admin_layout.html" %}
+
+{% block content %}
+    <div class="container-fluid">
+        <!-- En-tête avec retour -->
+        <div class="row mb-4 align-items-center">
+            <div class="col-md-6">
+                <h2 class="mb-0">
+                    <i class="bi bi-key me-2"></i>Privilèges - {{ role.nom_role }}
+                </h2>
+            </div>
+            <div class="col-md-6 text-end">
+                <a href="{{ url_for('roles') }}" class="btn btn-secondary">
+                    <i class="bi bi-arrow-left me-2"></i>Retour aux rôles
+                </a>
+                <button type="button" class="btn btn-success" onclick="sauvegarderPrivileges()">
+                    <i class="bi bi-check-circle me-2"></i>Sauvegarder
+                </button>
+            </div>
+        </div>
+
+        <!-- Barre de recherche -->
+        <div class="row mb-3">
+            <div class="col-md-6">
+                <div class="input-group">
+                    <span class="input-group-text"><i class="bi bi-search"></i></span>
+                    <input type="text" id="searchPrivilege" class="form-control"
+                           placeholder="Rechercher un privilège...">
+                </div>
+            </div>
+            <div class="col-md-6 text-end">
+                <button type="button" class="btn btn-sm btn-outline-primary" onclick="selectAll(true)">
+                    <i class="bi bi-check-all"></i> Tout sélectionner
+                </button>
+                <button type="button" class="btn btn-sm btn-outline-secondary" onclick="selectAll(false)">
+                    <i class="bi bi-x"></i> Tout désélectionner
+                </button>
+            </div>
+        </div>
+
+        <!-- Accordéon des privilèges -->
+        <div class="accordion" id="privilegesAccordion">
+            {% for type_privilege, privileges in privileges_grouped.items() %}
+                {% set associes_count = privileges|selectattr('associe', 'equalto', True)|list|length %}
+                <div class="accordion-item">
+                    <h2 class="accordion-header" id="heading{{ loop.index }}">
+                        <button class="accordion-button {% if not loop.first %}collapsed{% endif %}"
+                                type="button"
+                                data-bs-toggle="collapse"
+                                data-bs-target="#collapse{{ loop.index }}">
+                            <strong>{{ type_privilege }}</strong>
+                            <span class="badge bg-primary ms-2">{{ associes_count }}/{{ privileges|length }}</span>
+                        </button>
+                    </h2>
+                    <div id="collapse{{ loop.index }}"
+                         class="accordion-collapse collapse {% if loop.first %}show{% endif %}"
+                         data-bs-parent="#privilegesAccordion">
+                        <div class="accordion-body">
+                            <div class="d-flex justify-content-end mb-2">
+                                <button type="button" class="btn btn-sm btn-outline-primary me-2"
+                                        onclick="selectCategory('collapse{{ loop.index }}', true)">
+                                    <i class="bi bi-check-all"></i> Tout sélectionner
+                                </button>
+                                <button type="button" class="btn btn-sm btn-outline-secondary"
+                                        onclick="selectCategory('collapse{{ loop.index }}', false)">
+                                    <i class="bi bi-x"></i> Tout désélectionner
+                                </button>
+                            </div>
+                            <ul class="list-group">
+                                {% for privilege in privileges %}
+                                    <li class="list-group-item privilege-item"
+                                        data-privilege-name="{{ privilege.nom_privilege|lower }}">
+                                        <div class="form-check">
+                                            <input class="form-check-input"
+                                                   type="checkbox"
+                                                   id="priv_{{ privilege.id_privilege }}"
+                                                   data-id-privilege="{{ privilege.id_privilege }}"
+                                                   {% if privilege.associe %}checked{% endif %}>
+                                            <label class="form-check-label" for="priv_{{ privilege.id_privilege }}">
+                                                {{ privilege.nom_privilege }}
+                                            </label>
+                                        </div>
+                                    </li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <script>
+        // Recherche dans les privilèges
+        document.getElementById('searchPrivilege')?.addEventListener('input', function () {
+            const term = this.value.toLowerCase();
+            document.querySelectorAll('.privilege-item').forEach(item => {
+                const name = item.getAttribute('data-privilege-name');
+                item.style.display = name.includes(term) ? '' : 'none';
+            });
+        });
+
+        // Sélectionner/désélectionner tous
+        function selectAll(checked) {
+            document.querySelectorAll('input[type="checkbox"][data-id-privilege]')
+                .forEach(cb => cb.checked = checked);
+        }
+
+        // Sélectionner/désélectionner une catégorie
+        function selectCategory(collapseId, checked) {
+            document.querySelectorAll(`#${collapseId} input[type="checkbox"]`)
+                .forEach(cb => cb.checked = checked);
+        }
+
+        // Sauvegarder les privilèges
+        async function sauvegarderPrivileges() {
+            const checkboxes = document.querySelectorAll('input[type="checkbox"][data-id-privilege]');
+            const changes = Array.from(checkboxes).map(cb => ({
+                id_privilege: parseInt(cb.getAttribute('data-id-privilege'), 10),
+                associe: cb.checked
+            }));
+
+            try {
+                const response = await fetch('/roles/{{ role.id_role }}/privileges/sauvegarder', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({changes})
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    showNotification(data.message, 'success');
+                    setTimeout(() => window.location.href = "{{ url_for('roles') }}", 1500);
+                } else {
+                    showNotification(data.error || 'Erreur lors de la sauvegarde', 'error');
+                }
+            } catch (error) {
+                console.error('Erreur:', error);
+                showNotification('Erreur lors de la sauvegarde', 'error');
+            }
+        }
+
+        // Notification
+        function showNotification(message, type = 'success') {
+            Toastify({
+                text: message,
+                duration: 5000,
+                gravity: "bottom",
+                position: "right",
+                style: {
+                    background: type === 'success'
+                        ? "linear-gradient(to right, #00b09b, #96c93d)"
+                        : "linear-gradient(to right, #f85032, #e73827)",
+                    borderRadius: "20px",
+                },
+                close: true,
+            }).showToast();
+        }
+
+        // Messages flash
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    showNotification('{{ message }}', '{{ "success" if category == "success" else "error" }}');
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+    </script>
+
+    <style>
+        .accordion-button:not(.collapsed) {
+            background-color: #e7f1ff;
+            color: #0d6efd;
+        }
+
+        .privilege-item {
+            transition: background-color 0.2s;
+        }
+
+        .privilege-item:hover {
+            background-color: #f8f9fa;
+        }
+
+        .form-check-input:checked {
+            background-color: #198754;
+            border-color: #198754;
+        }
+    </style>
+{% endblock %}

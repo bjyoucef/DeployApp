@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Démo Notification Moderne Premium</title>
+    <style>
+        /* --- VARIABLES DE COULEURS --- */
+        :root {
+            --success: #10B981;
+            /* Vert moderne (Emerald) */
+            --error: #EF4444;
+            /* Rouge moderne (Rose) */
+            --info: #3B82F6;
+            /* Bleu moderne (Blue) */
+            --bg-toast: rgba(30, 30, 46, 0.85);
+            /* Fond sombre transparent */
+            --text-color: #F3F4F6;
+        }
+
+        /* --- Style de la page --- */
+        body {
+            font-family: 'Inter', 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+            margin: 0;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 20px;
+            overflow-x: hidden;
+        }
+
+        h1 {
+            color: white;
+            margin-bottom: 20px;
+            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+        }
+
+        .buttons-container {
+            display: flex;
+            gap: 15px;
+        }
+
+        button {
+            padding: 12px 28px;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            color: white;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4);
+        }
+
+        button:active {
+            transform: translateY(1px);
+        }
+
+        .btn-success {
+            background-color: var(--success);
+        }
+
+        .btn-error {
+            background-color: var(--error);
+        }
+
+        .btn-info {
+            background-color: var(--info);
+        }
+
+        /* --- SYSTÈME DE NOTIFICATION --- */
+
+        #toast-container {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            z-index: 9999;
+        }
+
+        .toast {
+            width: 350px;
+            border-radius: 12px;
+            color: var(--text-color);
+            background: var(--bg-toast);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            position: relative;
+            overflow: hidden;
+
+            /* État initial (caché) */
+            transform: translateX(100%) scale(0.9);
+            opacity: 0;
+            transition: all 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            /* Effet rebond */
+        }
+
+        /* État visible */
+        .toast.active {
+            transform: translateX(0) scale(1);
+            opacity: 1;
+        }
+
+        /* Quand on ferme (Animation Out) */
+        .toast.closing {
+            transform: translateX(100%) scale(0.9);
+            opacity: 0;
+            transition: all 0.4s ease-in-out;
+        }
+
+        .toast-content {
+            display: flex;
+            align-items: flex-start;
+            padding: 16px 20px;
+            gap: 15px;
+            z-index: 2;
+        }
+
+        .icon {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .icon svg {
+            width: 24px;
+            height: 24px;
+        }
+
+        .message {
+            flex: 1;
+            font-size: 15px;
+            line-height: 1.4;
+            margin-top: 2px;
+        }
+
+        /* Bouton de fermeture */
+        .close-btn {
+            background: none;
+            border: none;
+            color: #9ca3af;
+            cursor: pointer;
+            font-size: 20px;
+            line-height: 1;
+            padding: 0;
+            margin-top: 2px;
+            transition: color 0.2s;
+        }
+
+        .close-btn:hover {
+            color: white;
+        }
+
+        /* Ligne de progression (100% CSS) */
+        .progress {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            height: 4px;
+            width: 100%;
+            transform-origin: left;
+            /* L'animation est définie en JS pour démarrer au bon moment */
+        }
+
+        @keyframes shrinkProgress {
+            from {
+                transform: scaleX(1);
+            }
+
+            to {
+                transform: scaleX(0);
+            }
+        }
+
+        /* Pause de l'animation au survol de la notification */
+        .toast:hover .progress {
+            animation-play-state: paused;
+        }
+
+        /* --- STYLES SPÉCIFIQUES (Couleurs & Icônes) --- */
+
+        .toast.success {
+            border-left: 5px solid var(--success);
+        }
+
+        .toast.success .icon {
+            color: var(--success);
+        }
+
+        .toast.success .progress {
+            background-color: var(--success);
+            box-shadow: 0 0 10px var(--success);
+        }
+
+        .toast.error {
+            border-left: 5px solid var(--error);
+        }
+
+        .toast.error .icon {
+            color: var(--error);
+        }
+
+        .toast.error .progress {
+            background-color: var(--error);
+            box-shadow: 0 0 10px var(--error);
+        }
+
+        .toast.info {
+            border-left: 5px solid var(--info);
+        }
+
+        .toast.info .icon {
+            color: var(--info);
+        }
+
+        .toast.info .progress {
+            background-color: var(--info);
+            box-shadow: 0 0 10px var(--info);
+        }
+    </style>
+</head>
+
+<body>
+
+    <h1>Notifications Modernes</h1>
+
+    <div class="buttons-container">
+        <button class="btn-success"
+            onclick="showToast('Bravo ! Vos modifications ont été sauvegardées avec succès.', 'success')">Succès</button>
+        <button class="btn-error"
+            onclick="showToast('Oups ! Impossible de se connecter au serveur. Veuillez réessayer.', 'error')">Erreur</button>
+        <button class="btn-info"
+            onclick="showToast('Une nouvelle mise à jour du système est maintenant disponible.', 'info')">Info</button>
+    </div>
+
+    <div id="toast-container"></div>
+
+    <script>
+        // Bibliothèque d'icônes SVG pour éviter de charger une police externe
+        const icons = {
+            success: `<svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>`,
+            error: `<svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>`,
+            info: `<svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>`
+        };
+
+        function showToast(message, type = 'info') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+
+            toast.classList.add('toast', type);
+
+            // Structure HTML de la notification
+            toast.innerHTML = `
+                <div class="toast-content">
+                    <div class="icon">${icons[type]}</div>
+                    <div class="message">${message}</div>
+                    <button class="close-btn" onclick="closeToast(this.parentElement.parentElement)">&times;</button>
+                </div>
+                <div class="progress"></div>
+            `;
+
+            container.appendChild(toast);
+
+            // Apparition animée
+            setTimeout(() => {
+                toast.classList.add('active');
+            }, 10);
+
+            // Lancer l'animation de la barre de progression
+            const progressBar = toast.querySelector('.progress');
+            progressBar.style.animation = `shrinkProgress 4s linear forwards`;
+
+            // L'astuce magique : On écoute la fin de l'animation CSS !
+            // Si l'utilisateur survole la div, l'animation CSS est en pause, 
+            // donc cet événement attendra naturellement que la souris quitte la div.
+            progressBar.addEventListener('animationend', () => {
+                closeToast(toast);
+            });
+        }
+
+        // Fonction pour fermer proprement une notification
+        function closeToast(toastElement) {
+            toastElement.classList.remove('active');
+            toastElement.classList.add('closing'); // Animation de sortie
+
+            // Attendre la fin de l'animation CSS (0.4s) pour supprimer du DOM
+            setTimeout(() => {
+                toastElement.remove();
+            }, 400);
+        }
+    </script>
+</body>
+
+</html>

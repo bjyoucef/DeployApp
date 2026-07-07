@@ -1,0 +1,81 @@
+{% extends "layout.html" %}
+{% block content %}
+<div class="d-flex justify-content-center">
+    <a href="{{ url_for('cles_') }}"
+       class="btn btn-secondary mr-2 {% if request.path == url_for('cles_') %}active{% endif %}"
+       aria-label="Gestion des clés">Gestion des clés</a>
+    <a href="{{ url_for('mvm_cles') }}"
+       class="btn btn-secondary mr-2 {% if request.path == url_for('mvm_cles') %}active{% endif %}"
+       aria-label="Prêts en cours">Mouvement des clés</a>
+</div>
+
+<div class="container">
+    <!-- Filtrage avec des switchs -->
+    <form action="{{ url_for('mvm_cles') }}" class="mb-3 d-flex justify-content-center align-items-center"
+          id="filterForm" method="GET">
+        <div class="form-switch mr-3">
+            <input class="form-check-input switch-input" id="filterAll" name="filter" type="radio"
+                   value="all"
+                   {% if filter== 'all' %}checked{% endif %} onchange="this.form.submit()">
+            <label class="switch-label ml-2" for="filterAll" aria-label="Tous les emprunts">
+                <i class="fas fa-list"></i>
+            </label>
+        </div>
+        <div class="form-switch mr-3">
+            <input class="form-check-input switch-input" id="filterEnCours" name="filter"
+                   type="radio" value="en_cours" {% if filter== 'en_cours' %}checked{% endif %}
+            onchange="this.form.submit()">
+            <label class="switch-label ml-2" for="filterEnCours" aria-label="Emprunts en cours">
+                <i class="fas fa-clock"></i>
+            </label>
+        </div>
+        <div class="form-switch">
+            <input class="form-check-input switch-input" id="filterRetournees" name="filter" type="radio"
+                   value="retournees" {% if filter== 'retournees' %}checked{% endif %} onchange="this.form.submit()">
+            <label class="switch-label ml-2" for="filterRetournees" aria-label="Emprunts retournés">
+                <i class="fas fa-check"></i></label>
+        </div>
+    </form>
+</div>
+<table class="table table-hover" id="myTable">
+    <thead>
+    <tr>
+        <th><i class="fas fa-key"></i> Clé</th>
+        <th><i class="fas fa-info-circle"></i> Description</th>
+        <th><i class="fas fa-user-tie"></i> Prêteur</th>
+        <th><i class="fas fa-user-plus"></i> Donneur</th>
+        <th><i class="fas fa-calendar-alt"></i> Date de prêt</th>
+
+        <th><i class="fas fa-cogs"></i> Actions</th>
+    </tr>
+    </thead>
+    <tbody>
+    {% for emprunt in emprunts %}
+    {% if filter == 'all' or (filter == 'en_cours' and not emprunt.date_retour) or (filter == 'retournees' and
+    emprunt.date_retour) %}
+    <tr>
+        <td>{{ emprunt.numero_cle }}</td>
+        <td>{{ emprunt.description }}</td>
+        <td>{{ emprunt.nom_personne_prend }}</td>
+        <td>{{ emprunt.nom_personne_donne }}</td>
+        <td>{{ emprunt.date_emprunt }}</td>
+
+
+
+
+
+
+
+
+
+    </tr>
+    {% endif %}
+    {% endfor %}
+    </tbody>
+</table>
+<script>
+    document.getElementById('filterForm').addEventListener('change', function () {
+        this.submit();
+    });
+</script>
+{% endblock %}

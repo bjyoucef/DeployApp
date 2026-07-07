@@ -1,0 +1,1036 @@
+{% extends "layout.html" %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block style %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/daterangepicker.css') }}" />
+<style>
+    :root {
+        --anes-primary: #450A54;
+        --anes-primary-light: #6d28d9;
+        --anes-gradient: linear-gradient(135deg, #450A54 0%, #6d28d9 100%);
+    }
+
+    /* ─── Hero Banner ─── */
+    .hero-banner {
+        background: var(--anes-gradient);
+        border-radius: 1rem;
+        padding: 2rem 2.5rem;
+        color: white;
+        position: relative;
+        overflow: hidden;
+        margin-bottom: 2.5rem;
+    }
+
+    .hero-banner::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -10%;
+        width: 300px;
+        height: 300px;
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 50%;
+        pointer-events: none;
+        z-index: 1;
+    }
+
+    .hero-banner::after {
+        content: '';
+        position: absolute;
+        bottom: -30%;
+        right: 15%;
+        width: 200px;
+        height: 200px;
+        background: rgba(255, 255, 255, 0.03);
+        border-radius: 50%;
+        pointer-events: none;
+        z-index: 1;
+    }
+
+    .hero-banner>div {
+        position: relative;
+        z-index: 2;
+    }
+
+    .hero-banner h1 {
+        font-weight: 800;
+        font-size: 1.75rem;
+        margin-bottom: 0.25rem;
+    }
+
+    .hero-banner p {
+        opacity: 0.75;
+        font-size: 1rem;
+        margin: 0;
+    }
+
+    .hero-actions .btn {
+        border-radius: 0.5rem;
+        font-weight: 600;
+        font-size: 0.85rem;
+        padding: 0.5rem 1rem;
+        transition: all 0.2s;
+    }
+
+    .hero-actions .btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    }
+
+    /* ─── Stat Cards ─── */
+    .stat-card {
+        background: white;
+        border-radius: 1rem;
+        padding: 1.25rem;
+        position: relative;
+        overflow: hidden;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+        transition: transform 0.25s, box-shadow 0.25s;
+        border: 1px solid rgba(0, 0, 0, 0.04);
+    }
+
+    .stat-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+    }
+
+    .stat-card .stat-icon {
+        width: 48px;
+        height: 48px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.2rem;
+        color: white;
+        flex-shrink: 0;
+    }
+
+    .stat-card .stat-label {
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        color: #9ca3af;
+        font-weight: 600;
+        margin-bottom: 0.25rem;
+    }
+
+    .stat-card .stat-value {
+        font-size: 1.35rem;
+        font-weight: 800;
+        color: #1f2937;
+        line-height: 1.2;
+    }
+
+    .stat-card .stat-sub {
+        font-size: 0.75rem;
+        color: #6b7280;
+        margin-top: 0.15rem;
+    }
+
+    [data-theme="dark"] .stat-card {
+        background: var(--bg-card, #1e1e2e);
+        border-color: var(--border, #2a2a3e);
+    }
+
+    [data-theme="dark"] .stat-card .stat-value {
+        color: #f3f4f6;
+    }
+
+    [data-theme="dark"] .stat-card .stat-label {
+        color: #9ca3af;
+    }
+
+    [data-theme="dark"] .stat-card .stat-sub {
+        color: #6b7280;
+    }
+
+    /* ─── Filter Card ─── */
+    .filter-card {
+        background: white;
+        border-radius: 1rem;
+        padding: 1.5rem;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.07);
+        margin-top: -1.5rem;
+        margin-bottom: 2rem;
+        position: relative;
+        z-index: 10;
+        border: 1px solid rgba(0, 0, 0, 0.05);
+    }
+
+    [data-theme="dark"] .filter-card {
+        background: var(--bg-card, #1e1e2e);
+        border-color: var(--border, #2a2a3e);
+    }
+
+    .filter-card .form-control,
+    .filter-card .form-select {
+        border-radius: 0.5rem;
+        border: 1px solid var(--border, #e5e7eb);
+        padding: 0.55rem 0.875rem;
+        font-size: 0.875rem;
+        transition: all 0.2s;
+    }
+
+    .filter-card .form-control:focus,
+    .filter-card .form-select:focus {
+        border-color: var(--anes-primary-light);
+        box-shadow: 0 0 0 3px rgba(109, 40, 217, 0.1);
+    }
+
+    .filter-card label {
+        font-weight: 600;
+        font-size: 0.7rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 0.3rem;
+        color: var(--text-muted, #6b7280);
+    }
+
+    /* ─── Table Card ─── */
+    .table-card {
+        background: white;
+        border-radius: 1rem;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.07);
+        border: none;
+        overflow: hidden;
+        margin-bottom: 1.5rem;
+    }
+
+    [data-theme="dark"] .table-card {
+        background: var(--bg-card, #1e1e2e);
+    }
+
+    .table-card .card-header {
+        background: var(--anes-gradient);
+        color: white;
+        font-weight: 700;
+        padding: 0.875rem 1.25rem;
+        border: none;
+        font-size: 0.95rem;
+    }
+
+    .table-card .table {
+        margin: 0;
+    }
+
+    .table-card .table th {
+        background: #f8fafc;
+        font-weight: 700;
+        font-size: 0.78rem;
+        text-transform: uppercase;
+        letter-spacing: 0.3px;
+        color: #64748b;
+        border-bottom: 2px solid #e2e8f0;
+        padding: 0.75rem;
+    }
+
+    [data-theme="dark"] .table-card .table th {
+        background: #1a1a2e;
+        color: #94a3b8;
+        border-color: #2a2a3e;
+    }
+
+    .table-card .table td {
+        padding: 0.7rem 0.75rem;
+        vertical-align: middle;
+        font-size: 0.875rem;
+        border-color: #f1f5f9;
+    }
+
+    [data-theme="dark"] .table-card .table td {
+        border-color: #2a2a3e;
+        color: #e2e8f0;
+    }
+
+    .table-card .table-hover tbody tr:hover {
+        background: rgba(109, 40, 217, 0.04);
+    }
+
+    [data-theme="dark"] .table-card .table-hover tbody tr:hover {
+        background: rgba(109, 40, 217, 0.08);
+    }
+
+    /* ─── Badges ─── */
+    .badge-source {
+        font-size: 0.72rem;
+        padding: 0.35em 0.65em;
+        border-radius: 6px;
+        font-weight: 600;
+    }
+
+    .badge-type {
+        font-size: 0.72rem;
+        padding: 0.3em 0.6em;
+        border-radius: 6px;
+        font-weight: 600;
+    }
+
+    /* ─── Pagination ─── */
+    .pagination .page-link {
+        border: none;
+        color: var(--anes-primary);
+        padding: 0.5rem 0.875rem;
+        margin: 0 0.125rem;
+        border-radius: 8px;
+        background: transparent;
+        font-weight: 600;
+        font-size: 0.85rem;
+    }
+
+    .pagination .page-link:hover {
+        background: rgba(109, 40, 217, 0.08);
+        color: var(--anes-primary-light);
+    }
+
+    [data-theme="dark"] .pagination .page-link:hover {
+        background: rgba(109, 40, 217, 0.15);
+    }
+
+    .pagination .page-item.active .page-link {
+        background: var(--anes-gradient);
+        color: white;
+        box-shadow: 0 2px 8px rgba(69, 10, 84, 0.3);
+    }
+
+    .pagination .page-item.disabled .page-link {
+        color: #9ca3af;
+        background: transparent;
+    }
+
+    /* ─── Impayés Alert Card ─── */
+    .impayes-header {
+        background: linear-gradient(135deg, #f59e0b, #d97706);
+        color: white;
+        padding: 0.875rem 1.25rem;
+        border: none;
+        font-weight: 700;
+        font-size: 0.95rem;
+    }
+
+    /* ─── Sortable Headers ─── */
+    .sortable-header a {
+        color: #64748b;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.25rem;
+    }
+
+    .sortable-header a:hover {
+        color: var(--anes-primary);
+    }
+
+    [data-theme="dark"] .sortable-header a {
+        color: #94a3b8;
+    }
+
+    [data-theme="dark"] .sortable-header a:hover {
+        color: #a78bfa;
+    }
+
+    /* ─── Date Range Picker overrides ─── */
+    .daterangepicker {
+        border-radius: 12px;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+        border: none;
+    }
+
+    .daterangepicker td.active,
+    .daterangepicker td.active:hover {
+        background-color: var(--anes-primary) !important;
+    }
+
+    .daterangepicker .ranges li.active {
+        background-color: var(--anes-primary) !important;
+    }
+
+    .daterangepicker .btn-primary {
+        background: var(--anes-gradient) !important;
+        border: none !important;
+    }
+
+    /* ─── Animations ─── */
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .animate-in {
+        animation: fadeInUp 0.4s ease forwards;
+    }
+
+    .animate-delay-1 {
+        animation-delay: 0.05s;
+    }
+
+    .animate-delay-2 {
+        animation-delay: 0.1s;
+    }
+
+    .animate-delay-3 {
+        animation-delay: 0.15s;
+    }
+
+    .animate-delay-4 {
+        animation-delay: 0.2s;
+    }
+
+    .animate-delay-5 {
+        animation-delay: 0.25s;
+    }
+
+    .animate-delay-6 {
+        animation-delay: 0.3s;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Hero Banner -->
+    <div class="hero-banner animate-in">
+        <div class="d-flex justify-content-between align-items-start flex-wrap gap-3">
+            <div>
+                <h1><i class="fas fa-money-bill-wave me-2"></i>Honoraires d'Anesthésie</h1>
+                <p>Vue Globale — Bloc Opératoire • Accouchements • KT • Médecins Internes</p>
+            </div>
+            <div class="hero-actions d-flex gap-2 flex-wrap">
+                <a href="{{ url_for('anesthesie_decharges_list') }}"
+                    class="btn btn-light text-primary fw-bold shadow-sm">
+                    <i class="fas fa-file-invoice-dollar me-1"></i> Décharges
+                </a>
+                <a href="{{ url_for('anesthesie_honoraires_global_export', **filters) }}"
+                    class="btn btn-success shadow-sm">
+                    <i class="far fa-file-excel me-1"></i> Exporter Excel
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Stat Cards -->
+    <div class="row g-3 mb-4">
+        <div class="col-6 col-md-4 col-xl-2 animate-in animate-delay-1">
+            <div class="stat-card">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="stat-icon" style="background: linear-gradient(135deg, #667eea, #764ba2);">
+                        <i class="fas fa-calculator"></i>
+                    </div>
+                    <div>
+                        <div class="stat-label">Total Général</div>
+                        <div class="stat-value">{{ "%.0f"|format(total_general) }}</div>
+                        <div class="stat-sub">{{ total_count }} acte(s) • DA</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-md-4 col-xl-2 animate-in animate-delay-2">
+            <div class="stat-card">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="stat-icon" style="background: linear-gradient(135deg, #0dcaf0, #0a98c0);">
+                        <i class="fas fa-hospital"></i>
+                    </div>
+                    <div>
+                        <div class="stat-label">Bloc Opératoire</div>
+                        <div class="stat-value">{{ "%.0f"|format(total_general_bloc) }}</div>
+                        <div class="stat-sub">DA</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-md-4 col-xl-2 animate-in animate-delay-3">
+            <div class="stat-card">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="stat-icon" style="background: linear-gradient(135deg, #f43f5e, #e11d48);">
+                        <i class="fas fa-heartbeat"></i>
+                    </div>
+                    <div>
+                        <div class="stat-label">Accouchements</div>
+                        <div class="stat-value">{{ "%.0f"|format(total_general_accouchement) }}</div>
+                        <div class="stat-sub">DA</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-md-4 col-xl-2 animate-in animate-delay-4">
+            <div class="stat-card">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="stat-icon" style="background: linear-gradient(135deg, #f59e0b, #d97706);">
+                        <i class="fas fa-procedures"></i>
+                    </div>
+                    <div>
+                        <div class="stat-label">KT</div>
+                        <div class="stat-value">{{ "%.0f"|format(total_general_kt) }}</div>
+                        <div class="stat-sub">DA</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-md-4 col-xl-2 animate-in animate-delay-5">
+            <div class="stat-card">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="stat-icon" style="background: linear-gradient(135deg, #6b7280, #4b5563);">
+                        <i class="fas fa-user-md"></i>
+                    </div>
+                    <div>
+                        <div class="stat-label">Méd. Internes</div>
+                        <div class="stat-value">{{ "%.0f"|format(total_general_mi) }}</div>
+                        <div class="stat-sub">DA</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-md-4 col-xl-2 animate-in animate-delay-6">
+            <div class="stat-card">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="stat-icon" style="background: linear-gradient(135deg, #10b981, #059669);">
+                        <i class="fas fa-users"></i>
+                    </div>
+                    <div>
+                        <div class="stat-label">Intervenants</div>
+                        <div class="stat-value">{{ totaux_personnel|length }}</div>
+                        <div class="stat-sub">Actifs</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filter Card -->
+    <div class="filter-card animate-in">
+        <form method="GET" id="filterForm">
+            <input type="hidden" name="date_debut" value="{{ filters.date_debut }}">
+            <input type="hidden" name="date_fin" value="{{ filters.date_fin }}">
+
+            <div class="row g-2 align-items-end">
+                <!-- Date Range Picker -->
+                <div class="col-md-3">
+                    <label class="form-label ps-1"><i class="far fa-calendar-alt me-1"></i> Période</label>
+                    <div class="input-group">
+                        <span class="input-group-text bg-light border-end-0 rounded-start-pill ps-3"
+                            style="color: var(--anes-primary);">
+                            <i class="far fa-calendar-alt"></i>
+                        </span>
+                        <input type="text" id="date_range" class="form-control bg-light border-start-0 rounded-end-pill"
+                            placeholder="Sélectionner une période" readonly style="cursor: pointer;">
+                    </div>
+                </div>
+
+                <!-- Patient search -->
+                <div class="col-md-2">
+                    <label class="form-label ps-1">Patient</label>
+                    <div class="position-relative">
+                        <i class="fas fa-search position-absolute top-50 start-0 translate-middle-y ms-3 text-muted"
+                            style="font-size:0.8rem;"></i>
+                        <input type="text" name="patient" class="form-control bg-light rounded-pill ps-5 border-0"
+                            value="{{ filters.patient }}" placeholder="Nom du patient...">
+                    </div>
+                </div>
+
+                <!-- Type intervention -->
+                <div class="col-md-2">
+                    <label class="form-label ps-1">Intervention</label>
+                    <select name="type_intervention" class="form-select bg-light border-0">
+                        <option value="all" {% if filters.type_intervention=='all' %}selected{% endif %}>Tous</option>
+                        <option value="bloc" {% if filters.type_intervention=='bloc' %}selected{% endif %}>Bloc</option>
+                        <option value="accouchement" {% if filters.type_intervention=='accouchement' %}selected{% endif
+                            %}>Accouchement</option>
+                        <option value="kt" {% if filters.type_intervention=='kt' %}selected{% endif %}>KT</option>
+                    </select>
+                </div>
+
+                <!-- Type intervenant -->
+                <div class="col-md-2">
+                    <label class="form-label ps-1">Type Intervenant</label>
+                    <select name="type_intervenant" class="form-select bg-light border-0">
+                        <option value="all">Tous les types</option>
+                        {% for type in types_intervenants %}
+                        <option value="{{ type.id_type_intervenant }}" {% if
+                            filters.type_intervenant==type.id_type_intervenant|string %}selected{% endif %}>
+                            {{ type.nom_type }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- Intervenant -->
+                <div class="col-md-2">
+                    <label class="form-label ps-1">Intervenant</label>
+                    <select name="personnel" id="select-personnel" class="form-select bg-light border-0">
+                        <option value="all">Tous</option>
+                        {% for p in personnel_list %}
+                        <option value="{{ p.id_personnel_anesthesie }}" {% if
+                            filters.personnel==p.id_personnel_anesthesie|string %}selected{% endif %}>
+                            {{ p.nom_complet }} ({{ p.nom_type }})
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- Statut paiement -->
+                <div class="col-md-1">
+                    <label class="form-label ps-1">Paiement</label>
+                    <select name="statut_paiement" class="form-select bg-light border-0 px-2">
+                        <option value="all" {% if filters.statut_paiement=='all' %}selected{% endif %}>Tous</option>
+                        <option value="impayes" {% if filters.statut_paiement=='impayes' %}selected{% endif %}>Impayés
+                        </option>
+                        <option value="payes" {% if filters.statut_paiement=='payes' %}selected{% endif %}>Payés
+                        </option>
+                    </select>
+                </div>
+
+                <!-- Actions -->
+                <div class="col-12 col-md-auto d-flex gap-2 mt-2 mt-md-0">
+                    <button type="submit" class="btn btn-primary btn-sm rounded-pill px-3 shadow-sm"
+                        style="background: var(--anes-gradient); border: none;">
+                        <i class="fas fa-filter me-1"></i> Filtrer
+                    </button>
+                    <a href="{{ url_for('anesthesie_honoraires_global') }}"
+                        class="btn btn-light btn-sm rounded-pill px-3 shadow-sm">
+                        <i class="fas fa-redo-alt text-muted"></i>
+                    </a>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <!-- Totaux par Intervenant -->
+    <div class="table-card animate-in">
+        <div class="card-header">
+            <i class="fas fa-users me-2"></i> Totaux par Intervenant
+        </div>
+        <div class="table-responsive">
+            <table class="table table-hover table-sm mb-0">
+                <thead>
+                    <tr>
+                        <th>Intervenant</th>
+                        <th>Type</th>
+                        <th class="text-center">Nb Actes</th>
+                        <th class="text-center"><i class="fas fa-hospital text-info"></i> Bloc</th>
+                        <th class="text-center"><i class="fas fa-heartbeat text-danger"></i> Acc.</th>
+                        <th class="text-center"><i class="fas fa-procedures text-warning"></i> KT</th>
+                        <th class="text-center"><i class="fas fa-user-md text-secondary"></i> MI</th>
+                        <th class="text-end">Total (DA)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for total in totaux_personnel %}
+                    <tr>
+                        <td class="fw-semibold">{{ total.nom_personnel }}</td>
+                        <td>
+                            <span class="badge badge-type
+                                {% if total.type_intervenant == 'REANIMATEUR' %}bg-success
+                                {% elif total.type_intervenant == 'TECH_ANESTHESISTE' %}bg-info
+                                {% else %}bg-warning{% endif %}">
+                                {{ total.type_intervenant }}
+                            </span>
+                        </td>
+                        <td class="text-center fw-bold">{{ total.nombre_actes }}</td>
+                        <td class="text-center">
+                            {% if total.nombre_actes_bloc > 0 %}
+                            <span class="badge bg-info-subtle text-info">
+                                {{ total.nombre_actes_bloc }} · {{ "%.0f"|format(total.total_honoraires_bloc) }}
+                            </span>
+                            {% else %}<span class="text-muted">—</span>{% endif %}
+                        </td>
+                        <td class="text-center">
+                            {% if total.nombre_actes_accouchement > 0 %}
+                            <span class="badge bg-danger-subtle text-danger">
+                                {{ total.nombre_actes_accouchement }} · {{
+                                "%.0f"|format(total.total_honoraires_accouchement) }}
+                            </span>
+                            {% else %}<span class="text-muted">—</span>{% endif %}
+                        </td>
+                        <td class="text-center">
+                            {% if total.nombre_actes_kt > 0 %}
+                            <span class="badge bg-warning-subtle text-warning">
+                                {{ total.nombre_actes_kt }} · {{ "%.0f"|format(total.total_honoraires_kt) }}
+                            </span>
+                            {% else %}<span class="text-muted">—</span>{% endif %}
+                        </td>
+                        <td class="text-center">
+                            {% if total.nombre_actes_mi > 0 %}
+                            <span class="badge bg-secondary-subtle text-secondary">
+                                {{ total.nombre_actes_mi }} · {{ "%.0f"|format(total.total_honoraires_mi) }}
+                            </span>
+                            {% else %}<span class="text-muted">—</span>{% endif %}
+                        </td>
+                        <td class="text-end">
+                            <strong style="color: var(--anes-primary);">{{ "%.2f"|format(total.total_honoraires) }}
+                                DA</strong>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Impayés par Personnel -->
+    {% if impayes_personnel %}
+    <div class="table-card animate-in">
+        <div class="card-header impayes-header">
+            <i class="fas fa-exclamation-circle me-2"></i>
+            Honoraires Impayés par Personnel
+            <span class="badge bg-light text-dark ms-2">{{ impayes_personnel|length }} intervenant(s)</span>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-hover table-sm mb-0">
+                <thead>
+                    <tr>
+                        <th>Intervenant</th>
+                        <th>Type</th>
+                        <th class="text-center">Nb Actes</th>
+                        <th class="text-end">Total Impayé (DA)</th>
+                        <th class="text-center">Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for imp in impayes_personnel %}
+                    <tr>
+                        <td class="fw-semibold">{{ imp.nom_complet }}</td>
+                        <td>
+                            <span class="badge badge-type
+                                {% if imp.type_intervenant == 'REANIMATEUR' %}bg-success
+                                {% elif imp.type_intervenant == 'TECH_ANESTHESISTE' %}bg-info
+                                {% else %}bg-warning{% endif %}">
+                                {{ imp.type_intervenant }}
+                            </span>
+                        </td>
+                        <td class="text-center">{{ imp.nb_actes }}</td>
+                        <td class="text-end">
+                            <strong class="text-danger">{{ "%.2f"|format(imp.total_impaye) }} DA</strong>
+                        </td>
+                        <td class="text-center">
+                            <a href="{{ url_for('anesthesie_decharge_creer', id_personnel=imp.id_personnel_anesthesie) }}"
+                                class="btn btn-sm btn-outline-warning rounded-pill px-3">
+                                <i class="fas fa-file-invoice me-1"></i> Décharge
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+                <tfoot>
+                    <tr class="table-active">
+                        <td colspan="2" class="text-end fw-bold">Total Général :</td>
+                        <td class="text-center fw-bold">{{ impayes_personnel|sum(attribute='nb_actes') }}</td>
+                        <td class="text-end">
+                            <strong class="text-danger">
+                                {{ "%.2f"|format(impayes_personnel|sum(attribute='total_impaye')) }} DA
+                            </strong>
+                        </td>
+                        <td></td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Detailed Acts Table -->
+    <div class="table-card animate-in">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <span><i class="fas fa-list me-2"></i> Détail des Actes</span>
+            <span class="badge bg-white bg-opacity-25 rounded-pill px-3">{{ total_count }} résultat(s)</span>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead>
+                    <tr>
+                        <th class="sortable-header">
+                            <a
+                                href="?{{ request.query_string.decode().replace('&order_by=date', '').replace('&order_by=patient', '').replace('&order_by=personnel', '').replace('&order_by=type', '').replace('&order_by=honoraires', '').replace('&page=' ~ page, '') }}&order_by=date&order_direction={{ 'asc' if filters.order_by == 'date' and filters.order_direction == 'desc' else 'desc' }}">
+                                Date
+                                {% if filters.order_by == 'date' %}
+                                <i
+                                    class="fas fa-sort-{{ 'down' if filters.order_direction == 'desc' else 'up' }} ms-1"></i>
+                                {% endif %}
+                            </a>
+                        </th>
+                        <th class="sortable-header">
+                            <a
+                                href="?{{ request.query_string.decode() }}&order_by=patient&order_direction={{ 'asc' if filters.order_by == 'patient' and filters.order_direction == 'desc' else 'desc' }}">
+                                Patient
+                                {% if filters.order_by == 'patient' %}
+                                <i
+                                    class="fas fa-sort-{{ 'down' if filters.order_direction == 'desc' else 'up' }} ms-1"></i>
+                                {% endif %}
+                            </a>
+                        </th>
+                        <th>Source</th>
+                        <th>Acte</th>
+                        <th class="sortable-header">
+                            <a
+                                href="?{{ request.query_string.decode() }}&order_by=personnel&order_direction={{ 'asc' if filters.order_by == 'personnel' and filters.order_direction == 'desc' else 'desc' }}">
+                                Personnel
+                                {% if filters.order_by == 'personnel' %}
+                                <i
+                                    class="fas fa-sort-{{ 'down' if filters.order_direction == 'desc' else 'up' }} ms-1"></i>
+                                {% endif %}
+                            </a>
+                        </th>
+                        <th>Type</th>
+                        <th class="text-center">Durée</th>
+                        <th class="sortable-header text-end">
+                            <a
+                                href="?{{ request.query_string.decode() }}&order_by=honoraires&order_direction={{ 'asc' if filters.order_by == 'honoraires' and filters.order_direction == 'desc' else 'desc' }}">
+                                Honoraires
+                                {% if filters.order_by == 'honoraires' %}
+                                <i
+                                    class="fas fa-sort-{{ 'down' if filters.order_direction == 'desc' else 'up' }} ms-1"></i>
+                                {% endif %}
+                            </a>
+                        </th>
+                        <th class="text-center" style="width:50px;"></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for acte in actes %}
+                    <tr>
+                        <td>
+                            <span class="fw-semibold">{{ acte.date_intervention.strftime('%d/%m/%Y') if
+                                acte.date_intervention else 'N/A' }}</span>
+                        </td>
+                        <td>
+                            {% if acte.source == 'BLOC' %}
+                            <a href="{{ url_for('location_bloc_detail', id_dossier=acte.id_dossier) }}"
+                                class="text-decoration-none fw-medium">{{ acte.patient }}</a>
+                            {% elif acte.source == 'ACCOUCHEMENT' %}
+                            <a href="{{ url_for('accouchement_detail', id_dossier=acte.id_dossier) }}"
+                                class="text-decoration-none fw-medium">{{ acte.patient }}</a>
+                            {% elif acte.source == 'KT' %}
+                            <a href="{{ url_for('kt_dossier_detail', id_dossier=acte.id_dossier) }}"
+                                class="text-decoration-none fw-medium">{{ acte.patient }}</a>
+                            {% elif acte.source == 'MEDECIN_INTERNE' %}
+                            <a href="{{ url_for('medecin_interne_actes_detail', id_acte=acte.id_dossier) }}"
+                                class="text-decoration-none fw-medium">{{ acte.patient }}</a>
+                            {% else %}
+                            {{ acte.patient }}
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if acte.source == 'BLOC' %}
+                            <span class="badge badge-source bg-info-subtle text-info"><i
+                                    class="fas fa-hospital me-1"></i>Bloc</span>
+                            {% elif acte.source == 'ACCOUCHEMENT' %}
+                            <span class="badge badge-source bg-danger-subtle text-danger"><i
+                                    class="fas fa-heartbeat me-1"></i>Acc.</span>
+                            {% elif acte.source == 'KT' %}
+                            <span class="badge badge-source bg-warning-subtle text-warning"><i
+                                    class="fas fa-procedures me-1"></i>KT</span>
+                            {% elif acte.source == 'MEDECIN_INTERNE' %}
+                            <span class="badge badge-source bg-secondary-subtle text-secondary"><i
+                                    class="fas fa-user-md me-1"></i>MI</span>
+                            {% endif %}
+                        </td>
+                        <td><small>{{ acte.nom_acte }}</small></td>
+                        <td>{{ acte.nom_personnel }}</td>
+                        <td>
+                            <span class="badge badge-type
+                                {% if acte.type_intervenant == 'REANIMATEUR' %}bg-success
+                                {% elif acte.type_intervenant == 'TECH_ANESTHESISTE' %}bg-info
+                                {% else %}bg-warning{% endif %}">
+                                {{ acte.type_intervenant }}
+                            </span>
+                        </td>
+                        <td class="text-center text-muted">
+                            {{ acte.duree_reelle or '—' }}{% if acte.duree_reelle %}<small>min</small>{% endif %}
+                        </td>
+                        <td class="text-end">
+                            <strong style="color: var(--anes-primary);">{{ "%.2f"|format(acte.honoraires_calcules) }}
+                                DA</strong>
+                        </td>
+                        <td class="text-center">
+                            {% if acte.source == 'BLOC' %}
+                            <a href="{{ url_for('location_bloc_detail', id_dossier=acte.id_dossier) }}"
+                                class="btn btn-sm btn-light rounded-circle"
+                                style="width:30px;height:30px;padding:0;display:inline-flex;align-items:center;justify-content:center;">
+                                <i class="fas fa-eye" style="font-size:0.75rem;color:var(--anes-primary);"></i>
+                            </a>
+                            {% elif acte.source == 'ACCOUCHEMENT' %}
+                            <a href="{{ url_for('accouchement_detail', id_dossier=acte.id_dossier) }}"
+                                class="btn btn-sm btn-light rounded-circle"
+                                style="width:30px;height:30px;padding:0;display:inline-flex;align-items:center;justify-content:center;">
+                                <i class="fas fa-eye" style="font-size:0.75rem;color:var(--anes-primary);"></i>
+                            </a>
+                            {% elif acte.source == 'KT' %}
+                            <a href="{{ url_for('kt_dossier_detail', id_dossier=acte.id_dossier) }}"
+                                class="btn btn-sm btn-light rounded-circle"
+                                style="width:30px;height:30px;padding:0;display:inline-flex;align-items:center;justify-content:center;">
+                                <i class="fas fa-eye" style="font-size:0.75rem;color:var(--anes-primary);"></i>
+                            </a>
+                            {% elif acte.source == 'MEDECIN_INTERNE' %}
+                            <a href="{{ url_for('medecin_interne_actes_detail', id_acte=acte.id_dossier) }}"
+                                class="btn btn-sm btn-light rounded-circle"
+                                style="width:30px;height:30px;padding:0;display:inline-flex;align-items:center;justify-content:center;">
+                                <i class="fas fa-eye" style="font-size:0.75rem;color:var(--anes-primary);"></i>
+                            </a>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="9" class="text-center py-5">
+                            <div style="opacity:0.5;">
+                                <i class="fas fa-inbox fa-3x mb-3 d-block"></i>
+                                <p class="mb-0">Aucun acte d'anesthésie trouvé</p>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Pagination -->
+        {% if total_pages > 1 %}
+        <div class="d-flex justify-content-between align-items-center p-3 border-top">
+            <div class="text-muted small">
+                Affichage {{ (page - 1) * per_page + 1 }} — {{ [page * per_page, total_count]|min }}
+                sur {{ total_count }}
+            </div>
+            <nav>
+                <ul class="pagination mb-0">
+                    <li class="page-item {{ 'disabled' if page == 1 }}">
+                        <a class="page-link"
+                            href="{{ url_for('anesthesie_honoraires_global', page=page-1, **filters) if page > 1 else '#' }}">
+                            <i class="fas fa-chevron-left"></i>
+                        </a>
+                    </li>
+
+                    {% set start_page = [1, page - 2]|max %}
+                    {% set end_page = [total_pages, page + 2]|min %}
+
+                    {% if start_page > 1 %}
+                    <li class="page-item"><a class="page-link"
+                            href="{{ url_for('anesthesie_honoraires_global', page=1, **filters) }}">1</a></li>
+                    {% if start_page > 2 %}
+                    <li class="page-item disabled"><span class="page-link">…</span></li>
+                    {% endif %}
+                    {% endif %}
+
+                    {% for p in range(start_page, end_page + 1) %}
+                    <li class="page-item {{ 'active' if p == page }}">
+                        <a class="page-link" href="{{ url_for('anesthesie_honoraires_global', page=p, **filters) }}">{{
+                            p }}</a>
+                    </li>
+                    {% endfor %}
+
+                    {% if end_page < total_pages %} {% if end_page < total_pages - 1 %} <li class="page-item disabled">
+                        <span class="page-link">…</span></li>
+                        {% endif %}
+                        <li class="page-item"><a class="page-link"
+                                href="{{ url_for('anesthesie_honoraires_global', page=total_pages, **filters) }}">{{
+                                total_pages }}</a></li>
+                        {% endif %}
+
+                        <li class="page-item {{ 'disabled' if page == total_pages }}">
+                            <a class="page-link"
+                                href="{{ url_for('anesthesie_honoraires_global', page=page+1, **filters) if page < total_pages else '#' }}">
+                                <i class="fas fa-chevron-right"></i>
+                            </a>
+                        </li>
+                </ul>
+            </nav>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/moment.min.js') }}"></script>
+<script src="{{ url_for('static', filename='js/daterangepicker.min.js') }}"></script>
+<script>
+    $(function () {
+        // ─── Select2 on dropdowns ───
+        if ($.fn.select2) {
+            $('#select-personnel').select2({
+                theme: 'bootstrap-5',
+                placeholder: 'Tous les intervenants',
+                allowClear: true,
+                width: '100%'
+            });
+        }
+
+        // ─── Auto-submit on filter change ───
+        document.querySelectorAll('#filterForm select:not(#select-personnel)').forEach(sel => {
+            sel.addEventListener('change', () => document.getElementById('filterForm').submit());
+        });
+
+        // ─── Date Range Picker ───
+        if (typeof $.fn.daterangepicker === 'undefined') {
+            console.warn('daterangepicker not loaded');
+            return;
+        }
+
+        var startInput = $('input[name="date_debut"]');
+        var endInput = $('input[name="date_fin"]');
+        var rangeInput = $('#date_range');
+
+        moment.locale('fr');
+
+        var options = {
+            autoUpdateInput: false,
+            autoApply: false,
+            opens: 'left',
+            locale: {
+                format: 'DD/MM/YYYY',
+                applyLabel: "Appliquer",
+                cancelLabel: "Effacer",
+                fromLabel: "De",
+                toLabel: "À",
+                customRangeLabel: "Personnalisé",
+                weekLabel: "S",
+                daysOfWeek: ["Di", "Lu", "Ma", "Me", "Je", "Ve", "Sa"],
+                monthNames: ["Janvier", "Février", "Mars", "Avril", "Mai", "Juin", "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre"],
+                firstDay: 1
+            },
+            ranges: {
+                'Aujourd\'hui': [moment(), moment()],
+                'Hier': [moment().subtract(1, 'days'), moment().subtract(1, 'days')],
+                'Les 7 derniers jours': [moment().subtract(6, 'days'), moment()],
+                'Ce mois-ci': [moment().startOf('month'), moment().endOf('month')],
+                'Le mois dernier': [moment().subtract(1, 'month').startOf('month'), moment().subtract(1, 'month').endOf('month')],
+                'Cette année': [moment().startOf('year'), moment().endOf('year')]
+            }
+        };
+
+        rangeInput.daterangepicker(options);
+
+        // Set initial value if dates exist
+        if (startInput.val() && endInput.val()) {
+            var start = moment(startInput.val());
+            var end = moment(endInput.val());
+            if (start.isValid() && end.isValid()) {
+                rangeInput.val(start.format('DD/MM/YYYY') + ' — ' + end.format('DD/MM/YYYY'));
+                rangeInput.data('daterangepicker').setStartDate(start);
+                rangeInput.data('daterangepicker').setEndDate(end);
+            }
+        }
+
+        rangeInput.on('apply.daterangepicker', function (ev, picker) {
+            $(this).val(picker.startDate.format('DD/MM/YYYY') + ' — ' + picker.endDate.format('DD/MM/YYYY'));
+            startInput.val(picker.startDate.format('YYYY-MM-DD'));
+            endInput.val(picker.endDate.format('YYYY-MM-DD'));
+            // Auto submit after date selection
+            document.getElementById('filterForm').submit();
+        });
+
+        rangeInput.on('cancel.daterangepicker', function () {
+            $(this).val('');
+            startInput.val('');
+            endInput.val('');
+            document.getElementById('filterForm').submit();
+        });
+    });
+</script>
+{% endblock %}

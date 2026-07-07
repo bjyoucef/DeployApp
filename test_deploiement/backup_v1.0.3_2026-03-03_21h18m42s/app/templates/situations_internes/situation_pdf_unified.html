@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Situation - {{ medecin.nom_complet }}</title>
+    <style>
+        @page {
+            size: A4;
+            margin: 2cm;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            font-size: 11pt;
+            line-height: 1.6;
+            color: #333;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 2cm;
+            padding-bottom: 1cm;
+
+            border-bottom: 3px solid {
+                    {
+                    config.primary_color or '#3b82f6'
+                }
+            }
+
+            ;
+        }
+
+        .clinique-name {
+            font-size: 20pt;
+            font-weight: bold;
+
+            color: {
+                    {
+                    config.primary_color or '#3b82f6'
+                }
+            }
+
+            ;
+            margin-bottom: 0.5cm;
+        }
+
+        .document-title {
+            font-size: 18pt;
+            font-weight: bold;
+            color: #1f2937;
+            margin-top: 1cm;
+        }
+
+        .info-section {
+            background: #f3f4f6;
+            padding: 0.75cm;
+            border-radius: 8px;
+            margin-bottom: 1cm;
+        }
+
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.3cm 0;
+            border-bottom: 1px dashed #d1d5db;
+        }
+
+        .info-row:last-child {
+            border-bottom: none;
+        }
+
+        .info-label {
+            font-weight: 600;
+            color: #6b7280;
+        }
+
+        .info-value {
+            font-weight: bold;
+            color: #1f2937;
+        }
+
+        .section-title {
+            font-size: 14pt;
+            font-weight: bold;
+
+            color: {
+                    {
+                    config.primary_color or '#3b82f6'
+                }
+            }
+
+            ;
+            margin: 1cm 0 0.5cm 0;
+            padding-bottom: 0.3cm;
+
+            border-bottom: 2px solid {
+                    {
+                    config.primary_light or '#dbeafe'
+                }
+            }
+
+            ;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 1cm;
+        }
+
+        thead {
+            background: {
+                    {
+                    config.primary_color or '#3b82f6'
+                }
+            }
+
+            ;
+            color: white;
+        }
+
+        th {
+            padding: 0.4cm;
+            text-align: left;
+            font-weight: 600;
+            font-size: 10pt;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        td {
+            padding: 0.3cm 0.4cm;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        tbody tr:nth-child(even) {
+            background: #f9fafb;
+        }
+
+        tbody tr:hover {
+            background: {
+                    {
+                    config.bg_light or '#eff6ff'
+                }
+            }
+
+            ;
+        }
+
+        .text-right {
+            text-align: right;
+        }
+
+        .text-center {
+            text-align: center;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 0.15cm 0.3cm;
+            border-radius: 50px;
+            font-size: 9pt;
+            font-weight: 600;
+        }
+
+        .badge-voie-basse {
+            background: #fce7f3;
+            color: #be185d;
+        }
+
+        .badge-cesarienne {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+
+        .badge-convention {
+            background: #d1fae5;
+            color: #065f46;
+        }
+
+        .badge-payant {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .badge-ortho {
+            background: #e0e7ff;
+            color: #4338ca;
+        }
+
+        .badge-chirurgie {
+            background: #fce7f3;
+            color: #be185d;
+        }
+
+        /* Style pour les éléments annulés */
+        .row-cancelled {
+            color: #9ca3af;
+            text-decoration: line-through;
+        }
+
+        .badge-cancelled {
+            background-color: #fee2e2;
+            color: #991b1b;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 8pt;
+            margin-left: 4px;
+        }
+
+        .summary-box {
+            background: linear-gradient(135deg, {
+                    {
+                    config.primary_light or '#dbeafe'
+                }
+            }
+
+            , {
+                {
+                config.bg_light or '#eff6ff'
+            }
+        });
+        padding: 0.75cm;
+        border-radius: 8px;
+
+        border: 2px solid {
+                {
+                config.primary_color or '#3b82f6'
+            }
+        }
+
+        ;
+        margin-top: 1cm;
+        }
+
+        .summary-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.3cm 0;
+            font-size: 12pt;
+        }
+
+        .summary-total {
+            background: white;
+            padding: 0.5cm;
+            border-radius: 6px;
+            margin-top: 0.5cm;
+        }
+
+        .summary-total .summary-row {
+            font-size: 16pt;
+            font-weight: bold;
+
+            color: {
+                    {
+                    config.primary_dark or '#2563eb'
+                }
+            }
+
+            ;
+        }
+
+        .footer {
+            margin-top: 2cm;
+            padding-top: 0.5cm;
+            border-top: 1px solid #d1d5db;
+            text-align: center;
+            font-size: 9pt;
+            color: #6b7280;
+        }
+
+        .signature-section {
+            margin-top: 2cm;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .signature-box {
+            width: 45%;
+            text-align: center;
+        }
+
+        .signature-line {
+            margin-top: 1.5cm;
+            border-top: 2px solid #1f2937;
+            padding-top: 0.3cm;
+            font-weight: 600;
+        }
+
+        @media print {
+            .no-print {
+                display: none;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Header -->
+    <div class="header">
+        <div class="clinique-name">{{ config.clinique_name or 'CLINIQUE INAYA' }}</div>
+        <div style="color: #6b7280; font-size: 10pt;">
+            {{ config.clinique_info or 'Adresse de la clinique • Téléphone • Email' }}
+        </div>
+        <div class="document-title">SITUATION FINANCIÈRE</div>
+    </div>
+
+    <!-- Informations Médecin -->
+    <div class="info-section">
+        <div class="info-row">
+            <span class="info-label">{{ config.medecin_label_singular }} :</span>
+            <span class="info-value">{{ medecin.nom_complet }}</span>
+        </div>
+        <div class="info-row">
+            <span class="info-label">Spécialité :</span>
+            <span class="info-value">{{ medecin.specialite }}</span>
+        </div>
+        <div class="info-row">
+            <span class="info-label">Statut :</span>
+            <span class="info-value">{{ config.medecin_type }}</span>
+        </div>
+        {% if medecin.pourcentage %}
+        <div class="info-row">
+            <span class="info-label">Pourcentage :</span>
+            <span class="info-value">{{ "{:.0f}".format(medecin.pourcentage) }}%</span>
+        </div>
+        {% endif %}
+        <div class="info-row">
+            <span class="info-label">Période :</span>
+            <span class="info-value">Du {{ date_debut }} au {{ date_fin }}</span>
+        </div>
+        <div class="info-row">
+            <span class="info-label">Date de génération :</span>
+            <span class="info-value">{{ date_generation }}</span>
+        </div>
+    </div>
+
+    <!-- Liste des items -->
+    <h2 class="section-title">Détail des {{ config.item_label_plural }}</h2>
+
+    {% if items %}
+    <table>
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>Date</th>
+                <th>{{ config.patient_label or 'Patient' }}</th>
+                {% for col in config.pdf_columns %}
+                <th class="{{ col.class }}">{{ col.label }}</th>
+                {% endfor %}
+                <th class="text-right">Honoraires</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in items %}
+            <tr style="{{ 'color: #9ca3af; text-decoration: line-through;' if item.est_annule else '' }}">
+                <td>
+                    <strong>#{{ item[config.id_field] }}</strong>
+                    {% if item.est_annule %}
+                    <span
+                        style="background-color: #fee2e2; color: #991b1b; padding: 2px 6px; border-radius: 4px; font-size: 8pt; margin-left: 4px;">ANNULÉ</span>
+                    {% endif %}
+                </td>
+                <td>{{ item[config.date_field].strftime('%d/%m/%Y') }}</td>
+                <td>{{ item[config.patient_field] }}</td>
+                {% for col in config.pdf_columns %}
+                <td class="{{ col.class }}">
+                    {% if col.type == 'badge' %}
+                    <span class="badge {{ col.badge_class(item) }}">{{ col.value(item) }}</span>
+                    {% else %}
+                    {{ col.value(item) }}
+                    {% endif %}
+                </td>
+                {% endfor %}
+                <td class="text-right">
+                    <strong>{{ "{:,.2f}".format(item[config.honoraires_field]).replace(",", " ") }} DA</strong>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p style="text-align: center; color: #6b7280; padding: 2cm 0;">
+        Aucun {{ config.item_label }} sur cette période
+    </p>
+    {% endif %}
+
+    <!-- Récapitulatif -->
+    <h2 class="section-title">Récapitulatif Financier</h2>
+
+    <div class="summary-box">
+        <div class="summary-row">
+            <span>Nombre total de {{ config.item_label_plural }} :</span>
+            <strong>{{ stats.total }}</strong>
+        </div>
+
+        <div class="summary-total">
+            <div class="summary-row">
+                <span>TOTAL HONORAIRES :</span>
+                <span>{{ "{:,.2f}".format(stats.total_honoraires).replace(",", " ") }} DA</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Informations légales -->
+    <div
+        style="background: #fef3c7; padding: 0.5cm; border-radius: 6px; margin-top: 1cm; border-left: 4px solid #f59e0b;">
+        <p style="font-size: 9pt; color: #92400e; margin: 0;">
+            <strong>Note :</strong> {{ config.pdf_note or 'Ce document constitue un relevé des honoraires pour la
+            période indiquée.' }}
+        </p>
+    </div>
+
+    <!-- Signatures -->
+    <div class="signature-section">
+        <div class="signature-box">
+            <div>Le {{ config.medecin_label_singular }}</div>
+            <div class="signature-line">{{ medecin.nom_complet }}</div>
+        </div>
+        <div class="signature-box">
+            <div>La Direction</div>
+            <div class="signature-line">Signature et Cachet</div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="footer">
+        <p>Document généré automatiquement par le système INAYA</p>
+        <p>Ce document est confidentiel et destiné uniquement au {{ config.medecin_label_singular }} mentionné</p>
+    </div>
+
+    <!-- Boutons d'action (masqués à l'impression) -->
+    <div class="no-print" style="position: fixed; bottom: 20px; right: 20px; z-index: 1000;">
+        <button onclick="window.print()"
+            style="background: {{ config.primary_color or '#3b82f6' }}; color: white; border: none; padding: 1rem 2rem; border-radius: 8px; cursor: pointer; font-weight: 600; box-shadow: 0 4px 12px rgba(0,0,0,0.2);">
+            <i class="fas fa-print"></i> Imprimer
+        </button>
+    </div>
+</body>
+
+</html>

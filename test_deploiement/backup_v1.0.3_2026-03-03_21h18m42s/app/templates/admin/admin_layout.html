@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="description" content="Inaya - Administration" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>
+        {% block title %}INAYA - Administration - {{ title|default('', true) }}{% endblock %}
+    </title>
+
+    <link rel="icon" href="{{ url_for('static', filename='icon/favicon.ico') }}" />
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap-icons.css') }}" />
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/all.min.css') }}" />
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}" />
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}" />
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/modern_toast.css') }}" />
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/datatables.css') }}" />
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/datatables.min.css') }}" />
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/choices.min.css') }}" />
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/fontawesome.css') }}">
+    <style>
+        :root {
+            /* Admin Color Overrides */
+            --admin-primary: #dc3545;
+            /* Bootstrap Danger Red */
+            --admin-primary-dark: #b02a37;
+            --admin-bg-sidebar: #2c3e50;
+            /* A dark slate for admin sidebar */
+        }
+
+        /* Override Sidebar Styles for Admin */
+        aside {
+            background: var(--admin-bg-sidebar) !important;
+        }
+
+        .sidebar-brand {
+            color: #dc3545 !important;
+        }
+
+        .sidebar-link.active {
+            color: #dc3545 !important;
+            background-color: rgba(220, 53, 69, 0.1) !important;
+            border-left: 4px solid #dc3545;
+        }
+
+        .sidebar-link:hover {
+            background-color: rgba(255, 255, 255, 0.05);
+        }
+
+        /* Shared Styles from Layout */
+        .sidebar-link {
+            color: rgba(255, 255, 255, 0.75);
+            text-decoration: none;
+            padding: 12px 20px;
+            display: flex;
+            align-items: center;
+            border-radius: 8px;
+            transition: all 0.2s ease;
+            margin-bottom: 4px;
+        }
+
+        .sidebar-brand {
+            padding: 24px 20px;
+            font-size: 1.5rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            text-decoration: none;
+        }
+
+        .sidebar-icon {
+            width: 24px;
+            margin-right: 12px;
+            text-align: center;
+        }
+
+        /* Dashboard Card Styles */
+        .dashboard-card {
+            background: var(--bg-card);
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: var(--card-shadow, 0 4px 6px rgba(0, 0, 0, 0.02));
+            border: 1px solid var(--border-color, rgba(0, 0, 0, 0.04));
+            transition: transform 0.2s, box-shadow 0.2s;
+            height: 100%;
+            text-decoration: none;
+            display: block;
+            color: var(--text-main);
+        }
+
+        .dashboard-card:hover {
+            transform: translateY(-5px);
+            box-shadow: var(--card-hover-shadow, 0 10px 15px rgba(0, 0, 0, 0.05));
+            color: var(--text-main);
+        }
+
+        .card-icon-wrapper {
+            background-color: rgba(220, 53, 69, 0.1);
+            color: #dc3545;
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            margin-bottom: 16px;
+        }
+
+        [data-theme="dark"] .card-icon-wrapper {
+            background-color: rgba(255, 255, 255, 0.1);
+            color: #dc3545;
+        }
+    </style>
+
+    {% block style %}{% endblock %}
+</head>
+
+<body class="d-flex flex-column min-vh-100 bg-light">
+    {% block layout_body %}
+    <div class="d-flex min-vh-100">
+        <!-- Sidebar (Desktop) -->
+        <aside class="d-none d-lg-flex flex-column text-white flex-shrink-0"
+            style="width: 280px; position: sticky; top: 0; height: 100vh;">
+
+            <!-- Brand -->
+            <a href="{{ url_for('index_admin') }}" class="sidebar-brand">
+                <div class="sidebar-icon">
+                    <i class="fas fa-shield-halved"></i>
+                </div>
+                <span>Admin</span>
+            </a>
+
+            <div class="px-3 pb-2 d-flex align-items-center justify-content-between">
+                <button class="btn btn-link text-white p-0 text-decoration-none" id="sidebarToggle"
+                    title="Toggle Sidebar" style="font-size: 1.2rem;">
+                    <i class="fas fa-bars"></i>
+                </button>
+            </div>
+
+
+            <div class="px-3 pb-4 overflow-auto custom-scrollbar" style="flex-grow: 1;">
+                <ul class="nav flex-column sidebar-menu w-100" id="sidebarMenu">
+
+                    <!-- Back to App Link -->
+                    <li class="nav-item mb-3">
+                        <a class="sidebar-link bg-danger text-white hover-opacity" href="/"
+                            style="background-color: rgba(255,255,255,0.1) !important; border: 1px solid rgba(255,255,255,0.2);">
+                            <div class="d-flex align-items-center">
+                                <i class="fas fa-arrow-left sidebar-icon"></i>
+                                <span>Retour au site</span>
+                            </div>
+                        </a>
+                    </li>
+                    <li>
+                        <hr class="dropdown-divider bg-light opacity-25 mb-3">
+                    </li>
+
+                    {% for item in menu_items_admin %}
+                    {% if not item.privilege or has_permission(item.privilege) %}
+
+                    <li class="nav-item mb-1">
+                        <!-- Flat Rendering for Admin Menu (assuming flat list) -->
+                        <a class="sidebar-link {% if request.path == url_for(item.route) %}active{% endif %}"
+                            href="{{ url_for(item.route) }}">
+                            <div class="d-flex align-items-center">
+                                <i class="{{ item.icon }} sidebar-icon"></i>
+                                <span>{{ item.label }}</span>
+                            </div>
+                            {% if item.badge and item.badge > 0 %}
+                            <span class="badge bg-danger ms-auto">{{ item.badge }}</span>
+                            {% endif %}
+                        </a>
+                    </li>
+                    {% endif %}
+                    {% endfor %}
+                </ul>
+            </div>
+
+            <!-- User Profile at Bottom -->
+            <div class="px-3 pb-4">
+                {% if user['username'] %}
+                <div class="dropdown dropup">
+                    <a href="#" class="d-flex align-items-center text-decoration-none text-light"
+                        data-bs-toggle="dropdown" aria-expanded="false">
+                        <div class="rounded-circle bg-danger text-white fw-bold d-flex align-items-center justify-content-center border border-danger"
+                            style="width: 40px; height: 40px;">
+                            {{ g.user.nom[0] | upper }}{{ g.user.prenom[0] | upper }}
+                        </div>
+                        <div class="ms-2 small text-truncate" style="max-width: 150px;">
+                            {{ g.user.nom }} {{ g.user.prenom }}
+                        </div>
+                    </a>
+                    <ul class="dropdown-menu shadow mt-2" style="min-width: 200px;">
+                        <li>
+                            <h6 class="dropdown-header">{{ (g.user.nom + ' ' + g.user.prenom) | e }}</h6>
+                        </li>
+                        <li><a class="dropdown-item py-2" href="#" data-bs-toggle="modal"
+                                data-bs-target="#editPassModal"><i class="fas fa-key me-2 text-muted"></i> Modifier mot
+                                de passe</a></li>
+                        <li>
+                            <a class="dropdown-item py-2" href="#" id="themeToggleDropdown">
+                                <i class="fas fa-moon me-2 text-muted" id="themeIcon"></i> Mode sombre
+                            </a>
+                        </li>
+
+                        <li>
+                            <hr class="dropdown-divider">
+                        </li>
+                        <li><a class="dropdown-item py-2 text-danger" href="{{ url_for('logout') }}"><i
+                                    class="fas fa-sign-out-alt me-2"></i> Déconnexion</a></li>
+                    </ul>
+                </div>
+                {% endif %}
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <div class="d-flex flex-column flex-grow-1 w-100"
+            style="background-color: var(--bg-body); color: var(--text-main);">
+
+            <!-- Mobile Sidebar Toggle (Visible only on mobile) -->
+            <div class="d-lg-none p-3 bg-danger text-white d-flex align-items-center justify-content-between">
+                <span class="fw-bold h5 mb-0">Admin</span>
+                <button class="btn btn-link text-white p-0 text-decoration-none" data-bs-toggle="offcanvas"
+                    data-bs-target="#sidebarOffcanvas">
+                    <i class="fas fa-bars fa-lg"></i>
+                </button>
+            </div>
+
+            <!-- Content Body -->
+            <main class="flex-grow-1 overflow-auto p-4">
+                {% block content %} {% endblock %}
+            </main>
+        </div>
+    </div>
+
+    <!-- Mobile Sidebar (Offcanvas) -->
+    <div class="offcanvas offcanvas-start text-white" tabindex="-1" id="sidebarOffcanvas"
+        style="background: var(--admin-bg-sidebar, #2c3e50); width: 280px;">
+        <div class="offcanvas-header border-bottom border-white-50">
+            <h5 class="offcanvas-title fw-bold">INAYA Admin</h5>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas"
+                aria-label="Close"></button>
+        </div>
+        <div class="offcanvas-body">
+
+            <div class="mb-4">
+                <a class="btn btn-danger w-100" href="/">
+                    <i class="fas fa-arrow-left me-2"></i> Retour au site
+                </a>
+            </div>
+
+            <ul class="nav flex-column sidebar-menu w-100">
+                {% for item in menu_items_admin %}
+                {% if not item.privilege or has_permission(item.privilege) %}
+                <li class="nav-item mb-1">
+                    <a class="sidebar-link" href="{{ url_for(item.route) }}">
+                        <div class="d-flex align-items-center">
+                            <i class="{{ item.icon }} sidebar-icon"></i>
+                            <span>{{ item.label }}</span>
+                        </div>
+                    </a>
+                </li>
+                {% endif %}
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+
+    {% endblock %}
+
+    <!-- Modals -->
+    <div aria-hidden="true" aria-labelledby="editPassModalLabel" class="modal fade" id="editPassModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="editPassModalLabel">Modifier le mot de passe</h5>
+                    <button aria-label="Close" class="btn-close" data-bs-dismiss="modal" type="button"></button>
+                </div>
+                <div class="modal-body">
+                    <form action="{{ url_for('edit_pass') }}" class="needs-validation" method="POST" novalidate>
+                        <div class="mb-3">
+                            <label class="form-label" for="current_password">Mot de passe actuel</label>
+                            <input class="form-control" id="current_password" name="current_password" required
+                                type="password" />
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label" for="new_password">Nouveau mot de passe</label>
+                            <input class="form-control" id="new_password" name="new_password" required
+                                type="password" />
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label" for="confirm_password">Confirmer le nouveau mot de passe</label>
+                            <input class="form-control" id="confirm_password" name="confirm_password" required
+                                type="password" />
+                        </div>
+                        <div class="invalid-feedback">Les mots de passe ne correspondent pas.</div>
+                        <div class="modal-footer">
+                            <button class="btn btn-primary" type="submit">Mettre à jour</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div aria-hidden="true" aria-labelledby="loginModalLabel" class="modal fade" id="loginModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="loginModalLabel">Connexion</h5>
+                    <button aria-label="Close" class="btn-close" data-bs-dismiss="modal" type="button"></button>
+                </div>
+                <div class="modal-body">
+                    <form action="{{ url_for('login') }}" class="needs-validation" method="POST" novalidate>
+                        <div class="mb-3">
+                            <label class="form-label" for="username">Nom d'utilisateur</label>
+                            <input class="form-control" id="username" name="username" required type="text" />
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label" for="password">Mot de passe</label>
+                            <div class="input-group">
+                                <input class="form-control" id="password" name="password" required type="password" />
+                                <button class="btn btn-outline-secondary" id="togglePassword" type="button"><i
+                                        class="fas fa-eye"></i></button>
+                            </div>
+                        </div>
+                        <div class="form-group form-check">
+                            <input class="form-check-input" id="remember_me" name="remember_me" type="checkbox" />
+                            <label class="form-check-label" for="remember_me">Garder la session active</label>
+                        </div>
+                        <div class="modal-footer">
+                            <button class="btn btn-primary" type="submit">Se connecter</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+
+    <script src="{{ url_for('static', filename='js/jquery-3.7.1.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/bootstrap.bundle.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/datatables.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/datatables.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/modern_toast.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/custom.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/choices.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/select2.js') }}"></script>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+
+            {% with messages = get_flashed_messages(with_categories = True) %}
+            {% if messages %}
+            {% for category, message in messages %}
+            showToast({{ message | tojson }}, "{{ category }}");
+        {% endfor %}
+        {% endif %}
+        {% endwith %}
+
+        // Messages provenant de request.args
+        {% if request.args.get('message') %}
+        showToast({{ request.args.get('message') | tojson }}, "{{ request.args.get('category', 'info') }}");
+        {% endif %}
+
+        // Sidebar Toggle Logic
+        const sidebarToggle = document.getElementById('sidebarToggle');
+        const sidebar = document.querySelector('aside');
+
+        // Function to apply sidebar state
+        function setSidebarState(collapsed) {
+            if (!sidebar) return;
+
+            const sidebarLabels = sidebar.querySelectorAll('.sidebar-link span:not(.badge)');
+            const sidebarBrand = sidebar.querySelector('.sidebar-brand span');
+            // const chevrons = sidebar.querySelectorAll('.fa-chevron-down, .fa-chevron-up'); // Admin menu is flat
+
+            if (collapsed) {
+                sidebar.style.width = '80px';
+                sidebarLabels.forEach(el => el.style.display = 'none');
+                if (sidebarBrand) sidebarBrand.style.display = 'none';
+                // chevrons.forEach(el => el.style.display = 'none');
+            } else {
+                sidebar.style.width = '280px';
+                sidebarLabels.forEach(el => el.style.display = '');
+                if (sidebarBrand) sidebarBrand.style.display = '';
+                // chevrons.forEach(el => el.style.display = '');
+            }
+            localStorage.setItem('adminSidebarState', collapsed ? 'collapsed' : 'expanded');
+        }
+
+        if (sidebarToggle && sidebar) {
+            // Load state from local storage (separate key for admin)
+            const storedState = localStorage.getItem('adminSidebarState');
+            if (storedState === 'collapsed') {
+                setSidebarState(true);
+            }
+
+            sidebarToggle.addEventListener('click', function () {
+                const isCollapsed = sidebar.style.width === '80px';
+                setSidebarState(!isCollapsed);
+            });
+        }
+
+        // Toggle Password
+        const togglePassword = document.querySelector('#togglePassword');
+        const password = document.querySelector('#password');
+        if (togglePassword && password) {
+            togglePassword.addEventListener('click', function (e) {
+                const type = password.getAttribute('type') === 'password' ? 'text' : 'password';
+                password.setAttribute('type', type);
+                this.querySelector('i').classList.toggle('fa-eye-slash');
+            });
+        }
+
+        // Theme Toggle Logic
+        const themeToggleBtn = document.getElementById('themeToggleDropdown');
+        const themeIcon = document.getElementById('themeIcon');
+        const htmlElement = document.documentElement;
+
+        // Function to update icon
+        function updateThemeIcon(theme) {
+            if (!themeIcon) return;
+            if (theme === 'dark') {
+                themeIcon.classList.remove('fa-moon');
+                themeIcon.classList.add('fa-sun');
+                themeToggleBtn.innerHTML = '<i class="fas fa-sun me-2 text-muted" id="themeIcon"></i> Mode clair';
+            } else {
+                themeIcon.classList.remove('fa-sun');
+                themeIcon.classList.add('fa-moon');
+                themeToggleBtn.innerHTML = '<i class="fas fa-moon me-2 text-muted" id="themeIcon"></i> Mode sombre';
+            }
+        }
+
+        // Check local storage on load
+        const currentTheme = localStorage.getItem('theme');
+        if (currentTheme === 'dark') {
+            htmlElement.setAttribute('data-theme', 'dark');
+            updateThemeIcon('dark');
+        }
+
+        if (themeToggleBtn) {
+            themeToggleBtn.addEventListener('click', function (e) {
+                e.preventDefault(); // Prevent default link behavior
+                const isDark = htmlElement.getAttribute('data-theme') === 'dark';
+
+                if (isDark) {
+                    htmlElement.removeAttribute('data-theme');
+                    localStorage.setItem('theme', 'light');
+                    updateThemeIcon('light');
+                } else {
+                    htmlElement.setAttribute('data-theme', 'dark');
+                    localStorage.setItem('theme', 'dark');
+                    updateThemeIcon('dark');
+                }
+            });
+        }
+
+    });
+
+    </script>
+    {% block scripts %}{% endblock %}
+</body>
+
+</html>

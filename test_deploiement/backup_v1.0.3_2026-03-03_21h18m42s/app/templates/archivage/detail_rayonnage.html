@@ -1,0 +1,1320 @@
+{% extends "layout.html" %}
+
+{% block title %}Vue Détaillée Rayonnage - Archivage{% endblock %}
+
+{% block style %}
+<style>
+    :root {
+        --shelf-color: #e9ecef;
+        --shelf-border: #ced4da;
+        --cabinet-bg: #343a40;
+        --cabinet-shadow: inset 0 0 20px rgba(0, 0, 0, 0.5);
+    }
+
+    .shelf-detail-container {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+        align-items: center;
+        padding: 20px;
+        background-color: #f4f6f9;
+        min-height: 80vh;
+    }
+
+    /* --- Structure du Meuble (Cabinet) --- */
+    .shelf-structure {
+        background-color: var(--cabinet-bg);
+        border: 10px solid #212529;
+        border-radius: 6px;
+        padding: 15px 15px 0 15px;
+        /* Pas de padding en bas pour coller la dernière étagère */
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+        width: 100%;
+        overflow-x: auto;
+        position: relative;
+    }
+
+    .shelf-structure::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        box-shadow: var(--cabinet-shadow);
+        pointer-events: none;
+        z-index: 1;
+    }
+
+    /* --- Une étagère (Ligne) --- */
+    .shelf-row-container {
+        display: flex;
+        align-items: flex-end;
+        margin-bottom: 0;
+        position: relative;
+        z-index: 2;
+        height: 140px;
+    }
+
+    .shelf-cell:not(:last-child) {
+        border-right: 4px solid var(--shelf-border);
+    }
+
+    .shelf-row {
+        display: flex;
+        align-items: flex-end;
+        /* Aligner les boîtes en bas */
+        background: #d8dce1;
+        /* Fond du mur arrière de l'étagère */
+        border-bottom: 14px solid #8e959c;
+        /* L'épaisseur de la planche physique */
+        box-shadow: 0 5px 10px rgba(0, 0, 0, 0.15);
+        /* Ombre portée sur l'étage du dessous */
+        height: 100%;
+        width: 100%;
+        padding: 0 5px;
+        position: relative;
+    }
+
+    /* Indicateur d'étage (E1, E2...) */
+    .row-indicator {
+        width: 40px;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 800;
+        color: rgba(255, 255, 255, 0.3);
+        font-size: 1.5rem;
+        text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+        user-select: none;
+    }
+
+    /* --- La Boîte (Design Classeur Réaliste) --- */
+    .shelf-box {
+        height: 92%;
+        /* Un peu moins que l'étagère pour laisser de l'espace en haut */
+        min-width: 40px;
+        /* Minimum pour être cliquable */
+        position: relative;
+        cursor: pointer;
+        transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.27), margin 0.2s;
+        margin: 0 1px;
+        /* Petit espace entre classeurs */
+
+        /* Effet 3D sur le dos du classeur */
+        background: linear-gradient(90deg,
+                rgba(255, 255, 255, 0.1) 0%,
+                rgba(255, 255, 255, 0) 20%,
+                rgba(0, 0, 0, 0.05) 80%,
+                rgba(0, 0, 0, 0.2) 100%);
+        box-shadow: 2px 0 3px rgba(0, 0, 0, 0.2);
+        border-radius: 2px 4px 4px 2px;
+    }
+
+    .shelf-box:hover {
+        transform: translateY(-5px) scale(1.02);
+        z-index: 100;
+        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
+    }
+
+    /* Couleurs de base des classeurs */
+    .shelf-box.occupied {
+        background-color: #6c757d;
+        border-left: 4px solid rgba(0, 0, 0, 0.1);
+    }
+
+    /* Code couleur Remplissage (Couleur du plastique du classeur) */
+    .shelf-box.occupied.low {
+        background-color: #28a745;
+    }
+
+    /* Vert */
+    .shelf-box.occupied.medium {
+        background-color: #ffc107;
+    }
+
+    /* Jaune */
+    .shelf-box.occupied.high {
+        background-color: #fd7e14;
+    }
+
+    /* Orange */
+    .shelf-box.occupied.full {
+        background-color: #dc3545;
+    }
+
+    /* Rouge */
+
+    /* Étiquette Blanche sur le dos */
+    .binder-label {
+        position: absolute;
+        top: 35%;
+        left: 10%;
+        width: 80%;
+        height: 40%;
+        background: #f8f9fa;
+        border: 1px solid rgba(0, 0, 0, 0.1);
+        box-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.65rem;
+        color: #333;
+        text-align: center;
+        overflow: hidden;
+        padding: 2px;
+        font-family: 'Courier New', monospace;
+        /* Style machine à écrire */
+        font-weight: bold;
+    }
+
+    /* Trou de préhension (Œillet) */
+    .binder-hole {
+        position: absolute;
+        bottom: 15%;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 14px;
+        height: 14px;
+        background: radial-gradient(circle at center, #333 30%, #555 35%, #ddd 100%);
+        border-radius: 50%;
+        box-shadow: inset 1px 1px 3px rgba(0, 0, 0, 0.5);
+    }
+
+    /* --- Espace Libre --- */
+    .shelf-free-space {
+        height: 90%;
+        background-image: repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(0, 0, 0, 0.03) 10px, rgba(0, 0, 0, 0.03) 20px);
+        border: 2px dashed rgba(0, 0, 0, 0.1);
+        border-radius: 4px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #adb5bd;
+        font-size: 0.8rem;
+        margin: 0 2px;
+        transition: opacity 0.2s;
+    }
+
+    .shelf-free-space:hover {
+        opacity: 0.8;
+        background-color: rgba(0, 0, 0, 0.02);
+    }
+
+    /* Floating Toolbar */
+    .floating-toolbar {
+        position: sticky;
+        top: 20px;
+        z-index: 100;
+        background: var(--glass-surface);
+        backdrop-filter: blur(10px);
+        border: 1px solid var(--glass-border);
+        border-radius: 50px;
+        padding: 10px 20px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+        margin-bottom: 20px;
+    }
+
+    /* --- Badges Overlay (Lock/Shared) --- */
+    .cell-status-overlay {
+        position: absolute;
+        top: -10px;
+        /* Flottant au dessus de l'étagère */
+        left: 0;
+        z-index: 10;
+        pointer-events: none;
+    }
+
+    .status-badge {
+        font-size: 0.65rem;
+        padding: 3px 6px;
+        border-radius: 4px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        backdrop-filter: blur(2px);
+    }
+
+    /* Scrollbar personnalisée pour le meuble */
+    .shelf-structure::-webkit-scrollbar {
+        height: 12px;
+    }
+
+    .shelf-structure::-webkit-scrollbar-track {
+        background: #212529;
+    }
+
+    .shelf-structure::-webkit-scrollbar-thumb {
+        background-color: #6c757d;
+        border-radius: 6px;
+        border: 3px solid #212529;
+    }
+
+    /* Mode Switcher */
+    .toggle-move-container {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .switch {
+        position: relative;
+        display: inline-block;
+        width: 50px;
+        height: 24px;
+    }
+
+    .switch input {
+        opacity: 0;
+        width: 0;
+        height: 0;
+    }
+
+    .slider {
+        position: absolute;
+        cursor: pointer;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: #cbd5e1;
+        transition: .4s;
+        border-radius: 34px;
+    }
+
+    .slider:before {
+        position: absolute;
+        content: "";
+        height: 18px;
+        width: 18px;
+        left: 3px;
+        bottom: 3px;
+        background-color: white;
+        transition: .4s;
+        border-radius: 50%;
+    }
+
+    input:checked+.slider {
+        background-color: var(--bs-primary);
+    }
+
+    input:checked+.slider:before {
+        transform: translateX(26px);
+    }
+
+    .mode-move-active .shelf-box {
+        cursor: grab;
+    }
+
+    .mode-move-active .shelf-box:active {
+        cursor: grabbing;
+    }
+
+    .shelf-box.is-dragging {
+        opacity: 0.5;
+        transform: scale(1.05);
+    }
+
+    .shelf-cell.drag-over {
+        background: rgba(16, 185, 129, 0.2) !important;
+        border: 2px dashed #10b981 !important;
+    }
+
+    .custom-offcanvas {
+        --bs-offcanvas-width: 50%;
+    }
+
+    @media (max-width: 768px) {
+        .custom-offcanvas {
+            --bs-offcanvas-width: 100%;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Floating Toolbar En-tête -->
+    <div class="floating-toolbar">
+        <div>
+            <a href="{{ url_for('archivage_plan_visuel') }}" class="btn btn-sm btn-outline-secondary rounded-pill me-3">
+                <i class="fas fa-arrow-left me-1"></i> Plan Global
+            </a>
+            <h4 class="mb-0 d-inline-block align-middle fw-bold" style="color: var(--accent-violet);">
+                Rayonnage {{ rayonnage.code_etagere }} <span class="fs-6 fw-normal text-muted ms-2"><i class="fas fa-map-marker-alt"></i> {{ rayonnage.nom_zone }}</span>
+            </h4>
+            {% if rayonnage.est_interne %}
+            <span class="badge bg-success ms-2 fs-7 align-middle">Interne</span>
+            {% else %}
+            <span class="badge bg-primary ms-2 fs-7 align-middle">Externe</span>
+            {% endif %}
+        </div>
+
+        <div class="d-flex align-items-center gap-3">
+            <!-- Légende -->
+            <div class="d-none d-lg-flex align-items-center bg-white rounded-pill px-3 py-1 border shadow-sm" style="font-size: 0.8rem;">
+                <span class="me-2 fw-bold text-muted">Légende:</span>
+                <span class="rounded-circle me-1" style="width:10px;height:10px;background:#28a745;"></span> <span class="me-2">Faible</span>
+                <span class="rounded-circle me-1" style="width:10px;height:10px;background:#ffc107;"></span> <span class="me-2">Moyen</span>
+                <span class="rounded-circle me-1" style="width:10px;height:10px;background:#dc3545;"></span> <span>Plein</span>
+            </div>
+            
+            <!-- Search -->
+            <div class="position-relative" style="width: 250px;">
+                <i class="fas fa-search position-absolute text-muted" style="left: 12px; top: 50%; transform: translateY(-50%);"></i>
+                <input type="text" id="searchInput" class="form-control rounded-pill ps-4"
+                    placeholder="Patient, Réf, Boîte..." aria-label="Rechercher" autocomplete="off" style="border-color: var(--border-color);">
+            </div>
+
+            <!-- Toggle Déplacement -->
+            <div class="toggle-move-container ms-2">
+                <span class="fw-bold text-secondary" id="modeLabel">Mode Lecture</span>
+                <label class="switch" title="Activer le mode déplacement (Drag & Drop)">
+                    <input type="checkbox" id="moveModeToggle">
+                    <span class="slider"></span>
+                </label>
+            </div>
+        </div>
+    </div>
+
+    <!-- Le Rayonnage Visuel -->
+    <div class="shelf-detail-container rounded shadow-sm border bg-white">
+        <div class="d-flex justify-content-between w-100 px-2 mb-2">
+            <span class="text-muted small"><i class="fas fa-arrows-alt-h me-1"></i>Largeur: {{ rayonnage.largeur_cm }}
+                cm</span>
+            <span class="text-muted small">{{ rayonnage.nb_lignes }} Étagères</span>
+        </div>
+
+        <div class="shelf-structure">
+            {% for y in range(rayonnage.nb_lignes, 0, -1) %}
+            <div class="shelf-row-container">
+                <!-- Indicateur de ligne (gauche) -->
+                <div class="row-indicator">E{{ y }}</div>
+
+                <!-- La planche -->
+                <div class="shelf-row">
+                    {% for x in range(1, nb_colonnes + 1) %}
+                    {% set cell = cells_map.get((x, y)) %}
+
+                    {% if cell %}
+                    <div class="shelf-cell position-relative h-100 d-flex align-items-end px-1" style="flex: 1;"
+                        data-cell-id="{{ cell.id_emplacement }}">
+
+                        <!-- Indicateurs (Badges flottants) -->
+                        <div class="cell-status-overlay">
+                            {% if cell.reserved_medecins_noms %}
+                            <div class="status-badge bg-primary text-white mb-1">
+                                <i class="fas fa-lock text-white-50"></i> {{ cell.reserved_medecins_noms|truncate(20) }}
+                            </div>
+                            {% endif %}
+
+                            {% if cell.cell_est_partageable == 1 %}
+                            <div class="status-badge bg-success text-white">
+                                <i class="fas fa-users text-white-50"></i> Partagé
+                            </div>
+                            {% elif cell.cell_est_partageable is not none and cell.cell_est_partageable == 0 %}
+                            <div class="status-badge bg-warning text-dark">
+                                <i class="fas fa-user-shield"></i> Privé
+                            </div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Boucle des Boîtes -->
+                        {% for boite in cell.boites %}
+                        {% set width_pct = (boite.epaisseur_mm / (rayonnage.largeur_cm * 10)) * 100 %}
+
+                        <!-- Détermination de la classe couleur -->
+                        {% set color_class = 'low' %}
+                        {% if boite.est_pleine %}{% set color_class = 'full' %}
+                        {% elif boite.remplissage_pct > 75 %}{% set color_class = 'high' %}
+                        {% elif boite.remplissage_pct > 40 %}{% set color_class = 'medium' %}
+                        {% endif %}
+
+                        <div class="shelf-box occupied {{ color_class }}" id="box-{{ boite.id }}" draggable="false"
+                            data-box-id="{{ boite.id }}" data-medecin-id="{{ boite.id_medecin }}"
+                            data-specialty-id="{{ boite.id_specialty }}" data-epaisseur="{{ boite.epaisseur_mm }}"
+                            style="width: {{ width_pct }}%; flex: 0 0 {{ width_pct }}%;" data-bs-toggle="tooltip"
+                            data-bs-html="true" data-bs-placement="top"
+                            title="<div class='text-start'><strong>{{ boite.medecin_nom }}</strong><br>Ref: {{ boite.numero_archive }}<br>Remplissage: {{ boite.remplissage_pct }}%</div>">
+
+                            <!-- Détails visuels du classeur -->
+                            <div class="binder-hole"></div>
+                            <div class="binder-label">
+                                <span class="d-block text-truncate w-100">{{ boite.medecin_nom }}</span>
+                                <div class="border-top border-secondary w-50 my-1"></div>
+                                <span class="text-danger">{{ boite.remplissage_pct }}%</span>
+                            </div>
+                        </div>
+                        {% endfor %}
+
+                        <!-- Espace Libre -->
+                        {% if cell.largeur_restante_mm > 0 %}
+                        {% set free_pct = (cell.largeur_restante_mm / (rayonnage.largeur_cm * 10)) * 100 %}
+                        <div class="shelf-free-space" style="width: {{ free_pct }}%; flex: 0 0 {{ free_pct }}%;"
+                            data-bs-toggle="tooltip"
+                            title="Espace libre : {{ (cell.largeur_restante_mm / 10)|round(1) }} cm">
+                            <span>{{ (cell.largeur_restante_mm / 10)|round(0)|int }}cm</span>
+                        </div>
+                        {% endif %}
+                    </div>
+                    {% else %}
+                    <div class="w-100 h-100 d-flex align-items-center justify-content-center text-muted fst-italic">
+                        Emplacement Vide
+                    </div>
+                    {% endif %}
+                    {% endfor %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        <div class="mt-3 text-muted small fst-italic">
+            <i class="fas fa-info-circle me-1"></i> Cliquez sur un classeur pour voir le détail des dossiers.
+        </div>
+    </div>
+</div>
+
+<!-- Offcanvas Détails Boîte (Amélioré) -->
+<div class="offcanvas offcanvas-end custom-offcanvas border-0 shadow-lg" tabindex="-1" id="boxDetailsOffcanvas"
+    aria-labelledby="offcanvasRightLabel">
+    <div class="offcanvas-header bg-primary text-white">
+        <h5 id="offcanvasRightLabel" class="offcanvas-title fw-bold"><i class="fas fa-box-open me-2"></i>Détails Archive
+        </h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+    </div>
+
+    <div class="offcanvas-body p-0 bg-light">
+        <!-- Loader -->
+        <div id="box-loading" class="d-flex flex-column align-items-center justify-content-center h-50">
+            <div class="spinner-border text-primary mb-3" role="status"></div>
+            <span class="text-muted">Chargement des données...</span>
+        </div>
+
+        <div id="box-content" class="d-none">
+            <!-- Header Info -->
+            <div class="bg-white p-4 shadow-sm mb-3">
+                <div class="d-flex align-items-center mb-3">
+                    <div class="bg-light rounded-circle p-3 me-3 text-primary border">
+                        <i class="fas fa-folder-tree fa-lg"></i>
+                    </div>
+                    <div>
+                        <small class="text-muted text-uppercase fw-bold" style="font-size: 0.7em;">Référence</small>
+                        <h4 class="mb-0 fw-bold text-dark" id="detail-ref">...</h4>
+                    </div>
+                </div>
+
+                <div class="row g-2 mb-3">
+                    <div class="col-6">
+                        <div class="p-2 border rounded bg-light h-100">
+                            <small class="text-muted d-block">Médecin</small>
+                            <span class="fw-bold text-dark d-block text-truncate" id="detail-medecin">...</span>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="p-2 border rounded bg-light h-100">
+                            <small class="text-muted d-block">Spécialité</small>
+                            <span class="fw-bold text-dark d-block text-truncate" id="detail-specialite">...</span>
+                        </div>
+                    </div>
+                </div>
+
+                <label class="small text-muted mb-1">Niveau de remplissage</label>
+                <div class="progress" style="height: 8px; background-color: #e9ecef;">
+                    <div class="progress-bar rounded" role="progressbar" style="width: 0%; transition: width 1s ease;"
+                        id="detail-progress"></div>
+                </div>
+                <div class="d-flex justify-content-between mt-1">
+                    <small class="text-muted" id="detail-type">Standard</small>
+                    <small class="fw-bold text-primary" id="detail-pct">0%</small>
+                </div>
+            </div>
+
+            <!-- Liste Dossiers -->
+            <div class="px-3 pb-4">
+                <div class="d-flex justify-content-between align-items-center mb-2 px-1">
+                    <h6 class="fw-bold text-uppercase text-muted small mb-0">Dossiers Contenus</h6>
+                    <span class="badge bg-secondary rounded-pill" id="detail-count">0</span>
+                </div>
+
+                <div class="mb-3 px-1">
+                    <input type="text" class="form-control form-control-sm border-0 shadow-sm" id="search-dossier-input"
+                        placeholder="Rechercher patient, date, type..."
+                        style="background: var(--bg-body); color: var(--text-main);">
+                </div>
+
+                <div class="list-group border-0 shadow-sm" id="detail-dossiers-list">
+                    <!-- JS injectera les items ici -->
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Warning Changement Configuration -->
+<div class="modal fade" id="moveWarningModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content"
+            style="color: var(--text-main); border: 1px solid var(--border-color); border-radius: 16px;">
+            <div class="modal-header border-bottom-0">
+                <h5 class="modal-title fw-bold text-warning"><i class="fas fa-exclamation-triangle"></i> Attention
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p id="moveWarningMsg">Cette zone n'est pas configurée pour la spécialité de cette boîte.</p>
+                <p class="text-secondary small">Voulez-vous forcer le déplacement et modifier la configuration du
+                    rayonnage pour autoriser cette spécialité à l'avenir ?</p>
+            </div>
+            <div class="modal-footer border-top-0">
+                <button type="button" class="btn btn-outline-secondary rounded-pill fw-bold px-4"
+                    data-bs-dismiss="modal" id="cancelMoveBtn">Annuler</button>
+                <button type="button" class="btn btn-warning rounded-pill fw-bold px-4" id="forceMoveBtn">Forcer le
+                    déplacement</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Transfert Zone -->
+<div class="modal fade" id="transferZoneModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content"
+            style="color: var(--text-main); border: 1px solid var(--border-color); border-radius: 16px;">
+            <div class="modal-header" style="border-bottom: 1px solid var(--border-color);">
+                <h5 class="modal-title fw-bold text-primary"><i class="fas fa-share-square me-2"></i> Transférer de
+                    Zone
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Transfert de la boîte <strong id="transferBoxRef"></strong>.</p>
+                <div class="mb-3">
+                    <label class="form-label text-secondary fw-bold">Sélectionnez la zone de destination :</label>
+                    <select class="form-select" id="targetZoneSelect"
+                        style="color: var(--text-main); border-color: var(--border-color);">
+                        <option value="">-- Choisir une zone --</option>
+                        {% for z in zones_transfert %}
+                        <option value="{{ z.nom_zone }}">{{ z.nom_zone }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+            <div class="modal-footer border-top-0">
+                <button type="button" class="btn btn-outline-secondary rounded-pill fw-bold px-4"
+                    data-bs-dismiss="modal">Annuler</button>
+                <button type="button" class="btn btn-primary rounded-pill fw-bold px-4" id="confirmTransferBtn"
+                    disabled>Transférer</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Dropzone Area for Transfer (Shows when dragging) -->
+<div id="transferDropzone"
+    style="display: none; position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); border: 2px dashed var(--bs-primary); background-color: white; border-radius: 16px; padding: 20px 40px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.2); z-index: 1000; transition: 0.2s;">
+    <h5 class="mb-0 fw-bold" style="color: var(--bs-primary);"><i class="fas fa-share-square me-2"></i> Transférer
+        vers une autre zone</h5>
+    <p class="text-secondary small mb-0 mt-1">Lâchez la boîte ici pour choisir la destination</p>
+</div>
+
+<!-- Modal Historique Dossier -->
+<div class="modal fade" id="historyModal" tabindex="-1" style="z-index: 1060;">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content border-0 shadow"
+            style="background: var(--bg-card); color: var(--text-main); border-radius: 12px;">
+            <div class="modal-header border-bottom-0"
+                style="background: linear-gradient(135deg, #450A54 0%, #2a0633 100%); color: white;">
+                <h5 class="modal-title"><i class="fas fa-history me-2"></i> Historique du Dossier</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-4">
+                <div id="historyLoading" class="text-center py-4 d-none">
+                    <div class="spinner-border text-primary" role="status"></div>
+                    <p class="mt-2 text-secondary">Chargement de l'historique...</p>
+                </div>
+                <div id="historyError" class="alert alert-danger d-none"></div>
+                <div id="historyContent" class="table-responsive d-none">
+                    <table class="table table-hover align-middle small">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Date</th>
+                                <th>Action</th>
+                                <th>Détails</th>
+                                <th>Utilisateur</th>
+                            </tr>
+                        </thead>
+                        <tbody id="historyTableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // === CONFIGURATION & VARIABLES ===
+    const moveModeToggle = document.getElementById('moveModeToggle');
+    const modeLabel = document.getElementById('modeLabel');
+    const body = document.body;
+    let isMoveMode = false;
+
+    let draggedBox = null;
+    let pendingMoveParams = null;
+    const transferDropzone = document.getElementById('transferDropzone');
+
+    // === MODE SWITCHING ===
+    // Check local storage for initial state
+    if (localStorage.getItem('isMoveMode') === 'true') {
+        if (moveModeToggle) {
+            moveModeToggle.checked = true;
+            isMoveMode = true;
+            modeLabel.textContent = "Mode Déplacement";
+            modeLabel.classList.remove('text-secondary');
+            modeLabel.classList.add('text-primary');
+            body.classList.add('mode-move-active');
+            enableDragAndDrop();
+        }
+    }
+
+    if (moveModeToggle) {
+        moveModeToggle.addEventListener('change', function () {
+            isMoveMode = this.checked;
+            localStorage.setItem('isMoveMode', isMoveMode);
+            if (isMoveMode) {
+                modeLabel.textContent = "Mode Déplacement";
+                modeLabel.classList.remove('text-secondary');
+                modeLabel.classList.add('text-primary');
+                body.classList.add('mode-move-active');
+                enableDragAndDrop();
+            } else {
+                modeLabel.textContent = "Mode Lecture";
+                modeLabel.classList.add('text-secondary');
+                modeLabel.classList.remove('text-primary');
+                body.classList.remove('mode-move-active');
+                disableDragAndDrop();
+            }
+        });
+    }
+
+    // === DRAG & DROP LOGIC ===
+    function enableDragAndDrop() {
+        // Make boxes draggable
+        document.querySelectorAll('.shelf-box').forEach(box => {
+            box.setAttribute('draggable', 'true');
+            box.addEventListener('dragstart', handleDragStart);
+            box.addEventListener('dragend', handleDragEnd);
+        });
+
+        // Setup cells as drop zones
+        document.querySelectorAll('.shelf-cell').forEach(cell => {
+            if (cell.dataset.cellId) { // Only valid cells
+                cell.addEventListener('dragover', handleDragOver);
+                cell.addEventListener('dragleave', handleDragLeave);
+                cell.addEventListener('drop', handleDrop);
+            }
+        });
+
+        // Setup Transfer Dropzone
+        transferDropzone.addEventListener('dragover', handleTransferDragOver);
+        transferDropzone.addEventListener('dragleave', handleTransferDragLeave);
+        transferDropzone.addEventListener('drop', handleTransferDrop);
+    }
+
+    function disableDragAndDrop() {
+        document.querySelectorAll('.shelf-box').forEach(box => {
+            box.setAttribute('draggable', 'false');
+            box.removeEventListener('dragstart', handleDragStart);
+            box.removeEventListener('dragend', handleDragEnd);
+        });
+
+        document.querySelectorAll('.shelf-cell').forEach(cell => {
+            cell.removeEventListener('dragover', handleDragOver);
+            cell.removeEventListener('dragleave', handleDragLeave);
+            cell.removeEventListener('drop', handleDrop);
+        });
+    }
+
+    // === DRAG EVENTS ===
+    function handleDragStart(e) {
+        if (!isMoveMode) return;
+        draggedBox = this;
+        e.dataTransfer.effectAllowed = 'move';
+        // Hack for Firefox support
+        e.dataTransfer.setData('text/plain', this.dataset.boxId);
+
+        setTimeout(() => this.classList.add('is-dragging'), 0);
+        transferDropzone.style.display = 'block';
+    }
+
+    function handleDragEnd(e) {
+        this.classList.remove('is-dragging');
+        draggedBox = null;
+        transferDropzone.style.display = 'none';
+
+        // Remove highlighting from all cells
+        document.querySelectorAll('.shelf-cell').forEach(c => c.classList.remove('drag-over'));
+        transferDropzone.style.backgroundColor = '';
+    }
+
+    function handleDragOver(e) {
+        if (!isMoveMode) return;
+        e.preventDefault(); // Necessary to allow dropping
+        e.dataTransfer.dropEffect = 'move';
+        this.classList.add('drag-over');
+    }
+
+    function handleDragLeave(e) {
+        this.classList.remove('drag-over');
+    }
+
+    // === DROP EVENTS ===
+    function handleDrop(e) {
+        if (!isMoveMode || !draggedBox) return;
+        e.preventDefault();
+        e.stopPropagation();
+        this.classList.remove('drag-over');
+
+        const sourceCell = draggedBox.closest('.shelf-cell');
+        const targetCellId = this.dataset.cellId;
+        const sourceCellId = sourceCell.dataset.cellId;
+        const boxId = draggedBox.dataset.boxId;
+
+        if (sourceCellId === targetCellId) return; // Same cell
+
+        // Execute API call
+        moveBoxToCell(boxId, targetCellId, false, this);
+    }
+
+    // Transfer logic
+    function handleTransferDragOver(e) {
+        e.preventDefault();
+        e.dataTransfer.dropEffect = 'move';
+        this.style.backgroundColor = 'rgba(124, 58, 237, 0.1)';
+        this.style.transform = 'translateX(-50%) scale(1.05)';
+    }
+
+    function handleTransferDragLeave(e) {
+        this.style.backgroundColor = '';
+        this.style.transform = 'translateX(-50%) scale(1)';
+    }
+
+    function handleTransferDrop(e) {
+        if (!isMoveMode || !draggedBox) return;
+        e.preventDefault();
+        const boxId = draggedBox.dataset.boxId;
+        const boxRef = draggedBox.querySelector('.fw-bold') ? draggedBox.querySelector('.fw-bold').textContent : '';
+
+        // Safely extract box ref if available, else just use ID
+        document.getElementById('transferBoxRef').textContent = boxRef || ("ID: " + boxId);
+        document.getElementById('transferBoxRef').dataset.id = boxId; // store ID
+
+        var modal = new bootstrap.Modal(document.getElementById('transferZoneModal'));
+        modal.show();
+    }
+
+    // === API CALLS ===
+    function moveBoxToCell(boxId, newCellId, forceConfig = false, targetCellElement = null) {
+
+        const params = {
+            box_id: boxId,
+            new_emplacement_id: newCellId,
+            force_config: forceConfig
+        };
+
+        fetch('/archivage/api/move_box', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(params)
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (data.needs_confirmation) {
+                    // Show Warning Modal
+                    pendingMoveParams = params;
+                    pendingMoveParams.targetElement = targetCellElement;
+                    document.getElementById('moveWarningMsg').textContent = data.message;
+                    var modal = new bootstrap.Modal(document.getElementById('moveWarningModal'));
+                    modal.show();
+                } else if (data.success) {
+                    // Visually move the box
+                    if (targetCellElement && draggedBox) {
+                        targetCellElement.appendChild(draggedBox);
+                    } else {
+                        location.reload(); // Fallback if draggedBox is lost (e.g., forced move after modal)
+                    }
+                    if (typeof Toastify === 'function') {
+                        Toastify({ text: data.message, style: { background: "green" } }).showToast();
+                    }
+                } else {
+                    if (typeof Toastify === 'function') {
+                        Toastify({ text: "Erreur: " + data.message, style: { background: "red" } }).showToast();
+                    } else { alert("Erreur: " + data.message); }
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                if (typeof Toastify === 'function') {
+                    Toastify({ text: "Erreur de connexion", style: { background: "red" } }).showToast();
+                } else { alert("Erreur de connexion"); }
+            });
+    }
+
+    // Modal Events
+    document.getElementById('forceMoveBtn').addEventListener('click', function () {
+        const modalEl = document.getElementById('moveWarningModal');
+        const modal = bootstrap.Modal.getInstance(modalEl);
+        modal.hide();
+
+        if (pendingMoveParams) {
+            moveBoxToCell(pendingMoveParams.box_id, pendingMoveParams.new_emplacement_id, true, pendingMoveParams.targetElement);
+            pendingMoveParams = null; // reset
+        }
+    });
+
+    document.getElementById('cancelMoveBtn').addEventListener('click', function () {
+        pendingMoveParams = null;
+    });
+
+    // Transfer Modal
+    const targetZoneSelect = document.getElementById('targetZoneSelect');
+    const confirmTransferBtn = document.getElementById('confirmTransferBtn');
+
+    if (targetZoneSelect && confirmTransferBtn) {
+        targetZoneSelect.addEventListener('change', function () {
+            confirmTransferBtn.disabled = !this.value;
+        });
+
+        confirmTransferBtn.addEventListener('click', function () {
+            const boxId = document.getElementById('transferBoxRef').dataset.id;
+            const targetZone = targetZoneSelect.value;
+
+            confirmTransferBtn.disabled = true;
+            confirmTransferBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Transfert...';
+
+            fetch('/archivage/api/transfer_box_zone', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    box_id: boxId,
+                    target_zone: targetZone
+                })
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        if (typeof Toastify === 'function') {
+                            Toastify({ text: data.message, style: { background: "green" } }).showToast();
+                        }
+                        setTimeout(() => location.reload(), 1000); // Reload to remove box from this zone
+                    } else {
+                        if (typeof Toastify === 'function') {
+                            Toastify({ text: "Erreur: " + data.message, style: { background: "red" } }).showToast();
+                        }
+                        confirmTransferBtn.disabled = false;
+                        confirmTransferBtn.innerHTML = 'Transférer';
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    confirmTransferBtn.disabled = false;
+                    confirmTransferBtn.innerHTML = 'Transférer';
+                });
+        });
+    }
+    // Initialisation Tooltips
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl)
+    })
+
+    // Highlight Box from URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const highlightId = urlParams.get('highlight');
+
+    if (highlightId) {
+        $(document).ready(function () {
+            const $target = $(`#box-${highlightId}`);
+            if ($target.length) {
+                // Scroll fluide vers la boite
+                $target[0].scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+                // Effet visuel
+                $target.css('transition', 'all 0.5s');
+                $target.css('transform', 'scale(1.15) translateY(-10px)');
+                $target.css('box-shadow', '0 0 15px var(--bs-primary)');
+                $target.css('z-index', '200');
+
+                setTimeout(() => {
+                    $target.css('transform', '');
+                    $target.css('box-shadow', '');
+                    $target.css('z-index', '');
+                }, 2000);
+            }
+        });
+    }
+
+    // Gestion Clic Boîte (Offcanvas)
+    $(document).on('click', '.shelf-box.occupied', function () {
+        const boxId = $(this).attr('id').replace('box-', '');
+        const offcanvasEl = document.getElementById('boxDetailsOffcanvas');
+        const offcanvas = new bootstrap.Offcanvas(offcanvasEl);
+
+        // Reset UI
+        $('#box-loading').removeClass('d-none');
+        $('#box-content').addClass('d-none');
+        offcanvas.show();
+
+        // API Call
+        fetch(`/archivage/api/box/${boxId}/details`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    $('#box-loading').html(`<div class="text-danger p-3"><i class="fas fa-exclamation-triangle me-2"></i>${data.error}</div>`);
+                    return;
+                }
+
+                const b = data.boite;
+                const dossiers = data.dossiers;
+
+                // Bind Data
+                $('#detail-ref').text(b.numero_archive);
+                $('#detail-medecin').text(b.medecin_nom || 'Non assigné');
+                $('#detail-specialite').text(b.specialite || '-');
+                $('#detail-type').text(b.type_boite || 'Standard');
+
+                // Progress Bar Logic
+                const pct = b.remplissage_pct || 0;
+                let bgClass = 'bg-success';
+                if (pct > 50) bgClass = 'bg-warning';
+                if (pct > 85) bgClass = 'bg-danger';
+
+                $('#detail-progress').css('width', pct + '%').attr('class', `progress-bar rounded ${bgClass}`);
+                $('#detail-pct').text(pct + '%');
+                $('#detail-count').text(dossiers.length);
+
+                // Build List
+                const $list = $('#detail-dossiers-list');
+                $list.empty();
+
+                if (dossiers.length === 0) {
+                    $list.append(`
+                        <div class="text-center py-4 text-muted">
+                            <i class="fas fa-folder-open fa-2x mb-2 opacity-50"></i><br>
+                            <small>Cette boîte est vide.</small>
+                        </div>
+                    `);
+                } else {
+                    window.currentBoxDossiers = dossiers; // Store for search filtering
+                    
+                    // Auto-apply global search query if one exists
+                    var savedQuery = sessionStorage.getItem('archivageSearchQuery');
+                    if (savedQuery) {
+                        $('#search-dossier-input').val(savedQuery);
+                        // Filter immediately
+                        const term = savedQuery.toLowerCase();
+                        const filtered = dossiers.filter(d => {
+                            return (d.nom_patient || '').toLowerCase().includes(term) ||
+                                (d.id_patient_his || '').toLowerCase().includes(term) ||
+                                (d.actes_noms || '').toLowerCase().includes(term) ||
+                                (d.date_acte || '').toLowerCase().includes(term) ||
+                                (d.type_dossier || '').toLowerCase().includes(term);
+                        });
+                        renderDossiersList(filtered);
+                    } else {
+                        $('#search-dossier-input').val('');
+                        renderDossiersList(dossiers);
+                    }
+                }
+
+                $('#box-loading').addClass('d-none');
+                $('#box-content').removeClass('d-none');
+            })
+            .catch(err => {
+                console.error(err);
+                $('#box-loading').html('<div class="text-danger p-3 text-center">Erreur de communication serveur.</div>');
+            });
+    });
+
+    // Search input listener
+    $(document).ready(function () {
+        $('#search-dossier-input').on('keyup', function () {
+            const term = $(this).val().toLowerCase();
+            if (!window.currentBoxDossiers) return;
+
+            if (term === '') {
+                renderDossiersList(window.currentBoxDossiers);
+                return;
+            }
+
+            const filtered = window.currentBoxDossiers.filter(d => {
+                return (d.nom_patient || '').toLowerCase().includes(term) ||
+                    (d.id_patient_his || '').toLowerCase().includes(term) ||
+                    (d.actes_noms || '').toLowerCase().includes(term) ||
+                    (d.date_acte || '').toLowerCase().includes(term) ||
+                    (d.type_dossier || '').toLowerCase().includes(term);
+            });
+
+            renderDossiersList(filtered);
+        });
+    });
+
+    // === GLOBAL FUNCTIONS ===
+    function renderDossiersList(dossiersToRender) {
+        const $list = $('#detail-dossiers-list');
+        $list.empty();
+
+        if (dossiersToRender.length === 0) {
+            $list.append(`<div class="text-center py-3 text-secondary small">Aucun dossier ne correspond à la recherche.</div>`);
+            return;
+        }
+
+        dossiersToRender.forEach(d => {
+            let icon = 'fa-file-medical text-primary';
+            let typeBadgeClass = 'bg-secondary';
+
+            if (d.type_dossier === 'URGENCE') {
+                icon = 'fa-ambulance text-danger';
+                typeBadgeClass = 'bg-danger';
+            } else if (d.type_dossier === 'CONVENTION') {
+                icon = 'fa-file-signature text-warning';
+                typeBadgeClass = 'bg-warning text-dark';
+            } else {
+                typeBadgeClass = 'bg-info text-dark';
+            }
+
+            let statusBadge = '';
+            if (d.statut === 'SORTI') {
+                statusBadge = `<span class="badge bg-danger rounded-pill ms-2" title="Sorti le ${d.date_sortie || ''} - ${d.sortie_motif || ''}"><i class="fas fa-sign-out-alt me-1"></i>En Sortie</span>`;
+            }
+
+            $list.append(`
+                    <div class="list-group-item list-group-item-action border-0 border-bottom p-3 dossier-item" style="background: var(--bg-card); color: var(--text-main); border-color: var(--border-color) !important;">
+                        <div class="d-flex w-100 justify-content-between align-items-start mb-1">
+                            <div>
+                                <h6 class="mb-1 fw-bold" style="color: var(--text-main);">
+                                    <i class="fas ${icon} me-2 opacity-75"></i>${d.nom_patient}
+                                </h6>
+                                <small class="text-secondary d-block ms-4 mb-1">IPP/HIS: ${d.id_patient_his || 'N/A'}</small>
+                            </div>
+                            <div class="text-end">
+                                <span class="badge ${typeBadgeClass} rounded-pill" style="font-size: 0.7rem;">${d.type_dossier || 'SIMPLE'}</span>
+                                ${statusBadge}
+                            </div>
+                        </div>
+                        <div class="ms-4">
+                            <p class="mb-1 small" style="color: var(--text-main);"><i class="fas fa-stethoscope me-1 text-secondary"></i> <strong>Actes:</strong> ${d.actes_noms || 'N/A'}</p>
+                            <div class="d-flex justify-content-between align-items-center mt-2 flex-wrap gap-1">
+                                <span class="badge bg-light text-dark border"><i class="fas fa-calendar-check me-1 text-primary"></i>Acte: ${d.date_acte || '-'}</span>
+                                <span class="text-secondary" style="font-size:0.75rem;"><i class="fas fa-user-check me-1"></i>Archivé par <strong>${d.archiveur || 'Inconnu'}</strong> le ${d.date_heure_archivage || ''}</span>
+                            </div>
+                            <div class="mt-2 text-end">
+                                <button class="btn btn-sm btn-outline-info rounded-pill px-3" onclick="viewHistory(${d.id})">
+                                    <i class="fas fa-history me-1"></i>Historique
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `);
+        });
+    }
+
+    function viewHistory(id_dossier) {
+        const modal = new bootstrap.Modal(document.getElementById('historyModal'));
+        modal.show();
+
+        $('#historyLoading').removeClass('d-none');
+        $('#historyContent, #historyError').addClass('d-none');
+
+        fetch(`/archivage/api/dossier/${id_dossier}/historique`)
+            .then(res => res.json())
+            .then(data => {
+                $('#historyLoading').addClass('d-none');
+                if (data.success) {
+                    $('#historyContent').removeClass('d-none');
+                    const tbody = $('#historyTableBody');
+                    tbody.empty();
+
+                    if (data.historique.length === 0) {
+                        tbody.append('<tr><td colspan="4" class="text-center text-secondary py-3">Aucun historique trouvé</td></tr>');
+                        return;
+                    }
+
+                    data.historique.forEach(h => {
+                        let actionBadge = `<span class="badge bg-secondary">${h.action}</span>`;
+                        if (h.action === 'CREATION') actionBadge = `<span class="badge bg-success">Création</span>`;
+                        else if (h.action === 'DEPLACEMENT') actionBadge = `<span class="badge bg-primary">Transfert</span>`;
+                        else if (h.action === 'SORTIE_TEMPORAIRE') actionBadge = `<span class="badge bg-warning text-dark">Sortie</span>`;
+                        else if (h.action === 'RETOUR') actionBadge = `<span class="badge bg-info text-dark">Retour</span>`;
+
+                        let details = h.commentaire || '';
+                        if (h.action === 'DEPLACEMENT') {
+                            details = `De ${h.boite_avant_nom || '?'} vers ${h.boite_apres_nom || '?'}`;
+                        }
+
+                        tbody.append(`
+                                <tr>
+                                    <td class="text-nowrap">${h.date_action || ''}</td>
+                                    <td>${actionBadge}</td>
+                                    <td>${details}</td>
+                                    <td><i class="fas fa-user-circle me-1 text-secondary"></i>${h.effectue_par_nom || 'Système'}</td>
+                                </tr>
+                            `);
+                    });
+                } else {
+                    $('#historyError').removeClass('d-none').text(data.error || 'Erreur lors du chargement de l\'historique.');
+                }
+            })
+            .catch(err => {
+                $('#historyLoading').addClass('d-none');
+                $('#historyError').removeClass('d-none').text('Erreur de connexion serveur.');
+            });
+    }
+
+    // === SEARCH LOGIC ===
+    var searchInput = document.getElementById('searchInput');
+    var searchDebounce;
+
+    // Add dynamic styles for search visually
+    if (!document.getElementById('search-styles-rayonnage')) {
+        const style = document.createElement('style');
+        style.id = 'search-styles-rayonnage';
+        style.innerHTML = `
+            .shelf-box { transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.27) !important; }
+            .shelf-box.dimmed-box {
+                opacity: 0.2 !important;
+                filter: grayscale(100%) !important;
+                pointer-events: none !important;
+            }
+            .shelf-box.highlight-box {
+                box-shadow: 0 0 20px 5px var(--bs-primary, #450A54) !important;
+                border: 3px solid var(--bs-primary, #450A54) !important;
+                transform: scale(1.15) !important;
+                z-index: 100 !important;
+            }
+        `;
+        document.head.appendChild(style);
+    }
+
+    if (searchInput) {
+        searchInput.addEventListener('keydown', function (e) {
+            if (e.key === 'Enter') performSearch(); // Trigger on Enter
+        });
+
+        searchInput.addEventListener('input', function () {
+            clearTimeout(searchDebounce);
+            searchDebounce = setTimeout(performSearch, 400);
+
+            if (!this.value.trim()) {
+                sessionStorage.removeItem('archivageSearchQuery');
+                clearSearchVisuals();
+            }
+        });
+        
+        // Restore search querying when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            var savedQuery = sessionStorage.getItem('archivageSearchQuery');
+            if (savedQuery) {
+                searchInput.value = savedQuery;
+                // Timeout to ensure DOM is fully rendered before highlighting
+                setTimeout(performSearch, 500); 
+            }
+        });
+    }
+
+    function clearSearchVisuals() {
+        document.querySelectorAll('.shelf-box').forEach(el => {
+            el.classList.remove('highlight-box', 'dimmed-box');
+        });
+    }
+
+    function performSearch() {
+        var query = searchInput.value.trim();
+        if (!query) {
+            sessionStorage.removeItem('archivageSearchQuery');
+            clearSearchVisuals();
+            return;
+        }
+
+        sessionStorage.setItem('archivageSearchQuery', query);
+
+        fetch('/archivage/api/search-location?q=' + encodeURIComponent(query))
+            .then(r => r.json())
+            .then(data => {
+                // Clear previous highlights/dims
+                clearSearchVisuals();
+                
+                if (data.found) {
+                    var rawResults = data.multiple ? data.results : [data];
+                    
+                    // Deduplicate results by boite_id
+                    var uniqueBoxes = {};
+                    var results = [];
+                    rawResults.forEach(r => {
+                        if (!uniqueBoxes[r.boite_id]) {
+                            uniqueBoxes[r.boite_id] = true;
+                            results.push(r);
+                        }
+                    });
+
+                    var foundOnPage = 0;
+                    var foundElsewhere = 0;
+                    var lastElsewhereLocation = "";
+                    
+                    // Dim all boxes initially
+                    document.querySelectorAll('.shelf-box').forEach(el => {
+                        el.classList.add('dimmed-box');
+                    });
+                    
+                    results.forEach((res, index) => {
+                        var box = document.querySelector('[data-box-id="' + res.boite_id + '"]');
+                        if (box) {
+                            foundOnPage++;
+                            if (foundOnPage === 1) box.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                            
+                            // Remove dim and add highlight
+                            box.classList.remove('dimmed-box');
+                            box.classList.add('highlight-box');
+                        } else {
+                            foundElsewhere++;
+                            lastElsewhereLocation = res.location_text || (res.zone ? (res.zone + ' - ' + res.rayonnage) : "Ailleurs");
+                        }
+                    });
+
+                    if (foundOnPage > 0 && foundElsewhere === 0) {
+                        let txt = foundOnPage > 1 ? `${foundOnPage} boîtes trouvées ici.` : `1 boîte trouvée ici.`;
+                        if (typeof Toastify === 'function') {
+                            Toastify({ text: txt, duration: 4000, style: { background: "linear-gradient(to right, #10b981, #059669)", borderRadius: "10px" } }).showToast();
+                        } else { alert(txt); }
+                    } else if (foundOnPage > 0 && foundElsewhere > 0) {
+                        let txt = `${foundOnPage} boîte(s) ici, ${foundElsewhere} ailleurs.`;
+                        if (typeof Toastify === 'function') {
+                            Toastify({ text: txt, duration: 5000, style: { background: "linear-gradient(to right, #10b981, #059669)", borderRadius: "10px" } }).showToast();
+                        } else { alert(txt); }
+                    } else if (foundOnPage === 0 && foundElsewhere > 0) {
+                        let txt = foundElsewhere > 1 ? `${foundElsewhere} boîtes trouvées ailleurs.` : `Trouvé ailleurs : ${lastElsewhereLocation}`;
+                        if (typeof Toastify === 'function') {
+                            Toastify({ text: txt, duration: 5000, style: { background: "linear-gradient(to right, #3b82f6, #2563eb)", borderRadius: "10px" } }).showToast();
+                        } else { alert(txt); }
+                    }
+                } else {
+                    if (typeof Toastify === 'function') {
+                        Toastify({ text: 'Aucun résultat trouvé.', duration: 3000, style: { background: "linear-gradient(to right, #ef4444, #b91c1c)", borderRadius: "10px" } }).showToast();
+                    } else { alert('Aucun résultat trouvé.'); }
+                }
+            })
+            .catch(e => console.error(e));
+    }
+</script>
+{% endblock %}

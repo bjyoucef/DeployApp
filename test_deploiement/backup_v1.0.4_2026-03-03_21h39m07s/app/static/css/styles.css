@@ -1,0 +1,649 @@
+/* ---------------------------------------------
+   Styles généraux
+--------------------------------------------- */
+html, body {
+    height: 100%; /* Permet de remplir la hauteur de l'écran */
+    margin: 0; /* Supprime les marges par défaut */
+    display: flex;
+    flex-direction: column;
+}
+
+body {
+    display: flex;
+    padding-top: 0px; /* Ajustez cette valeur selon la hauteur de votre navbar */
+    background-color: #f8f9fa; /* Couleur de fond douce */
+}
+
+
+/* ---------------------------------------------
+   Pre-loader Style
+--------------------------------------------- */
+/* Préchargeur : fond et positionnement */
+.js-preloader {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.8); /* Fond noir semi-transparent */
+    backdrop-filter: blur(5px); /* Flou d'arrière-plan */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+    opacity: 1;
+    visibility: visible;
+    transition: opacity 0.5s ease, visibility 0.5s ease;
+}
+
+.js-preloader.loaded {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+}
+
+/* Préchargeur : contenu */
+.preloader-inner {
+    position: relative;
+    text-align: center;
+    animation: fadeIn 1.5s ease-in-out;
+}
+
+/* Logo central */
+.preloader-logo {
+    width: 80px;
+    height: 80px;
+}
+
+/* Points animés */
+.dots {
+    margin-top: 20px;
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+}
+
+.dot {
+    width: 12px;
+    height: 12px;
+    background-color: #fff; /* Couleur blanche pour s'harmoniser avec le logo */
+    border-radius: 50%;
+    animation: bounce 1.5s infinite ease-in-out;
+}
+
+.dot:nth-child(2) {
+    animation-delay: 0.2s;
+}
+.dot:nth-child(3) {
+    animation-delay: 0.4s;
+}
+.dot:nth-child(4) {
+    animation-delay: 0.6s;
+}
+
+/* Animations */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes rotate {
+    0% {
+        transform: rotate(0deg);
+    }
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+@keyframes bounce {
+    0%, 80%, 100% {
+        transform: scale(0);
+    }
+    40% {
+        transform: scale(1);
+    }
+}
+/* ---------------------------------------------
+   Services Style
+--------------------------------------------- */
+.services .service-item:hover .icon img {
+    margin-top: 20px;
+}
+
+.services .service-item {
+    position: relative;
+    margin-top: 100px;
+}
+
+.services .service-item .icon {
+    width: 190px;
+    height: 190px;
+    display: inline-block;
+    text-align: center;
+    line-height: 190px;
+    background-color: #7a6ad8;
+    border-radius: 50%;
+    position: absolute;
+    right: 0;
+    top: -90px;
+}
+
+.services .service-item .icon img {
+    max-width: 86px;
+    transition: all .2s;
+}
+
+.services .service-item .main-content {
+    border-radius: 50px;
+    padding: 80px 30px 50px 30px;
+    background-color: #f1f0fe;
+    margin-bottom: 20px;
+    margin-right: 80px;
+    transition: all .4s;
+    text-align: center;
+    border-style: inset;
+    border-color: #7a6ad8;
+}
+
+.services .service-item h4 {
+    margin-bottom: 15px;
+    line-height: 30px;
+    transition: all .4s;
+}
+
+.services .service-item p {
+    color: #4a4a4a;
+    margin-bottom: 25px;
+}
+
+
+.chart-container {
+    width: 80%;
+    margin: auto;
+    margin-bottom: 50px;
+    text-align: center;
+}
+/* ---------------------------------------------
+   Table Style
+--------------------------------------------- */
+.dataTables_wrapper {
+    width: 100%;
+    box-sizing: border-box;
+}
+
+/* Style des boutons de pagination */
+.dataTables_wrapper .dataTables_paginate .paginate_button {
+    background-color: #7a6ad8;
+    color: white !important;
+    border-radius: 5px;
+    margin: 2px;
+    padding: 5px 10px;
+    border: none;
+    transition: background-color 0.3s ease-in-out;
+}
+
+.dataTables_wrapper .dataTables_paginate .paginate_button:hover {
+    background-color: #5a4ac9;
+}
+
+/* Style de la barre de recherche */
+.dataTables_wrapper .dataTables_filter input {
+    border: 1px solid #7a6ad8;
+    border-radius: 5px;
+    padding: 5px 10px;
+    outline: none;
+}
+
+/* Style du thead */
+.dataTables_wrapper thead {
+    background-color: #7a6ad8;
+    color: white;
+}
+
+/* Style des lignes */
+.dataTables_wrapper tbody tr:nth-child(odd) {
+    background-color: #f3f3f3;
+}
+
+.dataTables_wrapper tbody tr:hover {
+    background-color: #e2e6ea;
+}
+
+/* Ajout d'un padding dans les cellules */
+.dataTable td, .dataTable th {
+    padding: 10px;
+    text-align: left;
+}
+
+
+
+/* Style pour la barre d'en-tête des modals */
+.modal-header {
+    background-color: #7a6ad8;
+    color: white;
+}
+
+/* ---------------------------------------------
+   Video Style
+--------------------------------------------- */
+video {
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    object-fit: contain; /* Ceci permet d'ajuster la vidéo à l'écran sans la rogner */
+    background-color: black; /* Optionnel pour les barres noires autour de la vidéo */
+    vertical-align: baseline;
+}
+
+.video-container {
+    width: 100%;
+    height: 100%;
+    max-width: 800px;
+    margin: auto;
+    overflow: hidden;
+    position: relative;
+}
+video.fullscreen {
+    width: 100vw; /* 100% de la largeur de la fenêtre */
+    height: 100vh; /* 100% de la hauteur de la fenêtre */
+    object-fit: contain; /* Assure que la vidéo n'est pas coupée en plein écran */
+}
+
+#videoElement {
+    width: 100%;
+    height: 100%;
+    background-color: black; /* Fond noir si la vidéo ne charge pas */
+}
+
+.video-container img {
+    width: 100%;       /* S'assure que la largeur est de 100% de la carte */
+    max-height: 200px; /* Ajuste cette valeur pour que la vidéo ne dépasse pas la hauteur désirée */
+    object-fit: cover; /* Pour que la vidéo soit coupée si nécessaire pour remplir le conteneur */
+    overflow-clip-margin: content-box;
+    overflow: clip;
+}
+
+/* CSS pour le spinner */
+.loading-spinner {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100px;
+}
+
+.loading-spinner:before {
+    content: '';
+    width: 40px;
+    height: 40px;
+    border: 4px solid #ccc;
+    border-top: 4px solid #7a6ad8;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+
+
+/* ---------------------------------------------
+   Styles pour les cartes
+--------------------------------------------- */
+.card {
+    border: 1px solid #e1e1e1; /* Bordure légère autour des cartes */
+    border-radius: 8px; /* Coins arrondis */
+    transition: transform 0.3s, box-shadow 0.3s; /* Animation au survol */
+}
+
+.card-header {
+    background-color: #7a6ad8 !important; /* Couleur de fond mauve */
+    color: white !important; /* Texte en blanc pour une meilleure lisibilité */
+    text-align: center; /* Centrer le texte */
+    text-transform: capitalize;
+}
+
+
+
+.card:hover {
+    transform: scale(1.008); /* Zoom léger au survol */
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5); /* Ombre au survol */
+}
+
+.card-img-top {
+    border-top-left-radius: 8px; /* Arrondi du coin supérieur gauche */
+    border-top-right-radius: 8px; /* Arrondi du coin supérieur droit */
+}
+
+
+.card-text {
+    color: #555; /* Couleur du texte */
+}
+
+
+/* Styles pour le tableau */
+
+/* Masquer les cellules qui seraient fusionnées */
+#myTable1 th,
+#myTable1 td {
+    vertical-align: middle;
+    text-align: start; /* Optionnel pour centrer aussi horizontalement */
+}
+
+.dataTables_wrapper {
+    width: 100%;
+    overflow-x: auto;
+}
+
+
+.icon-cell {
+    width: 40px; /* Largeur fixe pour les icônes */
+    text-align: center; /* Centrer le texte et les icônes */
+}
+
+
+/* Style personnalisé pour une checkbox urgente */
+/* Style pour signaler une urgence */
+
+.checkbox-urgence label {
+    font-weight: bold;
+    font-size: 1rem;
+    color: #d9534f; /* Rouge Bootstrap */
+}
+.checkbox-urgence input[type="checkbox"]:checked + label {
+    color: white;
+    background-color: #d9534f;
+    padding: 5px 10px;
+    border-radius: 5px;
+}
+/* ---------------------------------------------
+   Styles pour container
+--------------------------------------------- */
+
+.week-end-style {
+    background-color: #f9eac3; /* Jaune clair */
+    color: #000; /* Texte noir */
+}
+
+.fc-event-dot {
+    display: none; /* Supprime le point rouge */
+}
+.fc-event {
+    height: auto !important; /* Ajuste automatiquement la hauteur */
+    line-height: 1.2; /* Réduit l'espace entre les lignes */
+    padding: 4px 4px; /* Ajoute un léger padding */
+}
+
+.fc-daygrid-event {
+    white-space: normal; /* Permet au texte de passer à la ligne */
+}
+
+/* Événements multi-jours */
+.multi-day-event {
+    padding: 3px;
+    min-height: 10px; /* Taille différente pour les événements multi-jours */
+    background-color: #0056b3; /* Couleur distincte */
+    border: 1px solid #003d80;
+}
+.table-title {
+    background-color: #f8f9fa;
+    text-align: center;
+    padding: 10px;
+    border-radius: 5px;
+}
+
+.section-title {
+    color: #495057;
+    margin-top: 5px;
+}
+
+.badge-custom {
+    background-color: #0d6efd;
+    color: white;
+    padding: 5px 10px;
+    border-radius: 5px;
+}
+
+.row-zero-balance {
+    background-color: #d4edda !important; /* Vert clair */
+}
+
+.no-data {
+    color: #6c757d;
+}
+
+#suggestionsPatient {
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    max-height: 200px;
+    overflow-y: auto;
+    background: white;
+    position: absolute;
+    z-index: 1000;
+}
+#suggestionsActe {
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    max-height: 200px;
+    overflow-y: auto;
+    background: white;
+    position: absolute;
+    z-index: 1000;
+}
+.list-group-item {
+    cursor: pointer;
+}
+
+.list-group-item:hover {
+    background: #f0f0f0;
+}
+
+
+/* Container for the form switch group */
+.form-switch-container {
+    display: flex;
+    gap: 20px;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+/* Style for each switch */
+.form-switch {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+}
+
+/* Hide the checkbox */
+.form-switch input[type="checkbox"] {
+    display: none;
+}
+
+/* Slider (the toggle switch) */
+.form-switch .slider {
+    position: relative;
+    width: 40px;
+    height: 20px;
+    background-color: #ccc;
+    border-radius: 20px;
+    transition: background-color 0.3s ease;
+}
+
+.form-switch .slider::before {
+    content: '';
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 16px;
+    height: 16px;
+    background-color: #fff;
+    border-radius: 50%;
+    transition: transform 0.3s ease;
+}
+
+/* Active state for the slider */
+.form-switch input[type="checkbox"]:checked + .slider {
+    background-color: #7a6ad8;
+}
+
+.form-switch input[type="checkbox"]:checked + .slider::before {
+    transform: translateX(20px);
+}
+
+/* Text next to the slider */
+.form-switch .label-text {
+    color: #444;
+}
+
+/*========================== Sidebar Style ==========================*/
+/* Styles de base pour la sidebar */
+/* Style général de la sidebar */
+.sidebar {
+    background-color: #7a6ad8; /* Couleur de fond claire */
+    padding-top: 0px;
+    border-right: 1px solid #ddd;
+}
+
+/* Liens de la sidebar */
+.sidebar-menu {
+    padding: 0;
+    margin: 0;
+}
+
+/* Items de la sidebar */
+.sidebar-menu .nav-item {
+    border-bottom: 1px solid #5f3ebc; /* Séparation entre les éléments */
+}
+
+/* Liens dans la sidebar */
+.sidebar-menu .nav-link {
+    display: block;
+    color: #ffffff;
+    padding: 10px 0px;
+    font-size: 12px;
+    text-decoration: none;
+    transition: background-color 0.3s ease;
+}
+
+/* Apparence d'un lien actif */
+.sidebar-menu .nav-link.active {
+    background-color: #fdfdff; /* Fond bleu pour les éléments actifs */
+    color: #25145a;
+    font-size: 16px;
+}
+
+/* Apparence d'un lien survolé */
+.sidebar-menu .nav-link:hover {
+    background-color: #25145a86; /* Fond clair lors du survol */
+        color: #f6faf8;
+        font-size: 16px;
+
+
+}
+
+/* Style pour les icônes et le texte */
+.sidebar-menu .nav-link i {
+    margin-right: 8px;
+    font-size: 16px;
+}
+
+/* Style pour les badges de notification */
+.sidebar-menu .nav-link .badge {
+    margin-left: 10px;
+    font-size: 14px;
+}
+
+/* Espacement entre les éléments */
+.sidebar-menu .nav-item + .nav-item {
+    margin-top: 5px;
+}
+
+/* Responsivité : adaptabilité en fonction de la taille de l'écran */
+@media (max-width: 768px) {
+    .sidebar {
+        width: 100%;
+        position: relative;
+    }
+
+    .sidebar-menu {
+        padding-left: 10px;
+        padding-right: 10px;
+    }
+}
+
+/*pointage */
+        .table-success {
+    background-color: #d4edda;
+    color: #155724;
+}
+
+
+/* ---------------------------------------------
+   Styles pour les smartphones
+--------------------------------------------- */
+@media (max-width: 768px) {
+    body {
+        padding-bottom: 60px; /* Réduire l'espacement inférieur pour les smartphones */
+    }
+
+    .services .service-item {
+        margin-top: 50px; /* Réduire l'espacement supérieur pour les smartphones */
+    }
+
+    .navbar {
+        display: flex; /* Utilise Flexbox pour le positionnement */
+        justify-content: center; /* Centre les éléments horizontalement */
+        align-items: center; /* Centre les éléments verticalement */
+        position: relative; /* Nécessaire si vous utilisez positionnement absolu */
+    }
+
+    .navbar-toggler {
+        margin: 0 auto; /* Centre le bouton */
+    }
+    .navbar .nav-link {
+        margin: 0 5px; /* Réduire l'espacement horizontal entre les liens */
+    }
+
+    .modal-header {
+        padding: 10px; /* Réduire le padding de l'en-tête des modals */
+    }
+
+    .modal-body {
+        padding: 15px; /* Réduire le padding du corps des modals */
+    }
+
+    .table {
+    }
+
+    .center {
+        display: block;
+        margin-left: auto;
+        margin-right: auto;
+        width: 50%;
+    }
+}
+
+
+
+
+
+
+
+
+
+
+
+

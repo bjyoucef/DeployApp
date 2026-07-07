@@ -1,0 +1,235 @@
+{% extends 'admin/admin_layout.html' %}
+{% block content %}
+<!-- Bouton pour exporter en PDF -->
+<button type="button" class="btn btn-info" id="exportPDF">Exporter les graphiques en PDF</button>
+
+<h1>KT Statistiques des Dossiers Patients</h1>
+
+<!-- Graphique 1 : Prix Dossier Convention -->
+<div class="chart-container">
+    <h2>Prix Dossier Convention (Total: {{ total_convention | format_price}})</h2>
+    <canvas id="graphConvention" width="400" height="200"></canvas>
+</div>
+
+<!-- Graphique 3 : Part Operateur Dossiers Convention (Non payante) -->
+<div class="chart-container">
+    <h2>Part Operateur Dossiers Convention (Total: {{ total_operator_convention | format_price}})</h2>
+    <canvas id="graphOperatorConvention" width="400" height="200"></canvas>
+</div>
+
+<!-- Graphique 2 : Prix Dossier ESP -->
+<div class="chart-container">
+    <h2>Prix Dossier ESP (Total: {{ total_esp | format_price}})</h2>
+    <canvas id="graphEsp" width="400" height="200"></canvas>
+</div>
+
+
+
+<!-- Graphique 4 : Part Operateur Dossiers ESP (Payante) -->
+<div class="chart-container">
+    <h2>Part Operateur Dossiers ESP (Total: {{ total_operator_esp | format_price}})</h2>
+    <canvas id="graphOperatorEsp" width="400" height="200"></canvas>
+</div>
+
+<!-- Graphique 5 : Chiffre d'affaires mensuel par convention -->
+<div class="chart-container">
+    <h2>Chiffre d'Affaires Mensuel par Convention</h2>
+    <canvas id="graphMonthly" width="400" height="200"></canvas>
+</div>
+
+
+<!-- Inclusion de Chart.js et du plugin ChartDataLabels -->
+
+<!-- Inclusion de Chart.js, ChartDataLabels, et jsPDF -->
+<script src="{{ url_for('static', filename='js/chart.min.js') }}"></script>
+<script src="{{ url_for('static', filename='js/chartjs-plugin-datalabels.min.js') }}"></script>
+<script src="{{ url_for('static', filename='js/jspdf.umd.min.js') }}"></script>
+
+<script>
+    // Enregistrement du plugin DataLabels pour Chart.js v3
+    Chart.register(ChartDataLabels);
+
+    const datalabelsOptions = {
+        anchor: 'center',
+        align: 'center',
+        rotation: -90,
+        color: '#000',
+        font: { weight: 'bold' },
+        formatter: function (value) {
+            return value;
+        }
+    };
+
+    // Graphique 1 : Prix Dossier Convention
+    const labelsConvention = {{ labels_convention | tojson }};
+    const dataConvention = {{ data_convention | tojson }};
+    const ctxConvention = document.getElementById('graphConvention').getContext('2d');
+    new Chart(ctxConvention, {
+        type: 'bar',
+        data: {
+            labels: labelsConvention,
+            datasets: [{
+                label: 'Prix Dossier Convention',
+                data: dataConvention,
+                backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                borderColor: 'rgba(75, 192, 192, 1)',
+                borderWidth: 1
+            }]
+        },
+        options: {
+            animation: { duration: 1500 },
+            plugins: { datalabels: datalabelsOptions },
+            scales: { y: { beginAtZero: true } }
+        }
+    });
+
+    // Graphique 2 : Prix Dossier ESP
+    const labelsEsp = {{ labels_esp | tojson }};
+    const dataEsp = {{ data_esp | tojson }};
+    const ctxEsp = document.getElementById('graphEsp').getContext('2d');
+    new Chart(ctxEsp, {
+        type: 'bar',
+        data: {
+            labels: labelsEsp,
+            datasets: [{
+                label: 'Prix Dossier ESP',
+                data: dataEsp,
+                backgroundColor: 'rgba(192, 75, 192, 0.2)',
+                borderColor: 'rgba(192, 75, 192, 1)',
+                borderWidth: 1
+            }]
+        },
+        options: {
+            animation: { duration: 1500 },
+            plugins: { datalabels: datalabelsOptions },
+            scales: { y: { beginAtZero: true } }
+        }
+    });
+
+    // Graphique 3 : Part Operateur Dossiers Convention (Non payante)
+    const labelsOperatorConvention = {{ labels_operator_convention | tojson }};
+    const dataOperatorConvention = {{ data_operator_convention | tojson }};
+    const ctxOperatorConvention = document.getElementById('graphOperatorConvention').getContext('2d');
+    new Chart(ctxOperatorConvention, {
+        type: 'bar',
+        data: {
+            labels: labelsOperatorConvention,
+            datasets: [{
+                label: 'Part Operateur Dossiers Convention',
+                data: dataOperatorConvention,
+                backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                borderColor: 'rgba(54, 162, 235, 1)',
+                borderWidth: 1
+            }]
+        },
+        options: {
+            animation: { duration: 1500 },
+            plugins: { datalabels: datalabelsOptions },
+            scales: { y: { beginAtZero: true } }
+        }
+    });
+
+    // Graphique 4 : Part Operateur Dossiers ESP (Payante)
+    const labelsOperatorEsp = {{ labels_operator_esp | tojson }};
+    const dataOperatorEsp = {{ data_operator_esp | tojson }};
+    const ctxOperatorEsp = document.getElementById('graphOperatorEsp').getContext('2d');
+    new Chart(ctxOperatorEsp, {
+        type: 'bar',
+        data: {
+            labels: labelsOperatorEsp,
+            datasets: [{
+                label: 'Part Operateur Dossiers ESP',
+                data: dataOperatorEsp,
+                backgroundColor: 'rgba(255, 159, 64, 0.2)',
+                borderColor: 'rgba(255, 159, 64, 1)',
+                borderWidth: 1
+            }]
+        },
+        options: {
+            animation: { duration: 1500 },
+            plugins: { datalabels: datalabelsOptions },
+            scales: { y: { beginAtZero: true } }
+        }
+    });
+    // Graphique 5 : Chiffre d'affaires mensuel
+    const labelsMonthly = {{ labels_monthly | tojson }};
+    const dataMonthlyConvention = {{ data_monthly_convention | tojson }};
+    const dataMonthlyEsp = {{ data_monthly_esp | tojson }};
+    const ctxMonthly = document.getElementById('graphMonthly').getContext('2d');
+    new Chart(ctxMonthly, {
+        type: 'bar',
+        data: {
+            labels: labelsMonthly,
+            datasets: [
+                {
+                    label: 'Convention',
+                    data: dataMonthlyConvention,
+                    backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                    borderColor: 'rgba(75, 192, 192, 1)',
+                    borderWidth: 1
+                },
+                {
+                    label: 'ESP (Payante)',
+                    data: dataMonthlyEsp,
+                    backgroundColor: 'rgba(192, 75, 192, 0.2)',
+                    borderColor: 'rgba(192, 75, 192, 1)',
+                    borderWidth: 1
+                }
+            ]
+        },
+        options: {
+            animation: { duration: 1500 },
+            plugins: {
+                datalabels: datalabelsOptions,
+                legend: {
+                    display: true,
+                    position: 'top'
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    stacked: false
+                },
+                x: {
+                    stacked: false
+                }
+            }
+        }
+    });
+    // Fonction d'export en PDF
+    document.getElementById('exportPDF').addEventListener('click', function () {
+        // Utilisation de jsPDF via l'objet global "jspdf"
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF('l', 'mm', 'a4');
+
+        // Dimensions pour placer les images dans le PDF
+        const imgWidth = 250;  // Ajustez selon vos besoins
+        const imgHeight = 180; // Ajustez selon vos besoins
+        let yPosition = 10;
+
+        // Liste des canvas à exporter
+        const canvases = [
+            document.getElementById('graphConvention'),
+            document.getElementById('graphEsp'),
+            document.getElementById('graphOperatorConvention'),
+            document.getElementById('graphOperatorEsp'),
+            document.getElementById('graphMonthly')
+        ];
+
+        // Export de chaque canvas dans une page du PDF
+        canvases.forEach((canvas, index) => {
+            const imgData = canvas.toDataURL('image/png', 1.0);
+            if (index > 0) {
+                doc.addPage();
+            }
+            // Positionnement : ici, on centre l'image horizontalement
+            const xPosition = (doc.internal.pageSize.getWidth() - imgWidth) / 2;
+            doc.addImage(imgData, 'PNG', xPosition, yPosition, imgWidth, imgHeight);
+        });
+
+        // Enregistrement du PDF
+        doc.save('graphs.pdf');
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,296 @@
+{% extends "admin/admin_layout.html" %}
+
+{% block title %}Logs Bot Telegram{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <h2><i class="fas fa-robot"></i> Logs Bot Telegram Finance</h2>
+                <div>
+                    <a href="{{ url_for('bot_logs_dashboard') }}" class="btn btn-info">
+                        <i class="fas fa-chart-bar"></i> Dashboard
+                    </a>
+                    <a href="{{ url_for('bot_logs_export',
+                        user_id=current_user_id,
+                        action_type=current_action_type,
+                        start_date=current_start_date,
+                        end_date=current_end_date) }}"
+                       class="btn btn-success">
+                        <i class="fas fa-file-csv"></i> Exporter CSV
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filtres -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5 class="mb-0"><i class="fas fa-filter"></i> Filtres</h5>
+        </div>
+        <div class="card-body">
+            <form method="GET" action="{{ url_for('bot_logs_index') }}" id="filterForm">
+                <div class="row">
+                    <div class="col-md-3">
+                        <label for="user_id">Utilisateur</label>
+                        <select name="user_id" id="user_id" class="form-control">
+                            <option value="">Tous les utilisateurs</option>
+                            {% for user in users %}
+                            <option value="{{ user.user_id }}"
+                                {% if current_user_id == user.user_id|string %}selected{% endif %}>
+                                {{ user.first_name }} {{ user.last_name }}
+                                {% if user.username %}(@{{ user.username }}){% endif %}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="col-md-2">
+                        <label for="action_type">Type d'action</label>
+                        <select name="action_type" id="action_type" class="form-control">
+                            <option value="all" {% if current_action_type == 'all' %}selected{% endif %}>
+                                Tous
+                            </option>
+                            <option value="command" {% if current_action_type == 'command' %}selected{% endif %}>
+                                Commandes
+                            </option>
+                            <option value="button" {% if current_action_type == 'button' %}selected{% endif %}>
+                                Boutons
+                            </option>
+                            <option value="login" {% if current_action_type == 'login' %}selected{% endif %}>
+                                Connexions
+                            </option>
+                            <option value="error" {% if current_action_type == 'error' %}selected{% endif %}>
+                                Erreurs
+                            </option>
+                        </select>
+                    </div>
+
+                    <div class="col-md-2">
+                        <label for="start_date">Date début</label>
+                        <input type="date" name="start_date" id="start_date"
+                               class="form-control" value="{{ current_start_date }}">
+                    </div>
+
+                    <div class="col-md-2">
+                        <label for="end_date">Date fin</label>
+                        <input type="date" name="end_date" id="end_date"
+                               class="form-control" value="{{ current_end_date }}">
+                    </div>
+
+                    <div class="col-md-2">
+                        <label for="search">Recherche</label>
+                        <input type="text" name="search" id="search"
+                               class="form-control" placeholder="Action, message..."
+                               value="{{ current_search }}">
+                    </div>
+
+                    <div class="col-md-1">
+                        <label>&nbsp;</label>
+                        <button type="submit" class="btn btn-primary btn-block">
+                            <i class="fas fa-search"></i>
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Résultats -->
+    <div class="card">
+        <div class="card-header">
+            <h5 class="mb-0">
+                <i class="fas fa-list"></i> Logs
+                <span class="badge badge-primary">{{ total }} résultat(s)</span>
+            </h5>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-striped table-hover mb-0">
+                    <thead class="thead-dark">
+                        <tr>
+                            <th style="width: 140px;">Date/Heure</th>
+                            <th style="width: 150px;">Utilisateur</th>
+                            <th style="width: 100px;">Type</th>
+                            <th>Action</th>
+                            <th style="width: 80px;">Statut</th>
+                            <th style="width: 100px;">Détails</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for log in logs %}
+                        <tr class="{% if not log.success %}table-danger{% endif %}">
+                            <td>
+                                <small>
+                                    {{ log.created_at.strftime('%d/%m/%Y') }}<br>
+                                    {{ log.created_at.strftime('%H:%M:%S') }}
+                                </small>
+                            </td>
+                            <td>
+                                <a href="{{ url_for('bot_logs_user_detail', user_id=log.user_id) }}">
+                                    <strong>{{ log.first_name }} {{ log.last_name }}</strong>
+                                    {% if log.username %}
+                                    <br><small class="text-muted">@{{ log.username }}</small>
+                                    {% endif %}
+                                </a>
+                            </td>
+                            <td>
+                                {% if log.action_type == 'command' %}
+                                <span class="badge badge-primary">⌨️ Commande</span>
+                                {% elif log.action_type == 'button' %}
+                                <span class="badge badge-info">🔘 Bouton</span>
+                                {% elif log.action_type == 'login' %}
+                                <span class="badge badge-success">🔑 Connexion</span>
+                                {% elif log.action_type == 'error' %}
+                                <span class="badge badge-danger">⚠️ Erreur</span>
+                                {% else %}
+                                <span class="badge badge-secondary">{{ log.action_type }}</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <strong>{{ log.action_name }}</strong>
+                                {% if log.message_text %}
+                                <br><small class="text-muted">{{ log.message_text[:80] }}</small>
+                                {% endif %}
+                            </td>
+                            <td class="text-center">
+                                {% if log.success %}
+                                <span class="badge badge-success">✓ OK</span>
+                                {% else %}
+                                <span class="badge badge-danger">✗ Échec</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <button class="btn btn-sm btn-outline-info"
+                                        onclick="showLogDetails({{ log.id }})">
+                                    <i class="fas fa-info-circle"></i>
+                                </button>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Pagination -->
+        {% if total_pages > 1 %}
+        <div class="card-footer">
+            <nav>
+                <ul class="pagination mb-0 justify-content-center">
+                    {% if page > 1 %}
+                    <li class="page-item">
+                        <a class="page-link" href="{{ url_for('bot_logs_index',
+                            page=page-1,
+                            user_id=current_user_id,
+                            action_type=current_action_type,
+                            start_date=current_start_date,
+                            end_date=current_end_date,
+                            search=current_search) }}">
+                            Précédent
+                        </a>
+                    </li>
+                    {% endif %}
+
+                    {% for p in range(max(1, page-2), min(total_pages+1, page+3)) %}
+                    <li class="page-item {% if p == page %}active{% endif %}">
+                        <a class="page-link" href="{{ url_for('bot_logs_index',
+                            page=p,
+                            user_id=current_user_id,
+                            action_type=current_action_type,
+                            start_date=current_start_date,
+                            end_date=current_end_date,
+                            search=current_search) }}">
+                            {{ p }}
+                        </a>
+                    </li>
+                    {% endfor %}
+
+                    {% if page < total_pages %}
+                    <li class="page-item">
+                        <a class="page-link" href="{{ url_for('bot_logs_index',
+                            page=page+1,
+                            user_id=current_user_id,
+                            action_type=current_action_type,
+                            start_date=current_start_date,
+                            end_date=current_end_date,
+                            search=current_search) }}">
+                            Suivant
+                        </a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </nav>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Modal détails log -->
+<div class="modal fade" id="logDetailsModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Détails du log</h5>
+                <button type="button" class="close" data-dismiss="modal">
+                    <span>&times;</span>
+                </button>
+            </div>
+            <div class="modal-body" id="logDetailsContent">
+                <p class="text-center"><i class="fas fa-spinner fa-spin"></i> Chargement...</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function showLogDetails(logId) {
+    $('#logDetailsModal').modal('show');
+    // Tu peux ajouter une route API pour récupérer les détails complets
+    fetch(`/bot_logs/api/log/${logId}`)
+        .then(r => r.json())
+        .then(data => {
+            let html = `
+                <dl class="row">
+                    <dt class="col-sm-3">ID:</dt>
+                    <dd class="col-sm-9">${data.id}</dd>
+
+                    <dt class="col-sm-3">Date/Heure:</dt>
+                    <dd class="col-sm-9">${data.created_at}</dd>
+
+                    <dt class="col-sm-3">Utilisateur:</dt>
+                    <dd class="col-sm-9">${data.first_name} ${data.last_name} (@${data.username})</dd>
+
+                    <dt class="col-sm-3">Type:</dt>
+                    <dd class="col-sm-9">${data.action_type}</dd>
+
+                    <dt class="col-sm-3">Action:</dt>
+                    <dd class="col-sm-9">${data.action_name}</dd>
+
+                    ${data.message_text ? `
+                    <dt class="col-sm-3">Message:</dt>
+                    <dd class="col-sm-9"><code>${data.message_text}</code></dd>
+                    ` : ''}
+
+                    ${data.action_data ? `
+                    <dt class="col-sm-3">Données:</dt>
+                    <dd class="col-sm-9"><pre>${JSON.stringify(JSON.parse(data.action_data), null, 2)}</pre></dd>
+                    ` : ''}
+
+                    ${data.error_message ? `
+                    <dt class="col-sm-3">Erreur:</dt>
+                    <dd class="col-sm-9"><div class="alert alert-danger">${data.error_message}</div></dd>
+                    ` : ''}
+                </dl>
+            `;
+            document.getElementById('logDetailsContent').innerHTML = html;
+        })
+        .catch(err => {
+            document.getElementById('logDetailsContent').innerHTML =
+                '<div class="alert alert-danger">Erreur de chargement</div>';
+        });
+}
+</script>
+{% endblock %}

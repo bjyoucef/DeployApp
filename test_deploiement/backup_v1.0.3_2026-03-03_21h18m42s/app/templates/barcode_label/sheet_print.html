@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Planche Étiquettes</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Arial', sans-serif;
+            background-color: #ccc;
+            /* Gris pour preview */
+        }
+
+        .sheet {
+            background-color: white;
+            width: 210mm;
+            height: 297mm;
+            /* A4 */
+            margin: 0 auto;
+            /* Centré pour preview, 0 pour print via inline */
+            padding: 0;
+            /* Padding dynamique injecté via style inline */
+            box-shadow: 0 0 5% rgba(0, 0, 0, 0.1);
+
+            display: grid;
+
+            /* Grid dynamique injecté via style inline */
+
+            box-sizing: border-box;
+        }
+
+        .label-cell {
+            border: 1px solid #c10000;
+            /* Aide visuelle preview */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+            padding: 2px;
+        }
+
+        /* Contenu de l'étiquette (Miniature) */
+        .label-content {
+            width: 96%;
+            height: 96%;
+            /* Un peu de marge interne */
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            /* Espace équitablement réparti si body ne grandit pas, sinon Header haut / Footer bas */
+
+            font-size: 8pt;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            border-bottom: 1px solid #000;
+            font-size: 0.8em;
+            font-weight: bold;
+            margin-top: 5%;
+        }
+
+        .body {
+            flex-grow: 1;
+            /* Prend tout l'espace disponible au centre */
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            /* Centre le code barre verticalement dans cet espace */
+        }
+
+        .barcode-img {
+            width: 98%;
+            height: 98%;
+            /* Force le remplissage de la hauteur disponible (supprime les espaces 1 et 2) */
+            object-fit: fill;
+            margin-top: 5%;
+            display: block;
+        }
+
+        .barcode-text {
+            font-family: monospace;
+            font-size: 0.9em;
+            text-align: center;
+            white-space: nowrap;
+            margin-bottom: 5%;
+        }
+
+        .footer {
+            margin-bottom: 5%;
+            display: flex;
+            justify-content: space-between;
+            border-top: 1px solid #000;
+            font-size: 0.7em;
+        }
+
+        .footer div {
+            margin-bottom: 5%;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .info-block {
+            align-items: center;
+            justify-content: center;
+        }
+
+        .label {
+            font-weight: bold;
+        }
+
+        @media print {
+
+            html,
+            body {
+                background: none;
+                margin: 0 !important;
+                padding: 0 !important;
+            }
+
+            .sheet {
+                width: 210mm;
+                /* Force width to A4 */
+                height: 297mm;
+                /* Force height to A4 */
+                /* S'adapter au papier */
+                page-break-after: always;
+                margin: 0 !important;
+                box-shadow: none;
+                /* Padding géré par inline style (marges utilisateur) */
+            }
+
+            .label-cell {
+                border: none !important;
+                /* Pas de bordures à l'impression */
+            }
+
+            @page {
+                size: A4;
+                margin: 0;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="sheet" style="
+            grid-template-columns: repeat({{ cols }}, 1fr);
+            grid-template-rows: repeat({{ rows }}, 1fr);
+            column-gap: {{ gap_x }}mm;
+            row-gap: {{ gap_y }}mm;
+            padding-top: {{ margin_top }}mm;
+            padding-bottom: {{ margin_bottom }}mm;
+            padding-left: {{ margin_left }}mm;
+            padding-right: {{ margin_right }}mm;
+        ">
+        {% for i in range(quantity) %}
+        <div class="label-cell">
+            <div class="label-content">
+                <div class="header">
+                    <span class="product-name">{{ label.product_name }}</span>
+                    <span class="brand">'TORAY'</span>
+                </div>
+                <div class="body">
+                    <img src="data:image/png;base64,{{ barcode_image }}" class="barcode-img">
+                    <div class="barcode-text">{{ barcode_text }}</div>
+                </div>
+                <div class="footer">
+                    <div class="info-block">
+                        <span class="label">EXP DATE : {{ display_date }}</span>
+                    </div>
+                    <div class="info-block">
+                        <span class="label">LOT : {{ label.lot }}</span>
+                    </div>
+                    {% if label.sn %}
+                    <div class="info-block">
+                        <span class="label">SN : {{ label.sn }}</span>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+</body>
+
+</html>

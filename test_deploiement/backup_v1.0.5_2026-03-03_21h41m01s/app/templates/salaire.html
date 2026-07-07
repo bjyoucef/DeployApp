@@ -1,0 +1,243 @@
+{% extends "layout.html" %}
+{% block content %}
+<div class="row mt-4 text-center">
+    <button class="btn btn-primary" type="button" data-bs-toggle="offcanvas" data-bs-target="#staticBackdrop"
+            aria-controls="staticBackdrop">
+        Filtres
+    </button>
+    <!-- Colonne droite pour le tableau des pointages -->
+    <div class="row mb-1">
+        <div class="col-md-4">
+
+            <h5 class="text-primary">Total des salaires :
+                {% if total_salaire %}
+                {{ total_salaire | format_price }} DZ
+                {% else %}
+                0 DZ
+                {% endif %}
+            </h5>
+        </div>
+        <div class="col-md-4">
+
+            <h5 class="text-success">Total des Paiements :
+                {% if total_paiement %}
+                {{ total_paiement | format_price }} DZ
+                {% else %}
+                0 DZ
+                {% endif %}
+            </h5>
+        </div>
+        <div class="col-md-4">
+            <h5 class="text-danger">Rest :
+                {% if rest_a_payee %}
+                {{ rest_a_payee | format_price }} DZ
+                {% else %}
+                0 DZ
+                {% endif %}
+            </h5>
+        </div>
+    </div>
+
+    <!-- Tableau des salaires -->
+    <table id="myTable" class="table table-hover">
+        <thead>
+        <tr>
+            <th><i class="fas fa-user"></i> Nom et Prénom</th>
+            <th><i class="fas fa-dollar-sign"></i> Salaire (Prix)</th>
+            <th><i class="fas fa-dollar-sign"></i> Paiement (Prix)</th>
+            {% if 'CREER_DECHARGE_SALAIRE' in session.privileges %}
+
+            <th><i class="fas fa-info-circle"></i> Action</th>
+            {% endif %}
+
+        </tr>
+        </thead>
+        <tbody>
+        {% for pointage in pointages %}
+        <tr>
+            <td>{{ pointage.full_name }}</td>
+            <td>{{ pointage.prix_total }}</td>
+            <td>{{ pointage.paiement_total }}</td>
+            {% if 'CREER_DECHARGE_SALAIRE' in session.privileges %}
+
+            <td>
+                <button class="rounded btn btn-danger btn-sm" data-bs-toggle="modal"
+                        data-bs-target="#dechargeModal{{ pointage.id_employe }}">
+                    Décharge
+                </button>
+
+                <!-- Modal Décharge -->
+                <div class="modal fade" id="dechargeModal{{ pointage.id_employe }}" tabindex="-1" aria-hidden="true">
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title">Décharge pour {{ pointage.full_name }}</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                            </div>
+                            <div class="modal-body">
+                                <form method="POST" action="/add_decharge_salaire">
+                                    <input type="hidden" name="full_name" value="{{ pointage.full_name }}">
+                                    <input type="hidden" name="id_employe" value="{{ pointage.id_employe }}">
+
+                                    <div class="mb-3">
+                                        <label class="form-label">Montant</label>
+                                        <input type="number" class="form-control" name="amount" required step="0.01"
+                                               value="{{ pointage.prix_total }}">
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <label class="form-label">Noms des Dossiers :</label>
+                                        <textarea class="form-control improved-textarea" name="dossiers"
+                                                  rows="6" placeholder="Exemple : HASSANI MALIKA&#10;HAMEL MOHAMED"
+                                                  required readonly>{% for garde in pointage.pointagesDetail %}{{ garde.service_name }} - {{ garde.date_pointage }} - {{ garde.shift_type }} - {{ garde.prix }} {{ - garde.prix_acte if garde.prix_acte != 0 }}{% if not loop.last %}&#10;{% endif %}{% endfor %}</textarea>
+                                    </div>
+
+
+                                    <div class="mb-3">
+                                        <label class="form-label fw-semibold">Date : *</label>
+                                        <input type="date" class="form-control decharge-date"
+                                               id="decharge_date_{{ pointage.id_employe }}" name="date" required>
+                                    </div>
+
+                                    <button type="submit" class="btn btn-success w-100">Valider</button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </td>
+            {% endif %}
+
+        </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+
+
+    <div class="offcanvas offcanvas-end" data-bs-backdrop="static" tabindex="-1" id="staticBackdrop"
+         aria-labelledby="staticBackdropLabel">
+        <div class="offcanvas-header">
+            <h5 class="offcanvas-title" id="staticBackdropLabel">Filtres</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+        </div>
+        <div class="offcanvas-body">
+            <div>
+                <form id="filter-form" method="GET" action="/salaire">
+
+                    <div class="mb-3">
+                        <label class="form-label">Service :</label>
+                        <select name="id_service" class="form-select" onchange="this.form.submit()">
+                            <option value="">Tous les services</option>
+                            {% for service in services %}
+                            <option value="{{ service.id_service }}" {% if service.id_service== id_service %} selected
+                                    {% endif %}>
+                                {{ service.service_name }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Employé :</label>
+                        <select name="id_employe" class="form-select" onchange="this.form.submit()">
+                            <option value="">Tous les employés</option>
+                            {% for employe in employes %}
+                            <option value="{{ employe.id_personnel }}" {% if employe.id_personnel== id_employe %}
+                                    selected {% endif
+                                    %}>
+                                {{ employe.full_name }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Shift :</label>
+                        <select name="shift_type" class="form-select" onchange="this.form.submit()">
+                            <option value="">Tous les types de shift</option>
+                            <option value="24H" {% if shift_type==
+                            '24H' %} selected {% endif %}>24H</option>
+                            <option value="day" {% if shift_type==
+                            'day' %} selected {% endif %}>Jour</option>
+                            <option value="night" {% if shift_type==
+                            'night' %} selected {% endif %}>Nuit</option>
+                        </select>
+                    </div>
+
+                    <!-- Sélection de la plage de dates -->
+                    <div class="mb-3">
+                        <label class="form-label" for="start_date">Date de début :</label>
+                        <input type="date" class="form-control" id="start_date" name="start_date"
+                               value="{{ start_date }}" onchange="this.form.submit()" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label" for="end_date">Date de fin :</label>
+                        <input type="date" class="form-control" id="end_date" name="end_date"
+                               value="{{ end_date }}" onchange="this.form.submit()" required>
+                    </div>
+
+                </form>
+
+
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Obtenir la date actuelle au format YYYY-MM-DD
+    const today = new Date().toISOString().split('T')[0];
+
+    // Sélectionner tous les champs de date et leur attribuer la date du jour
+    document.querySelectorAll('.decharge-date').forEach(input => {
+        input.value = today;
+    });
+</script>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const startDateInput = document.getElementById("start_date");
+        const endDateInput = document.getElementById("end_date");
+
+        // Obtenir la date actuelle
+        const today = new Date();
+
+        // Fonction pour mettre à jour la date de fin si elle est inférieure à la date de début
+        function updateEndDateIfInvalid() {
+            const startDate = new Date(startDateInput.value);
+            const endDate = new Date(endDateInput.value);
+
+            // Si la date de fin est avant la date de début, on réajuste
+            if (endDate < startDate) {
+                endDateInput.value = startDate.toISOString().split('T')[0]; // Remettre la date de fin égale à la date de début
+            }
+        }
+
+        // Fonction pour mettre à jour la date de début si elle est après la date de fin
+        function updateStartDateIfInvalid() {
+            const startDate = new Date(startDateInput.value);
+            const endDate = new Date(endDateInput.value);
+
+            // Si la date de début est après la date de fin, on réajuste
+            if (startDate > endDate) {
+                startDateInput.value = endDate.toISOString().split('T')[0]; // Remettre la date de début égale à la date de fin
+            }
+        }
+
+        // Ajouter des écouteurs d'événements pour chaque champ de date
+        startDateInput.addEventListener('change', function () {
+            updateEndDateIfInvalid();
+        });
+
+        endDateInput.addEventListener('change', function () {
+            updateStartDateIfInvalid();
+        });
+
+        // Valider les dates initialement après le chargement de la page
+        updateEndDateIfInvalid();
+        updateStartDateIfInvalid();
+    });
+</script>
+
+{% endblock %}

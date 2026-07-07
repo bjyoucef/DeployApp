@@ -1,0 +1,30 @@
+<div class="modal fade" id="manquantModal{{ emprunt.id }}" tabindex="-1" role="dialog"
+     aria-labelledby="manquantModalLabel{{ emprunt.id }}" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="manquantModalLabel{{ emprunt.id }}">Marquer la clé {{
+                    emprunt.numero_cle }} comme manquante</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form action="{{ url_for('marquer_key_manquant', id=emprunt.id) }}" method="POST">
+                    <div class="form-group">
+                        <label for="id_personnel_manquant{{ emprunt.id }}">Personne ayant signalé la
+                            perte</label>
+                        <select id="id_personnel_manquant{{ emprunt.id }}" name="personne_id_perte"
+                                class="form-control" required>
+                            <option value="" disabled selected>-- Sélectionnez une personne --</option>
+                            {% for personne in personnes %}
+                            <option value="{{ personne.id_personnel }}">{{ personne.nom }} {{
+                                personne.prenom }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <button type="submit" class="btn btn-danger">Marquer comme manquant</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

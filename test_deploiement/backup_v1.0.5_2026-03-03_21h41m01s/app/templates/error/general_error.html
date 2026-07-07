@@ -1,0 +1,12 @@
+{% extends 'layout.html' %}
+{% block content %}
+<div class="container text-center mt-5">
+    <div class="alert alert-danger" role="alert">
+        <h1 class="display-4">Erreur interne du serveur</h1>
+        <p class="lead">Une erreur est survenue lors du traitement de votre requête.</p>
+        <hr class="my-4">
+        <p>Détails de l'erreur : {{ error_message }}</p>
+        <a href="/" class="btn btn-primary btn-lg mt-3" role="button">Retour à l'accueil</a>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,35 @@
+{% extends "layout.html" %}
+{% block content %}
+
+<div class="d-flex justify-content-center">
+
+        <a href="{{ url_for('bloc') }}" class="btn btn-secondary {% if request.path == '/bloc' %}Cles_active{% endif %}">Bloc</a>
+        <a href="{{ url_for('videos') }}" class="btn btn-secondary {% if request.path == '/videos' %}Cles_active{% endif %}">Vidéos</a>
+        <a href="{{ url_for('live') }}" class="btn btn-secondary {% if request.path == '/live' %}Cles_active{% endif %}">Live</a>
+    </div>
+
+
+<div class="row">
+    {% for video in videos %}
+    <div class="col-md-4 mb-4">
+        <div class="card">
+            <video class="card-img-top" controls preload="auto">
+                <source src="{{ url_for('download_file', filename='videos/' + video.name) }}" type="video/mp4">
+                Votre navigateur ne supporte pas la balise vidéo.
+            </video>
+
+            <div class="card-body">
+                <h5 class="card-title">{{ video.bloc }}</h5>
+                <p class="card-text">Médecin : {{ video.medcin }}</p>
+                <p class="card-text">Patient : {{ video.patient }}</p>
+                <p class="card-text">Date : {{ video.date }}</p>
+                <p class="card-text">Heure : {{ video.time }}</p>
+                <a href="{{ url_for('download_file', filename='videos/' + video.name) }}" class="btn btn-primary"
+                   download="{{ video.name }}">Télécharger <i class="fas fa-download"></i></a>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+{% endblock content %}

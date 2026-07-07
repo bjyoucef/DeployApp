@@ -1,0 +1,433 @@
+{% extends "layout.html" %}
+
+{% block style %}
+<style>
+    :root {
+        --pink: #ec4899;
+        --pink-dark: #db2777;
+        --pink-light: #fce7f3;
+        --success: #10b981;
+        --warning: #f59e0b;
+        --info: #3b82f6;
+        --dark: #1f2937;
+        --border: #e5e7eb;
+        --radius: 12px;
+        --shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+    }
+
+    body {
+        background: linear-gradient(135deg, #fdf2f8 0%, #fce7f3 100%);
+        min-height: 100vh;
+    }
+
+    .page-header {
+        background: linear-gradient(135deg, var(--pink), var(--pink-dark));
+        color: white;
+        padding: 1.5rem 2rem;
+        border-radius: var(--radius);
+        margin-bottom: 1.5rem;
+        box-shadow: var(--shadow);
+    }
+
+    .form-card {
+        background: white;
+        border-radius: var(--radius);
+        box-shadow: var(--shadow);
+        overflow: hidden;
+        margin-bottom: 1.5rem;
+    }
+
+    .form-card-header {
+        padding: 1.25rem 1.5rem;
+        border-bottom: 2px solid var(--border);
+        background: linear-gradient(135deg, #fce7f3, #fff);
+    }
+
+    .form-card-header h5 {
+        margin: 0;
+        color: var(--dark);
+        font-weight: 700;
+    }
+
+    .form-card-body {
+        padding: 2rem 1.5rem;
+    }
+
+    .form-label {
+        font-weight: 600;
+        color: var(--dark);
+        margin-bottom: 0.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .form-control,
+    .form-select {
+        border: 2px solid var(--border);
+        border-radius: 8px;
+        padding: 0.75rem;
+        transition: all 0.2s;
+        font-size: 1rem;
+    }
+
+    .form-control:focus,
+    .form-select:focus {
+        border-color: var(--pink);
+        box-shadow: 0 0 0 3px rgba(236, 72, 153, 0.1);
+    }
+
+    .input-group-text {
+        background: linear-gradient(135deg, var(--pink-light), #fff);
+        border: 2px solid var(--border);
+        border-right: none;
+        font-weight: 600;
+        color: var(--pink-dark);
+    }
+
+    .input-group .form-control {
+        border-left: none;
+    }
+
+    .badge-info {
+        padding: 0.5rem 1rem;
+        border-radius: 50px;
+        font-weight: 700;
+        font-size: 0.9rem;
+    }
+
+    .badge-convention {
+        background: var(--success);
+        color: white;
+    }
+
+    .badge-payant {
+        background: var(--warning);
+        color: white;
+    }
+
+    .badge-voie-basse {
+        background: var(--pink);
+        color: white;
+    }
+
+    .badge-cesarienne {
+        background: var(--info);
+        color: white;
+    }
+
+    .btn {
+        border-radius: 8px;
+        padding: 0.75rem 1.5rem;
+        font-weight: 600;
+        transition: all 0.2s;
+    }
+
+    .btn-pink {
+        background: linear-gradient(135deg, var(--pink), var(--pink-dark));
+        color: white;
+        border: none;
+    }
+
+    .btn-pink:hover {
+        color: white;
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(236, 72, 153, 0.4);
+    }
+
+    .btn-outline-pink {
+        border: 2px solid var(--pink);
+        color: var(--pink);
+        background: white;
+    }
+
+    .btn-outline-pink:hover {
+        background: var(--pink);
+        color: white;
+    }
+
+    .alert-info {
+        background: linear-gradient(135deg, #dbeafe, #eff6ff);
+        border-left: 4px solid var(--info);
+        border-radius: var(--radius);
+    }
+
+    .form-check-input:checked {
+        background-color: var(--pink);
+        border-color: var(--pink);
+    }
+
+    .form-check-input:focus {
+        border-color: var(--pink);
+        box-shadow: 0 0 0 3px rgba(236, 72, 153, 0.15);
+    }
+
+    .form-check-label {
+        font-weight: 500;
+        color: var(--dark);
+    }
+
+    .section-divider {
+        border-top: 2px dashed var(--border);
+        margin: 2rem 0;
+    }
+
+    .form-section-title {
+        font-size: 1.1rem;
+        font-weight: 700;
+        color: var(--pink-dark);
+        margin-bottom: 1.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .readonly-field {
+        background-color: #f9fafb;
+        cursor: not-allowed;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="page-header">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h1><i class="fas fa-edit me-2"></i>{{ title }}</h1>
+                <small class="opacity-75">Modification de la configuration tarifaire</small>
+            </div>
+            <a href="{{ url_for('accouchement_tarifs_list') }}" class="btn btn-light btn-sm">
+                <i class="fas fa-arrow-left me-1"></i>Retour
+            </a>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-8 offset-lg-2">
+            <!-- Info Type de Tarif -->
+            <div class="alert alert-info mb-4">
+                <div class="d-flex align-items-center gap-3">
+                    <i class="fas fa-info-circle fa-2x"></i>
+                    <div>
+                        <strong>Type de tarification:</strong>
+                        <span
+                            class="badge-info {{ 'badge-convention' if tarif.type_tarification == 'CONVENTION' else 'badge-payant' }} ms-2">
+                            {{ 'Convention' if tarif.type_tarification == 'CONVENTION' else 'Payant' }}
+                        </span>
+                        <span
+                            class="badge-info {{ 'badge-voie-basse' if tarif.type_accouchement == 'VOIE_BASSE' else 'badge-cesarienne' }} ms-2">
+                            {{ 'Voie Basse' if tarif.type_accouchement == 'VOIE_BASSE' else 'Césarienne' }}
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Formulaire -->
+            <form method="POST" id="tarifForm">
+                <div class="form-card">
+                    <div class="form-card-header">
+                        <h5>
+                            <i class="fas fa-coins me-2 text-pink"></i>
+                            Configuration des montants
+                        </h5>
+                    </div>
+
+                    <div class="form-card-body">
+                        <!-- Section spécifique CONVENTION -->
+                        {% if tarif.type_tarification == 'CONVENTION' %}
+                        <div class="form-section-title">
+                            <i class="fas fa-file-contract"></i>
+                            Tarifs Convention
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label" for="forfait_supplement">
+                                    <i class="fas fa-tag text-success"></i>
+                                    Forfait Supplément
+                                </label>
+                                <div class="input-group">
+                                    <input type="number" class="form-control" id="forfait_supplement"
+                                        name="forfait_supplement" value="{{ tarif.forfait_supplement or 0 }}"
+                                        step="0.01" min="0" required>
+                                    <span class="input-group-text">DA</span>
+                                </div>
+                                <small class="text-muted">Prix de base conventionné</small>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label" for="part_gyneco_externe">
+                                    <i class="fas fa-user-md text-pink"></i>
+                                    Part Gynéco Externe
+                                </label>
+                                <div class="input-group">
+                                    <input type="number" class="form-control" id="part_gyneco_externe"
+                                        name="part_gyneco_externe" value="{{ tarif.part_gyneco_externe or 0 }}"
+                                        step="0.01" min="0" required>
+                                    <span class="input-group-text">DA</span>
+                                </div>
+                                <small class="text-muted">Honoraires fixes gynéco externe</small>
+                            </div>
+                        </div>
+
+                        <!-- Section spécifique PAYANT -->
+                        {% else %}
+                        <div class="form-section-title">
+                            <i class="fas fa-money-bill-wave"></i>
+                            Tarifs Payant
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label" for="prix_base">
+                                    <i class="fas fa-tag text-warning"></i>
+                                    Prix de Base
+                                </label>
+                                <div class="input-group">
+                                    <input type="number" class="form-control" id="prix_base" name="prix_base"
+                                        value="{{ tarif.prix_base or 0 }}" step="0.01" min="0" required>
+                                    <span class="input-group-text">DA</span>
+                                </div>
+                                <small class="text-muted">Prix de base pour patient payant</small>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label" for="part_clinique_base">
+                                    <i class="fas fa-hospital text-info"></i>
+                                    Part Clinique Base
+                                </label>
+                                <div class="input-group">
+                                    <input type="number" class="form-control" id="part_clinique_base"
+                                        name="part_clinique_base" value="{{ tarif.part_clinique_base or 0 }}"
+                                        step="0.01" min="0" required>
+                                    <span class="input-group-text">DA</span>
+                                </div>
+                                <small class="text-muted">Part revenant à la clinique</small>
+                            </div>
+                        </div>
+                        {% endif %}
+
+                        <div class="section-divider"></div>
+
+                        <!-- Section commune -->
+                        <div class="form-section-title">
+                            <i class="fas fa-cogs"></i>
+                            Paramètres Communs
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label" for="honoraires_gyneco_interne">
+                                    <i class="fas fa-user-tie text-primary"></i>
+                                    Honoraires Gynéco Interne
+                                </label>
+                                <div class="input-group">
+                                    <input type="number" class="form-control" id="honoraires_gyneco_interne"
+                                        name="honoraires_gyneco_interne"
+                                        value="{{ tarif.honoraires_gyneco_interne or 0 }}" step="0.01" min="0" required>
+                                    <span class="input-group-text">DA</span>
+                                </div>
+                                <small class="text-muted">Honoraires fixes pour gynéco salarié</small>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label" for="nuitees_incluses">
+                                    <i class="fas fa-bed text-purple"></i>
+                                    Nuitées Incluses
+                                </label>
+                                <input type="number" class="form-control" id="nuitees_incluses" name="nuitees_incluses"
+                                    value="{{ tarif.nuitees_incluses or 1 }}" min="0" max="10" required>
+                                <small class="text-muted">Nombre de nuitées comprises dans le forfait</small>
+                            </div>
+                        </div>
+
+                        <div class="section-divider"></div>
+
+                        <!-- Statut -->
+                        <div class="mb-3">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" role="switch" id="est_actif"
+                                    name="est_actif" {{ 'checked' if tarif.est_actif else '' }}>
+                                <label class="form-check-label" for="est_actif">
+                                    <i class="fas fa-toggle-on me-2"></i>
+                                    Tarif actif
+                                    <small class="text-muted d-block">Les tarifs inactifs ne sont pas utilisés pour
+                                        les nouveaux dossiers</small>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Boutons d'action -->
+                <div class="form-card">
+                    <div class="form-card-body">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <a href="{{ url_for('accouchement_tarifs_list') }}" class="btn btn-outline-pink">
+                                <i class="fas fa-times me-2"></i>Annuler
+                            </a>
+                            <button type="submit" class="btn btn-pink">
+                                <i class="fas fa-save me-2"></i>Enregistrer les modifications
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const form = document.getElementById('tarifForm');
+
+        // Validation avant soumission
+        form.addEventListener('submit', function (e) {
+            let isValid = true;
+            const inputs = form.querySelectorAll('input[type="number"]');
+
+            inputs.forEach(input => {
+                const value = parseFloat(input.value);
+                if (isNaN(value) || value < 0) {
+                    isValid = false;
+                    input.classList.add('is-invalid');
+                } else {
+                    input.classList.remove('is-invalid');
+                }
+            });
+
+            if (!isValid) {
+                e.preventDefault();
+                alert('Veuillez vérifier que tous les montants sont valides et positifs.');
+            }
+        });
+
+        // Animation sur les inputs
+        const inputs = document.querySelectorAll('.form-control, .form-select');
+        inputs.forEach(input => {
+            input.addEventListener('focus', function () {
+                this.parentElement.style.transform = 'scale(1.02)';
+                this.parentElement.style.transition = 'transform 0.2s';
+            });
+
+            input.addEventListener('blur', function () {
+                this.parentElement.style.transform = 'scale(1)';
+            });
+        });
+
+        // Formater les nombres avec séparateurs de milliers
+        const numberInputs = document.querySelectorAll('input[type="number"]');
+        numberInputs.forEach(input => {
+            input.addEventListener('blur', function () {
+                if (this.value) {
+                    const value = parseFloat(this.value);
+                    this.value = value.toFixed(2);
+                }
+            });
+        });
+    });
+</script>
+{% endblock %}

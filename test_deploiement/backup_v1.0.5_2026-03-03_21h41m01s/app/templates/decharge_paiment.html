@@ -1,0 +1,245 @@
+{% extends 'layout.html' %}
+{% block content %}
+
+{% if 'CREER_DECHARGE' in session.privileges %}
+<!-- Button to open the Add Decharge modal -->
+<button type="button" class="btn btn-primary mb-4" data-bs-toggle="modal" data-bs-target="#addDossierModal">
+    Ajouter une Décharge de Paiement
+</button>
+
+<!-- Form to add a Decharge -->
+<div class="modal fade" id="addDossierModal" tabindex="-1" aria-labelledby="addDossierModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+
+            <div class="modal-header">
+                <h5 class="modal-title" id="addDossierModalLabel">Formulaire de Décharge de Paiement</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
+            </div>
+
+            <div class="modal-body">
+                <form action="/add_decharge_paiment" method="post">
+                    <div class="mb-3">
+                        <label for="doctor_name" class="form-label">Nom du Docteur :</label>
+                        <input
+                                type="text"
+                                class="form-control"
+                                id="doctor_name"
+                                name="doctor_name"
+                                placeholder="Entrez le nom complet."
+                                required
+                                aria-describedby="doctorNameHelp">
+                    </div>
+                    <div class="mb-3">
+                        <label for="amount" class="form-label">Montant (DA) :</label>
+                        <input
+                                type="number"
+                                class="form-control"
+                                id="amount"
+                                name="amount"
+                                placeholder="Exemple : 630000"
+                                required
+                                aria-describedby="amountHelp">
+                        <small id="amountHelp" class="form-text text-muted">Indiquez le montant total de la décharge en
+                            Dinars algériens (DA).</small>
+                    </div>
+                    <div class="mb-3">
+                        <label for="date" class="form-label">Date :</label>
+                        <input
+                                type="date"
+                                class="form-control"
+                                id="date"
+                                name="date"
+                                value="{{ current_date }}"
+                                required
+                                aria-describedby="dateHelp">
+                        <small id="dateHelp" class="form-text text-muted">Sélectionnez la date à laquelle la décharge de
+                            paiement est enregistrée.</small>
+                    </div>
+                    <div class="mb-3">
+                        <label for="dossiers" class="form-label">Noms des Dossiers :</label>
+                        <textarea
+                                class="form-control"
+                                id="dossiers"
+                                name="dossiers"
+                                rows="4"
+                                placeholder="Exemple : HASSANI MALIKA&#10;HAMEL MOHAMED"
+                                required
+                                aria-describedby="dossiersHelp"></textarea>
+                        <small id="dossiersHelp" class="form-text text-muted">Listez les dossiers associés à cette
+                            décharge. Un dossier par ligne.</small>
+                    </div>
+                    <div class="d-grid">
+                        <button type="submit" name="sauv_decharge" class="btn btn-secondary mt-3">
+                            Enregistrer la Décharge
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endif %}
+<div class="form-switch-container mb-3 d-flex justify-content-center align-items-center">
+    <form method="GET" action="/decharges">
+        <label class="form-switch">
+            <input
+                    type="checkbox"
+                    class="paymentCheckbox"
+                    id="payDoctorFilter"
+                    name="payDoctorFilter"
+                    value="true"
+                    {% if filter_paid %}checked{% endif %} onchange="this.form.submit()">
+            <span class="slider"></span>
+            <span class="label-text">Décharge Réglé</span>
+        </label>
+    </form>
+</div>
+
+
+<!-- List of Decharges -->
+<div class="table-responsive">
+    <table class="table" id="myTable">
+        <thead class="table-purple-500">
+        <tr>
+            <th>Date</th>
+            <th>Docteur</th>
+            <th>Montant (DA)</th>
+            <th>Reste (DA)</th>
+            <th>Créé par</th>
+            <th>Dossiers</th>
+            <th>Actions</th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for decharge in decharges %}
+        {% if 'AFFICHER_DECHARGES_REGLE' in session.privileges %}
+        <tr>
+            <td>{{ decharge.date }}</td>
+            <td>{{ decharge.doctor_name }}</td>
+            <td>{{ decharge.amount | format_price }}</td>
+            <td>{{ decharge.reste | format_price }}</td>
+            <td>{{ decharge.created_par }}</td>
+            <td>
+                <ul class="mb-0">
+                    {% for dossier in decharge.dossiers.splitlines() %}
+                    <li>{{ dossier }}</li>
+                    {% endfor %}
+                </ul>
+            </td>
+
+            <td>
+
+                {% if 'MODIFIER_DECHARGE' in session.privileges %}
+                <!-- Edit Button (opens modal) -->
+                <button class="btn btn-warning btn-sm" data-bs-toggle="modal"
+                        data-bs-target="#editDossierModal{{ decharge.id }}" title="Modifier la décharge">
+                    <i class="fas fa-edit"></i> Modifier
+                </button>
+                <!-- Edit Modal -->
+                <div class="modal fade" id="editDossierModal{{ decharge.id }}" tabindex="-1"
+                     aria-labelledby="editDossierModalLabel{{ decharge.id }}" aria-hidden="true">
+                    <div class="modal-dialog modal-xl">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title" id="editDossierModalLabel{{ decharge.id }}">Modifier la Décharge
+                                    de Paiement</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal"
+                                        aria-label="Fermer"></button>
+                            </div>
+                            <div class="modal-body">
+                                <form action="{{ url_for('edit_decharge', id=decharge.id) }}" method="POST">
+                                    <div class="mb-3">
+                                        <label for="doctor_name_{{ decharge.id }}" class="form-label">Nom du Docteur
+                                            :</label>
+                                        <input type="text" class="form-control" id="doctor_name_{{ decharge.id }}"
+                                               name="doctor_name" value="{{ decharge.doctor_name }}" required>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="amount_{{ decharge.id }}" class="form-label">Montant (DA) :</label>
+                                        <input type="number" class="form-control" id="amount_{{ decharge.id }}"
+                                               name="amount" value="{{ decharge.amount }}" required>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="date_{{ decharge.id }}" class="form-label">Date :</label>
+                                        <input type="date" class="form-control" id="date_{{ decharge.id }}" name="date"
+                                               value="{{ decharge.date }}" required>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="dossiers_{{ decharge.id }}" class="form-label">Noms des Dossiers
+                                            :</label>
+                                        <textarea class="form-control" id="dossiers_{{ decharge.id }}" name="dossiers"
+                                                  rows="4" required>{{ decharge.dossiers }}</textarea>
+                                    </div>
+                                    <div class="d-grid">
+                                        <button type="submit" class="btn btn-secondary mt-3">
+                                            Sauvegarder les Modifications
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+
+                {% if 'SUPPRIMER_DECHARGE' in session.privileges %}
+                <!-- Delete Button -->
+                <form action="{{ url_for('delete_decharge', id=decharge.id) }}" method="POST" class="d-inline-block">
+                    <button class="btn btn-danger btn-sm" type="submit" title="Supprimer la décharge">
+                        <i class="fas fa-trash"></i> Supprimer
+                    </button>
+                </form>
+                {% endif %}
+
+                {% if 'EXPORTER_DECHARGE_PDF' in session.privileges %}
+
+                {% if not decharge.time_export_decharge_pdf %}
+                <a href="{{ url_for('export_decharge_pdf', id=decharge.id) }}" class="btn btn-primary btn-sm"
+                   title="Exporter la décharge en PDF">
+                    <i class="fas fa-file-pdf me-1"></i> Exporter en PDF
+                </a>
+
+                {% elif 'REEXPORTER_DECHARGE_PDF' in session.privileges %}
+                <a href="{{ url_for('export_decharge_pdf', id=decharge.id) }}" class="btn btn-warning btn-sm mt-2"
+                   title="Réexporter la décharge en PDF">
+                    <i class="fas fa-redo me-1"></i> Réexporter en PDF
+                </a>
+                {% endif %}
+
+                {% endif %}
+
+                <div class="mt-1">
+
+                    {% if decharge.reste == 0 %}
+                    <span class="badge bg-success">
+                            <i class="fas fa-check-circle me-1"></i> Régé le : {{ decharge.time_payment }}
+                            <strong> par :</strong> {{ decharge.payment_par }}
+                        </span>
+                    {% else %}
+
+                    {% if 'AJOUTER_PAYMENT_DECHARGE' in session.privileges %}
+                    <form action="{{ url_for('add_payment_decharges', id=decharge.id) }}" method="POST"
+                          class="d-inline-block mt-2">
+                        <input type="number" name="payment_amount" step="0.01" min="0" required
+                               placeholder="Montant" class="form-control d-inline-block w-auto"/>
+                        <button class="btn btn-danger btn-sm" type="submit" title="Régler cette décharge.">Régler
+                        </button>
+                    </form>
+                    {% endif %}
+
+                    {% endif %}
+                </div>
+
+            </td>
+
+
+        </tr>
+        {% endif %}
+
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

@@ -1,0 +1,2169 @@
+{% extends "layout.html" %}
+{% import 'his/macros/his_direct_selector.html' as his_selector %}
+{% block style %}
+<style>
+    /* Tous les styles sont maintenant encapsulés dans .detail-page */
+    .detail-page {
+        /* ==================== Variables & Reset ==================== */
+        --primary: #6366f1;
+        --primary-dark: #4f46e5;
+        --primary-light: #818cf8;
+        --success: #10b981;
+        --success-dark: #059669;
+        --warning: #f59e0b;
+        --warning-dark: #d97706;
+        --danger: #ef4444;
+        --danger-dark: #dc2626;
+        --info: #3b82f6;
+        --info-dark: #2563eb;
+        --dark: #1f2937;
+        --gray-50: #f9fafb;
+        --gray-100: #f3f4f6;
+        --gray-200: #e5e7eb;
+        --gray-300: #d1d5db;
+        --gray-400: #9ca3af;
+        --gray-500: #6b7280;
+        --gray-600: #4b5563;
+        --gray-700: #374151;
+        --border: #e5e7eb;
+        --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+        --shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+        --shadow-md: 0 6px 12px -2px rgb(0 0 0 / 0.15);
+        --shadow-lg: 0 20px 25px -5px rgb(0 0 0 / 0.1);
+        --shadow-xl: 0 25px 50px -12px rgb(0 0 0 / 0.25);
+        --radius-sm: 8px;
+        --radius: 12px;
+        --radius-lg: 16px;
+        --radius-xl: 20px;
+        --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        --transition-fast: all 0.15s ease;
+
+        --bg-surface: white;
+        --bg-gradient: linear-gradient(135deg, #f5f7fa 0%, #e4e9f2 100%);
+        --text-color: var(--dark);
+    }
+
+    [data-theme="dark"] .detail-page {
+        --primary: #818cf8;
+        --primary-dark: #6366f1;
+        --primary-light: #4f46e5;
+        --success: #34d399;
+        --success-dark: #10b981;
+        --warning: #fbbf24;
+        --warning-dark: #f59e0b;
+        --danger: #f87171;
+        --danger-dark: #ef4444;
+        --info: #60a5fa;
+        --info-dark: #3b82f6;
+        --dark: #f9fafb;
+        --gray-50: #121212;
+        --gray-100: #1e1e1e;
+        --gray-200: #2d2d2d;
+        --gray-300: #404040;
+        --gray-400: #6c757d;
+        --gray-500: #adb5bd;
+        --gray-600: #ced4da;
+        --gray-700: #e9ecef;
+        --border: #374151;
+
+        --bg-surface: #1e1e1e;
+        --bg-gradient: #121212;
+        --text-color: #f9fafb;
+
+        --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.5);
+        --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.5);
+        --shadow-md: 0 6px 12px -2px rgba(0, 0, 0, 0.5);
+    }
+
+
+    .detail-page * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+    }
+
+    /* ==================== Body & Container ==================== */
+    .detail-page {
+        background: var(--bg-gradient);
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        line-height: 1.6;
+        color: var(--text-color);
+        min-height: 100vh;
+    }
+
+
+    .detail-page .detail-container {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 2rem 1rem;
+    }
+
+
+
+    /* ==================== Header Enhanced ==================== */
+    .detail-page .detail-header {
+        background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+        border-radius: var(--radius-xl);
+        padding: 2.5rem;
+        margin-bottom: 2rem;
+        color: white;
+        box-shadow: var(--shadow-lg), 0 0 0 1px rgba(99, 102, 241, 0.1);
+        position: relative;
+        overflow: hidden;
+    }
+
+
+
+    .detail-page .detail-header::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -20%;
+        width: 500px;
+        height: 500px;
+        background: radial-gradient(circle, rgba(255, 255, 255, 0.15) 0%, transparent 70%);
+        border-radius: 50%;
+    }
+
+
+
+    .detail-page .detail-header::after {
+        content: '';
+        position: absolute;
+        bottom: -30%;
+        left: -10%;
+        width: 400px;
+        height: 400px;
+        background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 70%);
+        border-radius: 50%;
+    }
+
+    .detail-page .header-content {
+        position: relative;
+        z-index: 1;
+    }
+
+    .detail-page .dossier-id {
+        font-size: 2.25rem;
+        font-weight: 800;
+        margin-bottom: 0.75rem;
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        flex-wrap: wrap;
+        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+
+
+    .detail-page .status-badge {
+        font-size: 0.875rem;
+        padding: 0.625rem 1.5rem;
+        border-radius: 50px;
+        background: rgba(255, 255, 255, 0.25);
+        backdrop-filter: blur(10px);
+        border: none;
+        box-shadow: inset 0 0 1px rgba(255, 255, 255, 0.15);
+        font-weight: 600;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        transition: var(--transition);
+    }
+
+
+
+    .detail-page .status-badge:hover {
+        background: rgba(255, 255, 255, 0.35);
+        transform: translateY(-2px);
+    }
+
+    /* ==================== Navigation Sticky ==================== */
+    .detail-page .sticky-top {
+        position: sticky;
+        top: 0;
+        z-index: 1020;
+        background: var(--bg-surface);
+        border-radius: var(--radius);
+        box-shadow: var(--shadow);
+        margin-bottom: 2rem;
+        border: 1px solid var(--border);
+    }
+
+    .detail-page .nav-scroller {
+        display: flex;
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        padding: 1rem;
+        gap: 0.5rem;
+        scrollbar-width: thin;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .detail-page .nav-scroller::-webkit-scrollbar {
+        height: 4px;
+    }
+
+    .detail-page .nav-scroller::-webkit-scrollbar-track {
+        background: var(--gray-100);
+        border-radius: 2px;
+    }
+
+    .detail-page .nav-scroller::-webkit-scrollbar-thumb {
+        background: var(--primary);
+        border-radius: 2px;
+    }
+
+    .detail-page .nav-link {
+        padding: 0.75rem 1.5rem;
+        background: var(--gray-50);
+        border: 2px solid var(--gray-200);
+        border-radius: var(--radius);
+        font-weight: 600;
+        color: var(--gray-600);
+        cursor: pointer;
+        transition: var(--transition);
+        white-space: nowrap;
+        flex-shrink: 0;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .detail-page .nav-link:hover {
+        background: var(--gray-100);
+        border-color: var(--primary-light);
+        color: var(--primary);
+        transform: translateY(-2px);
+    }
+
+    .detail-page .nav-link.active {
+        background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+        color: white;
+        border-color: var(--primary);
+        box-shadow: 0 4px 12px rgba(99, 102, 241, 0.25);
+    }
+
+    .detail-page .nav-link i {
+        font-size: 1.1em;
+    }
+
+    /* ==================== Section Content ==================== */
+    .detail-page .section-content {
+        display: none;
+    }
+
+
+
+    .detail-page .section-content.active {
+        display: block;
+    }
+
+    /* ==================== Modern Cards Enhanced ==================== */
+    .detail-page .modern-card {
+        background: var(--bg-surface);
+        border-radius: var(--radius-lg);
+        box-shadow: var(--shadow);
+        padding: 2rem;
+        margin-bottom: 2rem;
+        transition: var(--transition);
+        border: 1px solid var(--border);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .detail-page .modern-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: linear-gradient(90deg, var(--primary), var(--primary-light));
+        transform: scaleX(0);
+        transform-origin: left;
+        transition: transform 0.4s ease;
+    }
+
+    .detail-page .modern-card:hover::before {
+        transform: scaleX(1);
+    }
+
+    .detail-page .modern-card:hover {
+        box-shadow: var(--shadow-xl);
+        transform: translateY(-4px);
+    }
+
+    .detail-page .card-header-modern {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        margin-bottom: 2rem;
+        padding-bottom: 1.25rem;
+        border-bottom: 2px solid var(--gray-100);
+    }
+
+    .detail-page .card-icon {
+        width: 56px;
+        height: 56px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+        border-radius: 14px;
+        color: white;
+        font-size: 1.75rem;
+        flex-shrink: 0;
+        box-shadow: 0 8px 16px rgba(99, 102, 241, 0.3);
+        transition: var(--transition);
+    }
+
+    .detail-page .card-icon:hover {
+        transform: rotate(5deg) scale(1.1);
+    }
+
+    .detail-page .card-icon.success {
+        background: linear-gradient(135deg, var(--success), var(--success-dark));
+        box-shadow: 0 8px 16px rgba(16, 185, 129, 0.3);
+    }
+
+    .detail-page .card-icon.warning {
+        background: linear-gradient(135deg, var(--warning), var(--warning-dark));
+        box-shadow: 0 8px 16px rgba(245, 158, 11, 0.3);
+    }
+
+    .detail-page .card-icon.info {
+        background: linear-gradient(135deg, var(--info), var(--info-dark));
+        box-shadow: 0 8px 16px rgba(59, 130, 246, 0.3);
+    }
+
+    .detail-page .card-title-modern {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--text-color);
+        margin: 0;
+        letter-spacing: -0.02em;
+    }
+
+    /* ==================== Info Grid Enhanced ==================== */
+    .detail-page .info-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 1.5rem;
+    }
+
+    .detail-page .info-item {
+        display: flex;
+        align-items: flex-start;
+        gap: 1rem;
+        padding: 1.25rem;
+        background: var(--gray-50);
+        border-radius: var(--radius);
+        transition: var(--transition);
+        border: 2px solid transparent;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .detail-page .info-item::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 4px;
+        height: 100%;
+        background: linear-gradient(180deg, var(--primary), var(--primary-light));
+        transform: scaleY(0);
+        transform-origin: top;
+        transition: transform 0.3s ease;
+    }
+
+    .detail-page .info-item:hover::before {
+        transform: scaleY(1);
+    }
+
+    .detail-page .info-item:hover {
+        background: var(--bg-surface);
+        border-color: var(--primary);
+        transform: translateX(4px) translateY(-2px);
+        box-shadow: var(--shadow-md);
+    }
+
+    .detail-page .info-icon {
+        width: 48px;
+        height: 48px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: var(--bg-surface);
+        border-radius: 12px;
+        color: var(--primary);
+        font-size: 1.5rem;
+        flex-shrink: 0;
+        box-shadow: var(--shadow-sm);
+        transition: var(--transition);
+    }
+
+    .detail-page .info-item:hover .info-icon {
+        transform: scale(1.15) rotate(5deg);
+        box-shadow: var(--shadow);
+    }
+
+    .detail-page .info-content {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .detail-page .info-label {
+        font-size: 0.8rem;
+        color: var(--gray-500);
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        margin-bottom: 0.375rem;
+        font-weight: 600;
+    }
+
+    .detail-page .info-value {
+        font-size: 1.125rem;
+        font-weight: 700;
+        color: var(--text-color);
+        word-break: break-word;
+    }
+
+
+    /* ==================== Tables Enhanced ==================== */
+    .detail-page .section-header {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        margin: 2rem 0 1.5rem;
+        padding-bottom: 1rem;
+        border-bottom: 3px solid var(--gray-100);
+        position: relative;
+    }
+
+    .detail-page .section-header::after {
+        content: '';
+        position: absolute;
+        bottom: -3px;
+        left: 0;
+        width: 60px;
+        height: 3px;
+        background: linear-gradient(90deg, var(--primary), var(--primary-light));
+    }
+
+    .detail-page .section-icon {
+        width: 44px;
+        height: 44px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: var(--primary);
+        color: white;
+        border-radius: 10px;
+        font-size: 1.25rem;
+        box-shadow: 0 4px 8px rgba(99, 102, 241, 0.3);
+    }
+
+    .detail-page .section-title {
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: var(--text-color);
+        margin: 0;
+    }
+
+
+    .detail-page .modern-table-wrapper {
+        border-radius: var(--radius);
+        overflow: hidden;
+        box-shadow: var(--shadow);
+        border: 1px solid var(--border);
+    }
+
+    .detail-page .modern-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.95rem;
+    }
+
+    .detail-page .modern-table thead {
+        background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+    }
+
+    .detail-page .modern-table thead th {
+        color: white;
+        font-weight: 700;
+        padding: 1.25rem 1rem;
+        text-align: left;
+        font-size: 0.875rem;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        border-bottom: 3px solid var(--primary-dark);
+    }
+
+    .detail-page .modern-table tbody tr {
+        background: var(--bg-surface);
+        transition: var(--transition-fast);
+        border-bottom: 1px solid var(--gray-200);
+    }
+
+
+    .detail-page .modern-table tbody tr:hover {
+        background: var(--gray-50);
+        transform: scale(1.01);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    }
+
+    .detail-page .modern-table tbody tr:last-child {
+        border-bottom: none;
+    }
+
+    .detail-page .modern-table tbody td {
+        padding: 1.25rem 1rem;
+        vertical-align: middle;
+    }
+
+    .detail-page .modern-table tbody td:first-child {
+        font-weight: 600;
+    }
+
+    /* ==================== Badges Enhanced ==================== */
+    .detail-page .badge-modern {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.5rem 1.25rem;
+        border-radius: 50px;
+        font-weight: 700;
+        font-size: 0.875rem;
+        transition: var(--transition);
+        border: 2px solid transparent;
+        white-space: nowrap;
+    }
+
+    .detail-page .badge-modern:hover {
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-md);
+    }
+
+    .detail-page .badge-primary {
+        background: linear-gradient(135deg, rgba(99, 102, 241, 0.15), rgba(79, 70, 229, 0.15));
+        color: var(--primary-dark);
+        border-color: rgba(99, 102, 241, 0.3);
+    }
+
+    .detail-page .badge-success {
+        background: linear-gradient(135deg, rgba(16, 185, 129, 0.15), rgba(5, 150, 105, 0.15));
+        color: var(--success-dark);
+        border-color: rgba(16, 185, 129, 0.3);
+    }
+
+    .detail-page .badge-danger {
+        background: linear-gradient(135deg, rgba(239, 68, 68, 0.15), rgba(220, 38, 38, 0.15));
+        color: var(--danger-dark);
+        border-color: rgba(239, 68, 68, 0.3);
+    }
+
+    .detail-page .badge-warning {
+        background: linear-gradient(135deg, rgba(245, 158, 11, 0.15), rgba(217, 119, 6, 0.15));
+        color: var(--warning-dark);
+        border-color: rgba(245, 158, 11, 0.3);
+    }
+
+    /* ==================== Summary Panel Enhanced ==================== */
+    .detail-page .summary-panel {
+        background: linear-gradient(135deg, rgba(16, 185, 129, 0.08), rgba(5, 150, 105, 0.08));
+        border: 3px solid var(--success);
+        border-radius: var(--radius-lg);
+        padding: 2rem;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .detail-page .summary-panel::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -20%;
+        width: 300px;
+        height: 300px;
+        background: radial-gradient(circle, rgba(16, 185, 129, 0.1) 0%, transparent 70%);
+        border-radius: 50%;
+    }
+
+    .detail-page .summary-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 1rem 0;
+        border-bottom: 2px solid rgba(16, 185, 129, 0.15);
+        position: relative;
+        z-index: 1;
+        transition: var(--transition);
+    }
+
+    .detail-page .summary-row:hover {
+        padding-left: 1rem;
+        background: rgba(255, 255, 255, 0.5);
+        border-radius: var(--radius-sm);
+    }
+
+    .detail-page .summary-row:last-child {
+        border-bottom: none;
+    }
+
+    .detail-page .summary-row.total {
+        background: var(--bg-surface);
+        padding: 2rem;
+        border-radius: var(--radius);
+        margin-top: 1.5rem;
+        border: none;
+        box-shadow: var(--shadow-md);
+    }
+
+    .detail-page .summary-label {
+        font-size: 1rem;
+        color: var(--gray-700);
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        font-weight: 600;
+    }
+
+    .detail-page .summary-label i {
+        font-size: 1.25rem;
+        color: var(--success);
+    }
+
+    .detail-page .summary-value {
+        font-size: 1.25rem;
+        font-weight: 800;
+        color: var(--text-color);
+        font-variant-numeric: tabular-nums;
+    }
+
+
+    .detail-page .summary-total {
+        font-size: 2rem !important;
+        color: var(--success) !important;
+        text-shadow: 0 2px 4px rgba(16, 185, 129, 0.2);
+    }
+
+    /* ==================== Action Buttons Enhanced ==================== */
+    .detail-page .action-buttons {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 1rem;
+        padding: 2rem 0;
+    }
+
+    .detail-page .btn-modern {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.75rem;
+        padding: 1rem 2rem;
+        border-radius: var(--radius);
+        font-weight: 700;
+        font-size: 1rem;
+        transition: var(--transition);
+        border: none;
+        cursor: pointer;
+        text-decoration: none;
+        position: relative;
+        overflow: hidden;
+        box-shadow: var(--shadow);
+    }
+
+    .detail-page .btn-modern::before {
+        content: '';
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 0;
+        height: 0;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.3);
+        transform: translate(-50%, -50%);
+        transition: width 0.6s, height 0.6s;
+    }
+
+    .detail-page .btn-modern:hover::before {
+        width: 300px;
+        height: 300px;
+    }
+
+    .detail-page .btn-modern:hover {
+        transform: translateY(-3px);
+        box-shadow: var(--shadow-lg);
+    }
+
+    .detail-page .btn-modern:active {
+        transform: translateY(-1px);
+    }
+
+    .detail-page .btn-modern i {
+        font-size: 1.25rem;
+        position: relative;
+        z-index: 1;
+    }
+
+    .detail-page .btn-modern span {
+        position: relative;
+        z-index: 1;
+    }
+
+    .detail-page .btn-primary-modern {
+        background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+        color: white;
+    }
+
+    .detail-page .btn-success-modern {
+        background: linear-gradient(135deg, var(--success), var(--success-dark));
+        color: white;
+    }
+
+    .detail-page .btn-warning-modern {
+        background: linear-gradient(135deg, var(--warning), var(--warning-dark));
+        color: white;
+    }
+
+    .detail-page .btn-danger-modern {
+        background: linear-gradient(135deg, var(--danger), var(--danger-dark));
+        color: white;
+    }
+
+    .detail-page .btn-secondary-modern {
+        background: linear-gradient(135deg, var(--gray-600), var(--gray-700));
+        color: white;
+    }
+
+    /* ==================== Loading Overlay Enhanced ==================== */
+    .detail-page .pdf-loading-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.85);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        z-index: 9999;
+        backdrop-filter: blur(10px);
+    }
+
+    .detail-page .pdf-loading-content {
+        background: var(--bg-surface);
+        padding: 3rem;
+        border-radius: var(--radius-xl);
+        text-align: center;
+        box-shadow: var(--shadow-xl);
+        max-width: 450px;
+        width: 90%;
+    }
+
+
+
+    .detail-page .pdf-spinner {
+        width: 70px;
+        height: 70px;
+        border: 5px solid var(--gray-200);
+        border-top-color: var(--primary);
+        border-right-color: var(--primary-light);
+        border-radius: 50%;
+
+        margin: 0 auto 2rem;
+    }
+
+
+
+    .detail-page .pdf-progress-bar {
+        width: 100%;
+        height: 6px;
+        background: var(--gray-200);
+        border-radius: 3px;
+        overflow: hidden;
+        margin-top: 1.5rem;
+        position: relative;
+    }
+
+    .detail-page .pdf-progress-fill {
+        height: 100%;
+        background: linear-gradient(90deg, var(--primary), var(--primary-light));
+        border-radius: 3px;
+        width: 0;
+        transition: width 0.5s ease;
+        box-shadow: 0 0 10px rgba(99, 102, 241, 0.5);
+    }
+
+    /* ==================== Empty State ==================== */
+    .detail-page .empty-state {
+        text-align: center;
+        padding: 4rem 2rem;
+    }
+
+    .detail-page .empty-state i {
+        font-size: 5rem;
+        color: var(--gray-300);
+        margin-bottom: 1.5rem;
+        opacity: 0.5;
+    }
+
+    .detail-page .empty-state p {
+        color: var(--gray-400);
+        font-size: 1.125rem;
+        font-weight: 500;
+    }
+
+    /* ==================== Observations ==================== */
+    .detail-page .observations-box {
+        background: linear-gradient(135deg, #fef3c7, #fde68a);
+        border-left: 5px solid var(--warning);
+        padding: 2rem;
+        border-radius: var(--radius);
+        margin-top: 1.5rem;
+        box-shadow: var(--shadow-sm);
+    }
+
+    .detail-page .observations-box p {
+        color: #92400e;
+        font-weight: 500;
+        line-height: 1.8;
+    }
+
+    /* ==================== Print Styles ==================== */
+    @media print {
+        .detail-page body {
+            background: white;
+            font-size: 11pt;
+        }
+
+        .detail-page .detail-container {
+            max-width: 100%;
+            padding: 0;
+            margin: 0;
+        }
+
+        .detail-page .action-buttons,
+        .detail-page .btn-modern,
+        .detail-page .pdf-export-section,
+        .detail-page .pdf-preview-card,
+        .detail-page .sticky-top {
+            display: none !important;
+        }
+
+        .detail-page .modern-card {
+            break-inside: avoid;
+            box-shadow: none;
+            border: 1px solid #ddd;
+            margin-bottom: 1.5rem;
+            padding: 1.5rem;
+            page-break-inside: avoid;
+        }
+
+        .detail-page .detail-header {
+            background: #6366f1 !important;
+            color: white !important;
+            border: 2px solid #4f46e5;
+            page-break-after: avoid;
+        }
+
+        .detail-page .modern-table-wrapper {
+            page-break-inside: avoid;
+        }
+
+        .detail-page .modern-table {
+            font-size: 9pt;
+        }
+
+        .detail-page .modern-table thead {
+            background: #f3f4f6 !important;
+            color: #000 !important;
+        }
+
+        .detail-page .modern-table thead th {
+            color: #000 !important;
+            border-bottom: 2px solid #000;
+        }
+
+        .detail-page .section-header {
+            page-break-after: avoid;
+        }
+    }
+
+    /* ==================== Responsive Design ==================== */
+    @media (max-width: 1024px) {
+        .detail-page .info-grid {
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+        }
+    }
+
+    @media (max-width: 768px) {
+        .detail-page .detail-container {
+            padding: 1rem 0.5rem;
+        }
+
+        .detail-page .detail-header {
+            padding: 2rem 1.5rem;
+            border-radius: var(--radius-lg);
+        }
+
+        .detail-page .dossier-id {
+            font-size: 1.75rem;
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        .detail-page .modern-card {
+            padding: 1.5rem;
+            border-radius: var(--radius);
+        }
+
+        .detail-page .card-header-modern {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 1rem;
+        }
+
+        .detail-page .card-icon {
+            width: 48px;
+            height: 48px;
+            font-size: 1.5rem;
+        }
+
+        .detail-page .card-title-modern {
+            font-size: 1.25rem;
+        }
+
+        .detail-page .info-grid {
+            grid-template-columns: 1fr;
+            gap: 1rem;
+        }
+
+        .detail-page .modern-table-wrapper {
+            overflow-x: auto;
+        }
+
+        .detail-page .modern-table {
+            font-size: 0.85rem;
+        }
+
+        .detail-page .modern-table thead th,
+        .detail-page .modern-table tbody td {
+            padding: 0.875rem 0.75rem;
+        }
+
+        .detail-page .action-buttons {
+            flex-direction: column;
+            padding: 1.5rem 0;
+        }
+
+        .detail-page .btn-modern {
+            width: 100%;
+            justify-content: center;
+            padding: 0.875rem 1.5rem;
+        }
+
+        .detail-page .summary-panel {
+            padding: 1.5rem;
+        }
+
+        .detail-page .summary-row {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 0.5rem;
+        }
+
+        .detail-page .summary-value {
+            font-size: 1.125rem;
+        }
+
+        .detail-page .summary-total {
+            font-size: 1.75rem !important;
+        }
+
+        .detail-page .nav-scroller {
+            padding: 0.75rem;
+        }
+
+        .detail-page .nav-link {
+            padding: 0.5rem 1rem;
+            font-size: 0.9rem;
+        }
+    }
+
+    @media (max-width: 480px) {
+        .detail-page .dossier-id {
+            font-size: 1.5rem;
+        }
+
+        .detail-page .card-title-modern {
+            font-size: 1.125rem;
+        }
+
+        .detail-page .section-title {
+            font-size: 1.125rem;
+        }
+
+        .detail-page .nav-link {
+            padding: 0.5rem 0.75rem;
+            font-size: 0.85rem;
+        }
+    }
+
+    /* ==================== Utilities ==================== */
+    .detail-page .text-center {
+        text-align: center;
+    }
+
+    .detail-page .text-end {
+        text-align: right;
+    }
+
+    .detail-page .mb-3 {
+        margin-bottom: 1rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="detail-page">
+    <div class="detail-container">
+        <!-- Header -->
+        <div class="detail-header">
+            <div class="header-content">
+                <div class="dossier-id">
+                    <i class="fas fa-file-medical"></i>
+                    Dossier #D-{{ "%05d"|format(dossier.id_dossier) }}
+                    <span class="status-badge" {% if not dossier.statut_paiement %}style="display:none;" {% endif %}>
+                        {% if dossier.type_tarification == 'FORFAIT' %}
+                        <i class="fas fa-box"></i> Forfaitaire
+                        {% else %}
+                        <i class="far fa-clock"></i> À la durée
+                        {% endif %}
+                    </span>
+                </div>
+                <p style="opacity: 0.95; margin: 0; font-size: 1.05rem;">
+                    <i class="far fa-calendar-check"></i>
+                    Créé
+                    le {{ dossier.date_creation.strftime('%d/%m/%Y à %H:%M') if dossier.date_creation else 'N/A' }}
+                    Par {{ dossier.cree_par_nom if dossier.cree_par_nom else 'N/A' }}
+                    {% if dossier.statut_paiement %}
+                    <span style="margin-left: 1.5rem;">
+                        <i class="fas fa-money-bill-alt"></i>
+                        Statut paiement:
+                        {% if dossier.statut_paiement == 'COMPLEMENT_MEDECIN' %}
+                        <span style="color: #f59e0b; font-weight: 600;">Complément médecin</span>
+                        {% elif dossier.statut_paiement == 'SURPLUS_CLINIQUE' %}
+                        <span style="color: #10b981; font-weight: 600;">Surplus clinique</span>
+                        {% elif dossier.statut_paiement == 'AUCUN_PAIEMENT' %}
+                        <span style="color: #ef4444; font-weight: 600;">Aucun paiement</span>
+                        {% else %}
+                        {{ dossier.statut_paiement }}
+                        {% endif %}
+                    </span>
+                    {% endif %}
+                </p>
+            </div>
+        </div>
+
+        <!-- Navigation Sticky -->
+        <div class="sticky-top section-navigation">
+            <div class="nav-scroller">
+                <button class="nav-link active" data-section="general">
+                    <i class="fa-solid fa-circle-info"></i> Informations
+                </button>
+                <button class="nav-link" data-section="products">
+                    <i class="fa-solid fa-boxes-stacked"></i> Produits
+                </button>
+                <button class="nav-link" data-section="acts">
+                    <i class="fas fa-heartbeat"></i> Actes
+                </button>
+                <button class="nav-link" data-section="hospitalization">
+                    <i class="fas fa-hospital"></i> Hospitalisation
+                </button>
+                <button class="nav-link" data-section="explorations">
+                    <i class="fas fa-clipboard-list"></i> Explorations
+                </button>
+                <button class="nav-link" data-section="anesthesie">
+                    <i class="fas fa-heart-pulse"></i> Anesthésie
+                </button>
+                <button class="nav-link" data-section="summary">
+                    <i class="fas fa-calculator"></i> Récapitulatif
+                </button>
+                <button class="nav-link" data-section="observations" {% if not dossier.observations
+                    %}style="display: none;" {% endif %}>
+                    <i class="far fa-comment-dots"></i> Observations
+                </button>
+            </div>
+        </div>
+
+        <!-- SECTION 1: Informations Générales -->
+        <div id="section-general" class="section-content active">
+            <div class="row">
+                <!-- Informations Générales -->
+                <div class="col-lg-6">
+                    <div class="modern-card">
+                        <div class="card-header-modern">
+                            <div class="card-icon">
+                                <i class="fa-solid fa-info"></i>
+                            </div>
+                            <h3 class="card-title-modern">Informations générales</h3>
+                        </div>
+
+                        <div class="info-grid">
+                            <div class="info-item">
+                                <div class="info-icon">
+                                    <i class="fa-solid fa-user-injured"></i>
+                                </div>
+
+                                <div class="info-content">
+                                    <div class="info-label">Patient</div>
+                                    <div class="info-value">{{ dossier.patient|default('N/A', true) }}</div>
+                                </div>
+                                {% if dossier.patient_oid_his %}
+                                <button class="btn btn-sm btn-info"
+                                    onclick="event.stopPropagation() ; showPatientHistoryDirect('{{ dossier.patient_oid_his }}')"
+                                    title="Historique HIS">
+                                    <i class="fas fa-history"></i>
+                                </button>
+                                {% endif %}
+                            </div>
+
+                            <div class="info-item">
+                                <div class="info-icon">
+                                    <i class="fas fa-user-md"></i>
+                                </div>
+                                <div class="info-content">
+                                    <div class="info-label">Médecin</div>
+                                    <div class="info-value">{{ dossier.doctor_name|default('N/A', true) }}</div>
+                                </div>
+                            </div>
+
+                            <div class="info-item">
+                                <div class="info-icon">
+                                    <i class="far fa-calendar-alt"></i>
+                                </div>
+                                <div class="info-content">
+                                    <div class="info-label">Date d'opération</div>
+                                    <div class="info-value">
+                                        {{ dossier.location_date.strftime('%d/%m/%Y') if dossier.location_date else
+                                        'N/A' }}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="info-item">
+                                <div class="info-icon">
+                                    <i class="far fa-clock"></i>
+                                </div>
+                                <div class="info-content">
+                                    <div class="info-label">Heure</div>
+                                    <div class="info-value">{{ dossier.heure_operation|default('N/A', true) }}</div>
+                                </div>
+                            </div>
+
+                            <div class="info-item">
+                                <div class="info-icon">
+                                    <i class="fas fa-clipboard-list"></i>
+                                </div>
+                                <div class="info-content">
+                                    <div class="info-label">Intervention</div>
+                                    <div class="info-value">{{ dossier.nom_acte|default('Non spécifiée', true) }}</div>
+                                </div>
+                            </div>
+
+                            <div class="info-item">
+                                <div class="info-icon">
+                                    <i class="fas fa-stopwatch"></i>
+                                </div>
+                                <div class="info-content">
+                                    <div class="info-label">Durée réelle</div>
+                                    <div class="info-value">{{ dossier.duree_reelle|default(0) }} minutes</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Informations Tarification -->
+                <div class="col-lg-6">
+                    <div class="modern-card">
+                        <div class="card-header-modern">
+                            <div class="card-icon success">
+                                <i class="fas fa-money-bill-alt"></i>
+                            </div>
+                            <h3 class="card-title-modern">Tarification</h3>
+                        </div>
+
+                        <div class="info-grid">
+                            <div class="info-item">
+                                <div class="info-icon">
+                                    <i class="fas fa-hospital"></i>
+                                </div>
+                                <div class="info-content">
+                                    <div class="info-label">Bloc opératoire</div>
+                                    <div class="info-value">{{ dossier.name_bloc|default('N/A', true) }}</div>
+                                </div>
+                            </div>
+
+                            {% if dossier.type_tarification == 'FORFAIT' %}
+                            <div class="info-item">
+                                <div class="info-icon">
+                                    <i class="fas fa-box-seam"></i>
+                                </div>
+                                <div class="info-content">
+                                    <div class="info-label">Forfait</div>
+                                    <div class="info-value">{{ dossier.name_forfait|default('N/A', true) }}</div>
+                                </div>
+                            </div>
+
+                            <div class="info-item">
+                                <div class="info-icon">
+                                    <i class="far fa-moon"></i>
+                                </div>
+                                <div class="info-content">
+                                    <div class="info-label">Nuitées incluses</div>
+                                    <div class="info-value">{{ dossier.forfait_nbr_nuit|default(0) }} nuit(s)
+                                    </div>
+                                </div>
+                            </div>
+                            {% endif %}
+
+                            <div class="info-item">
+                                <div class="info-icon">
+                                    <i class="fas fa-dollar-sign"></i>
+                                </div>
+                                <div class="info-content">
+                                    <div class="info-label">Prix base</div>
+                                    <div class="info-value">{{ (dossier.prix_bloc|default(0)) }} DA</div>
+                                </div>
+                            </div>
+
+                            <div class="info-item">
+                                <div class="info-icon">
+                                    <i class="fas fa-plus-circle"></i>
+                                </div>
+                                <div class="info-content">
+                                    <div class="info-label">Supplément durée</div>
+                                    <div class="info-value">{{ (dossier.prix_supplement_duree|default(0)) }} DA
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="info-item">
+                                <div class="info-icon">
+                                    <i class="fas fa-calculator"></i>
+                                </div>
+                                <div class="info-content">
+                                    <div class="info-label">Type tarification</div>
+                                    <div class="info-value">
+                                        {% if dossier.type_tarification == 'FORFAIT' %}
+                                        <span class="badge-modern badge-success">Forfaitaire</span>
+                                        {% else %}
+                                        <span class="badge-modern badge-primary">À la durée</span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SECTION 2: Produits Consommés -->
+        <div id="section-products" class="section-content">
+            <div class="modern-card">
+                <div class="card-header-modern">
+                    <div class="card-icon warning">
+                        <i class="fa-solid fa-box-open"></i>
+                    </div>
+                    <h3 class="card-title-modern">Produits consommés</h3>
+                </div>
+
+                {% if produits_groupes.BLOC or produits_groupes.FORFAIT %}
+                <div class="section-header">
+                    <div class="section-icon" style="background: var(--info);">
+                        <i class="far fa-check-circle"></i>
+                    </div>
+                    <h4 class="section-title">Produits inclus</h4>
+                </div>
+
+                <div class="modern-table-wrapper">
+                    <table class="modern-table">
+                        <thead>
+                            <tr>
+                                <th>Produit</th>
+                                <th class="text-center">Qté incluse</th>
+                                <th class="text-center">Qté utilisée</th>
+                                <th class="text-center">Écart</th>
+                                <th class="text-end">Prix unitaire</th>
+                                <th class="text-end">Supplément</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for prod in produits_groupes.BLOC + produits_groupes.FORFAIT %}
+                            <tr>
+                                <td><strong>{{ prod.produit_nom|default('N/A', true) }}</strong></td>
+                                <td class="text-center">
+                                    <span class="badge-modern badge-primary">{{ prod.qte_incluse|default(0) }}</span>
+                                </td>
+                                <td class="text-center">
+                                    <strong>{{ prod.qte_utilisee|default(0) }}</strong>
+                                </td>
+                                <td class="text-center">
+                                    {% if prod.ecart|default(0) > 0 %}
+                                    <span class="badge-modern badge-danger">+{{ prod.ecart }}</span>
+                                    {% else %}
+                                    <span class="badge-modern badge-success">{{ prod.ecart|default(0) }}</span>
+                                    {% endif %}
+                                </td>
+                                <td class="text-end">{{ (prod.prix_unitaire|default(0)) }} DA</td>
+                                <td class="text-end">
+                                    {% if prod.prix_supplement|default(0) > 0 %}
+                                    <strong style="color: var(--danger);">{{ prod.prix_supplement }}
+                                        DA</strong>
+                                    {% else %}
+                                    <span style="color: var(--gray-400);">0.00 DA</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% endif %}
+
+                {% if produits_groupes.SUPPLEMENTAIRE %}
+                <div class="section-header" style="margin-top: 2rem;">
+                    <div class="section-icon" style="background: var(--warning);">
+                        <i class="fas fa-plus-circle"></i>
+                    </div>
+                    <h4 class="section-title">Produits supplémentaires</h4>
+                </div>
+
+                <div class="modern-table-wrapper">
+                    <table class="modern-table">
+                        <thead>
+                            <tr>
+                                <th>Produit</th>
+                                <th class="text-center">Quantité</th>
+                                <th class="text-end">Prix unitaire</th>
+                                <th class="text-end">Total</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for prod in produits_groupes.SUPPLEMENTAIRE %}
+                            <tr>
+                                <td><strong>{{ prod.produit_nom|default('N/A', true) }}</strong></td>
+                                <td class="text-center">
+                                    <span class="badge-modern badge-warning">{{ prod.qte_utilisee|default(0) }}</span>
+                                </td>
+                                <td class="text-end">{{ (prod.prix_unitaire|default(0)) }} DA</td>
+                                <td class="text-end">
+                                    <strong style="color: var(--warning);">
+                                        {{ ((prod.qte_utilisee|default(0)) * (prod.prix_unitaire|default(0))) }}
+                                        DA
+                                    </strong>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% endif %}
+
+                {% if not produits_groupes.BLOC and not produits_groupes.FORFAIT and not produits_groupes.SUPPLEMENTAIRE
+                %}
+                <div class="empty-state">
+                    <i class="fas fa-inbox"></i>
+                    <p>Aucun produit consommé</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- SECTION 3: Actes Réalisés -->
+        <div id="section-acts" class="section-content">
+            <div class="modern-card">
+                <div class="card-header-modern">
+                    <div class="card-icon success">
+                        <i class="fas fa-heartbeat"></i>
+                    </div>
+                    <h3 class="card-title-modern">Actes réalisés</h3>
+                </div>
+
+                {% if actes_groupes.FORFAIT %}
+                <div class="section-header">
+                    <div class="section-icon" style="background: var(--success);">
+                        <i class="far fa-check-circle"></i>
+                    </div>
+                    <h4 class="section-title">Actes inclus dans le forfait</h4>
+                </div>
+
+                <div class="modern-table-wrapper">
+                    <table class="modern-table">
+                        <thead>
+                            <tr>
+                                <th>Acte</th>
+                                <th class="text-center">Qté incluse</th>
+                                <th class="text-center">Qté utilisée</th>
+                                <th class="text-center">Écart</th>
+                                <th class="text-end">Prix unitaire</th>
+                                <th class="text-end">Supplément</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for acte in actes_groupes.FORFAIT %}
+                            <tr>
+                                <td><strong>{{ acte.nom_acte|default('N/A', true) }}</strong></td>
+                                <td class="text-center">
+                                    <span class="badge-modern badge-success">{{ acte.qte_incluse|default(0) }}</span>
+                                </td>
+                                <td class="text-center">
+                                    <strong>{{ acte.qte_utilisee|default(0) }}</strong>
+                                </td>
+                                <td class="text-center">
+                                    {% if acte.ecart|default(0) > 0 %}
+                                    <span class="badge-modern badge-danger">+{{ acte.ecart }}</span>
+                                    {% else %}
+                                    <span class="badge-modern badge-success">{{ acte.ecart|default(0) }}</span>
+                                    {% endif %}
+                                </td>
+                                <td class="text-end">{{ (acte.prix_unitaire|default(0)) }} DA</td>
+                                <td class="text-end">
+                                    {% if acte.prix_supplement|default(0) > 0 %}
+                                    <strong style="color: var(--danger);">{{ acte.prix_supplement }}
+                                        DA</strong>
+                                    {% else %}
+                                    <span style="color: var(--gray-400);">0.00 DA</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% endif %}
+
+                {% if actes_groupes.SUPPLEMENTAIRE %}
+                <div class="section-header" style="margin-top: 2rem;">
+                    <div class="section-icon" style="background: var(--warning);">
+                        <i class="fas fa-plus-circle"></i>
+                    </div>
+                    <h4 class="section-title">Actes supplémentaires</h4>
+                </div>
+
+                <div class="modern-table-wrapper">
+                    <table class="modern-table">
+                        <thead>
+                            <tr>
+                                <th>Acte</th>
+                                <th class="text-center">Quantité</th>
+                                <th class="text-end">Prix unitaire</th>
+                                <th class="text-end">Total</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for acte in actes_groupes.SUPPLEMENTAIRE %}
+                            <tr>
+                                <td><strong>{{ acte.nom_acte|default('N/A', true) }}</strong></td>
+                                <td class="text-center">
+                                    <span class="badge-modern badge-warning">{{ acte.qte_utilisee|default(0) }}</span>
+                                </td>
+                                <td class="text-end">{{ (acte.prix_unitaire|default(0)) }} DA</td>
+                                <td class="text-end">
+                                    <strong style="color: var(--success);">
+                                        {{ ((acte.qte_utilisee|default(0)) * (acte.prix_unitaire|default(0))) }}
+                                        DA
+                                    </strong>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% endif %}
+
+                {% if not actes_groupes.FORFAIT and not actes_groupes.SUPPLEMENTAIRE %}
+                <div class="empty-state">
+                    <i class="fas fa-inbox"></i>
+                    <p>Aucun acte réalisé</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- SECTION 4: Hospitalisation -->
+        <div id="section-hospitalization" class="section-content">
+            <div class="modern-card">
+                <div class="card-header-modern">
+                    <div class="card-icon info">
+                        <i class="fas fa-hospital"></i>
+                    </div>
+                    <h3 class="card-title-modern">Hospitalisation & Nuitées</h3>
+                </div>
+
+                {% if nuitees and nuitees|length > 0 %}
+                <!-- Récapitulatif global -->
+                {% set total_nuitees_all = nuitees|sum(attribute='nombre_nuitees') %}
+                {% set total_prix_nuitees = nuitees|sum(attribute='prix_total') %}
+                {% set nuitees_gratuites_preop_count = nuitees|selectattr('nuit_pre_op_gratuite', 'equalto',
+                True)|list|length %}
+
+                <div class="summary-panel mb-4">
+                    <div class="row text-center">
+                        <div class="col-md-3 mb-3">
+                            <strong style="display: block; margin-bottom: 0.5rem;">Total Nuitées</strong>
+                            <div class="h4 text-primary mb-0">{{ total_nuitees_all }}</div>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <strong style="display: block; margin-bottom: 0.5rem;">Nuitées gratuites
+                                pré-op</strong>
+                            <div class="h4 text-success mb-0">{{ nuitees_gratuites_preop_count }}</div>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <strong style="display: block; margin-bottom: 0.5rem;">Incluses forfait</strong>
+                            <div class="h4 text-success mb-0">
+                                {% if dossier.forfait_id and dossier.forfait_nbr_nuit %}
+                                {{ dossier.forfait_nbr_nuit }}
+                                {% else %}
+                                0
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <strong style="display: block; margin-bottom: 0.5rem;">Prix total</strong>
+                            <div class="h4 text-primary mb-0">{{ total_prix_nuitees|round(2) }} DA</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Liste des hospitalisations -->
+                {% for nuitee in nuitees %}
+                <div class="modern-card mb-3"
+                    style="border-left: 4px solid var(--primary); background: var(--gray-50);">
+                    <h6 class="mb-3">
+                        <i class="fas fa-building"></i>
+                        Hospitalisation #{{ loop.index }}
+                        {% if nuitee.nuit_pre_op_gratuite %}
+                        <span class="badge-modern badge-success ms-2">
+                            <i class="fas fa-gift"></i> Nuit pré-op gratuite
+                        </span>
+                        {% endif %}
+                    </h6>
+
+                    <div class="info-grid">
+                        <div class="info-item">
+                            <div class="info-icon">
+                                <i class="fas fa-building"></i>
+                            </div>
+                            <div class="info-content">
+                                <div class="info-label">Type de chambre</div>
+                                <div class="info-value">
+                                    {{ nuitee.type_chambre_nom|default('N/A', true) }}
+                                    {% if nuitee.est_standard %}
+                                    <span class="badge-modern badge-success ms-2">Standard</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="info-item">
+                            <div class="info-icon">
+                                <i class="far fa-calendar-check"></i>
+                            </div>
+                            <div class="info-content">
+                                <div class="info-label">Date d'entrée</div>
+                                <div class="info-value">
+                                    {{ nuitee.date_entree.strftime('%d/%m/%Y') if nuitee.date_entree else 'N/A' }}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="info-item">
+                            <div class="info-icon">
+                                <i class="far fa-calendar-times"></i>
+                            </div>
+                            <div class="info-content">
+                                <div class="info-label">Date de sortie</div>
+                                <div class="info-value">
+                                    {{ nuitee.date_sortie.strftime('%d/%m/%Y') if nuitee.date_sortie else 'N/A' }}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="info-item">
+                            <div class="info-icon">
+                                <i class="far fa-moon"></i>
+                            </div>
+                            <div class="info-content">
+                                <div class="info-label">Nombre de Nuitées</div>
+                                <div class="info-value">{{ nuitee.nombre_nuitees|default(0) }} nuit(s)</div>
+                            </div>
+                        </div>
+
+                        <div class="info-item">
+                            <div class="info-icon">
+                                <i class="fas fa-dollar-sign"></i>
+                            </div>
+                            <div class="info-content">
+                                <div class="info-label">Prix unitaire</div>
+                                <div class="info-value">{{ (nuitee.prix_unitaire|default(0))|round(2) }} DA
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="info-item">
+                            <div class="info-icon">
+                                <i class="fas fa-money-bill-wave"></i>
+                            </div>
+                            <div class="info-content">
+                                <div class="info-label">Prix de cette hospitalisation</div>
+                                <div class="info-value text-primary">
+                                    <strong>{{ (nuitee.prix_total|default(0))|round(2) }} DA</strong>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {% if nuitee.nuit_pre_op_gratuite %}
+                    <div style="background: linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(5, 150, 105, 0.1));
+                    border-left: 4px solid var(--success);
+                    padding: 1rem;
+                    border-radius: var(--radius);
+                    margin-top: 1.5rem;">
+                        <div style="display: flex; align-items: center; gap: 1rem;">
+                            <i class="fas fa-gift" style="color: var(--success); font-size: 2rem;"></i>
+                            <div>
+                                <strong style="color: var(--success);">Nuit pré-opératoire gratuite
+                                    accordée</strong>
+                                <p style="margin: 0.5rem 0 0 0; color: var(--gray-600); font-size: 0.9rem;">
+                                    Cette hospitalisation bénéficie d'une nuitée pré-opératoire gratuite
+                                    (chambre standard uniquement)
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+                {% endfor %}
+
+                {% if dossier.forfait_id and dossier.forfait_nbr_nuit and dossier.forfait_nbr_nuit > 0 %}
+                <div class="summary-panel"
+                    style="background: linear-gradient(135deg, rgba(245, 158, 11, 0.08), rgba(217, 119, 6, 0.08)); border-color: var(--warning);">
+                    <strong><i class="fas fa-info-circle"></i> Information sur le forfait :</strong>
+                    <p class="mt-2 mb-0">
+                        Les {{ dossier.forfait_nbr_nuit }} nuitées incluses dans le forfait correspondent à
+                        des
+                        <strong>chambres standard</strong>. Pour les chambres non-standard, la différence de
+                        prix
+                        est facturée automatiquement.
+                    </p>
+                </div>
+                {% endif %}
+                {% else %}
+                <div class="empty-state">
+                    <i class="fas fa-inbox"></i>
+                    <p>Aucune hospitalisation enregistrée</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- SECTION 5: Explorations médicales -->
+        <div id="section-explorations" class="section-content">
+            <div class="modern-card">
+                <div class="card-header-modern">
+                    <div class="card-icon warning">
+                        <i class="fas fa-clipboard-list"></i>
+                    </div>
+                    <h3 class="card-title-modern">Explorations médicales</h3>
+                </div>
+
+                {% if explorations and explorations|length > 0 %}
+                <div class="modern-table-wrapper">
+                    <table class="modern-table">
+                        <thead>
+                            <tr>
+                                <th>Type</th>
+                                <th>Nom de l'exploration</th>
+                                <th class="text-center">Date</th>
+                                <th class="text-end">Prix</th>
+                                <th>Observations</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for exploration in explorations %}
+                            <tr>
+                                <td>
+                                    {% if exploration.type_exploration == 'IMAGERIE' %}
+                                    <span class="badge-modern badge-primary">
+                                        <i class="fas fa-camera"></i> Imagerie
+                                    </span>
+                                    {% elif exploration.type_exploration == 'LABORATOIRE' %}
+                                    <span class="badge-modern badge-success">
+                                        <i class="fas fa-tint"></i> Laboratoire
+                                    </span>
+                                    {% else %}
+                                    <span class="badge-modern badge-warning">
+                                        <i class="fas fa-clipboard-list"></i> Autre
+                                    </span>
+                                    {% endif %}
+                                </td>
+                                <td><strong>{{ exploration.nom_exploration|default('N/A', true) }}</strong></td>
+                                <td class="text-center">
+                                    <span class="badge badge-info">
+                                        {{ exploration.date_exploration.strftime('%d/%m/%Y') if
+                                        exploration.date_exploration else 'N/A' }}
+                                    </span>
+                                </td>
+                                <td class="text-end">
+                                    <strong style="color: var(--primary);">
+                                        {{ (exploration.prix|default(0)) }} DA
+                                    </strong>
+                                </td>
+                                <td>
+                                    <small class="text-muted">
+                                        {{ exploration.observations|default('', true)|truncate(50) }}
+                                    </small>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                        <tfoot class="table-light">
+                            <tr>
+                                <td colspan="3" class="text-end"><strong>Total explorations:</strong></td>
+                                <td class="text-end">
+                                    <strong class="text-primary">
+                                        {% set total_explorations = explorations|sum(attribute='prix')|default(0) %}
+                                        {{ (total_explorations) }} DA
+                                    </strong>
+                                </td>
+                                <td></td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+                {% else %}
+                <div class="empty-state">
+                    <i class="fas fa-inbox"></i>
+                    <p>Aucune exploration enregistrée</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- SECTION : ANESTHÉSIE -->
+        <div id="section-anesthesie" class="section-content">
+            <div class="modern-card">
+                <div class="card-header-modern">
+                    <div class="card-icon success">
+                        <i class="fas fa-heart-pulse"></i>
+                    </div>
+                    <h3 class="card-title-modern">Anesthésie</h3>
+                </div>
+
+                {% if actes_anesthesie_groupes %}
+                {% for acte_data in actes_anesthesie_groupes.values() %}
+                <div class="modern-card mb-3"
+                    style="border-left: 4px solid var(--success); background: var(--gray-50);">
+
+                    <!-- En-tête de l'acte avec tarif forfaitaire -->
+                    <div style="background: linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(5, 150, 105, 0.1));
+                                            padding: 1.5rem; border-radius: var(--radius); margin-bottom: 1.5rem;
+                                            border: 2px solid rgba(16, 185, 129, 0.3);">
+                        <div class="row align-items-center">
+                            <div class="col-md-6">
+                                <h5 class="mb-2" style="color: var(--success); font-weight: 800;">
+                                    <i class="fas fa-heartbeat"></i>
+                                    {{ acte_data.nom_acte }}
+                                </h5>
+                                <p class="mb-0" style="color: var(--gray-600); font-size: 0.95rem;">
+                                    <i class="fas fa-stopwatch"></i>
+                                    Durée réelle: <strong>{{ acte_data.duree_reelle }} minutes</strong>
+                                </p>
+                            </div>
+                            <div class="col-md-6 text-end">
+                                <div style="font-size: 0.875rem; color: var(--gray-600); margin-bottom: 0.5rem;">
+                                    <i class="fas fa-file-invoice-dollar"></i>
+                                    Tarif forfaitaire (facturé au patient)
+                                </div>
+                                <div style="font-size: 2rem; font-weight: 800; color: var(--success);">
+                                    {{ acte_data.tarif_forfaitaire|round(2) }} DA
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Intervenants avec honoraires -->
+                    <div class="section-header" style="margin-bottom: 1.5rem;">
+                        <div class="section-icon" style="background: var(--info);">
+                            <i class="fas fa-users"></i>
+                        </div>
+                        <h4 class="section-title">Intervenants & Honoraires (comptabilité interne)</h4>
+                    </div>
+
+                    <div class="row">
+                        {% for intervenant in acte_data.intervenants %}
+                        <div class="col-md-6 mb-3">
+                            <div class="info-item" style="border-left: 3px solid var(--info);">
+                                <div class="info-icon" style="background: var(--info); color: white;">
+                                    <i class="fas fa-user-md"></i>
+                                </div>
+                                <div class="info-content">
+                                    <div class="info-label">{{ intervenant.type }}</div>
+                                    <div class="info-value mb-2">{{ intervenant.nom }}</div>
+                                    <div>
+                                        <span class="badge-modern badge-info">
+                                            <i class="fas fa-coins"></i>
+                                            Honoraires: {{ intervenant.honoraires|round(2) }} DA
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+
+                    <!-- Note explicative -->
+                    <div style="background: rgba(245, 158, 11, 0.08); border-left: 4px solid var(--warning);
+                                            padding: 1rem; border-radius: var(--radius); margin-top: 1.5rem;">
+                        <p style="margin: 0; color: var(--gray-700); font-size: 0.9rem;">
+                            <i class="fas fa-info-circle" style="color: var(--warning);"></i>
+                            <strong>Note :</strong> Le tarif forfaitaire
+                            ({{ acte_data.tarif_forfaitaire|round(2) }} DA)
+                            est le montant <strong>facturé au patient</strong> et ajouté au total du
+                            dossier.
+                        </p>
+                    </div>
+                </div>
+                {% endfor %}
+                {% else %}
+                <div class="empty-state">
+                    <i class="fas fa-inbox"></i>
+                    <p>Aucun acte d'anesthésie enregistré</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- SECTION 6: Récapitulatif Financier -->
+        <div id="section-summary" class="section-content">
+            <div class="modern-card">
+                <div class="card-header-modern">
+                    <div class="card-icon success">
+                        <i class="fas fa-calculator"></i>
+                    </div>
+                    <h3 class="card-title-modern">Récapitulatif financier</h3>
+                </div>
+
+                <div class="summary-panel">
+                    <div class="summary-row">
+                        <span class="summary-label">
+                            <i class="fas fa-building"></i>
+                            Prix {{ 'forfait' if dossier.type_tarification == 'FORFAIT' else 'bloc' }} base
+                        </span>
+                        <span class="summary-value">{{ (dossier.prix_bloc|default(0))|round(2) }} DA</span>
+                    </div>
+
+                    <div class="summary-row">
+                        <span class="summary-label">
+                            <i class="far fa-clock"></i>
+                            Supplément durée
+                        </span>
+                        <span class="summary-value">{{ (dossier.prix_supplement_duree|default(0))|round(2) }} DA</span>
+                    </div>
+
+                    <div class="summary-row">
+                        <span class="summary-label">
+                            <i class="fa-solid fa-syringe"></i>
+                            Suppléments produits
+                        </span>
+                        <span class="summary-value">{{ (prix_produits_supplementaires|default(0))|round(2) }} DA</span>
+                    </div>
+
+                    <div class="summary-row">
+                        <span class="summary-label">
+                            <i class="fas fa-heartbeat"></i>
+                            Suppléments actes
+                        </span>
+                        <span class="summary-value">{{ (prix_actes_supplementaires|default(0))|round(2) }} DA</span>
+                    </div>
+
+                    <div class="summary-row">
+                        <span class="summary-label">
+                            <i class="fas fa-hospital"></i>
+                            Nuitées
+                        </span>
+                        <span class="summary-value">{{ (dossier.prix_nuitees|default(0))|round(2) }} DA</span>
+                    </div>
+
+                    <div class="summary-row">
+                        <span class="summary-label">
+                            <i class="fas fa-clipboard-list"></i>
+                            Explorations
+                        </span>
+                        <span class="summary-value">{{ (dossier.prix_explorations|default(0))|round(2) }} DA</span>
+                    </div>
+
+                    <!-- AJOUTER CETTE LIGNE -->
+                    <div class="summary-row">
+                        <span class="summary-label">
+                            <i class="fas fa-heart-pulse"></i>
+                            Anesthésie (tarif forfaitaire)
+                        </span>
+                        <span class="summary-value">{{ (prix_anesthesie|default(0))|round(2) }} DA</span>
+                    </div>
+
+                    <div class="summary-row total">
+                        <span class="summary-label" style="font-size: 1.5rem; font-weight: 800;">
+                            <i class="fas fa-dollar-sign"></i>
+                            TOTAL
+                        </span>
+                        <span class="summary-value summary-total">
+                            {{ (dossier.prix_total|default(0))|round(2) }} DA
+                        </span>
+                    </div>
+
+                    <div class="summary-row"
+                        style="background: rgba(59, 130, 246, 0.08); padding: 1.25rem; border-radius: var(--radius); margin-top: 1.5rem; border: 2px solid rgba(59, 130, 246, 0.2);">
+                        <span class="summary-label">
+                            <i class="fas fa-wallet"></i>
+                            Montant payé caisse
+                        </span>
+                        <span class="summary-value" style="color: var(--info);">
+                            {{ (dossier.montant_paye_caisse|default(0))|round(2) }} DA
+                        </span>
+                    </div>
+
+                    <div class="summary-row"
+                        style="background: {% if (dossier.difference_paiement|default(0)) < 0 %}rgba(239, 68, 68, 0.08){% elif (dossier.difference_paiement|default(0)) > 0 %}rgba(16, 185, 129, 0.08){% else %}rgba(107, 114, 128, 0.08){% endif %}; padding: 1.25rem; border-radius: var(--radius); border: 2px solid {% if (dossier.difference_paiement|default(0)) < 0 %}rgba(239, 68, 68, 0.3){% elif (dossier.difference_paiement|default(0)) > 0 %}rgba(16, 185, 129, 0.3){% else %}rgba(107, 114, 128, 0.3){% endif %};">
+                        <span class="summary-label" style="font-weight: 800;">
+                            <i class="fas fa-exchange-alt"></i>
+                            Différence
+                        </span>
+                        <span class="summary-value"
+                            style="color: {% if (dossier.difference_paiement|default(0)) < 0 %}var(--danger){% elif (dossier.difference_paiement|default(0)) > 0 %}var(--success){% else %}var(--gray-500){% endif %}; font-weight: 800;">
+                            {{ (dossier.difference_paiement|default(0))|round(2) }} DA
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SECTION 7: Observations -->
+        <div id="section-observations" class="section-content" {% if not dossier.observations %}style="display: none;"
+            {% endif %}>
+            {% if dossier.observations %}
+            <div class="modern-card">
+                <div class="card-header-modern">
+                    <div class="card-icon warning">
+                        <i class="far fa-comment-dots"></i>
+                    </div>
+                    <h3 class="card-title-modern">Observations</h3>
+                </div>
+                <div class="observations-box">
+                    <p style="margin: 0; white-space: pre-line;">{{ dossier.observations }}</p>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="action-buttons">
+            <a href="{{ url_for('location_bloc_list') }}" class="btn-modern btn-secondary-modern">
+                <i class="fas fa-arrow-left"></i>
+                <span>Retour à la liste</span>
+            </a>
+
+            <a href="{{ url_for('location_bloc_edit', id_dossier=dossier.id_dossier) }}"
+                class="btn-modern btn-warning-modern">
+                <i class="fas fa-edit"></i>
+                <span>Modifier le dossier</span>
+            </a>
+
+            <!-- Remplacez le bouton existant -->
+            <button type="button" class="btn-modern btn-primary-modern"
+                onclick="window.location.href='{{ url_for('location_bloc_pdf_download', id_dossier=dossier.id_dossier) }}'">
+                <i class="far fa-file-pdf"></i>
+                <span>Exporter en PDF</span>
+            </button>
+
+
+            <button type="button" class="btn-modern btn-danger-modern" data-bs-toggle="modal"
+                data-bs-target="#deleteModal" style="margin-left: auto;">
+                <i class="fas fa-trash-alt"></i>
+                <span>Supprimer</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div class="pdf-loading-overlay" id="pdfLoadingOverlay">
+        <div class="pdf-loading-content">
+            <div class="pdf-spinner"></div>
+            <h5 style="color: var(--dark); margin-bottom: 0.75rem; font-weight: 800;">Génération du PDF</h5>
+            <p style="color: var(--gray-500); margin-bottom: 1.5rem; font-size: 1rem;" id="pdfProgressMessage">
+                Préparation du document...
+            </p>
+            <div class="pdf-progress-bar">
+                <div class="pdf-progress-fill" id="pdfProgressFill"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Suppression -->
+    <div class="modal fade" id="deleteModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content"
+                style="border-radius: var(--radius-lg); border: none; box-shadow: var(--shadow-xl);">
+                <div class="modal-header"
+                    style="background: linear-gradient(135deg, var(--danger), var(--danger-dark)); color: white; border: none; padding: 2rem;">
+                    <h5 class="modal-title" style="font-weight: 800; font-size: 1.5rem;">
+                        <i class="fas fa-exclamation-triangle me-2"></i>Confirmer la suppression
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body" style="padding: 2.5rem;">
+                    <div class="text-center">
+                        <i class="fas fa-trash-alt" style="font-size: 5rem; color: var(--danger); opacity: 0.8;"></i>
+                        <h5 style="margin-top: 1.5rem; color: var(--dark); font-weight: 700; font-size: 1.25rem;">
+                            Supprimer définitivement ce dossier ?
+                        </h5>
+                        <p style="color: var(--gray-500); margin-top: 1rem; font-size: 1rem;">
+                            Dossier: <strong style="color: var(--dark);">#D-{{ "%05d"|format(dossier.id_dossier)
+                                }}</strong><br>
+                            Patient: <strong style="color: var(--dark);">{{ dossier.patient }}</strong>
+                        </p>
+                    </div>
+                    <div
+                        style="background: linear-gradient(135deg, rgba(239, 68, 68, 0.1), rgba(220, 38, 38, 0.1)); border-left: 4px solid var(--danger); padding: 1.5rem; border-radius: var(--radius); margin-top: 2rem;">
+                        <div style="display: flex; align-items: center; gap: 1rem;">
+                            <i class="fas fa-exclamation-triangle" style="color: var(--danger); font-size: 2rem;"></i>
+                            <div>
+                                <strong style="color: var(--danger); font-size: 1.125rem;">Action
+                                    irréversible</strong>
+                                <p style="margin: 0.5rem 0 0 0; color: var(--gray-600);">
+                                    Toutes les données seront définitivement supprimées.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer" style="border: none; padding: 1.5rem 2.5rem 2.5rem; gap: 1rem;">
+                    <button type="button" class="btn-modern btn-secondary-modern" data-bs-dismiss="modal"
+                        style="flex: 1;">
+                        <i class="far fa-times-circle"></i>
+                        <span>Annuler</span>
+                    </button>
+                    <form method="POST" action="{{ url_for('location_bloc_delete', id_dossier=dossier.id_dossier) }}"
+                        style="flex: 1;">
+                        <button type="submit" class="btn-modern btn-danger-modern" style="width: 100%;">
+                            <i class="fas fa-trash-alt"></i>
+                            <span>Confirmer</span>
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- ✅ AJOUTER LE MODAL HIS -->
+{{ his_selector.render_modal('modalPatientHistoryDirect') }}
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // ==================== NAVIGATION SECTIONS ====================
+    document.addEventListener('DOMContentLoaded', function () {
+        // Navigation buttons
+        const navLinks = document.querySelectorAll('.nav-link');
+        const sectionContents = document.querySelectorAll('.section-content');
+
+        navLinks.forEach(link => {
+            link.addEventListener('click', function () {
+                const targetSection = this.getAttribute('data-section');
+
+                // Update active nav link
+                navLinks.forEach(nav => nav.classList.remove('active'));
+                this.classList.add('active');
+
+                // Show target section
+                sectionContents.forEach(section => {
+                    section.classList.remove('active');
+                    if (section.id === `section-${targetSection}`) {
+                        section.classList.add('active');
+                    }
+                });
+
+                // Scroll to section
+                const targetElement = document.getElementById(`section-${targetSection}`);
+                if (targetElement) {
+                    window.scrollTo({
+                        top: targetElement.offsetTop - 100,
+                        behavior: 'smooth'
+                    });
+                }
+            });
+        });
+
+        // Auto-hide observations section if empty
+        const observationsSection = document.querySelector('[data-section="observations"]');
+        const observationsContent = document.getElementById('section-observations');
+        if (!observationsContent || observationsContent.innerHTML.trim() === '') {
+            if (observationsSection) observationsSection.style.display = 'none';
+        }
+
+        // Check URL hash for direct section access
+        const hash = window.location.hash.substring(1);
+        if (hash) {
+            const targetLink = document.querySelector(`.nav-link[data-section="${hash}"]`);
+            if (targetLink) {
+                targetLink.click();
+            }
+        }
+
+        // Smooth scroll for anchor links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const targetId = this.getAttribute('href').substring(1);
+                const targetElement = document.getElementById(targetId);
+                if (targetElement) {
+                    window.scrollTo({
+                        top: targetElement.offsetTop - 100,
+                        behavior: 'smooth'
+                    });
+                }
+            });
+        });
+
+        console.log("✅ Page de détail du dossier chargée avec succès");
+    });
+
+
+    // ==================== PRINT OPTIMIZATION ====================
+    window.addEventListener('beforeprint', function () {
+        // Hide navigation and action buttons when printing
+        document.querySelector('.sticky-top')?.classList.add('d-print-none');
+        document.querySelector('.action-buttons')?.classList.add('d-print-none');
+    });
+
+    window.addEventListener('afterprint', function () {
+        // Restore elements after printing
+        document.querySelector('.sticky-top')?.classList.remove('d-print-none');
+        document.querySelector('.action-buttons')?.classList.remove('d-print-none');
+    });
+    // ✅ Fonction globale pour afficher l'historique patient
+    window.showPatientHistoryDirect = function (patientOid) {
+        if (typeof PatientHistoryModal !== 'undefined' && PatientHistoryModal.show) {
+            PatientHistoryModal.show(patientOid);
+        } else {
+            console.error('PatientHistoryModal not loaded');
+        }
+    };
+</script>
+{% endblock %}

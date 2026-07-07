@@ -1,0 +1,426 @@
+{% extends "layout.html" %}
+{% block content %}
+<!-- FullCalendar CSS -->
+<link rel="stylesheet" href="{{ url_for('static', filename='css/fullcalendar.css') }}"/>
+
+<!-- FullCalendar JS -->
+<script src="{{ url_for('static', filename='js/fullcalendar.js') }}"></script>
+
+<div class="row text-center">
+    <button class="btn btn-primary" type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvasRight"
+            aria-controls="offcanvasRight">Filtres
+    </button>
+    <!-- Colonne droite pour le calendrier -->
+    <div>
+        <div id="calendar" style="margin-top: 20px; padding-bottom: 50px;"></div>
+    </div>
+    <div class="offcanvas offcanvas-end" tabindex="-1" id="offcanvasRight" aria-labelledby="offcanvasRightLabel" data-bs-backdrop="static">
+        <div class="offcanvas-header">
+            <h5 class="offcanvas-title" id="offcanvasRightLabel">Filtres</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+        </div>
+        <div class="offcanvas-body">
+        <form method="get" action="{{ url_for('planning') }}" id="filterForm">
+                    <!-- Filtre service -->
+                    <div class="mb-3">
+                        <label for="serviceFilter" class="form-label">Service :</label>
+                <select name="service" id="serviceFilter" class="form-select">
+                    <option value="all" {% if selected_service == 'all' %}selected{% endif %}>Tous les services</option>
+                            {% for service in services %}
+                        <option style="color: {{ service.color }};" value="{{ service['service_name'] }}"
+                            {% if selected_service == service['service_name'] %}selected{% endif %}>
+                            {{ service['service_name'] }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <!-- Filtre employé -->
+                    <div class="mb-3">
+                        <label for="employeeFilter" class="form-label">Employé :</label>
+                <select name="employee" id="employeeFilter" class="form-select">
+                    <option value="all" {% if selected_employee == 'all' %}selected{% endif %}>Tous les employés</option>
+                            {% for employee in employees %}
+                        <option value="{{ employee['full_name'] }}" {% if selected_employee == employee['full_name'] %}selected{% endif %}>
+                            {{ employee['full_name'] }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <!-- Filtre shift -->
+                    <div class="mb-3">
+                        <label for="shiftFilter" class="form-label">Shift :</label>
+                <select name="shift" id="shiftFilter" class="form-select">
+                    <option value="all" {% if selected_shift == 'all' %}selected{% endif %}>Tous les shifts</option>
+                    <option value="day" {% if selected_shift == 'day' %}selected{% endif %}>Jour</option>
+                    <option value="night" {% if selected_shift == 'night' %}selected{% endif %}>Nuit</option>
+                    <option value="24H" {% if selected_shift == '24H' %}selected{% endif %}>24H</option>
+                        </select>
+                    </div>
+
+                    <!-- Filtre date de début -->
+                    <div class="mb-3">
+                        <label for="startDate" class="form-label">Date de début :</label>
+                        <input type="date" name="start_date" id="startDate" class="form-control"
+                       value="{{ selected_start_date if selected_start_date else '' }}">
+                    </div>
+
+                    <!-- Filtre date de fin -->
+                    <div class="mb-3">
+                        <label for="endDate" class="form-label">Date de fin :</label>
+                        <input type="date" name="end_date" id="endDate" class="form-control"
+                       value="{{ selected_end_date if selected_end_date else '' }}">
+                    </div>
+                        <!-- Bouton de validation -->
+            <div class="mb-3">
+                <button type="submit" class="btn btn-primary w-100">Sélectionner</button>
+            </div>
+                </form>
+        </div>
+    </div>
+
+</div>
+
+{% if 'CREER_PLANNING' in session.privileges %}
+
+<!-- Modal pour ajouter un shift -->
+<div class="modal fade" id="addShiftModal" tabindex="-1" aria-labelledby="addShiftModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Ajouter un shift</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form action="{{ url_for('save_planning',
+                          service=selected_service,
+                          employee=selected_employee,
+                          shift=selected_shift,
+                          start_date=selected_start_date,
+                          end_date=selected_end_date) }}"
+                  method="post">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="date" class="form-label">Date :</label>
+                        <input type="date" name="date" id="date" class="form-control" required>
+                    </div>
+                    <input type="hidden" name="service" value="{{ selected_service }}">
+                    <input type="hidden" name="employee" value="{{ selected_employee }}">
+                    <input type="hidden" name="shift" value="{{ selected_shift }}">
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                    <button type="submit" class="btn btn-primary">Enregistrer</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal d'avertissement -->
+<div class="modal fade" id="warningModal" tabindex="-1" aria-labelledby="warningModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered"> <!-- Ajout de la classe "modal-dialog-centered" ici -->
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="warningModalLabel">Sélection Incomplète</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Veuillez sélectionner un service, un employé et un shift avant de continuer.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fermer</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endif %}
+
+
+{% if 'MODIFIER_PLANNING' in session.privileges %}
+<!-- Formulaire pour la mise à jour d'un événement -->
+<form id="updateEventForm" action="/update-event" method="POST" style="display:none;">
+    <!-- Champs obligatoires pour la mise à jour -->
+    <input type="hidden" id="eventId" name="event_id">
+    <input type="hidden" id="eventStart" name="start">
+
+    <!-- Champs pour les filtres existants -->
+    <input type="hidden" name="service" value="{{ selected_service }}">
+    <input type="hidden" name="employee" value="{{ selected_employee }}">
+    <input type="hidden" name="shift" value="{{ selected_shift }}">
+    <input type="hidden" name="start_date" value="{{ selected_start_date }}">
+    <input type="hidden" name="end_date" value="{{ selected_end_date }}">
+
+    <!-- Bouton de soumission -->
+    <button type="submit">Mise à jour</button>
+</form>
+
+{% endif %}
+
+
+{% if 'SUPPRIMER_PLANNING' in session.privileges %}
+
+<!-- Modal de confirmation de suppression -->
+<div class="modal fade" id="deleteEventModal" tabindex="-1" aria-labelledby="deleteEventModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered"> <!-- Ajout de la classe "modal-dialog-centered" ici -->
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteEventModalLabel">Confirmation de suppression</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                Êtes-vous sûr de vouloir supprimer cet événement ?
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                <button type="button" class="btn btn-danger" id="confirmDeleteBtn">Supprimer</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+
+<script>
+    document.addEventListener('DOMContentLoaded',
+    function () {
+        const calendarEl = document.getElementById('calendar');
+
+        if (!calendarEl) {
+            console.error('Élément avec id="calendar" introuvable.');
+            return;
+        }
+
+        // Récupération des événements depuis Flask
+        const events = {{ events | tojson | safe }};
+        console.log(events); // Vérifiez les données dans la console
+
+        const selectedEmployee = "{{ selected_employee }}";
+        const selectedService = "{{ selected_service }}";
+        const selectedShift = "{{ selected_shift }}";
+
+        // Initialisation du calendrier FullCalendar
+        const calendar = new FullCalendar.Calendar(
+        calendarEl, {
+    initialDate: "{{ selected_start_date }}", // La date passée depuis Flask via Jinja2
+    <!--  dayMaxEventRows: true,
+
+    locale: 'fr',
+    themeSystem: 'bootstrap5',
+    initialView: 'dayGridMonth',
+    headerToolbar: {
+    left: 'prev,next today myCustomButton',
+    center: 'title', // Calendar title in the center
+    right: 'dayGridMonth,timeGridWeek,timeGridDay,list',},
+    eventDisplay: 'block', // Affiche les événements comme des blocs (pas des points)
+
+    editable: true,
+    weekends: true,
+    nowIndicator: true,
+
+    buttonText: {
+    today: "Aujourd'hui",
+    month: "Mois",
+    week: "Semaine",
+    day: "Jour",
+    list: "Liste"
+    },
+
+    events: events.map(event => {
+    // Détecter si un événement dure plusieurs jours
+    const isMultiDay = event.start && event.end && new Date(event.end) > new Date(event.start);
+
+    return {
+    ...event,
+    color: event.color || '#007bff', // Couleur par défaut
+    textColor: '#ffffff',           // Couleur du texte
+    editable: !event.passive,       // Contrôle de l'éditabilité
+    classNames: isMultiDay ? ['multi-day-event'] : ['single-day-event'], // Classes dynamiques
+    };
+    }),
+
+    {% if 'EXPORTER_PLANNING' in session.privileges %}
+
+    // Custom Buttons for downloading the planning
+
+    customButtons: {
+    myCustomButton: {
+    text: 'Télécharger le Planning',
+    click: function () {
+    // Récupérer les valeurs des filtres
+    const filters = ['serviceFilter', 'employeeFilter', 'shiftFilter', 'startDate', 'endDate']
+        .reduce((acc, id) => {
+    const el = document.getElementById(id);
+    acc[id] = el ? el.value : '';
+    return acc;
+    }, {});
+
+    const { serviceFilter, employeeFilter, shiftFilter, startDate, endDate } = filters;
+
+    // Générer l'URL dynamiquement avec les paramètres
+    const url = `{{ url_for('print_planning') }}?service=${serviceFilter}&employee=${employeeFilter}&shift=${shiftFilter}&start_date=${startDate}&end_date=${endDate}`;
+
+    // Redirection vers l'URL pour télécharger le planning
+    window.location.href = url;
+    }
+    }
+    },
+    {% endif %}
+
+    // Handling Event Click (Open Modal)
+    eventClick: function (info) {
+    // Ouvrir le modal de confirmation de suppression
+    openDeleteModal(info.event.id); // Passer l'ID de l'événement au modal
+    },
+
+    // Handling Date Clicks
+    dateClick: function (info) {
+    if (selectedService === "all" || selectedShift === "all" || selectedEmployee === "all") {
+    openWarningModal();  // Ouvrir le modal d'avertissement
+    } else {
+    openModal(info.dateStr);  // Ouvrir le modal normal
+    }
+    },
+
+
+    // Handling Event Drag and Drop (Updating Event)
+    eventDrop: function (info) {
+    const eventId = info.event.id;
+    const newDate = info.event.start?.toISOString().slice(0, 10); // Format YYYY-MM-DD
+
+    if (!eventId || !newDate) {
+    console.error("L'ID de l'événement ou la date ne sont pas définis.");
+    return;
+    }
+
+    // Mise à jour des champs du formulaire
+    const updateForm = document.getElementById('updateEventForm');
+    if (updateForm) {
+    updateForm.querySelector('#eventId').value = eventId;
+    updateForm.querySelector('#eventStart').value = newDate;
+    updateForm.submit();
+    } else {
+    console.error('Formulaire de mise à jour introuvable.');
+    }
+    },
+
+    // Styling Specific Days
+    dayCellDidMount: function (info) {
+    const day = info.date.getDay();
+    if (day === 5 || day === 6) { // Vendredi, Samedi
+    info.el.classList.add('week-end-style');
+    }
+    }
+    });
+
+    // Render the Calendar
+    calendar.render();
+
+    // Fonction pour ouvrir le modal de suppression
+    function openDeleteModal(eventId) {
+    const modalEl = document.getElementById('deleteEventModal');
+    if (modalEl) {
+    const modal = new bootstrap.Modal(modalEl);
+    modal.show();
+
+    // Gestion de la suppression au clic sur "Supprimer"
+    const confirmDeleteBtn = document.getElementById('confirmDeleteBtn');
+    confirmDeleteBtn.onclick = function () {
+    // Supprimer l'événement via une requête AJAX
+    fetch(`/delete-event/${eventId}`, {
+    method: 'DELETE',
+    }).then(response => {
+    if (response.ok) {
+    // Fermer le modal
+    modal.hide();
+    // Recharger la page ou mettre à jour l'interface
+    window.location.reload();
+    } else {
+    console.error('Erreur lors de la suppression de l\'événement.');
+    }
+    });
+    };
+    } else {
+    console.error('Modal de suppression introuvable.');
+    }
+    }
+
+    // Fonction pour ouvrir le modal d'ajout
+    function openModal(date) {
+    const dateInput = document.getElementById('date');
+    if (dateInput) {
+    dateInput.value = date;
+    } else {
+    console.error('Champ "date" introuvable dans le formulaire.');
+    }
+
+    const modalEl = document.getElementById('addShiftModal');
+    if (modalEl) {
+    const modal = new bootstrap.Modal(modalEl);
+    modal.show();
+    } else {
+    console.error('Modal avec id="addShiftModal" introuvable.');
+    }
+    }
+
+    // Fonction pour ouvrir le modal d'avertissement
+    function openWarningModal() {
+    const modalEl = document.getElementById('warningModal');
+    if (modalEl) {
+    const modal = new bootstrap.Modal(modalEl);
+    modal.show();
+    } else {
+    console.error('Modal d\'avertissement introuvable.');
+    }
+    }
+
+    });
+</script>
+
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const startDateInput = document.getElementById("startDate");
+        const endDateInput = document.getElementById("endDate");
+
+        // Obtenir la date actuelle
+        const today = new Date();
+
+        // Fonction pour mettre à jour la date de fin si elle est inférieure à la date de début
+        function updateEndDateIfInvalid() {
+            const startDate = new Date(startDateInput.value);
+            const endDate = new Date(endDateInput.value);
+
+            // Si la date de fin est avant la date de début, on réajuste
+            if (endDate < startDate) {
+                endDateInput.value = startDate.toISOString().split('T')[0]; // Remettre la date de fin égale à la date de début
+            }
+        }
+
+        // Fonction pour mettre à jour la date de début si elle est après la date de fin
+        function updateStartDateIfInvalid() {
+            const startDate = new Date(startDateInput.value);
+            const endDate = new Date(endDateInput.value);
+
+            // Si la date de début est après la date de fin, on réajuste
+            if (startDate > endDate) {
+                startDateInput.value = endDate.toISOString().split('T')[0]; // Remettre la date de début égale à la date de fin
+            }
+        }
+
+        // Ajouter des écouteurs d'événements pour chaque champ de date
+        startDateInput.addEventListener('change', function () {
+            updateEndDateIfInvalid();
+        });
+
+        endDateInput.addEventListener('change', function () {
+            updateStartDateIfInvalid();
+        });
+
+        // Valider les dates initialement après le chargement de la page
+        updateEndDateIfInvalid();
+        updateStartDateIfInvalid();
+    });
+</script>
+{% endblock %}

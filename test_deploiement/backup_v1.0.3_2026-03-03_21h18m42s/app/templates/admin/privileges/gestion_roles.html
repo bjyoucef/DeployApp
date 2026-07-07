@@ -1,0 +1,221 @@
+{% extends "admin/admin_layout.html" %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- En-tête avec bouton d'ajout -->
+    <div class="row mb-4 align-items-center">
+        <div class="col-md-6">
+            <h2 class="mb-0">
+                <i class="bi bi-shield-lock me-2"></i>Gestion des Rôles
+            </h2>
+            </div>
+        <div class="col-md-6 text-end">
+            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#ajouterRoleModal">
+                <i class="bi bi-plus-circle me-2"></i>Ajouter un Rôle
+            </button>
+                    </div>
+                    </div>
+
+    <!-- Barre de recherche -->
+    <div class="row mb-3">
+        <div class="col-md-6">
+            <div class="input-group">
+                <span class="input-group-text"><i class="bi bi-search"></i></span>
+                <input type="text" id="searchRole" class="form-control" placeholder="Rechercher un rôle...">
+            </div>
+        </div>
+        <div class="col-md-6 text-end">
+            <span class="badge bg-info fs-6">Total: <span id="roleCount">{{ roles|length }}</span></span>
+    </div>
+</div>
+
+    <!-- Tableau des rôles -->
+    <div class="shadow-sm">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle" id="rolesTable">
+                    <thead class="table-light">
+        <tr>
+                            <th style="width: 10%">ID</th>
+                            <th style="width: 40%">Nom du Rôle</th>
+                            <th style="width: 20%" class="text-center">Privilèges</th>
+                            <th style="width: 30%" class="text-center">Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for role in roles %}
+                        <tr data-role-name="{{ role.nom_role|lower }}">
+                            <td><span class="badge bg-secondary">{{ role.id_role }}</span></td>
+            <td>
+                                <strong>{{ role.nom_role }}</strong>
+                            </td>
+                            <td class="text-center">
+                                <span class="badge bg-info">
+                                    <i class="bi bi-key me-1"></i>{{ role.privilege_count }}
+                                </span>
+                            </td>
+                            <td class="text-center">
+                                <div class="btn-group" role="group">
+                                    <a href="{{ url_for('gestion_privileges_role', id_role=role.id_role) }}"
+                                            class="btn btn-sm btn-outline-primary"
+                                            title="Gérer les privilèges">
+                                        <i class="bi bi-key"></i> Privilèges
+                                    </a>
+                                    <button type="button"
+                                            class="btn btn-sm btn-outline-secondary"
+                                            data-bs-toggle="modal"
+                                            data-bs-target="#modifierRoleModal{{ role.id_role }}"
+                                            title="Modifier le rôle">
+                                        <i class="bi bi-pencil"></i>
+                </button>
+                                    <button type="button"
+                                            class="btn btn-sm btn-outline-danger"
+                                            onclick="confirmDeleteRole({{ role.id_role }}, '{{ role.nom_role }}')"
+                                            title="Supprimer le rôle">
+                                        <i class="bi bi-trash"></i>
+                </button>
+                                </div>
+            </td>
+        </tr>
+
+        <!-- Modal pour modifier un rôle -->
+                        <div class="modal fade" id="modifierRoleModal{{ role.id_role }}" tabindex="-1" aria-hidden="true">
+                            <div class="modal-dialog">
+                <div class="modal-content">
+                                    <div class="modal-header bg-secondary text-white">
+                                        <h5 class="modal-title">
+                                            <i class="bi bi-pencil me-2"></i>Modifier le Rôle
+                                        </h5>
+                                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                                        <form method="POST" action="{{ url_for('modifier_role', id_role=role.id_role) }}">
+                            <div class="mb-3">
+                                                <label for="nom_role_{{ role.id_role }}" class="form-label">
+                                                    Nom du rôle <span class="text-danger">*</span>
+                                                </label>
+                                <input type="text" id="nom_role_{{ role.id_role }}" name="nom_role" class="form-control" value="{{ role.nom_role }}" required>
+                            </div>
+                                            <div class="modal-footer px-0">
+                                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                                                    Annuler
+                                                </button>
+                                                <button type="submit" class="btn btn-primary">
+                                                    <i class="bi bi-check-circle me-1"></i>Enregistrer
+                                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </tbody>
+</table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal pour ajouter un rôle -->
+<div class="modal fade" id="ajouterRoleModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title">
+                    <i class="bi bi-plus-circle me-2"></i>Ajouter un Rôle
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form method="POST" action="/roles">
+                    <div class="mb-3">
+                        <label for="nom_role" class="form-label">
+                            Nom du rôle <span class="text-danger">*</span>
+                        </label>
+                        <input type="text"
+                               id="nom_role"
+                               name="nom_role"
+                               class="form-control"
+                               placeholder="Ex: ADMINISTRATEUR"
+                               required>
+                        <div class="form-text">Le nom sera automatiquement converti en majuscules</div>
+                    </div>
+                    <div class="modal-footer px-0">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                            Annuler
+                        </button>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-check-circle me-1"></i>Ajouter
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Recherche dans le tableau des rôles
+document.getElementById('searchRole')?.addEventListener('input', function() {
+    const term = this.value.toLowerCase();
+    const rows = document.querySelectorAll('#rolesTable tbody tr');
+    let visibleCount = 0;
+
+    rows.forEach(row => {
+        const roleName = row.getAttribute('data-role-name');
+        if (roleName.includes(term)) {
+            row.style.display = '';
+            visibleCount++;
+        } else {
+            row.style.display = 'none';
+        }
+    });
+
+    document.getElementById('roleCount').textContent = visibleCount;
+});
+
+// Confirmation de suppression
+function confirmDeleteRole(idRole, nomRole) {
+    if (confirm(`Êtes-vous sûr de vouloir supprimer le rôle "${nomRole}" ?\n\nCette action est irréversible.`)) {
+        window.location.href = `/roles/supprimer/${idRole}`;
+    }
+}
+
+// Notification
+function showNotification(message, type = 'success') {
+    Toastify({
+        text: message,
+        duration: 5000,
+        gravity: "bottom",
+        position: "right",
+        style: {
+            background: type === 'success'
+                ? "linear-gradient(to right, #00b09b, #96c93d)"
+                : "linear-gradient(to right, #f85032, #e73827)",
+            borderRadius: "20px",
+        },
+        close: true,
+    }).showToast();
+}
+
+    // Messages flash
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                showNotification('{{ message }}', '{{ "success" if category == "success" else "error" }}');
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+</script>
+
+<style>
+.table tbody tr:hover {
+    background-color: #f8f9fa;
+}
+
+.badge {
+    font-weight: 500;
+}
+</style>
+{% endblock %}

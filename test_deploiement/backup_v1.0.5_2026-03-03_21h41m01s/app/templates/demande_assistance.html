@@ -1,0 +1,116 @@
+{%extends "layout.html"%}
+{% block content%}
+<div class="services" id="services">
+    <div class="container">
+        <div class="row">
+            {% set services = [
+            {'title': 'Assistance Informatiques', 'description': 'Vous rencontrez des problèmes avec votre ordinateur,
+            votre réseau ou vos logiciels ?', 'icon': 'static/images/service-01.png', 'modal': 'assistanceInformatiqueModal'},
+
+            {'title': 'Demande d\'Approvisionnement', 'description': 'Besoin de matériel ou de fournitures
+            supplémentaires ?', 'icon': 'static/images/service-02.png', 'modal':
+            'demandeApprovisionnementModal'},
+
+            {'title': 'Assistance Technique', 'description': 'Que ce soit pour des équipements défectueux ou toute autre difficulté technique.', 'icon': 'static/images/service-03.png', 'modal':
+            'assistanceTechniqueModal'}
+            ] %}
+
+            {% for service in services %}
+            <div class="col-lg-4 col-md-6">
+                <div class="service-item">
+                    <div class="icon">
+                        <img src="{{ service.icon }}" alt="{{ service.title }}">
+                    </div>
+                    <div class="main-content">
+                        <h4>{{ service.title }}</h4>
+                        <p>{{ service.description }}</p>
+                        <div class="main-button">
+                            <a href="#" class="btn btn-primary w-100" data-bs-toggle="modal"
+                               data-bs-target="#{{ service.modal }}">
+                                {{ service.title }}
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+{% macro render_modal(modal_id, title, action_route, index) %}
+<div class="modal fade" id="{{ modal_id }}" tabindex="-1" aria-labelledby="{{ modal_id }}Label" aria-hidden="true"
+data-bs-backdrop="static" data-bs-keyboard="false">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="{{ modal_id }}Label">{{ title }}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"
+                        aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form method="post" enctype="multipart/form-data" action="{{ url_for(action_route) }}">
+                    <div class="mb-3">
+                        {% if user['username'] %}
+                        <input type="hidden" name="name" value="{{ user['username'] }}"/>
+                        {% else %}
+                        <input id="nameN" class="form-control" type="text" name="name"
+                               placeholder="Nom"/>
+                        {% endif %}
+                    </div>
+                    <div class="mb-3">
+                        <textarea id="demande_details" class="form-control" name="demande_details"
+                                  placeholder="Décrivez les détails de la demande..." rows="7"></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <input type="file" class="form-control shadow-sm" id="file" name="file_upload" multiple
+                               onchange="validateFileCount(this)">
+                        <small class="text-muted">Vous pouvez télécharger jusqu'à 10 fichiers.</small>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Enregistrement vocal</label>
+                        <button type="button" class="btn btn-secondary shadow-sm" id="recordAudio{{ index }}">🎤
+                            Enregistrer
+                        </button>
+                        <audio controls id="audioPlayback{{ index }}" style="display:none;" class="mt-2 w-100"></audio>
+                        <input type="hidden" id="audioData{{ index }}" name="audioData">
+                    </div>
+                    <div>
+                        <button class="btn btn-primary d-block w-100" type="submit">📨 Soumettre</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endmacro %}
+
+{{ render_modal('assistanceInformatiqueModal', "Demande d'Assistance Informatique", 'envoyer_demandeIt', 1) }}
+{{ render_modal('assistanceTechniqueModal', "Demande d'Assistance Technique", 'envoyer_demandeTech', 2) }}
+{{ render_modal('demandeApprovisionnementModal', "Demande d'Approvisionnement", 'envoyer_demandeAppro', 3) }}
+
+<script>
+    document.getElementById("file").addEventListener("change", function(event) {
+    const fileInput = event.target;
+    const files = fileInput.files;
+    const formData = new FormData();
+    const progressBar = document.getElementById("progressBar");
+    const uploadProgress = document.getElementById("uploadProgress");
+
+    if (files.length === 0) {
+        return;
+    }
+
+    // Disable the submit button while uploading
+    uploadProgress.style.display = "block";  // Show progress bar
+
+    // Append files to form data
+    for (let i = 0; i < files.length; i++) {
+        formData.append("file_upload[]", files[i]);
+    }
+
+    const xhr = new XMLHttpRequest();
+
+});
+</script>
+{% endblock content %}

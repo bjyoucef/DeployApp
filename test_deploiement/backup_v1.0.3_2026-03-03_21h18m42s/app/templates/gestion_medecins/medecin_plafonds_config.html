@@ -1,0 +1,713 @@
+{% extends "layout.html" %}
+
+{% block title %}Plafonds Consommables Médecins{% endblock %}
+
+{% block style %}
+<style>
+    /* -------------------------------------------------------------------------- */
+    /*                                CORE LAYOUT                                 */
+    /* -------------------------------------------------------------------------- */
+    :root {
+        --grid-gap: 1.25rem;
+        --card-radius: 12px;
+        --transition-speed: 0.2s;
+    }
+
+    .plafond-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        gap: var(--grid-gap);
+        padding-bottom: 5rem;
+        /* Space for floating bar */
+    }
+
+    /* -------------------------------------------------------------------------- */
+    /*                                PRODUCT CARD                                */
+    /* -------------------------------------------------------------------------- */
+    .product-card {
+        background: var(--bg-card, #ffffff);
+        border: 1px solid var(--border-color, #e2e8f0);
+        border-radius: var(--card-radius);
+        padding: 1rem;
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+        position: relative;
+        transition: all var(--transition-speed) ease;
+        height: 100%;
+        overflow: hidden;
+    }
+
+    .product-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        border-color: #b794f4;
+        /* Light violet */
+    }
+
+    /* Active State (Selection or Value Set) */
+    .product-card.active {
+        border-color: var(--primary-color);
+        background: linear-gradient(135deg,
+                var(--bg-card) 0%,
+                rgba(69, 10, 84, 0.05) 100%);
+        box-shadow: 0 0 0 1px var(--primary-color);
+    }
+
+    [data-theme="dark"] .product-card.active {
+        background: linear-gradient(135deg,
+                var(--bg-card) 0%,
+                rgba(168, 85, 247, 0.1) 100%);
+    }
+
+    /* Card Header with Checkbox */
+    .card-header-custom {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 0.5rem;
+    }
+
+    .form-check-input.product-checkbox {
+        width: 1.2em;
+        height: 1.2em;
+        cursor: pointer;
+        border-color: #cbd5e0;
+        transition: background-color 0.2s, border-color 0.2s;
+    }
+
+    .form-check-input.product-checkbox:checked {
+        background-color: var(--primary-color);
+        border-color: var(--primary-color);
+    }
+
+    /* Product Info */
+    .product-name {
+        font-weight: 600;
+        color: var(--text-main);
+        line-height: 1.4;
+        font-size: 0.95rem;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+        min-height: 2.8em;
+        /* Ensure consistent height for 2 lines */
+    }
+
+    .product-price {
+        font-size: 0.85rem;
+        color: var(--text-secondary, #718096);
+        background: var(--bg-body, #f7fafc);
+        padding: 0.25rem 0.6rem;
+        border-radius: 6px;
+        display: inline-block;
+        font-family: 'Courier New', monospace;
+        font-weight: 700;
+    }
+
+    /* Input Field */
+    .qty-input-wrapper {
+        position: relative;
+    }
+
+    .qty-input-wrapper::after {
+        content: 'U';
+        position: absolute;
+        right: 12px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: var(--text-secondary);
+        font-size: 0.8rem;
+        pointer-events: none;
+        opacity: 0.6;
+    }
+
+    .qty-input {
+        text-align: center;
+        font-weight: 700;
+        color: var(--primary-color);
+        border: 1px solid var(--border-color);
+        background: var(--bg-body);
+        transition: all 0.2s;
+        border-radius: 8px;
+        padding-right: 1.5rem;
+        /* Space for unit */
+    }
+
+    .qty-input:focus {
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 3px rgba(69, 10, 84, 0.15);
+        background: var(--bg-card);
+    }
+
+    .qty-input::placeholder {
+        color: #cbd5e0;
+        font-weight: 400;
+    }
+
+    /* -------------------------------------------------------------------------- */
+    /*                             BULK ACTIONS BAR                               */
+    /* -------------------------------------------------------------------------- */
+    .bulk-actions-bar {
+        position: fixed;
+        bottom: 2rem;
+        left: 50%;
+        transform: translate(-50%, 150%);
+        /* Hidden by default */
+        width: 90%;
+        max-width: 800px;
+
+        /* Glassmorphism */
+        background: rgba(255, 255, 255, 0.85);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+
+        border-radius: 16px;
+        padding: 1rem 1.5rem;
+        box-shadow:
+            0 20px 25px -5px rgba(0, 0, 0, 0.1),
+            0 10px 10px -5px rgba(0, 0, 0, 0.04),
+            0 0 0 1px rgba(0, 0, 0, 0.05);
+        /* Subtle outline */
+
+        z-index: 1050;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+        transition: transform 0.4s cubic-bezier(0.19, 1, 0.22, 1);
+    }
+
+    [data-theme="dark"] .bulk-actions-bar {
+        background: rgba(30, 41, 59, 0.85);
+        /* Slate 800 with opacity */
+        border-color: rgba(255, 255, 255, 0.1);
+        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+    }
+
+    .bulk-actions-bar.visible {
+        transform: translate(-50%, 0);
+    }
+
+    /* Mobile handling for Stacked Bar */
+    @media (max-width: 768px) {
+        .bulk-actions-bar {
+            flex-direction: column;
+            bottom: 1rem;
+            width: 95%;
+            padding: 1rem;
+            gap: 0.75rem;
+            border-radius: 12px;
+        }
+
+        .bulk-actions-bar>div {
+            width: 100%;
+            justify-content: space-between;
+        }
+
+        /* Hide divider on mobile */
+        .bulk-actions-bar .vr {
+            display: none;
+        }
+    }
+
+    /* -------------------------------------------------------------------------- */
+    /*                                UTILITIES                                   */
+    /* -------------------------------------------------------------------------- */
+    .page-header-card {
+        background: linear-gradient(135deg, var(--bg-card) 0%, rgba(69, 10, 84, 0.03) 100%);
+        border-left: 4px solid var(--primary-color);
+    }
+
+    [data-theme="dark"] .page-header-card {
+        background: linear-gradient(135deg, var(--bg-card) 0%, rgba(168, 85, 247, 0.05) 100%);
+    }
+
+    .form-control-search {
+        border-radius: 50px;
+        padding-left: 1.25rem;
+        background: var(--bg-body);
+        border: 1px solid transparent;
+        transition: all 0.2s;
+    }
+
+    .form-control-search:focus {
+        background: var(--bg-card);
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 3px rgba(69, 10, 84, 0.1);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+
+    <!-- 1. Page Header -->
+    <div class="card shadow-sm border-0 mb-4 page-header-card dashboard-card" id="medecin_plafonds_config_div_1">
+        <div class="card-body p-4 d-flex justify-content-between align-items-center flex-wrap gap-3">
+            <div>
+                <h4 class="fw-bold mb-1" style="color: var(--primary-color);">
+                    <i class="fas fa-cubes me-2"></i>Plafonds Consommables
+                </h4>
+                <p class="text-muted mb-0 small">
+                    Définissez les quotas de gratuité pour chaque médecin interne.
+                </p>
+            </div>
+            <a href="{{ url_for('admin_tarifs_personnalises') }}" class="btn btn-outline-secondary rounded-pill px-4" id="medecin_plafonds_config_a_2">
+                <i class="fas fa-arrow-left me-2"></i>Retour
+            </a>
+        </div>
+    </div>
+
+    <!-- 2. Doctor Selection & Controls -->
+    <div class="card shadow-sm border-0 mb-4 dashboard-card" id="medecin_plafonds_config_div_3">
+        <div class="card-body p-4">
+            <div class="row align-items-end g-3">
+                <div class="col-md-5">
+                    <label class="form-label fw-bold text-uppercase small text-muted mb-2">
+                        <i class="fas fa-user-md me-1"></i> Médecin Concerné
+                    </label>
+                    <select id="doctorSelect" class="form-select">
+                        <option value="">-- Sélectionner un médecin --</option>
+                        {% for doctor in doctors %}
+                        <option value="{{ doctor.id }}" {% if selected_doctor_id==doctor.id %}selected{% endif %}>
+                            {{ doctor.name }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="col-md-7">
+                    <!-- Search & Quick Filters (Visible only when filtering is active) -->
+                    <div id="filterControls" class="d-none opacity-0 transition-opacity duration-300">
+                        <div class="row g-2">
+                            <div class="col-md-7">
+                                <label class="form-label fw-bold text-uppercase small text-muted mb-2">
+                                    <i class="fas fa-search me-1"></i> Filtrer Produits
+                                </label>
+                                <div class="position-relative">
+                                    <input type="text" id="productSearch" class="form-control form-control-search"
+                                        placeholder="Rechercher par nom...">
+                                    <i
+                                        class="fas fa-search position-absolute top-50 end-0 translate-middle-y me-3 text-muted"></i>
+                                </div>
+                            </div>
+                            <div class="col-md-5 d-flex align-items-end justify-content-end gap-2">
+                                <button type="button" class="btn btn-outline-secondary btn-sm rounded-pill"
+                                    id="btnSelectAll">
+                                    <i class="far fa-check-square me-1"></i>Tout
+                                </button>
+                                <button type="button" class="btn btn-outline-secondary btn-sm rounded-pill"
+                                    id="btnDeselectAll">
+                                    <i class="far fa-square me-1"></i>Rien
+                                </button>
+                                <button type="button" class="btn btn-outline-danger btn-sm rounded-pill"
+                                    style="display: none;" id="btnResetSelected">
+                                    <i class="fas fa-trash-alt me-1"></i>Reset
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 3. Loading State -->
+    <div id="loadingState" class="text-center py-5 d-none">
+        <div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem;">
+            <span class="visually-hidden">Chargement...</span>
+        </div>
+        <p class="mt-3 text-muted fw-bold">Récupération de la configuration...</p>
+    </div>
+
+    <!-- 4. Empty State -->
+    <div id="emptyState" class="text-center py-5">
+        <div class="display-1 text-muted opacity-25 mb-3">
+            <i class="fas fa-clipboard-list"></i>
+        </div>
+        <h4 class="fw-bold">Aucune configuration chargée</h4>
+        <p class="text-muted">Sélectionnez un médecin dans la liste ci-dessus pour afficher et modifier ses plafonds.
+        </p>
+    </div>
+
+    <!-- 5. Products Grid -->
+    <div id="productsContainer" class="d-none">
+        <div class="plafond-grid" id="productsGrid">
+            <!-- Products will be injected here via JS -->
+        </div>
+    </div>
+
+</div>
+
+<!-- 6. Floating Bulk Actions Bar -->
+<div id="bulkActionsBar" class="bulk-actions-bar">
+    <div class="d-flex align-items-center gap-3 w-100 justify-content-between">
+        <!-- Left: Selection Info -->
+        <div class="d-flex align-items-center gap-2">
+            <span class="badge bg-primary rounded-pill fs-6" id="selectedCount">0</span>
+            <span class="text-main fw-bold small">sélectionné(s)</span>
+        </div>
+
+        <!-- Center: Bulk Edit Input -->
+        <div class="d-flex align-items-center gap-2 flex-grow-1 justify-content-center">
+            <div class="vr mx-2 bg-secondary opacity-25"></div>
+            <span class="small text-muted text-nowrap">Masse:</span>
+            <div class="input-group input-group-sm" style="max-width: 140px;">
+                <input type="number" id="bulkQuantityInput" class="form-control text-center fw-bold" placeholder="Qté"
+                    min="1">
+                <button class="btn btn-primary" id="btnApplyBulk" title="Appliquer à la sélection">
+                    <i class="fas fa-check"></i>
+                </button>
+            </div>
+            <div class="vr mx-2 bg-secondary opacity-25"></div>
+        </div>
+
+        <!-- Right: Save Action -->
+        <div>
+            <button class="btn btn-success rounded-pill fw-bold px-4 shadow-sm" id="btnSaveChanges">
+                <i class="fas fa-save me-2"></i>Enregistrer
+            </button>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        // Initialize Doctor Choices for better UX
+        const doctorSelect = new Choices('#doctorSelect', {
+            searchEnabled: true,
+            itemSelectText: '',
+            placeholderValue: 'Choisir un médecin',
+            noResultsText: 'Aucun médecin trouvé',
+            shouldSort: false
+        });
+
+        // DOM Elements
+        const els = {
+            doctorSelect: document.getElementById('doctorSelect'),
+            loading: document.getElementById('loadingState'),
+            empty: document.getElementById('emptyState'),
+            container: document.getElementById('productsContainer'),
+            grid: document.getElementById('productsGrid'),
+            search: document.getElementById('productSearch'),
+            filterControls: document.getElementById('filterControls'),
+            bulkBar: document.getElementById('bulkActionsBar'),
+            selectedCount: document.getElementById('selectedCount'),
+            btnSelectAll: document.getElementById('btnSelectAll'),
+            btnDeselectAll: document.getElementById('btnDeselectAll'),
+            btnApplyBulk: document.getElementById('btnApplyBulk'),
+            bulkQuantityInput: document.getElementById('bulkQuantityInput'),
+            btnSaveChanges: document.getElementById('btnSaveChanges'),
+            btnResetSelected: document.getElementById('btnResetSelected')
+        };
+
+        // State
+        let allProducts = {{ produits_list | tojson | safe
+    }}; // [{id_produit, description, prix}, ...]
+    let currentPlafonds = new Map(); // Map<id_produit, quantite_max> -> Initial state from server
+    let modifiedPlafonds = new Map(); // Map<id_produit, quantite_max> -> Pending changes (UI state)
+
+    // ------------------------------------------------------------------
+    // Initialization & Event Listeners
+    // ------------------------------------------------------------------
+
+    // Initial Load from URL param if present
+    if (els.doctorSelect.value) {
+        loadDoctorConfig(els.doctorSelect.value);
+    }
+
+    // Doctor Change
+    els.doctorSelect.addEventListener('change', function (e) {
+        const id = e.target.value;
+        if (id) loadDoctorConfig(id);
+        else showEmptyState();
+    });
+
+    // Search Filter
+    els.search.addEventListener('input', function (e) {
+        const term = e.target.value.toLowerCase().trim();
+        document.querySelectorAll('.product-card-wrapper').forEach(wrapper => {
+            const text = wrapper.dataset.search.toLowerCase();
+            wrapper.style.display = text.includes(term) ? 'block' : 'none';
+        });
+    });
+
+    // ------------------------------------------------------------------
+    // Core Functions
+    // ------------------------------------------------------------------
+
+    function showEmptyState() {
+        els.loading.classList.add('d-none');
+        els.container.classList.add('d-none');
+        els.filterControls.classList.add('d-none');
+        els.filterControls.classList.remove('opacity-100');
+        els.empty.classList.remove('d-none');
+        els.bulkBar.classList.remove('visible');
+    }
+
+    function loadDoctorConfig(doctorId) {
+        // UI Reset
+        els.empty.classList.add('d-none');
+        els.container.classList.add('d-none');
+        els.filterControls.classList.add('d-none');
+        els.loading.classList.remove('d-none');
+        els.bulkBar.classList.remove('visible');
+
+        // Fetch Data
+        fetch(`/api/gestion_medecins/plafond_consommables_mi/${doctorId}`)
+            .then(r => r.json())
+            .then(data => {
+                if (data.success) {
+                    // Sync Maps
+                    currentPlafonds.clear();
+                    data.plafonds.forEach(p => currentPlafonds.set(p.id_produit, p.quantite_max));
+
+                    modifiedPlafonds = new Map(currentPlafonds); // Clone for editing
+
+                    // Render
+                    renderGrid();
+
+                    // Show UI
+                    els.loading.classList.add('d-none');
+                    els.container.classList.remove('d-none');
+                    els.filterControls.classList.remove('d-none');
+                    // Small timeout for fade-in effect
+                    setTimeout(() => els.filterControls.classList.add('opacity-100'), 50);
+
+                    updateBulkBar();
+                } else {
+                    Toastify({
+                        text: "Erreur lors du chargement: " + (data.message || "Inconnue"),
+                        style: { background: "var(--bs-danger)" }
+                    }).showToast();
+                    showEmptyState();
+                }
+            })
+            .catch(err => {
+                console.error(err);
+                Toastify({
+                    text: "Erreur de connexion au serveur",
+                    style: { background: "var(--bs-danger)" }
+                }).showToast();
+                showEmptyState();
+            });
+    }
+
+    function renderGrid() {
+        els.grid.innerHTML = allProducts.map(p => {
+            // Get current value (fallback to 0/undefined)
+            const qty = modifiedPlafonds.get(p.id_produit);
+            const isActive = (qty !== undefined && qty !== null);
+            const inputValue = isActive ? qty : '';
+
+            return `
+                <div class="product-card-wrapper" data-search="${p.description}">
+                    <div class="product-card ${isActive ? 'active' : ''}" data-id="${p.id_produit}">
+                        <!-- Header -->
+                        <div class="card-header-custom">
+                            <div class="form-check m-0">
+                                <input class="form-check-input product-checkbox" type="checkbox" value="${p.id_produit}" id="medecin_plafonds_config_input_4">
+                            </div>
+                            <span class="product-price">${parseFloat(p.prix).toFixed(2)} DA</span>
+                        </div>
+                        
+                        <!-- Body -->
+                        <div class="flex-grow-1 d-flex flex-column justify-content-center">
+                            <div class="product-name" title="${p.description}">${p.description}</div>
+                        </div>
+                        
+                        <!-- Footer / Input -->
+                        <div class="qty-input-wrapper">
+                            <input type="number" class="form-control qty-input" 
+                                   placeholder="Illimité" value="${inputValue}" min="1" 
+                                   data-id="${p.id_produit}" id="medecin_plafonds_config_input_5">
+                        </div>
+                    </div>
+                </div>`;
+        }).join('');
+
+        attachGridEvents();
+    }
+
+    function attachGridEvents() {
+        // Input Changes (Individual)
+        document.querySelectorAll('.qty-input').forEach(input => {
+            input.addEventListener('input', function () {
+                const id = parseInt(this.dataset.id);
+                const val = parseInt(this.value);
+                const card = this.closest('.product-card');
+
+                if (!isNaN(val) && val > 0) {
+                    modifiedPlafonds.set(id, val);
+                    card.classList.add('active');
+                } else {
+                    modifiedPlafonds.delete(id);
+                    // Only remove active class if we want to visually indicate "No Limit/Default"
+                    // But wait, "delete" means NO entry in DB = Not Free ? 
+                    // The logic implies: Entry in Table = Capped Free Qty. No Entry = No Free Qty (User pays all).
+                    card.classList.remove('active');
+                }
+                updateBulkBar();
+            });
+        });
+
+        // Checkbox Selection
+        document.querySelectorAll('.product-checkbox').forEach(cb => {
+            cb.addEventListener('change', updateBulkBar);
+        });
+    }
+
+    // ------------------------------------------------------------------
+    // Bulk Actions Logic
+    // ------------------------------------------------------------------
+
+    function updateBulkBar() {
+        const checkedBoxes = document.querySelectorAll('.product-checkbox:checked');
+        const checkedCount = checkedBoxes.length;
+
+        els.selectedCount.textContent = checkedCount;
+
+        // Logic to show bar:
+        // 1. If items are selected -> SHOW
+        // 2. If changes are pending (modifiedPlafonds size > 0) -> SHOW (to allow save)
+        // Actually, we always want the save button accessible if a doctor is loaded.
+        // But visually, the floating bar is nice. Let's keep it visible if Doctor is loaded.
+
+        if (els.container.offsetParent !== null) {
+            els.bulkBar.classList.add('visible');
+        } else {
+            els.bulkBar.classList.remove('visible');
+        }
+
+        // Enable/Disable Bulk Apply
+        els.btnApplyBulk.disabled = (checkedCount === 0);
+
+        // Show/Hide Reset Button in filter Header
+        els.btnResetSelected.style.display = checkedCount > 0 ? 'inline-block' : 'none';
+    }
+
+    // Select/Deselect All
+    els.btnSelectAll.addEventListener('click', () => {
+        document.querySelectorAll('.product-checkbox').forEach(cb => {
+            // Only select visible ones (respecting search filter)
+            if (cb.closest('.product-card-wrapper').style.display !== 'none') {
+                cb.checked = true;
+            }
+        });
+        updateBulkBar();
+    });
+
+    els.btnDeselectAll.addEventListener('click', () => {
+        document.querySelectorAll('.product-checkbox').forEach(cb => cb.checked = false);
+        updateBulkBar();
+    });
+
+    // Apply Bulk Qty
+    els.btnApplyBulk.addEventListener('click', () => {
+        const qty = parseInt(els.bulkQuantityInput.value);
+        if (isNaN(qty) || qty < 0) {
+            Toastify({ text: "Veuillez saisir une quantité valide (>0)", style: { background: "#DC2626" } }).showToast();
+            return;
+        }
+
+        const checked = document.querySelectorAll('.product-checkbox:checked');
+        if (checked.length === 0) return;
+
+        checked.forEach(cb => {
+            const id = parseInt(cb.value);
+            modifiedPlafonds.set(id, qty);
+
+            // Update UI directly
+            const card = cb.closest('.product-card');
+            card.classList.add('active');
+            card.querySelector('.qty-input').value = qty;
+        });
+
+        Toastify({
+            text: `${checked.length} produits mis à jour avec la quantité : ${qty}`,
+            style: { background: "var(--bs-success)" }
+        }).showToast();
+    });
+
+    // Reset Selected (Delete/Clear)
+    els.btnResetSelected.addEventListener('click', () => {
+        const checked = document.querySelectorAll('.product-checkbox:checked');
+        if (checked.length === 0) return;
+
+        if (!confirm("Voulez-vous vraiment supprimer les plafonds pour les éléments sélectionnés ?")) return;
+
+        checked.forEach(cb => {
+            const id = parseInt(cb.value);
+            modifiedPlafonds.delete(id);
+
+            const card = cb.closest('.product-card');
+            card.classList.remove('active');
+            card.querySelector('.qty-input').value = '';
+            cb.checked = false; // logic choice: deselect after reset
+        });
+        updateBulkBar();
+    });
+
+    // ------------------------------------------------------------------
+    // Save Changes
+    // ------------------------------------------------------------------
+
+    els.btnSaveChanges.addEventListener('click', () => {
+        const doctorId = els.doctorSelect.value;
+        if (!doctorId) return;
+
+        // Optimistic UI
+        const originalBtnText = els.btnSaveChanges.innerHTML;
+        els.btnSaveChanges.disabled = true;
+        els.btnSaveChanges.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Enregistrement...';
+
+        // Prepare Payload
+        // We send the FULL list of what is currently in `modifiedPlafonds`. 
+        // The backend handles diffing or typically wipes and inserts for this doctor/list type.
+        const payload = {
+            id_doctor: doctorId,
+            produits: Array.from(modifiedPlafonds.entries()).map(([k, v]) => ({ id_produit: k, quantite_max: v }))
+        };
+
+        fetch('/api/gestion_medecins/plafond_consommables_mi', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        })
+            .then(r => r.json())
+            .then(data => {
+                if (data.success) {
+                    Toastify({
+                        text: "Modifications enregistrées avec succès !",
+                        style: { background: "var(--bs-success)" },
+                        duration: 3000
+                    }).showToast();
+
+                    // Update "Current" source of truth
+                    currentPlafonds = new Map(modifiedPlafonds);
+                } else {
+                    Toastify({
+                        text: data.message || "Erreur lors de l'enregistrement",
+                        style: { background: "var(--bs-danger)" }
+                    }).showToast();
+                }
+            })
+            .catch(err => {
+                console.error(err);
+                Toastify({ text: "Erreur réseau", style: { background: "var(--bs-danger)" } }).showToast();
+            })
+            .finally(() => {
+                els.btnSaveChanges.disabled = false;
+                els.btnSaveChanges.innerHTML = originalBtnText;
+            });
+    });
+
+    });
+</script>
+{% endblock %}

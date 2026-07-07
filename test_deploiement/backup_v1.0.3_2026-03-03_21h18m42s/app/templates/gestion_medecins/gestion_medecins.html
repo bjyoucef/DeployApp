@@ -1,0 +1,859 @@
+{% extends 'layout.html' %}
+
+{% block title %}Gestion des Médecins{% endblock %}
+
+{% block style %}
+<style>
+    :root {
+        --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        --glass-bg: rgba(255, 255, 255, 0.95);
+        --glass-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.15);
+        --card-radius: 16px;
+        }
+
+    /* Page Header */
+        .page-header {
+            background: var(--primary-gradient);
+        padding: 2.5rem 2rem;
+            border-radius: var(--card-radius);
+            margin-bottom: 2rem;
+        box-shadow: 0 10px 30px -10px rgba(102, 126, 234, 0.5);
+        color: white;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .page-header::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M11 18c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm48 25c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm-43-7c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm63 31c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM34 90c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm56-76c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM12 86c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm28-65c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm23-11c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-6 60c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm29 22c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zM32 63c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm57-13c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-9-21c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM60 91c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM35 41c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM12 60c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2z' fill='%23ffffff' fill-opacity='0.1' fill-rule='evenodd'/%3E%3C/svg%3E");
+        opacity: 0.4;
+        pointer-events: none;
+    }
+
+    .page-header>* {
+        position: relative;
+        z-index: 1;
+    }
+
+    /* Stats Cards */
+        .stats-card {
+            background: white;
+            border-radius: var(--card-radius);
+            padding: 1.5rem;
+        border: none;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        }
+
+        .stats-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+        }
+
+    .icon-box {
+        width: 50px;
+        height: 50px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        margin-bottom: 1rem;
+    }
+
+    .icon-box.primary {
+        background: rgba(102, 126, 234, 0.1);
+        color: #667eea;
+        }
+
+    .icon-box.success {
+        background: rgba(40, 167, 69, 0.1);
+        color: #28a745;
+        }
+
+    .icon-box.info {
+        background: rgba(23, 162, 184, 0.1);
+        color: #17a2b8;
+        }
+
+    .icon-box.warning {
+        background: rgba(255, 193, 7, 0.1);
+        color: #ffc107;
+        }
+
+    /* Main Table Card */
+    .table-container {
+            background: white;
+        border-radius: var(--card-radius);
+        box-shadow: var(--glass-shadow);
+            overflow: hidden;
+        }
+
+    .table-toolbar {
+            padding: 1.5rem;
+        background: #f8f9fc;
+        border-bottom: 1px solid #e3e6f0;
+        }
+
+    .table-doctors thead th {
+        background: #f8f9fc;
+        text-transform: uppercase;
+        font-size: 0.75rem;
+        letter-spacing: 0.05em;
+        color: #8898aa;
+        border-bottom: 1px solid #e3e6f0;
+        padding: 1rem 1.5rem;
+        }
+
+    .table-doctors tbody td {
+        padding: 1rem 1.5rem;
+        vertical-align: middle;
+        border-bottom: 1px solid #e3e6f0;
+        color: #525f7f;
+        }
+
+    .table-doctors tbody tr:last-child td {
+        border-bottom: none;
+        }
+
+    .table-doctors tbody tr:hover {
+        background-color: #f8f9fc;
+        }
+
+    /* Badges */
+    .badge-soft {
+        padding: 0.5em 0.75em;
+        border-radius: 6px;
+            font-weight: 600;
+            font-size: 0.75rem;
+    }
+
+    .badge-soft-primary {
+        background: rgba(102, 126, 234, 0.1);
+        color: #667eea;
+        }
+
+    .badge-soft-success {
+        background: rgba(40, 167, 69, 0.1);
+        color: #28a745;
+        }
+
+    .badge-soft-info {
+        background: rgba(23, 162, 184, 0.1);
+        color: #17a2b8;
+        }
+
+    /* Buttons */
+    .btn-gradient {
+        background: var(--primary-gradient);
+            color: white;
+            border: none;
+        box-shadow: 0 4px 6px rgba(50, 50, 93, 0.11), 0 1px 3px rgba(0, 0, 0, 0.08);
+        transition: all 0.15s ease;
+        }
+
+    .btn-gradient:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 7px 14px rgba(50, 50, 93, 0.1), 0 3px 6px rgba(0, 0, 0, 0.08);
+            color: white;
+    }
+
+    /* Dark Mode Overrides */
+    [data-theme="dark"] .stats-card,
+    [data-theme="dark"] .table-container {
+        background: #2d3748;
+        color: #e2e8f0;
+    }
+
+    [data-theme="dark"] .table-toolbar,
+    [data-theme="dark"] .table-doctors thead th {
+        background: #1a202c;
+        border-color: #4a5568;
+        color: #a0aec0;
+        }
+
+    [data-theme="dark"] .table-doctors tbody td {
+        border-color: #4a5568;
+        color: #e2e8f0;
+}
+
+    [data-theme="dark"] .table-doctors tbody tr:hover {
+        background-color: #2d3748;
+    }
+
+    [data-theme="dark"] .form-control,
+    [data-theme="dark"] .form-select {
+        background-color: #1a202c;
+        border-color: #4a5568;
+        color: #e2e8f0;
+}
+
+    [data-theme="dark"] .modal-content {
+        background-color: #2d3748;
+        color: #e2e8f0;
+}
+
+    [data-theme="dark"] .modal-header {
+        border-bottom-color: #4a5568;
+    }
+
+    [data-theme="dark"] .modal-footer {
+        border-top-color: #4a5568;
+    }
+
+    [data-theme="dark"] .btn-close {
+        filter: invert(1);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+        <!-- Header -->
+    <div class="page-header d-flex justify-content-between align-items-center">
+        <div>
+            <h1 class="h3 fw-bold mb-1">Gestion des Médecins</h1>
+            <p class="mb-0 text-white-50">Administration du personnel médical</p>
+                </div>
+        <div class="d-flex gap-2">
+            <button class="btn btn-light text-primary fw-bold shadow-sm" data-bs-toggle="modal"
+                data-bs-target="#modalFusionMedecin">
+                         <i class="fas fa-code-merge me-2"></i>Fusionner
+                     </button>
+            <a class="btn btn-light text-primary fw-bold shadow-sm" href="{{ url_for('admin_tarifs_personnalises') }}">
+                <i class="fas fa-cog me-2"></i>Configuration
+            </a>
+            <button class="btn btn-light text-primary fw-bold shadow-sm" data-bs-toggle="modal"
+                data-bs-target="#modalAjouterMedecin">
+                <i class="fas fa-plus me-2"></i>Nouveau Médecin
+            </button>
+            </div>
+        </div>
+
+    <!-- Stats Row -->
+    <div class="row g-4 mb-4">
+        <div class="col-xl-3 col-md-6">
+            <div class="stats-card">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                        <div class="text-muted small fw-bold text-uppercase mb-1">Total Médecins</div>
+                        <div class="h2 mb-0 fw-bold">{{ medecins|length }}</div>
+                        </div>
+                    <div class="icon-box primary">
+                        <i class="fas fa-user-md"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        <div class="col-xl-3 col-md-6">
+            <div class="stats-card">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                        <div class="text-muted small fw-bold text-uppercase mb-1">Médecins Externes</div>
+                        <div class="h2 mb-0 fw-bold text-success">{{ medecins|selectattr('est_interne', 'equalto',
+                            0)|list|length }}</div>
+                        </div>
+                    <div class="icon-box success">
+                        <i class="fas fa-user-check"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        <div class="col-xl-3 col-md-6">
+            <div class="stats-card">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                        <div class="text-muted small fw-bold text-uppercase mb-1">Médecins Internes</div>
+                        <div class="h2 mb-0 fw-bold text-info">{{ medecins|selectattr('est_interne', 'equalto',
+                            1)|list|length }}</div>
+                        </div>
+                    <div class="icon-box info">
+                        <i class="fas fa-user-graduate"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        <div class="col-xl-3 col-md-6">
+            <div class="stats-card">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                        <div class="text-muted small fw-bold text-uppercase mb-1">Dossiers</div>
+                        <div class="h2 mb-0 fw-bold text-warning">{{ total_dossiers }}</div>
+                        </div>
+                    <div class="icon-box warning">
+                        <i class="fas fa-award"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    <!-- Main Table -->
+    <div class="table-container">
+        <div class="table-toolbar">
+            <div class="row align-items-center">
+                <div class="col-md-4">
+                    <div class="input-group">
+                        <span class="input-group-text bg-white border-end-0"><i
+                                class="fas fa-search text-muted"></i></span>
+                        <input type="text" id="searchInput" class="form-control border-start-0 ps-0"
+                            placeholder="Rechercher un médecin...">
+                    </div>
+                        </div>
+                <div class="col-md-8 text-md-end mt-3 mt-md-0 d-flex gap-2 justify-content-md-end">
+                    <select id="filterType" class="form-select w-20%">
+                        <option value="all">Tous types</option>
+                        <option value="externe">Externes</option>
+                        <option value="interne">Internes</option>
+                            </select>
+                    <select id="filterSpecialty" class="form-select w-20%">
+                        <option value="all">Toutes spécialités</option>
+                                {% for specialty in specialties %}
+                                    <option value="{{ specialty.id_specialty }}">{{ specialty.name_specialty }}</option>
+                                {% endfor %}
+                            </select>
+                    <select id="sortBy" class="form-select w-20%">
+                        <option value="name_asc">Nom (A-Z)</option>
+                        <option value="name_desc">Nom (Z-A)</option>
+                        <option value="specialty">Spécialité</option>
+                        <option value="dossiers_desc">Dossiers (D2C)</option>
+                        <option value="dossiers_asc">Dossiers (C2D)</option>
+                    </select>
+                </div>
+            </div>
+            </div>
+
+                <div class="table-responsive">
+            <table class="table table-doctors mb-0 align-middle" id="tableMedecins">
+                        <thead>
+                        <tr>
+                        <th class="ps-4">Médecin</th>
+                        <th>Téléphone</th>
+                            <th>Spécialité</th>
+                            <th>Type</th>
+                        <th class="text-center">Dossiers</th>
+                        <th class="text-end pe-4">Actions</th>
+                    </tr>
+                </thead>
+                        <tbody id="tableBody">
+                        {% for medecin in medecins %}
+                            <tr data-doctor-id="{{ medecin.id_doctor }}"
+                                data-doctor-name="{{ (medecin.nom_complet or '')|lower }}"
+                                data-specialty="{{ medecin.id_specialty }}"
+                        data-specialty-name="{{ (medecin.name_specialty or '')|lower }}"
+                        data-total-dossiers="{{ medecin.total_dossiers }}"
+                                data-type="{{ 'interne' if medecin.est_interne else 'externe' }}">
+                        <td class="ps-4">
+                            <div class="d-flex align-items-center">
+                                <div class="avatar rounded-circle bg-light text-primary d-flex align-items-center justify-content-center me-3"
+                                    style="width: 40px; height: 40px; font-weight: bold;">
+                                    {{ medecin.first_name[0]|upper }}{{ medecin.last_name[0]|upper }}
+                                </div>
+                                <div>
+                                    <div class="fw-bold text-dark">
+                                        Dr. {{ medecin.nom_complet }}
+                                        <button class="btn btn-sm btn-light text-primary ms-2 border-0 p-0"
+                                            onclick="MedecinInfoModal.open({{ medecin.id_doctor }})"
+                                            title="Plus d'informations">
+                                            <i class="fas fa-info-circle"></i>
+                                        </button>
+                                    </div>
+                                    <div class="small text-muted">ID: #{{ medecin.id_doctor }}</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            {% if medecin.telephone %}
+                            <a href="tel:{{ medecin.telephone }}" class="text-decoration-none text-body">
+                                <i class="fas fa-phone-alt me-1 text-muted small"></i> {{ medecin.telephone }}
+                            </a>
+                            {% else %}
+                            <span class="text-muted small">-</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <span class="badge badge-soft-primary">{{ medecin.name_specialty or 'N/A' }}</span>
+                                </td>
+                        <td>
+                            {% if medecin.est_interne %}
+                            <span class="badge badge-soft-info"><i class="fas fa-hospital-user me-1"></i>Interne</span>
+                            {% else %}
+                            <span class="badge badge-soft-success"><i class="fas fa-user-md me-1"></i>Externe</span>
+                            {% endif %}
+                                </td>
+                        <td class="text-center">
+                            <span class="fw-bold">{{ medecin.total_dossiers_bloc + medecin.total_dossiers_accouchement +
+                                medecin.total_dossiers_interne + medecin.total_dossiers_kt }}</span>
+                                </td>
+                        <td class="text-end pe-4">
+                            <button class="btn btn-sm btn-light text-warning"
+                                onclick="openEditModal({{ medecin.id_doctor }})" title="Modifier">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="8" class="text-center py-5">
+                            <div class="text-muted">
+                                <i class="fas fa-user-md fa-3x mb-3 opacity-50"></i>
+                                <p class="mb-0">Aucun médecin trouvé.</p>
+                                    </div>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+        <div id="noResults" class="text-center py-5" style="display: none;">
+            <i class="fas fa-search fa-2x text-muted mb-3"></i>
+            <p class="text-muted">Aucun résultat ne correspond à votre recherche.</p>
+                </div>
+        </div>
+    </div>
+
+    <!-- Modal Ajouter Médecin -->
+    <div class="modal fade" id="modalAjouterMedecin" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                    <div class="modal-header">
+                <h5 class="modal-title fw-bold"><i class="fas fa-user-plus me-2 text-primary"></i>Ajouter un médecin
+                        </h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+            <form id="formAjouterMedecin">
+                    <div class="modal-body">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Prénom <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" name="first_name" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Nom <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" name="last_name" required>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">Téléphone</label>
+                            <input type="tel" class="form-control" name="telephone" placeholder="0X XX XX XX XX">
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">Spécialité <span class="text-danger">*</span></label>
+                            <select class="form-select" name="specialty" required>
+                                <option value="">-- Sélectionner --</option>
+                                {% for specialty in specialties %}
+                                    <option value="{{ specialty.id_specialty }}">{{ specialty.name_specialty }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-12">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" name="est_interne" id="add_est_interne">
+                                <label class="form-check-label" for="add_est_interne">Médecin interne</label>
+                            </div>
+                            </div>
+                        </div>
+                    </div>
+                <div class="modal-footer bg-light">
+                    <button type="button" class="btn btn-link text-muted text-decoration-none"
+                        data-bs-dismiss="modal">Annuler</button>
+                    <button type="submit" class="btn btn-gradient px-4">Ajouter</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Modifier Médecin -->
+    <div class="modal fade" id="modalModifierMedecin" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                    <div class="modal-header">
+                <h5 class="modal-title fw-bold"><i class="fas fa-user-edit me-2 text-warning"></i>Modifier le médecin
+                        </h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+            <form id="formModifierMedecin">
+                    <div class="modal-body">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Prénom <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="edit_first_name" name="first_name" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Nom <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="edit_last_name" name="last_name" required>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">Téléphone</label>
+                            <input type="tel" class="form-control" id="edit_telephone" name="telephone"
+                                placeholder="0X XX XX XX XX">
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">Spécialité <span class="text-danger">*</span></label>
+                            <select class="form-select" id="edit_specialty" name="specialty" required>
+                                <option value="">-- Sélectionner --</option>
+                                {% for specialty in specialties %}
+                                    <option value="{{ specialty.id_specialty }}">{{ specialty.name_specialty }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-12">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" name="est_interne"
+                                       id="edit_est_interne">
+                                <label class="form-check-label" for="edit_est_interne">Médecin interne</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer bg-light">
+                    <button type="button" class="btn btn-link text-muted text-decoration-none"
+                        data-bs-dismiss="modal">Annuler</button>
+                    <button type="submit" class="btn btn-warning px-4">Enregistrer</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+
+{% include 'admin/includes/modal_fusion_medecin.html' ignore missing %}
+
+<div class="modal fade" id="modalFusionMedecin" tabindex="-1">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title"><i class="fas fa-code-merge me-2"></i>Fusionner des médecins</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-warning d-flex align-items-center">
+                    <i class="fas fa-exclamation-triangle fa-2x me-3"></i>
+                    <div>
+                        <strong>Action irréversible !</strong><br>
+                        Toutes les données du médecin source seront transférées vers le médecin cible,
+                        puis le médecin source sera définitivement supprimé.
+                    </div>
+                </div>
+                <div class="row g-4">
+                    <div class="col-md-6">
+                        <div class="card h-100 border-success border-2">
+                            <div class="card-header bg-success text-white py-3">
+                                <div class="d-flex align-items-center">
+                                    <i class="fas fa-check-circle fa-lg me-2"></i>
+                                    <div>
+                                        <strong>Médecin à GARDER</strong>
+                                        <div class="small opacity-75">Recevra toutes les données</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="card-body">
+                                <select class="form-select form-select-lg mb-3" id="fusion_cible"
+                                        onchange="loadMedecinStats('cible')">
+                                    <option value="">-- Sélectionner --</option>
+                                    {% for medecin in medecins %}
+                                    <option value="{{ medecin.id_doctor }}">#{{ medecin.id_doctor }} - {{
+                                        medecin.nom_complet }}</option>
+                                    {% endfor %}
+                                </select>
+                                <div id="stats_cible" class="stats-container"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card h-100 border-danger border-2">
+                            <div class="card-header bg-danger text-white py-3">
+                                <div class="d-flex align-items-center">
+                                    <i class="fas fa-trash-alt fa-lg me-2"></i>
+                                    <div>
+                                        <strong>Médecin à SUPPRIMER</strong>
+                                        <div class="small opacity-75">Sera supprimé après transfert</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="card-body">
+                                <select class="form-select form-select-lg mb-3" id="fusion_source"
+                                        onchange="loadMedecinStats('source')">
+                                    <option value="">-- Sélectionner --</option>
+                                    {% for medecin in medecins %}
+                                    <option value="{{ medecin.id_doctor }}">#{{ medecin.id_doctor }} - {{
+                                        medecin.nom_complet }}</option>
+                                    {% endfor %}
+                                </select>
+                                <div id="stats_source" class="stats-container"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                <button type="button" class="btn btn-danger" onclick="confirmFusion()">Confirmer la fusion</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% include 'admin/includes/modal_medecin_info.html' %}
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/medecin_info.js') }}"></script>
+    <script>
+    let currentEditId = null;
+
+    // --- Gestion Ajout ---
+    $('#formAjouterMedecin').on('submit', function (e) {
+            e.preventDefault();
+        const btn = $(this).find('button[type="submit"]');
+        const originalText = btn.html();
+        btn.html('<i class="fas fa-spinner fa-spin me-2"></i>Ajout...').prop('disabled', true);
+
+        $.ajax({
+            url: "{{ url_for('ajouter_medecin') }}",
+                    method: 'POST',
+            data: $(this).serialize(),
+            success: function (response) {
+                if (response.success) {
+                    Toastify({
+                        text: response.message,
+                        style: { background: "linear-gradient(to right, #00b09b, #96c93d)" }
+                    }).showToast();
+                    setTimeout(() => location.reload(), 1000);
+                }
+            },
+            error: function (xhr) {
+                const res = xhr.responseJSON;
+                Toastify({
+                    text: res.error || "Erreur lors de l'ajout",
+                    style: { background: "linear-gradient(to right, #f85032, #e73827)" }
+                }).showToast();
+                btn.html(originalText).prop('disabled', false);
+            }
+        });
+    });
+
+    // --- Gestion Modification ---
+    function openEditModal(id) {
+        currentEditId = id;
+                const modal = new bootstrap.Modal(document.getElementById('modalModifierMedecin'));
+
+        // Loader visual effect if needed, or just fetch
+        $.get(`/api/get_medecin/${id}`, function (response) {
+            if (response.success) {
+                const m = response.medecin;
+                $('#edit_first_name').val(m.first_name);
+                $('#edit_last_name').val(m.last_name);
+                $('#edit_telephone').val(m.telephone || '');
+                $('#edit_specialty').val(m.id_specialty);
+                $('#edit_est_interne').prop('checked', m.est_interne == 1);
+                modal.show();
+            }
+        }).fail(function () {
+            Toastify({ text: "Impossible de charger les données du médecin", style: { background: "#f85032" } }).showToast();
+        });
+        }
+
+    $('#formModifierMedecin').on('submit', function (e) {
+            e.preventDefault();
+        if (!currentEditId) return;
+
+        const btn = $(this).find('button[type="submit"]');
+        const originalText = btn.html();
+        btn.html('<i class="fas fa-spinner fa-spin me-2"></i>Enregistrement...').prop('disabled', true);
+
+        $.ajax({
+            url: `/modifier_medecin/${currentEditId}`,
+                    method: 'POST',
+            data: $(this).serialize(),
+            success: function (response) {
+                if (response.success) {
+                    Toastify({
+                        text: response.message,
+                        style: { background: "linear-gradient(to right, #00b09b, #96c93d)" }
+                    }).showToast();
+                    setTimeout(() => location.reload(), 1000);
+                }
+            },
+            error: function (xhr) {
+                btn.html(originalText).prop('disabled', false);
+                Toastify({
+                    text: xhr.responseJSON?.error || "Erreur lors de la modification",
+                    style: { background: "linear-gradient(to right, #f85032, #e73827)" }
+                }).showToast();
+            }
+        });
+    });
+
+    // --- Filtrage et Tri Tableau ---
+    $(document).ready(function () {
+        const table = $('#tableMedecins');
+        const tbody = $('#tableBody');
+        const noResults = $('#noResults');
+
+        function sortRows() {
+            const rows = tbody.find('tr').get();
+            const sortType = $('#sortBy').val();
+
+            rows.sort(function (a, b) {
+                const $a = $(a);
+                const $b = $(b);
+
+                // Si c'est la ligne "Aucun médecin trouvée"
+                if ($a.find('td').length === 1) return 0;
+
+                let valA, valB;
+
+                switch (sortType) {
+                    case 'name_asc':
+                        valA = ($a.attr('data-doctor-name') || '').toString();
+                        valB = ($b.attr('data-doctor-name') || '').toString();
+                        return valA.localeCompare(valB);
+                    case 'name_desc':
+                        valA = ($a.attr('data-doctor-name') || '').toString();
+                        valB = ($b.attr('data-doctor-name') || '').toString();
+                        return valB.localeCompare(valA);
+                    case 'specialty':
+                        valA = ($a.attr('data-specialty-name') || '').toString();
+                        valB = ($b.attr('data-specialty-name') || '').toString();
+                        return valA.localeCompare(valB);
+                    case 'dossiers_desc':
+                        valA = parseInt($a.attr('data-total-dossiers')) || 0;
+                        valB = parseInt($b.attr('data-total-dossiers')) || 0;
+                        return valB - valA;
+                    case 'dossiers_asc':
+                        valA = parseInt($a.attr('data-total-dossiers')) || 0;
+                        valB = parseInt($b.attr('data-total-dossiers')) || 0;
+                        return valA - valB;
+                    default:
+                        return 0;
+                }
+            });
+
+            $.each(rows, function (index, row) {
+                tbody.append(row);
+            });
+        }
+
+        function filterTable() {
+            const term = $('#searchInput').val().toLowerCase();
+            const type = $('#filterType').val();
+            const specialty = $('#filterSpecialty').val();
+            let visibleCount = 0;
+
+            tbody.find('tr').each(function () {
+                const row = $(this);
+                // Ignorer la ligne "Aucun résultat" si présente dans le tbody (cas initiaux vide)
+                if (row.find('td[colspan]').length > 0) return;
+
+                const name = (row.data('doctor-name') || '').toString();
+                const sName = (row.data('specialty-name') || '').toString();
+                const dType = row.data('type'); // 'interne' or 'externe'
+                const dSpec = row.data('specialty'); // ID
+
+                const matchTerm = name.includes(term) || sName.includes(term);
+                const matchType = (type === 'all') || (type === dType);
+                const matchSpec = (specialty === 'all') || (specialty == dSpec);
+
+                if (matchTerm && matchType && matchSpec) {
+                    row.show();
+                    visibleCount++;
+                } else {
+                    row.hide();
+            }
+        });
+
+            if (visibleCount === 0) {
+                table.hide();
+                noResults.show();
+            } else {
+                table.show();
+                noResults.hide();
+    }
+        }
+
+        // Écouteurs d'événements
+        $('#searchInput').on('input', filterTable);
+        $('#filterType, #filterSpecialty').on('change', filterTable);
+        $('#sortBy').on('change', function () {
+            sortRows();
+            filterTable(); // Ré-appliquer le filtre au cas où
+        });
+
+        // Tri initial
+        sortRows();
+    });
+
+    // --- Logic Fusion (Simplifié pour l'exemple) ---
+    // Note: Le backend de fusion existe déjà via `loadMedecinStats` et `confirmFusion`.
+    // Il faudrait s'assurer que ces fonctions sont définies ou incluses.
+    // Je vais ajouter les placeholders si elles manquent pour éviter les erreurs.
+
+    function loadMedecinStats(type) {
+        const id = $(`#fusion_${type}`).val();
+        const container = $(`#stats_${type}`);
+
+        if (!id) {
+            container.html('');
+            return;
+        }
+
+        container.html('<div class="text-center py-3"><i class="fas fa-spinner fa-spin"></i> Chargement...</div>');
+
+        $.get(`/api/stats_medecin/${id}`, function (response) {
+            if (response.success) {
+                const stats = response.stats;
+                let html = '<div class="list-group list-group-flush small">';
+                // Exemple d'affichage simple
+                for (let [key, val] of Object.entries(stats)) {
+                    if (key !== 'total' && val > 0) {
+                        html += `<div class="list-group-item d-flex justify-content-between px-0 py-1">
+                                    <span>${key.replace(/_/g, ' ')}</span>
+                                    <span class="badge bg-secondary rounded-pill">${val}</span>
+                                 </div>`;
+                    }
+                }
+                html += `<div class="list-group-item d-flex justify-content-between px-0 py-2 fw-bold border-top">
+                            <span>TOTAL ÉLÉMENTS</span>
+                            <span class="badge bg-primary rounded-pill">${stats.total}</span>
+                         </div>`;
+                html += '</div>';
+                container.html(html);
+            }
+        });
+    }
+
+    function confirmFusion() {
+        const sourceId = $('#fusion_source').val();
+        const cibleId = $('#fusion_cible').val();
+
+        if (!sourceId || !cibleId) {
+            Toastify({ text: "Veuillez sélectionner les deux médecins", style: { background: "#f85032" } }).showToast();
+            return;
+        }
+
+        if (confirm("Êtes-vous sûr de vouloir fusionner ces médecins ? Cette action est irréversible.")) {
+            $.post('/fusionner_medecins', { id_source: sourceId, id_cible: cibleId }, function (response) {
+                if (response.success) {
+                    Toastify({ text: response.message, style: { background: "#00b09b" } }).showToast();
+                    setTimeout(() => location.reload(), 1500);
+                } else {
+                    Toastify({ text: response.error, style: { background: "#f85032" } }).showToast();
+                }
+            }).fail(function () {
+                Toastify({ text: "Erreur serveur lors de la fusion", style: { background: "#f85032" } }).showToast();
+            });
+        }
+    }
+</script>
+{% endblock %}

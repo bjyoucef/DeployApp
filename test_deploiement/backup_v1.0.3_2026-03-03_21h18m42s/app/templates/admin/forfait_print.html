@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Détail du Forfait - {{ forfait.name_forfait }}</title>
+    <link href="{{ url_for('static', filename='css/bootstrap.min.css') }}" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/all.min.css') }}" rel="stylesheet">
+    <style>
+        body {
+            background-color: #f8f9fa;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        .print-container {
+            max-width: 800px;
+            margin: 20px auto;
+            background: white;
+            padding: 40px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+        }
+
+        .header-logo {
+            max-height: 80px;
+        }
+
+        .hospital-info {
+            font-size: 0.9rem;
+            color: #666;
+        }
+
+        .forfait-title {
+            color: #2c3e50;
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 5px;
+            margin-bottom: 30px;
+        }
+
+        .section-title {
+            background-color: #f8f9fa;
+            padding: 8px 15px;
+            border-left: 4px solid #3498db;
+            margin: 20px 0 15px 0;
+            color: #2c3e50;
+            font-weight: 600;
+        }
+
+        .table th {
+            background-color: #f1f5f9;
+            color: #495057;
+        }
+
+        .total-section {
+            background-color: #e8f4fd;
+            padding: 5px;
+            border-radius: 8px;
+            margin-top: 10px;
+            text-align: right;
+        }
+
+        .price-tag {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #2980b9;
+        }
+
+        .print-btn-container {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+        }
+
+        @media print {
+            body {
+                background: white;
+            }
+
+            .print-container {
+                box-shadow: none;
+                margin: 0;
+                padding: 0;
+                width: 100%;
+                max-width: none;
+            }
+
+            .print-btn-container {
+                display: none;
+            }
+
+            .no-print {
+                display: none !important;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="print-container">
+        <!-- En-tête -->
+        <div class="text-center mb-1">
+            <img src="{{ url_for('static', filename='images/entet_inaya.png') }}" alt="En-tête Clinique"
+                class="img-fluid" style="max-height: 150px;">
+        </div>
+
+        <div class="forfait-title">
+            <h3 class="h5 text-uppercase text-primary mb-1">Détail du Forfait Médical</h3>
+            <h2 class="h4 mb-0"><i class="fas fa-file-invoice-medical me-2 text-secondary"></i>{{ forfait.name_forfait
+                }}</h2>
+            <span class="badge bg-light text-dark border mt-1"><i class="fas fa-stethoscope me-1 text-info"></i>{{
+                forfait.name_specialty }}</span>
+        </div>
+
+        <div class="row mb-1">
+            <div class="col-6">
+                <div class="p-3 border rounded bg-light">
+                    <small class="text-muted d-block text-uppercase fw-bold mb-1">Durée Bloc</small>
+                    <span class="fs-5"><i class="fas fa-stopwatch me-2 text-danger"></i>{{ forfait.duree_forfait or 0 }}
+                        min</span>
+                </div>
+            </div>
+            <div class="col-6">
+                <div class="p-3 border rounded bg-light">
+                    <small class="text-muted d-block text-uppercase fw-bold mb-1">Séjour</small>
+                    <span class="fs-5"><i class="fas fa-bed me-2 text-info"></i>{{ forfait.nbr_nuit or 0 }}
+                        Nuit(s)</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Produits Inclus -->
+        {% if produits_inclus %}
+        <div class="section-title">
+            <i class="fas fa-notes-medical me-2 text-primary"></i>Produits & Consommables Inclus
+        </div>
+        <table class="table table-sm">
+            <thead>
+                <tr>
+                    <th style="width: 70%">Désignation</th>
+                    <th style="width: 30%" class="text-center">Quantité Incluse</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for produit in produits_inclus %}
+                <tr>
+                    <td>{{ produit.description }}</td>
+                    <td class="text-center fw-bold">{{ produit.qte }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% endif %}
+
+        <!-- Actes Inclus -->
+        {% if actes_inclus %}
+        <div class="section-title">
+            <i class="fas fa-user-md me-2 text-primary"></i>Actes Médicaux Inclus
+        </div>
+        <table class="table table-sm">
+            <thead>
+                <tr>
+                    <th style="width: 100%">Désignation de l'acte</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for acte in actes_inclus %}
+                <tr>
+                    <td>{{ acte.nom_acte }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% endif %}
+
+        <!-- Prix Total -->
+        <div class="total-section">
+            <h5 class="text-muted mb-0">Prix Total Forfaitaire</h5>
+            <div class="price-tag">{{ "{:,.2f}".format(forfait.prix_forfait).replace(',', ' ').replace('.', ',') }} DA
+            </div>
+            <small class="text-muted">* Ce prix inclut l'ensemble des éléments listés ci-dessus.</small>
+        </div>
+
+        <div class="mt-1 pt-1 text-center text-muted border-top">
+            <p class="mb-1 small"><i class="fas fa-laptop-medical me-1"></i>CIS Clinic Information System</p>
+            <small>
+                <i class="fas fa-user-edit me-1"></i>Édité par : <strong>{{ user.nom }} {{ user.prenom }}</strong>
+                <span class="mx-2 text-muted">|</span>
+                <i class="far fa-calendar-alt me-1"></i>Le : {{ today }}
+            </small>
+        </div>
+    </div>
+
+    <!-- Bouton d'impression flottant -->
+    <div class="print-btn-container">
+        <button onclick="window.print()" class="btn btn-primary btn-lg shadow rounded-pill">
+            <i class="fas fa-print me-2"></i>Imprimer
+        </button>
+        <button onclick="window.close()" class="btn btn-secondary btn-lg shadow rounded-pill ms-2">
+            <i class="fas fa-times me-2"></i>Fermer
+        </button>
+    </div>
+
+</body>
+
+</html>

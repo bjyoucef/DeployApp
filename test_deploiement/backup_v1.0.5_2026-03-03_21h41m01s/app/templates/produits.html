@@ -1,0 +1,95 @@
+{% extends "layout.html" %}
+{% block content %}
+
+<!-- Bouton pour afficher le modal d'ajout -->
+<button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addProductModal">
+    Ajouter un Produit
+</button>
+
+<!-- Modal pour Ajouter un Produit -->
+<div class="modal fade" id="addProductModal" tabindex="-1" aria-labelledby="addProductModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+    <form action="/produits" method="POST">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="addProductModalLabel">Ajouter un Produit</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="description" class="form-label">Description</label>
+                        <input type="text" class="form-control" name="description" id="description" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="prix" class="form-label">Prix</label>
+                        <input type="number" step="0.01" class="form-control" name="prix" id="prix" required>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fermer</button>
+                    <button type="submit" class="btn btn-primary">Ajouter</button>
+                </div>
+    </form>
+        </div>
+    </div>
+</div>
+
+<!-- Liste des Produits -->
+            <table id="myTable" class="table table-hover">
+
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Description</th>
+                <th>Prix</th>
+                <th>Date Création</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for produit in produits %}
+            <tr>
+                <td>{{ produit.id_produit }}</td>
+                <td>{{ produit.description }}</td>
+                <td>{{ produit.prix }}</td>
+                <td>{{ produit.created_at }}</td>
+                <td>
+                <!-- Bouton pour afficher le modal de modification -->
+                <button type="button" class="btn btn-warning btn-sm" data-bs-toggle="modal" data-bs-target="#editProductModal{{ produit.id_produit }}">
+                    Modifier
+                </button>
+                </td>
+            </tr>
+
+        <!-- Modal pour Modifier un Produit -->
+        <div class="modal fade" id="editProductModal{{ produit.id_produit }}" tabindex="-1" aria-labelledby="editProductModalLabel{{ produit.id_produit }}" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <form action="{{ url_for('modifier_produit', id_produit=produit.id_produit) }}" method="POST">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="editProductModalLabel{{ produit.id_produit }}">Modifier le Produit</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="mb-3">
+                                <label for="description{{ produit.id_produit }}" class="form-label">Description</label>
+                                <input type="text" class="form-control" name="description" id="description{{ produit.id_produit }}" value="{{ produit.description }}" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="prix{{ produit.id_produit }}" class="form-label">Prix</label>
+                                <input type="number" step="0.01" class="form-control" name="prix" id="prix{{ produit.id_produit }}" value="{{ produit.prix }}" required>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fermer</button>
+                            <button type="submit" class="btn btn-primary">Mettre à jour</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+            {% endfor %}
+        </tbody>
+    </table>
+
+{% endblock content %}

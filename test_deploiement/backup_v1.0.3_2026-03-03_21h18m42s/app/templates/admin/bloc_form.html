@@ -1,0 +1,364 @@
+{% extends "admin/admin_layout.html" %}
+
+{% block style %}
+<style>
+    .form-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 2rem;
+        border-radius: 12px 12px 0 0;
+        margin: -1.5rem -1.5rem 2rem -1.5rem;
+    }
+
+    .form-section {
+        background: #f8f9fa;
+        padding: 1.5rem;
+        border-radius: 8px;
+        margin-bottom: 1.5rem;
+    }
+
+    .form-section-title {
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: #495057;
+        margin-bottom: 1rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .required-field::after {
+        content: "*";
+        color: #dc3545;
+        margin-left: 0.25rem;
+    }
+
+    .form-card {
+        border: none;
+        border-radius: 12px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.07);
+    }
+
+    .btn-action {
+        padding: 0.75rem 2rem;
+        font-weight: 500;
+        border-radius: 8px;
+    }
+
+    .info-badge {
+        background: #e7f1ff;
+        color: #004085;
+        padding: 0.5rem 1rem;
+        border-radius: 6px;
+        font-size: 0.875rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row justify-content-center">
+        <div class="col-lg-10 col-xl-9">
+            <!-- Breadcrumb -->
+            <nav aria-label="breadcrumb" class="mb-4">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item">
+                        <a href="{{ url_for('bloc_admin') }}">
+                            <i class="fas fa-hospital me-1"></i>Gestion des Blocs
+                        </a>
+                    </li>
+                    <li class="breadcrumb-item active" aria-current="page">
+                        {% if mode == 'create' %}Nouveau Bloc{% else %}Modifier Bloc{% endif %}
+                    </li>
+                </ol>
+            </nav>
+
+            <!-- Formulaire -->
+            <div class="card form-card">
+                <div class="card-body p-4">
+                    <div class="form-header">
+                        <h3 class="mb-1">
+                            <i class="fas fa-{% if mode == 'create' %}plus-circle{% else %}edit{% endif %} me-2"></i>
+                            {% if mode == 'create' %}Créer un Nouveau Bloc{% else %}Modifier le Bloc{% endif %}
+                        </h3>
+                        <p class="mb-0 opacity-75">
+                            {% if mode == 'create' %}
+                            Configurez un nouveau bloc opératoire avec ses tarifications et paramètres
+                            {% else %}
+                            Modifiez les informations et paramètres du bloc opératoire
+                            {% endif %}
+                        </p>
+                    </div>
+
+                    <form method="POST"
+                        action="{% if mode == 'create' %}{{ url_for('add_bloc') }}{% else %}{{ url_for('update_bloc') }}{% endif %}"
+                        id="blocForm">
+
+                        {% if mode == 'edit' %}
+                        <input type="hidden" name="id_bloc" value="{{ bloc.id_bloc }}">
+                        {% endif %}
+
+                        <!-- Section Informations Générales -->
+                        <div class="form-section">
+                            <div class="form-section-title">
+                                <i class="fas fa-info-circle text-primary"></i>
+                                Informations Générales
+                            </div>
+
+                            <div class="row g-3">
+                                <div class="col-md-8">
+                                    <label for="name_bloc" class="form-label fw-semibold required-field">
+                                        Nom du Bloc
+                                    </label>
+                                    <div class="input-group">
+                                        <span class="input-group-text">
+                                            <i class="fas fa-hospital-alt"></i>
+                                        </span>
+                                        <input type="text" name="name_bloc" class="form-control form-control-lg"
+                                            id="name_bloc"
+                                            value="{% if mode == 'edit' %}{{ bloc.name_bloc }}{% endif %}"
+                                            placeholder="Ex: Bloc A - Chirurgie Générale" required>
+                                    </div>
+                                </div>
+
+                                <div class="col-md-4">
+                                    <label for="duree_base" class="form-label fw-semibold">
+                                        <i class="fas fa-clock text-info me-1"></i>
+                                        Durée de Base (min)
+                                    </label>
+                                    <input type="number" name="duree_base" class="form-control form-control-lg"
+                                        id="duree_base"
+                                        value="{% if mode == 'edit' %}{{ bloc.duree_base }}{% else %}90{% endif %}"
+                                        min="1" placeholder="90">
+                                </div>
+
+                                <div class="col-12">
+                                    <label for="description" class="form-label fw-semibold">
+                                        <i class="fas fa-align-left text-secondary me-1"></i>
+                                        Description
+                                    </label>
+                                    <textarea name="description" class="form-control" id="description" rows="3"
+                                        placeholder="Ajouter une description pour ce bloc...">{% if mode == 'edit' %}{{ bloc.description or '' }}{% endif %}</textarea>
+                                    <small class="text-muted">
+                                        <i class="fas fa-info-circle me-1"></i>
+                                        Optionnel - Informations complémentaires sur le bloc
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Section Tarification -->
+                        <div class="form-section">
+                            <div class="form-section-title">
+                                <i class="fas fa-tag text-success"></i>
+                                Tarification
+                            </div>
+
+                            <div class="info-badge mb-3">
+                                <i class="fas fa-lightbulb me-2"></i>
+                                Définissez le prix de base pour la durée standard et le supplément pour chaque période
+                                de 30 minutes supplémentaires
+                            </div>
+
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label for="prix" class="form-label fw-semibold required-field">
+                                        Prix de Base
+                                    </label>
+                                    <div class="input-group input-group-lg">
+                                        <span class="input-group-text">
+                                            <i class="fas fa-money-bill-wave"></i>
+                                        </span>
+                                        <input type="number" name="prix" class="form-control" id="prix"
+                                            value="{% if mode == 'edit' %}{{ bloc.prix }}{% endif %}" step="0.01"
+                                            min="0" placeholder="0.00" required>
+                                        <span class="input-group-text">DA</span>
+                                    </div>
+                                    <small class="text-muted">
+                                        Prix pour la durée de base ({{ bloc.duree_base if mode == 'edit' else '90' }}
+                                        minutes)
+                                    </small>
+                                </div>
+
+                                <div class="col-md-6">
+                                    <label for="prix_supplement_30min" class="form-label fw-semibold required-field">
+                                        Supplément 30 Minutes
+                                    </label>
+                                    <div class="input-group input-group-lg">
+                                        <span class="input-group-text">
+                                            <i class="fas fa-plus-square"></i>
+                                        </span>
+                                        <input type="number" name="prix_supplement_30min" class="form-control"
+                                            id="prix_supplement_30min"
+                                            value="{% if mode == 'edit' %}{{ bloc.prix_supplement_30min }}{% endif %}"
+                                            step="0.01" min="0" placeholder="0.00" required>
+                                        <span class="input-group-text">DA</span>
+                                    </div>
+                                    <small class="text-muted">
+                                        Prix supplémentaire par tranche de 30 minutes
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Section Configuration Technique -->
+                        <div class="form-section">
+                            <div class="form-section-title">
+                                <i class="fas fa-cog text-warning"></i>
+                                Configuration Technique
+                            </div>
+
+                            <div class="info-badge mb-3">
+                                <i class="fas fa-info-circle me-2"></i>
+                                Optionnel - Paramètres de connexion pour l'intégration avec les équipements du bloc
+                            </div>
+
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label for="ipserver" class="form-label fw-semibold">
+                                        <i class="fas fa-server text-primary me-1"></i>
+                                        Adresse IP Serveur
+                                    </label>
+                                    <input type="text" name="ipserver" class="form-control form-control-lg"
+                                        id="ipserver"
+                                        value="{% if mode == 'edit' %}{{ bloc.ipserver or '' }}{% endif %}"
+                                        placeholder="192.168.1.100">
+                                </div>
+
+                                <div class="col-md-6">
+                                    <label for="port" class="form-label fw-semibold">
+                                        <i class="fas fa-ethernet text-primary me-1"></i>
+                                        Port
+                                    </label>
+                                    <input type="text" name="port" class="form-control form-control-lg" id="port"
+                                        value="{% if mode == 'edit' %}{{ bloc.port or '' }}{% endif %}"
+                                        placeholder="8080">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Section Statut (uniquement en mode édition) -->
+                        {% if mode == 'edit' %}
+                        <div class="form-section">
+                            <div class="form-section-title">
+                                <i class="fas fa-toggle-on text-info"></i>
+                                Statut
+                            </div>
+
+                            <div class="form-check form-switch">
+                                <input type="checkbox" name="est_actif" class="form-check-input" id="est_actif"
+                                    role="switch" {% if bloc.est_actif %}checked{% endif %}
+                                    style="width: 3em; height: 1.5em;">
+                                <label class="form-check-label fw-semibold ms-2" for="est_actif">
+                                    <i class="fas fa-power-off me-1"></i>
+                                    Bloc actif
+                                </label>
+                                <div class="form-text">
+                                    <i class="fas fa-info-circle me-1"></i>
+                                    Désactivez le bloc pour le rendre indisponible temporairement
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+
+                        <!-- Boutons d'action -->
+                        <div class="d-flex justify-content-between align-items-center pt-4 border-top">
+                            <a href="{{ url_for('bloc_admin') }}" class="btn btn-lg btn-light btn-action">
+                                <i class="fas fa-arrow-left me-2"></i>
+                                Retour
+                            </a>
+
+                            <div class="d-flex gap-2">
+                                <button type="reset" class="btn btn-lg btn-secondary btn-action">
+                                    <i class="fas fa-undo me-2"></i>
+                                    Réinitialiser
+                                </button>
+                                <button type="submit" class="btn btn-lg btn-primary btn-action">
+                                    <i class="fas fa-save me-2"></i>
+                                    {% if mode == 'create' %}Créer le Bloc{% else %}Enregistrer les Modifications{%
+                                    endif %}
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Carte d'information -->
+            <div class="card border-0 shadow-sm mt-4">
+                <div class="card-body bg-light">
+                    <h6 class="fw-bold mb-3">
+                        <i class="fas fa-question-circle text-primary me-2"></i>
+                        Aide
+                    </h6>
+                    <ul class="mb-0 small text-muted">
+                        <li class="mb-2">
+                            <strong>Nom du bloc :</strong> Identifiant unique et descriptif du bloc opératoire
+                        </li>
+                        <li class="mb-2">
+                            <strong>Durée de base :</strong> Temps standard alloué pour une opération (généralement 90
+                            minutes)
+                        </li>
+                        <li class="mb-2">
+                            <strong>Prix de base :</strong> Tarif forfaitaire pour la durée standard
+                        </li>
+                        <li class="mb-2">
+                            <strong>Supplément 30 min :</strong> Coût additionnel facturé pour chaque période de 30
+                            minutes au-delà de la durée de base
+                        </li>
+                        <li>
+                            <strong>Configuration technique :</strong> Paramètres optionnels pour la connexion aux
+                            équipements du bloc
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.getElementById('blocForm').addEventListener('submit', function (e) {
+        const prix = parseFloat(document.getElementById('prix').value);
+        const supplement = parseFloat(document.getElementById('prix_supplement_30min').value);
+
+        if (prix < 0 || supplement < 0) {
+            e.preventDefault();
+            alert('Les prix ne peuvent pas être négatifs');
+            return false;
+        }
+
+        // Validation de l'IP si fournie
+        const ip = document.getElementById('ipserver').value.trim();
+        if (ip) {
+            const ipPattern = /^(\d{1,3}\.){3}\d{1,3}$/;
+            if (!ipPattern.test(ip)) {
+                e.preventDefault();
+                alert('Format d\'adresse IP invalide');
+                return false;
+            }
+        }
+    });
+
+    // Calcul automatique du prix total estimé
+    function updatePriceEstimate() {
+        const prixBase = parseFloat(document.getElementById('prix').value) || 0;
+        const supplement = parseFloat(document.getElementById('prix_supplement_30min').value) || 0;
+        const dureeBase = parseInt(document.getElementById('duree_base').value) || 90;
+
+        // Exemple: pour 2 heures
+        const dureeExample = 120;
+        const supplementMinutes = Math.max(0, dureeExample - dureeBase);
+        const nbSupplements = Math.ceil(supplementMinutes / 30);
+        const prixTotal = prixBase + (supplement * nbSupplements);
+
+        console.log(`Estimation pour ${dureeExample} min: ${prixTotal.toFixed(2)} DA`);
+    }
+
+    document.getElementById('prix').addEventListener('input', updatePriceEstimate);
+    document.getElementById('prix_supplement_30min').addEventListener('input', updatePriceEstimate);
+    document.getElementById('duree_base').addEventListener('input', updatePriceEstimate);
+</script>
+{% endblock %}

@@ -1,0 +1,87 @@
+{% extends 'layout.html' %}
+{% block content %}
+<style>
+    :root {
+        --bg-card: #ffffff;
+        --text-main: #212529;
+        --bg-code: #f8f9fa;
+        --text-code: #212529;
+    }
+
+    [data-theme="dark"] {
+        --bg-card: #1e1e1e;
+        --text-main: #e0e0e0;
+        --bg-code: #2d2d2d;
+        --text-code: #f8f9fa;
+    }
+
+    .card-error {
+        background-color: var(--bg-card);
+        color: var(--text-main);
+    }
+
+    .card-footer-custom {
+        background-color: rgba(0, 0, 0, 0.03);
+        color: rgba(33, 37, 41, 0.75);
+    }
+
+    [data-theme="dark"] .card-footer-custom {
+        background-color: rgba(255, 255, 255, 0.05);
+        color: rgba(255, 255, 255, 0.6);
+    }
+
+    .code-block {
+        background-color: var(--bg-code) !important;
+        color: var(--text-code) !important;
+        border: 1px solid rgba(0, 0, 0, 0.1);
+    }
+
+    [data-theme="dark"] .code-block {
+        border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+</style>
+<div class="container mt-5">
+    <div class="card card-error border-danger shadow-lg">
+        <div class="card-header bg-danger text-white">
+            <h3 class="mb-0">
+                <i class="fas fa-exclamation-triangle me-2"></i>
+                {{ error_title }} <small>({{ error_code }})</small>
+            </h3>
+        </div>
+        <div class="card-body">
+            <h4 class="card-title text-danger">Une erreur est survenue lors du traitement de votre requête.</h4>
+            <p class="card-text lead">{{ error_message }}</p>
+
+            <div class="alert alert-warning" role="alert">
+                <strong>Chemin :</strong> <code>{{ path }}</code>
+            </div>
+
+            <hr>
+
+            <button class="btn btn-outline-secondary btn-sm mb-3" type="button" data-bs-toggle="collapse"
+                data-bs-target="#errorDetails" aria-expanded="false" aria-controls="errorDetails">
+                Voir les détails techniques
+            </button>
+
+            <div class="collapse" id="errorDetails">
+                <div class="card card-body code-block">
+                    <pre class="mb-0" style="white-space: pre-wrap; font-size: 0.85rem;">{{ error_details }}</pre>
+                </div>
+            </div>
+
+            <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-4">
+                <a href="/" class="btn btn-primary btn-lg">
+                    <i class="fas fa-home me-2"></i>Retour à l'accueil
+                </a>
+                <a href="{{ request.referrer }}" class="btn btn-secondary btn-lg">
+                    <i class="fas fa-arrow-left me-2"></i>Retour
+                </a>
+            </div>
+        </div>
+        <div class="card-footer card-footer-custom">
+            <small>Utilisateur : {{ user.nom if user else 'Anonyme' }} | Date : {{ datetime.now().strftime('%Y-%m-%d
+                %H:%M:%S') }}</small>
+        </div>
+    </div>
+</div>
+{% endblock %}

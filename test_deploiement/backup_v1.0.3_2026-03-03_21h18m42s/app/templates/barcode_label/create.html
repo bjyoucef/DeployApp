@@ -1,0 +1,100 @@
+{% extends "admin/admin_layout.html" %}
+
+{% block title %}Créer une Étiquette Code-Barres{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8 col-lg-6">
+
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h1 class="h3 text-gray-800">Génération d'Étiquettes</h1>
+            <a href="{{ url_for('search_barcode_history') }}" class="btn btn-outline-primary shadow-sm" id="create_a_1">
+                <i class="fas fa-history me-2"></i>Historique
+            </a>
+        </div>
+
+        <div class="card shadow-sm border-left-primary" id="create_div_2">
+            <div class="card-header bg-white py-3">
+                <h6 class="m-0 font-weight-bold text-primary"><i class="fas fa-barcode me-2"></i>Nouvelle Étiquette</h6>
+            </div>
+            <div class="card-body">
+                <form action="{{ url_for('create_barcode_label') }}" method="POST" target="_blank" id="barcodeForm">
+                    <!-- Nom du Produit -->
+                    <div class="mb-3">
+                        <label for="product_name" class="form-label font-weight-bold">Nom du Produit <span
+                                class="text-danger">*</span></label>
+                        <input type="text" class="form-control form-control-lg" id="product_name" name="product_name"
+                            required placeholder="Ex: ims-30">
+                        <small class="text-muted">Nom du produit afficher en haut de l'étiquette.</small>
+                    </div>
+
+                    <!-- GTIN -->
+                    <div class="mb-3">
+                        <label for="gtin" class="form-label font-weight-bold">GTIN (01) <span
+                                class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="gtin" name="gtin" required
+                            placeholder="Ex: 04960685200118">
+                    </div>
+
+                    <!-- Lot -->
+                    <div class="mb-3">
+                        <label for="lot" class="form-label font-weight-bold">Numéro de Lot (10) <span
+                                class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="lot" name="lot" required placeholder="Ex: 241121">
+                    </div>
+
+                    <!-- SN -->
+                    <div class="mb-3">
+                        <label for="sn" class="form-label font-weight-bold">Numéro de Série (21) <span
+                                class="text-muted">(Optionnel)</span></label>
+                        <input type="text" class="form-control" id="sn" name="sn"
+                            placeholder="Laisser vide si pas de SN">
+                    </div>
+
+                    <!-- Date d'Expiration -->
+                    <div class="mb-3">
+                        <label for="exp_date" class="form-label font-weight-bold">Date d'Expiration (17)<span
+                                class="text-danger">*</span></label>
+                        <input type="date" class="form-control" id="exp_date" name="exp_date" required>
+                    </div>
+
+                    <div class="d-grid gap-2 mt-4">
+                        <button type="submit" class="btn btn-success btn-lg shadow" id="create_button_3">
+                            <i class="fas fa-print me-2"></i>Générer & Imprimer
+                        </button>
+                        <button type="reset" class="btn btn-light btn-sm" id="create_button_4">
+                            <i class="fas fa-undo me-2"></i>Réinitialiser
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Set default date to today + 1 year (example convenience)
+    document.addEventListener('DOMContentLoaded', function () {
+        const dateInput = document.getElementById('exp_date');
+        if (!dateInput.value) {
+            const today = new Date();
+            today.setFullYear(today.getFullYear() + 1);
+            dateInput.value = today.toISOString().split('T')[0];
+        }
+    });
+
+    document.getElementById('barcodeForm').addEventListener('submit', function () {
+        setTimeout(() => {
+            Toastify({
+                text: "Étiquette générée ! Vérifiez l'onglet ouvert.",
+                duration: 3000,
+                gravity: "top",
+                position: "right",
+                style: { background: "linear-gradient(to right, #00b09b, #96c93d)" }
+            }).showToast();
+        }, 500);
+    });
+</script>
+{% endblock %}

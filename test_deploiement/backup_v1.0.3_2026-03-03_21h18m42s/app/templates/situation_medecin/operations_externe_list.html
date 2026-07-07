@@ -1,0 +1,729 @@
+{% extends "layout.html" %}
+
+{% block title %}
+{{ 'Encaissements' if type_operation == 'ENCAISSEMENT' else 'Décharges' if type_operation == 'DECHARGE' else
+'Compensations' }} - {{ type_display }}
+{% endblock %}
+
+{% block style %}
+<style>
+    :root {
+        --card-radius: 12px;
+        --muted: #6c757d;
+
+        --primary-color: {
+                {
+                '#007bff' if type_situation=='BLOC' else '#dc3545'
+            }
+        }
+
+        ;
+    }
+
+    .operation-card {
+        transition: transform .18s ease, box-shadow .18s ease;
+        border-left: 6px solid transparent;
+        border-radius: var(--card-radius);
+        overflow: hidden;
+    }
+
+    .operation-card:hover {
+        transform: translateY(-6px);
+        box-shadow: 0 12px 35px rgba(0, 0, 0, 0.08);
+    }
+
+    .operation-card.paye {
+        border-left-color: #28a745;
+        background: linear-gradient(90deg, rgba(40, 167, 69, 0.03), transparent);
+    }
+
+    .operation-card.en-cours {
+        border-left-color: var(--primary-color);
+        background: linear-gradient(90deg, rgba(var(--primary-color), 0.03), transparent);
+    }
+
+    .badge-large {
+        font-size: 0.85rem;
+        padding: 0.35rem 0.8rem;
+    }
+
+    .progress-custom {
+        height: 22px;
+        font-size: 0.85rem;
+        border-radius: 10px;
+        overflow: hidden;
+    }
+
+    .muted-sm {
+        font-size: .85rem;
+        color: var(--muted);
+    }
+
+    /* Styles pour les boutons PDF */
+    .btn-pdf-group {
+        position: relative;
+    }
+
+    .btn-pdf {
+        position: relative;
+        overflow: hidden;
+        transition: all 0.3s ease;
+    }
+
+    .btn-pdf:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .btn-pdf i {
+        transition: transform 0.3s ease;
+    }
+
+    .btn-pdf:hover i {
+        transform: scale(1.15);
+    }
+
+    /* Animation de téléchargement */
+    @keyframes pulse {
+
+        0%,
+        100% {
+            opacity: 1;
+        }
+
+        50% {
+            opacity: 0.5;
+        }
+    }
+
+    .downloading {
+        animation: pulse 1s infinite;
+    }
+
+    /* Sélection multiple */
+    .selection-toolbar {
+        position: fixed;
+        bottom: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: white;
+        padding: 15px 25px;
+        border-radius: 50px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+        display: none;
+        z-index: 1000;
+        transition: all 0.3s ease;
+    }
+
+    .selection-toolbar.show {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+    }
+
+    .checkbox-select {
+        width: 20px;
+        height: 20px;
+        cursor: pointer;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- En-tête -->
+    <div class="row mb-3 align-items-center">
+        <div class="col-md-7">
+            <h2 class="mb-1">
+                <i
+                    class="fas fa-{{ 'money-bill-wave' if type_operation == 'ENCAISSEMENT' else 'wallet' if type_operation == 'DECHARGE' else 'exchange-alt' }} me-2"></i>
+                {{ 'Encaissements' if type_operation == 'ENCAISSEMENT' else 'Décharges' if type_operation == 'DECHARGE'
+                else 'Compensations' }}
+                <span class="badge {{ 'bg-info' if type_situation == 'BLOC' else 'bg-danger' }}">{{ type_display
+                    }}</span>
+            </h2>
+            <p class="muted-sm mb-0">
+                {% if type_operation == 'ENCAISSEMENT' %}
+                <i class="fas fa-arrow-right"></i> Médecin paie la clinique
+                {% elif type_operation == 'DECHARGE' %}
+                <i class="fas fa-arrow-left"></i> Clinique paie le médecin
+                {% else %}
+                <i class="fas fa-exchange-alt"></i> Compensation automatique
+                {% endif %}
+            </p>
+        </div>
+
+        <div class="col-md-5 text-end">
+            <div class="d-flex justify-content-end gap-2 flex-wrap">
+                <input id="searchInput" type="search" class="form-control form-control-sm" style="max-width: 250px;"
+                    placeholder="Rechercher...">
+
+                <div class="btn-group">
+                    <a href="?filter_paid=false"
+                        class="btn btn-{{ 'primary' if not filter_paid else 'outline-primary' }} btn-sm">
+                        <i class="far fa-clock"></i> En cours
+                    </a>
+                    <a href="?filter_paid=true"
+                        class="btn btn-{{ 'success' if filter_paid else 'outline-success' }} btn-sm">
+                        <i class="far fa-check-circle"></i> Réglés
+                    </a>
+                </div>
+
+                <a href="{{ url_for(route_back) }}" class="btn btn-outline-secondary btn-sm">
+                    <i class="fas fa-arrow-left"></i> Retour
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistiques -->
+    <div class="row mb-4 g-3">
+        {% set total_montant = operations|sum(attribute='montant') %}
+        {% set total_paye = operations|sum(attribute='montant_paye') %}
+        {% set total_reste = operations|sum(attribute='reste') %}
+
+        <div class="col-sm-6 col-md-3">
+            <div class="card shadow-sm h-100">
+                <div class="card-body d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="muted-sm mb-1">Total opérations</h6>
+                        <h4 class="mb-0">{{ operations|length }}</h4>
+                    </div>
+                    <i
+                        class="far fa-file-alt {{ 'text-primary' if type_situation == 'BLOC' else 'text-danger' }} display-6"></i>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-sm-6 col-md-3">
+            <div class="card shadow-sm h-100">
+                <div class="card-body d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="muted-sm mb-1">Montant total</h6>
+                        <h5 class="mb-0 text-info">{{ "{:,.2f}".format(total_montant) }} DA</h5>
+                    </div>
+                    <i class="fas fa-calculator text-info display-6"></i>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-sm-6 col-md-3">
+            <div class="card shadow-sm h-100">
+                <div class="card-body d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="muted-sm mb-1">Déjà payé</h6>
+                        <h5 class="mb-0 text-success">{{ "{:,.2f}".format(total_paye) }} DA</h5>
+                    </div>
+                    <i class="far fa-check-circle text-success display-6"></i>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-sm-6 col-md-3">
+            <div class="card shadow-sm h-100">
+                <div class="card-body d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="muted-sm mb-1">Reste à payer</h6>
+                        <h5 class="mb-0 text-warning">{{ "{:,.2f}".format(total_reste) }} DA</h5>
+                    </div>
+                    <i class="far fa-hourglass text-warning display-6"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Barre d'outils sélection multiple -->
+    <div class="selection-toolbar" id="selectionToolbar">
+        <span id="selectedCount" class="fw-bold">0 sélectionné(s)</span>
+        <button class="btn btn-sm btn-primary" onclick="exporterSelection()">
+            <i class="far fa-file-pdf me-1"></i>Exporter sélection
+        </button>
+        <button class="btn btn-sm btn-outline-secondary" onclick="clearSelection()">
+            <i class="fas fa-times"></i>
+        </button>
+    </div>
+
+    <!-- Liste des opérations -->
+    {% if operations %}
+    <div class="row" id="operationsContainer">
+        {% for operation in operations %}
+        {% set pourcentage = (operation.montant_paye / operation.montant * 100) if operation.montant > 0 else 0 %}
+        {% set est_paye = operation.reste == 0 %}
+
+        <div class="col-md-6 mb-4 operation-item" data-doctor="{{ (operation.doctor_name or '')|lower }}"
+            data-id="{{ operation.id }}" data-status="{{ 'paye' if est_paye else 'en-cours' }}">
+
+            <div class="card operation-card {{ 'paye' if est_paye else 'en-cours' }} shadow-sm">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                        <div class="d-flex align-items-start gap-2">
+                            <!-- Checkbox pour sélection multiple -->
+                            <input type="checkbox" class="checkbox-select" data-operation-id="{{ operation.id }}"
+                                onchange="updateSelection()">
+
+                            <div>
+                                <h5 class="mb-1">
+                                    <i class="far fa-user-circle me-1"></i>
+                                    Dr. {{ operation.doctor_name }}
+                                </h5>
+                                <small class="muted-sm">
+                                    <span class="badge {{ 'bg-info' if type_situation == 'BLOC' else 'bg-danger' }}">
+                                        <i
+                                            class="fas fa-{{ 'hospital' if type_situation == 'BLOC' else 'heartbeat' }}"></i>
+                                        {{ type_display }}
+                                    </span>
+                                    Opération #{{ operation.id }} – {{ operation.date.strftime('%d/%m/%Y') }}
+                                </small>
+                            </div>
+                        </div>
+
+                        <div>
+                            {% if est_paye %}
+                            <span class="badge bg-success badge-large">
+                                <i class="far fa-check-circle me-1"></i>Réglé
+                            </span>
+                            {% else %}
+                            <span class="badge bg-warning badge-large">
+                                <i class="far fa-clock me-1"></i>En cours
+                            </span>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="row text-center mb-3">
+                        <div class="col-4">
+                            <small class="muted-sm d-block">Montant</small>
+                            <strong>{{ "{:,.2f}".format(operation.montant) }} DA</strong>
+                        </div>
+                        <div class="col-4">
+                            <small class="muted-sm d-block">Payé</small>
+                            <strong class="text-success">{{ "{:,.2f}".format(operation.montant_paye) }} DA</strong>
+                        </div>
+                        <div class="col-4">
+                            <small class="muted-sm d-block">Reste</small>
+                            <strong class="text-warning">{{ "{:,.2f}".format(operation.reste) }} DA</strong>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <div class="progress progress-custom">
+                            <div class="progress-bar {{ 'bg-success' if est_paye else 'bg-warning' }}"
+                                role="progressbar" style="width: {{ pourcentage }}%">{{ "%.1f"|format(pourcentage) }}%
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="d-flex justify-content-between small text-muted mb-2">
+                        <div>
+                            <i class="fas fa-user"></i> {{ operation.created_by_name or 'N/A' }}
+                        </div>
+                        <div>
+                            <i class="far fa-calendar"></i>
+                            {{ operation.created_at.strftime('%d/%m/%Y %H:%M') if operation.created_at else 'N/A' }}
+                        </div>
+                    </div>
+
+                    {% if operation.payment_by_name %}
+                    <div class="d-flex justify-content-between small text-muted">
+                        <div>
+                            <i class="fas fa-money-bill-wave"></i> {{ operation.payment_by_name }}
+                        </div>
+                        <div>
+                            {{ operation.payment_at.strftime('%d/%m/%Y %H:%M') if operation.payment_at else '-' }}
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <!-- BOUTONS D'ACTION OPTIMISÉS -->
+                    <div class="mt-3 d-flex gap-2 flex-wrap">
+                        <!-- Bouton Voir Dossiers -->
+                        <button class="btn btn-sm btn-outline-info flex-grow-1"
+                            onclick="voirDossiers({{ operation.id }})">
+                            <i class="far fa-eye me-1"></i>Dossiers
+                        </button>
+
+                        <!-- Groupe de boutons PDF -->
+                        <div class="btn-group btn-pdf-group">
+                            <a href="{{ url_for('exporter_bon_pdf', id_operation=operation.id) }}"
+                                class="btn btn-sm btn-outline-secondary btn-pdf" title="Télécharger le bon en PDF"
+                                onclick="handlePDFDownload(event, {{ operation.id }})">
+                                <i class="far fa-file-pdf me-1"></i>PDF
+                            </a>
+                            <button type="button"
+                                class="btn btn-sm btn-outline-secondary dropdown-toggle dropdown-toggle-split"
+                                data-bs-toggle="dropdown">
+                                <span class="visually-hidden">Options PDF</span>
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-end">
+                                <li>
+                                    <a class="dropdown-item"
+                                        href="{{ url_for('exporter_bon_pdf', id_operation=operation.id) }}"
+                                        target="_blank">
+                                        <i class="far fa-file-pdf me-2"></i>Télécharger
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item"
+                                        href="{{ url_for('apercu_bon_pdf', id_operation=operation.id) }}"
+                                        target="_blank">
+                                        <i class="far fa-eye me-2"></i>Aperçu
+                                    </a>
+                                </li>
+                                <li>
+                                    <hr class="dropdown-divider">
+                                </li>
+                                <li>
+                                    <a class="dropdown-item" href="#"
+                                        onclick="envoyerParEmail({{ operation.id }}); return false;">
+                                        <i class="far fa-envelope me-2"></i>Envoyer par email
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item" href="#"
+                                        onclick="imprimerBon({{ operation.id }}); return false;">
+                                        <i class="fas fa-print me-2"></i>Imprimer
+                                    </a>
+                                </li>
+                            </ul>
+                        </div>
+
+                        <!-- Bouton Payer (si non payé) -->
+                        {% if not est_paye %}
+                        <button class="btn btn-sm btn-outline-success"
+                            onclick="enregistrerPaiement({{ operation.id }}, {{ operation.reste }})">
+                            <i class="fas fa-money-bill-wave me-1"></i>Payer
+                        </button>
+                        {% endif %}
+
+                        <!-- Bouton Supprimer -->
+                        {% if not est_paye and operation.montant_paye == 0 %}
+                        <button class="btn btn-sm btn-outline-danger" onclick="supprimerOperation({{ operation.id }})">
+                            <i class="far fa-trash-alt"></i>
+                        </button>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <div id="noResults" class="alert alert-warning text-center" style="display: none;">
+        <i class="fas fa-search"></i> Aucun résultat.
+    </div>
+    {% else %}
+    <div class="card">
+        <div class="card-body text-center py-5">
+            <i class="far fa-inbox display-1 text-muted"></i>
+            <h4 class="mt-3 text-muted">
+                Aucune opération {{ 'réglée' if filter_paid else 'en cours' }}
+            </h4>
+            <p class="text-muted">
+                {% if filter_paid %}
+                Les opérations complètement réglées apparaîtront ici
+                {% else %}
+                Créez une nouvelle opération depuis la situation médecin
+                {% endif %}
+            </p>
+            <a href="{{ url_for(route_back) }}"
+                class="btn {{ 'btn-primary' if type_situation == 'BLOC' else 'btn-danger' }}">
+                <i class="fas fa-arrow-left me-1"></i>Retour
+            </a>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Modal Voir Dossiers -->
+<div class="modal fade" id="modalDossiers" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="far fa-folder-open me-1"></i>Dossiers liés à l'opération
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div id="listeDossiers">
+                    <div class="text-center py-4">
+                        <div class="spinner-border {{ 'text-primary' if type_situation == 'BLOC' else 'text-danger' }}">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Paiement -->
+<div class="modal fade" id="modalPaiement" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="POST" id="formPaiement">
+                <div class="modal-header bg-success text-white">
+                    <h5 class="modal-title">
+                        <i class="fas fa-money-bill-wave me-1"></i>Enregistrer un paiement
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" name="type_operation" value="{{ type_operation }}">
+
+                    <div class="alert alert-info d-flex justify-content-between">
+                        <div><strong>Reste à payer:</strong></div>
+                        <div id="resteAPayer" class="fw-bold">-</div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Montant du paiement <span class="text-danger">*</span></label>
+                        <div class="input-group">
+                            <input type="number" step="0.01" min="0.01" name="payment_amount" class="form-control"
+                                id="montantPaiement" required>
+                            <span class="input-group-text">DA</span>
+                        </div>
+                    </div>
+
+                    <div class="alert alert-warning">
+                        <i class="far fa-info-circle me-1"></i>
+                        Le paiement sera réparti automatiquement au prorata.
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                    <button type="submit" class="btn btn-success">
+                        <i class="far fa-check-circle me-1"></i>Enregistrer
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Suppression -->
+<div class="modal fade" id="modalSupprimer" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="POST" id="formSupprimer">
+                <div class="modal-header bg-danger text-white">
+                    <h5 class="modal-title">
+                        <i class="fas fa-exclamation-triangle me-1"></i>Confirmer la suppression
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="mb-0">
+                        <strong>Êtes-vous sûr de vouloir supprimer cette opération ?</strong>
+                    </p>
+                    <p class="text-muted mt-2">Cette action est irréversible.</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                    <button type="submit" class="btn btn-danger">
+                        <i class="far fa-trash-alt me-1"></i>Supprimer
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Email -->
+<div class="modal fade" id="modalEmail" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form id="formEmail">
+                <div class="modal-header bg-info text-white">
+                    <h5 class="modal-title">
+                        <i class="far fa-envelope me-1"></i>Envoyer par email
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Destinataire</label>
+                        <input type="email" class="form-control" id="emailDestinataire" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Message (optionnel)</label>
+                        <textarea class="form-control" rows="3" id="emailMessage"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                    <button type="submit" class="btn btn-info">
+                        <i class="far fa-paper-plane me-1"></i>Envoyer
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    const API_DOSSIERS_ENDPOINT = '{{ api_dossiers_endpoint }}';
+    const ROUTE_PAYER = '{{ route_payer }}';
+    const ROUTE_SUPPRIMER = '{{ route_supprimer }}';
+
+    // Recherche avec debounce
+    (function () {
+        const searchInput = document.getElementById('searchInput');
+        const container = document.getElementById('operationsContainer');
+        const noResults = document.getElementById('noResults');
+
+        function filterCards() {
+            if (!container) return;
+
+            const query = (searchInput?.value || '').toLowerCase();
+            const items = container.querySelectorAll('.operation-item');
+
+            let shown = 0;
+            items.forEach(item => {
+                const text = item.innerText.toLowerCase();
+                const visible = text.includes(query);
+                item.style.display = visible ? '' : 'none';
+                if (visible) shown++;
+            });
+
+            if (noResults) noResults.style.display = shown === 0 ? 'block' : 'none';
+        }
+
+        function debounce(fn, wait) {
+            let t;
+            return function (...args) {
+                clearTimeout(t);
+                t = setTimeout(() => fn.apply(this, args), wait);
+            };
+        }
+
+        const debouncedFilter = debounce(filterCards, 200);
+
+        searchInput?.addEventListener('input', debouncedFilter);
+        document.addEventListener('DOMContentLoaded', filterCards);
+    })();
+
+    // Voir dossiers
+    function voirDossiers(idOperation) {
+        const modal = new bootstrap.Modal(document.getElementById('modalDossiers'));
+        const liste = document.getElementById('listeDossiers');
+
+        liste.innerHTML = '<div class="text-center py-4"><div class="spinner-border"></div></div>';
+        modal.show();
+
+        fetch(`${API_DOSSIERS_ENDPOINT}/${idOperation}`)
+            .then(res => res.json())
+            .then(dossiers => {
+                if (!dossiers?.length) {
+                    liste.innerHTML = '<div class="alert alert-warning">Aucun dossier trouvé</div>';
+                    return;
+                }
+
+                let html = '<div class="table-responsive"><table class="table table-hover">';
+                html += '<thead class="table-light"><tr>';
+                html += '<th>Patient</th><th>Date</th><th class="text-end">Prix total</th><th class="text-end">Montant</th>';
+                html += '</tr></thead><tbody>';
+
+                let total = 0;
+                dossiers.forEach(d => {
+                    html += `<tr>
+                    <td><strong>${d.patient || d.patiente}</strong></td>
+                    <td><small class="text-muted">${d.date}</small></td>
+                    <td class="text-end">${parseFloat(d.prix_total).toLocaleString('fr-FR', { minimumFractionDigits: 2 })} DA</td>
+                    <td class="text-end"><strong class="text-primary">${parseFloat(d.montant).toLocaleString('fr-FR', { minimumFractionDigits: 2 })} DA</strong></td>
+                </tr>`;
+                    total += parseFloat(d.montant);
+                });
+
+                html += `</tbody><tfoot class="table-light"><tr>
+                <th colspan="3" class="text-end">TOTAL:</th>
+                <th class="text-end">${total.toLocaleString('fr-FR', { minimumFractionDigits: 2 })} DA</th>
+            </tr></tfoot></table></div>`;
+
+                liste.innerHTML = html;
+            })
+            .catch(err => {
+                liste.innerHTML = `<div class="alert alert-danger">Erreur: ${err.message}</div>`;
+            });
+    }
+
+    // Enregistrer paiement
+    function enregistrerPaiement(idOperation, reste) {
+        const modal = new bootstrap.Modal(document.getElementById('modalPaiement'));
+        const form = document.getElementById('formPaiement');
+
+        form.action = `/${ROUTE_PAYER}/${idOperation}`;
+
+        const resteNode = document.getElementById('resteAPayer');
+        const montantInput = document.getElementById('montantPaiement');
+
+        resteNode.textContent = parseFloat(reste).toLocaleString('fr-FR', { minimumFractionDigits: 2 }) + ' DA';
+        montantInput.value = parseFloat(reste).toFixed(2);
+        montantInput.max = parseFloat(reste).toFixed(2);
+
+        modal.show();
+    }
+
+    // Supprimer opération
+    function supprimerOperation(idOperation) {
+        const modal = new bootstrap.Modal(document.getElementById('modalSupprimer'));
+        const form = document.getElementById('formSupprimer');
+
+        form.action = `/${ROUTE_SUPPRIMER}/${idOperation}`;
+        modal.show();
+    }
+
+    // Messages flash
+    {% with messages = get_flashed_messages(with_categories = true) %}
+    {% if messages %}
+    {% for category, message in messages %}
+    showToast({{ message| tojson }}, "{{ category }}");
+    {% endfor %}
+    {% endif %}
+    {% endwith %}
+</script>
+<script>
+    // Fonction améliorée pour télécharger le PDF avec notification
+    function telechargerPDF(idOperation, event) {
+        event.preventDefault();
+
+        const btn = event.currentTarget;
+        const icon = btn.querySelector('i');
+        const originalHTML = btn.innerHTML;
+
+        // Animation de chargement
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Génération...';
+        btn.classList.add('downloading');
+
+        // Créer un lien invisible pour le téléchargement
+        const link = document.createElement('a');
+        link.href = `/exporter_bon_pdf/${idOperation}`;
+        link.target = '_blank';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+
+        // Réinitialiser le bouton après un délai
+        setTimeout(() => {
+            btn.disabled = false;
+            btn.innerHTML = originalHTML;
+            btn.classList.remove('downloading');
+
+            // Notification de succès
+            showToast('PDF généré avec succès !', 'success');
+        }, 1500);
+    }
+
+    // Alternative : Bouton avec icône animée
+    function exporterBonAvecAnimation(idOperation) {
+        showToast('Génération du PDF en cours...', 'info');
+
+        setTimeout(() => {
+            window.open(`/exporter_bon_pdf/${idOperation}`, '_blank');
+            showToast('PDF téléchargé !', 'success');
+        }, 500);
+    }
+</script>
+{% endblock %}

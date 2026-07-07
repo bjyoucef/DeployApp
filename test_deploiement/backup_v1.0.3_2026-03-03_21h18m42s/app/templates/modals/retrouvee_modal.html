@@ -1,0 +1,31 @@
+<div class="modal fade" id="retrouveeModal{{ emprunt.id }}" tabindex="-1" role="dialog"
+     aria-labelledby="personneTrouveeModalLabel{{ emprunt.id }}" aria-hidden="true">
+    <div class="modal-dialog" role="document" class="modal-stack">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="personneTrouveeModalLabel{{ emprunt.id }}">
+                    Sélectionner la personne ayant trouvé la clé {{ emprunt.numero_cle }}
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form action="{{ url_for('marquer_retrouvee', id=emprunt.id) }}" method="POST">
+                    <div class="form-group">
+                        <label for="id_personne_trouvee{{ emprunt.id }}">Personne ayant trouvé la
+                            clé</label>
+                        <select id="id_personne_trouvee{{ emprunt.id }}" name="id_personne_trouvee"
+                                class="form-control" required>
+                            <option value="" disabled selected>-- Sélectionnez une personne --</option>
+                            {% for personne in personnes %}
+                            <option value="{{ personne.id_personnel }}">{{ personne.nom }} {{
+                                personne.prenom }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <button type="submit" class="btn btn-success">Enregistrer</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,706 @@
+{% extends "layout.html" %}
+{% import 'his/macros/his_direct_selector.html' as his_selector %}
+
+{% block style %}
+<style>
+    .stats-card {
+        border-left: 5px solid;
+        transition: all 0.2s ease;
+        border-radius: 10px;
+    }
+
+    .stats-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+    }
+
+    .stats-value {
+        font-size: 1.6rem;
+        font-weight: 700;
+    }
+
+    .table th {
+        white-space: nowrap;
+    }
+
+    .badge {
+        font-size: 0.75rem;
+    }
+
+    .dropdown-menu {
+        min-width: 200px;
+    }
+
+    .stats-label {
+        font-size: 0.875rem;
+        color: #6c757d;
+    }
+
+    .pagination .page-item.active .page-link {
+        background-color: #0d6efd;
+        border-color: #0d6efd;
+    }
+
+    /* ✅ Styles pour le bouton historique HIS */
+    .btn-history-his {
+        padding: 0.25rem 0.5rem;
+        font-size: 0.75rem;
+        line-height: 1;
+    }
+
+    .patient-name-cell {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+    }
+
+    /* Animation au survol du bouton historique */
+    .btn-history-his {
+        transition: all 0.2s ease;
+    }
+
+    .btn-history-his:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0, 123, 255, 0.3);
+    }
+
+    /* Badge HIS */
+    .badge.bg-info {
+        font-size: 0.75rem;
+        font-weight: 600;
+    }
+
+    /* Pour la cellule patient avec flex */
+    .patient-name-cell {
+        min-height: 32px;
+    }
+
+    /* Responsive - cacher le texte du bouton sur mobile */
+    @media (max-width: 768px) {
+        .btn-history-his {
+            padding: 0.25rem 0.4rem;
+        }
+
+        .btn-history-his .btn-text {
+            display: none;
+        }
+    }
+
+    /* ✅ Ligne de facture donnée au patient */
+    tr.facture-donnee {
+        background-color: #d4edda !important;
+    }
+
+    tr.facture-donnee:hover {
+        background-color: #c3e6cb !important;
+    }
+
+    /* Dark Mode Overrides */
+    [data-theme="dark"] .stats-card {
+        background-color: var(--bg-card);
+        color: var(--text-primary);
+    }
+
+    [data-theme="dark"] .stats-label {
+        color: var(--text-secondary);
+    }
+
+    [data-theme="dark"] .stats-value {
+        color: var(--text-primary) !important;
+    }
+
+    [data-theme="dark"] tr.facture-donnee {
+        background-color: rgba(16, 185, 129, 0.15) !important;
+    }
+
+    [data-theme="dark"] tr.facture-donnee:hover {
+        background-color: rgba(16, 185, 129, 0.25) !important;
+    }
+
+    [data-theme="dark"] .page-item.active .page-link {
+        background-color: var(--primary);
+        border-color: var(--primary);
+        color: white;
+    }
+
+    [data-theme="dark"] .page-item .page-link {
+        background-color: var(--bg-card);
+        border-color: var(--border-color);
+        color: var(--text-primary);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>
+            <i class="fas fa-file-invoice"></i>
+            {% if type_facture == 'proforma' %}
+            Factures Proforma
+            {% else %}
+            Factures
+            {% endif %}
+        </h2>
+
+        <div class="d-flex gap-2">
+            <a href="{{ url_for('admin_config_clinique') }}" class="btn btn-outline-secondary btn-sm"
+                id="btn-config-clinique">
+                <i class="fas fa-cog me-1"></i>Config
+            </a>
+            <a href="{{ url_for('nouvelle_facture') }}" class="btn btn-primary btn-sm" id="btn-nouvelle-facture"
+                style="background:#450A54; border:none;">
+                <i class="fas fa-plus me-1"></i>Nouvelle Facture
+            </a>
+        </div>
+    </div>
+
+    <!-- Statistiques -->
+    {% if stats %}
+    <div class="row mb-4">
+        <!-- Total Factures -->
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="card stats-card" style="border-left-color: #0d6efd;">
+                <div class="card-body">
+                    <div class="stats-label">Total Factures</div>
+                    <div class="stats-value text-primary">{{ stats.total_factures or 0 }}</div>
+                    <small class="text-muted">
+                        <i class="fas fa-file-alt text-secondary"></i> {{ stats.nb_brouillon or 0 }} brouillon
+                        <i class="fas fa-check-circle text-success ms-2"></i> {{ stats.nb_valide or 0 }}
+                        validées
+                        <i class="fas fa-times-circle text-danger ms-2"></i> {{ stats.nb_annule or 0 }} annulées
+                    </small>
+                </div>
+            </div>
+        </div>
+
+        <!-- Total HT -->
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="card stats-card" style="border-left-color: #198754;">
+                <div class="card-body">
+                    <div class="stats-label">Total HT</div>
+                    <div class="stats-value text-success">{{ "{:,.2f}".format(stats.total_ht or 0) }} DA</div>
+                    <small class="text-muted">
+                        TVA: {{ "{:,.2f}".format(stats.total_tva or 0) }} DA
+                    </small>
+                </div>
+            </div>
+        </div>
+
+        <!-- Total TTC Global -->
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="card stats-card" style="border-left-color: #dc3545;">
+                <div class="card-body">
+                    <div class="stats-label">Total TTC Global</div>
+                    <div class="stats-value text-danger">{{ "{:,.2f}".format(stats.total_ttc or 0) }} DA</div>
+                    <small class="text-muted">
+                        {% if stats.total_debours and stats.total_debours > 0 %}
+                        <i class="fas fa-hand-holding-usd"></i> Débours:
+                        {{ "{:,.2f}".format(stats.total_debours) }} DA
+                        {% endif %}
+                    </small>
+                </div>
+            </div>
+        </div>
+
+        <!-- Total TVA -->
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="card stats-card" style="border-left-color: #ffc107;">
+                <div class="card-body">
+                    <div class="stats-label">Total TVA</div>
+                    <div class="stats-value text-warning">{{ "{:,.2f}".format(stats.total_tva or 0) }} DA</div>
+                    <small class="text-muted">
+                        9%: {{ "{:,.2f}".format(stats.total_tva_9 or 0) }} DA<br>
+                        19%: {{ "{:,.2f}".format(stats.total_tva_19 or 0) }} DA
+                    </small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ✅ NOUVELLES STATISTIQUES DÉTAILLÉES PAR STATUT -->
+    <div class="row mb-4">
+        <!-- TTC Brouillon -->
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="card stats-card" style="border-left-color: #6c757d;">
+                <div class="card-body">
+                    <div class="stats-label">
+                        <i class="fas fa-file-alt"></i> TTC Brouillon
+                    </div>
+                    <div class="stats-value text-secondary">{{ "{:,.2f}".format(stats.total_ttc_brouillon or 0) }} DA
+                    </div>
+                    <small class="text-muted">{{ stats.nb_brouillon or 0 }} facture(s)</small>
+                </div>
+            </div>
+        </div>
+
+        <!-- TTC Validé -->
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="card stats-card" style="border-left-color: #198754;">
+                <div class="card-body">
+                    <div class="stats-label">
+                        <i class="fas fa-check-circle"></i> TTC Validé
+                    </div>
+                    <div class="stats-value text-success">{{ "{:,.2f}".format(stats.total_ttc_valide or 0) }} DA</div>
+                    <small class="text-muted">{{ stats.nb_valide or 0 }} facture(s)</small>
+                </div>
+            </div>
+        </div>
+
+        <!-- TTC Remise au patient -->
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="card stats-card" style="border-left-color: #0dcaf0;">
+                <div class="card-body">
+                    <div class="stats-label">
+                        <i class="fas fa-hand-holding"></i> TTC Remise
+                    </div>
+                    <div class="stats-value text-info">{{ "{:,.2f}".format(stats.total_ttc_remise or 0) }} DA</div>
+                    <small class="text-muted">Donnée au patient</small>
+                </div>
+            </div>
+        </div>
+
+        <!-- TTC En attente de remise -->
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="card stats-card" style="border-left-color: #ffc107;">
+                <div class="card-body">
+                    <div class="stats-label">
+                        <i class="fas fa-clock"></i> TTC En attente
+                    </div>
+                    <div class="stats-value text-warning">{{ "{:,.2f}".format(stats.total_ttc_en_attente or 0) }} DA
+                    </div>
+                    <small class="text-muted">Validé mais non remise</small>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Filtres -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <form method="GET" action="{{ url_for('facturation') }}" id="filterForm">
+                <div class="row g-3">
+                    <div class="col-md-2">
+                        <label for="type" class="form-label">Type</label>
+                        <select name="type" id="type" class="form-select">
+                            <option value="facture" {% if request.args.get('type')=='facture' %}selected{% endif %}>
+                                Facture
+                            </option>
+                            <option value="proforma" {% if request.args.get('type')=='proforma' %}selected{% endif %}>
+                                Proforma
+                            </option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <label for="donnee_patient" class="form-label">Remise patient</label>
+                        <select name="donnee_patient" id="donnee_patient" class="form-select">
+                            <option value="">Tous</option>
+                            <option value="oui" {% if request.args.get('donnee_patient')=='oui' %}selected{% endif %}>
+                                Donnée au patient
+                            </option>
+                            <option value="non" {% if request.args.get('donnee_patient')=='non' %}selected{% endif %}>
+                                Non donnée
+                            </option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <label for="statut" class="form-label">Statut</label>
+                        <select name="statut" id="statut" class="form-select">
+                            <option value="">Tous</option>
+                            <option value="brouillon" {% if request.args.get('statut')=='brouillon' %}selected{% endif
+                                %}>Brouillon
+                            </option>
+                            <option value="valide" {% if request.args.get('statut')=='valide' %}selected{% endif %}>
+                                Validé
+                            </option>
+                            <option value="annule" {% if request.args.get('statut')=='annule' %}selected{% endif %}>
+                                Annulé
+                            </option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <label for="avec_debours" class="form-label">Débours</label>
+                        <select name="avec_debours" id="avec_debours" class="form-select">
+                            <option value="">Tous</option>
+                            <option value="oui" {% if request.args.get('avec_debours')=='oui' %}selected{% endif %}>Avec
+                                débours
+                            </option>
+                            <option value="non" {% if request.args.get('avec_debours')=='non' %}selected{% endif %}>Sans
+                                débours
+                            </option>
+                        </select>
+                    </div>
+
+                    <div class="col-md-2">
+                        <label for="date_debut" class="form-label">Date début</label>
+                        <input type="date" name="date_debut" id="date_debut" class="form-control"
+                            value="{{ request.args.get('date_debut', '') }}">
+                    </div>
+
+                    <div class="col-md-2">
+                        <label for="date_fin" class="form-label">Date fin</label>
+                        <input type="date" name="date_fin" id="date_fin" class="form-control"
+                            value="{{ request.args.get('date_fin', '') }}">
+                    </div>
+
+                    <div class="col-md-2">
+                        <label for="recherche_patient" class="form-label">Recherche</label>
+                        <input type="text" name="recherche_patient" id="recherche_patient" class="form-control"
+                            value="{{ request.args.get('recherche_patient', '') }}" placeholder="Patient ou N° facture">
+                    </div>
+                </div>
+
+                <div class="row mt-3">
+                    <div class="col-md-12">
+                        <button type="submit" class="btn btn-secondary">
+                            <i class="fas fa-filter"></i> Filtrer
+                        </button>
+
+                        <a href="{{ url_for('export_factures_excel', **request.args) }}" class="btn btn-success ms-2"
+                            id="btn-export-excel">
+                            <i class="fas fa-file-excel"></i> Export Excel
+                        </a>
+
+                        <a href="{{ url_for('facturation', type=request.args.get('type', 'facture')) }}"
+                            class="btn btn-outline-secondary">
+                            <i class="fas fa-redo"></i> Réinitialiser
+                        </a>
+                        <div class="float-end">
+                            <label class="me-2">Afficher:</label>
+                            <select name="per_page" class="form-select d-inline-block" style="width: auto;"
+                                onchange="this.form.submit()">
+                                <option value="10" {% if request.args.get('per_page', '20' )=='10' %}selected{% endif
+                                    %}>10
+                                </option>
+                                <option value="20" {% if request.args.get('per_page', '20' )=='20' %}selected{% endif
+                                    %}>20
+                                </option>
+                                <option value="50" {% if request.args.get('per_page', '20' )=='50' %}selected{% endif
+                                    %}>50
+                                </option>
+                                <option value="100" {% if request.args.get('per_page', '20' )=='100' %}selected{% endif
+                                    %}>100
+                                </option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Résultats et Tableau -->
+    <div class="card">
+        <div class="card-header">
+            <h5 class="mb-0">
+                Résultats: {{ total_count }} facture(s)
+                {% if request.args.get('recherche_patient') or request.args.get('date_debut') or
+                request.args.get('date_fin') %}
+                <span class="text-muted small">(filtrées)</span>
+                {% endif %}
+            </h5>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover" id="facturesTable">
+                    <thead>
+                        <tr>
+                            <th>N° Facture</th>
+                            <th>Origine</th>
+                            <th>Date</th>
+                            <th>Patient</th>
+                            <th>Montant HT</th>
+                            <th>TVA</th>
+                            <th>Total TTC</th>
+                            <th>Débours</th>
+                            <th>Statut</th>
+                            <th>Remise</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% if factures %}
+                        {% for facture in factures %}
+                        <tr {% if facture.donnee_au_patient %}class="facture-donnee" {% endif %}>
+                            <td>
+                                <strong>{{ facture.numero_facture }}</strong>
+                            </td>
+                            <td>
+                                {% if facture.proforma_origine_numero %}
+                                <span class="badge bg-info"
+                                    title="Issue du proforma {{ facture.proforma_origine_numero }}">
+                                    <i class="fas fa-link"></i> {{ facture.proforma_origine_numero }}
+                                </span>
+                                {% elif facture.type_facture == 'proforma' and facture.est_transforme %}
+                                <span class="badge bg-success" title="Transformé en facture">
+                                    <i class="fas fa-check"></i> Transformé
+                                </span>
+                                {% else %}
+                                <span class="text-muted">-</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ facture.date_facture.strftime('%d/%m/%Y') }}</td>
+                            <td>
+                                <div class="patient-name-cell">
+                                    <div class="flex-grow-1">
+                                        <div class="d-flex align-items-center gap-2">
+                                            <span class="fw-medium">{{ facture.patient_complet }}</span>
+
+                                            <!-- Badge HIS si référence présente -->
+                                            {% if facture.patient_code_his %}
+                                            <span class="badge bg-light text-info border border-info"
+                                                title="Patient synchronisé HIS - Code: {{ facture.patient_code_his }}">
+                                                <i class="fas fa-database"></i>
+                                            </span>
+                                            {% endif %}
+                                        </div>
+
+                                        <!-- Informations supplémentaires -->
+                                        {% if facture.patient_raison_sociale %}
+                                        <small class="text-muted d-block">
+                                            <i class="fas fa-building"></i> {{ facture.patient_raison_sociale }}
+                                        </small>
+                                        {% endif %}
+                                    </div>
+
+                                    <!-- Bouton Historique -->
+                                    {% if facture.patient_oid_his %}
+                                    <button class="btn btn-info btn-history-his"
+                                        onclick="showPatientHistoryDirect('{{ facture.patient_oid_his }}')"
+                                        title="Voir l'historique HIS du patient">
+                                        <i class="fas fa-history"></i>
+                                        <span class="btn-text d-none d-lg-inline ms-1">HIS</span>
+                                    </button>
+                                    {% endif %}
+                                </div>
+                            </td>
+                            <td>{{ "{:,.2f}".format(facture.total_ht) }} DA</td>
+                            <td>
+                                <small>
+                                    9%: {{ "{:,.2f}".format(facture.total_tva_9) }} DA<br>
+                                    19%: {{ "{:,.2f}".format(facture.total_tva_19) }} DA
+                                </small>
+                            </td>
+                            <td><strong>{{ "{:,.2f}".format(facture.total_ttc) }} DA</strong></td>
+                            <td>
+                                {% if facture.total_debours and facture.total_debours > 0 %}
+                                <span class="badge bg-warning text-dark">
+                                    {{ "{:,.2f}".format(facture.total_debours) }} DA
+                                </span>
+                                {% else %}
+                                <span class="text-muted">-</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if facture.statut == 'brouillon' %}
+                                <span class="badge bg-secondary">Brouillon</span>
+                                {% elif facture.statut == 'valide' %}
+                                <span class="badge bg-success">Validé</span>
+                                {% elif facture.statut == 'annule' %}
+                                <span class="badge bg-danger">Annulé</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if facture.donnee_au_patient %}
+                                <span class="badge bg-success"
+                                    title="Donnée le {{ facture.date_remise_patient.strftime('%d/%m/%Y à %H:%M') }}">
+                                    <i class="fas fa-check-circle"></i> Donnée
+                                </span>
+                                {% elif facture.statut == 'valide' %}
+                                <span class="badge bg-warning text-dark">
+                                    <i class="fas fa-clock"></i> En attente
+                                </span>
+                                {% else %}
+                                <span class="text-muted">-</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <div class="btn-group btn-group-sm" role="group">
+                                    {# Bouton Voir - toujours visible si accès facturation #}
+                                    <a href="{{ url_for('voir_facture', facture_id=facture.id) }}" class="btn btn-info"
+                                        title="Voir">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+
+                                    {% if facture.statut == 'brouillon' %}
+                                    <a href="{{ url_for('editer_facture', facture_id=facture.id) }}"
+                                        class="btn btn-warning btn-edit-facture-draft" title="Éditer">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    {% elif facture.statut == 'valide' %}
+                                    <a href="{{ url_for('editer_facture', facture_id=facture.id) }}"
+                                        class="btn btn-warning btn-edit-facture-valid" title="⚠️ Modifier (validée)">
+                                        <i class="fas fa-edit"></i>
+                                        <i class="fas fa-exclamation-triangle" style="font-size: 0.7em;"></i>
+                                    </a>
+                                    {% endif %}
+
+                                    {# ✅ Bouton Donner au patient - si validée et non encore donnée #}
+                                    {% if facture.statut == 'valide' and not facture.donnee_au_patient %}
+                                    <button type="button" class="btn btn-success btn-mark-given"
+                                        onclick="marquerFactureDonnee({{ facture.id }})"
+                                        title="Marquer comme donnée au patient">
+                                        <i class="fas fa-hand-holding"></i>
+                                    </button>
+                                    {% endif %}
+
+                                    {# Menu PDF - uniquement si privilège GENERER_PDF_FACTURE #}
+                                    {% if facture.statut != 'annule' %}
+                                    <a class="btn btn-danger btn-generate-pdf" title="Télécharger PDF"
+                                        href="{{ url_for('generer_pdf_facture', facture_id=facture.id, type='nb') }}"
+                                        target="_blank">
+                                        <i class="fas fa-file-pdf"></i>
+                                    </a>
+                                    {% endif %}
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                        {% else %}
+                        <tr>
+                            <td colspan="9" class="text-center text-muted py-4">
+                                <i class="fas fa-inbox fa-3x mb-3 d-block"></i>
+                                Aucune facture trouvée
+                            </td>
+                        </tr>
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Pagination -->
+            {% if total_pages > 1 %}
+            <nav aria-label="Navigation des pages" class="mt-4">
+                <ul class="pagination justify-content-center">
+                    <!-- Première page -->
+                    <li class="page-item {% if page == 1 %}disabled{% endif %}">
+                        <a class="page-link"
+                            href="{{ url_for('facturation', page=1, type=request.args.get('type'), statut=request.args.get('statut'), date_debut=request.args.get('date_debut'), date_fin=request.args.get('date_fin'), recherche_patient=request.args.get('recherche_patient'), avec_debours=request.args.get('avec_debours'), per_page=per_page) }}">
+                            <i class="fas fa-angle-double-left"></i>
+                        </a>
+                    </li>
+
+                    <!-- Page précédente -->
+                    <li class="page-item {% if page == 1 %}disabled{% endif %}">
+                        <a class="page-link"
+                            href="{{ url_for('facturation', page=page-1, type=request.args.get('type'), statut=request.args.get('statut'), date_debut=request.args.get('date_debut'), date_fin=request.args.get('date_fin'), recherche_patient=request.args.get('recherche_patient'), avec_debours=request.args.get('avec_debours'), per_page=per_page) }}">
+                            <i class="fas fa-angle-left"></i>
+                        </a>
+                    </li>
+
+                    <!-- Pages numérotées -->
+                    {% set start_page = [1, page - 2]|max %}
+                    {% set end_page = [total_pages, page + 2]|min %}
+
+                    {% if start_page > 1 %}
+                    <li class="page-item disabled"><span class="page-link">...</span></li>
+                    {% endif %}
+
+                    {% for p in range(start_page, end_page + 1) %}
+                    <li class="page-item {% if p == page %}active{% endif %}">
+                        <a class="page-link"
+                            href="{{ url_for('facturation', page=p, type=request.args.get('type'), statut=request.args.get('statut'), date_debut=request.args.get('date_debut'), date_fin=request.args.get('date_fin'), recherche_patient=request.args.get('recherche_patient'), avec_debours=request.args.get('avec_debours'), per_page=per_page) }}">
+                            {{ p }}
+                        </a>
+                    </li>
+                    {% endfor %}
+
+                    {% if end_page < total_pages %} <li class="page-item disabled"><span class="page-link">...</span>
+                        </li>
+                        {% endif %}
+
+                        <!-- Page suivante -->
+                        <li class="page-item {% if page == total_pages %}disabled{% endif %}">
+                            <a class="page-link"
+                                href="{{ url_for('facturation', page=page + 1, type=request.args.get('type'), statut=request.args.get('statut'), date_debut=request.args.get('date_debut'), date_fin=request.args.get('date_fin'), recherche_patient=request.args.get('recherche_patient'), avec_debours=request.args.get('avec_debours'), per_page=per_page) }}">
+                                <i class="fas fa-angle-right"></i>
+                            </a>
+                        </li>
+
+                        <!-- Dernière page -->
+                        <li class="page-item {% if page == total_pages %}disabled{% endif %}">
+                            <a class="page-link"
+                                href="{{ url_for('facturation', page=total_pages, type=request.args.get('type'), statut=request.args.get('statut'), date_debut=request.args.get('date_debut'), date_fin=request.args.get('date_fin'), recherche_patient=request.args.get('recherche_patient'), avec_debours=request.args.get('avec_debours'), per_page=per_page) }}">
+                                <i class="fas fa-angle-double-right"></i>
+                            </a>
+                        </li>
+                </ul>
+                <p class="text-center text-muted">
+                    Page {{ page }} sur {{ total_pages }} ({{ total_count }}
+                    résultat{{ 's' if total_count > 1 else '' }})
+                </p>
+            </nav>
+            {% endif %}
+        </div>
+    </div>
+
+</div>
+{{ his_selector.render_modal('modalPatientHistoryDirect') }}
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // ✅ Fonction globale pour afficher l'historique patient HIS
+    window.showPatientHistoryDirect = function (patientOid) {
+        if (typeof PatientHistoryModal !== 'undefined' && PatientHistoryModal.show) {
+            PatientHistoryModal.show(patientOid);
+        } else {
+            console.error('PatientHistoryModal not loaded');
+            showToast('Le module d\'historique HIS n\'est pas chargé.', "warning");
+        }
+    };
+
+    // ✅ Fonction pour marquer une facture comme donnée
+    function marquerFactureDonnee(factureId) {
+        if (!confirm('Confirmer que cette facture a été donnée au patient ?')) {
+            return;
+        }
+
+        fetch(`/facturation/marquer_donnee/${factureId}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            credentials: 'same-origin'
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showSuccessToast(data.message);
+                    // Recharger la page après un court délai
+                    setTimeout(() => location.reload(), 1000);
+                } else {
+                    showErrorToast('Erreur: ' + data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Erreur:', error);
+                showErrorToast('Erreur lors de la mise à jour');
+            });
+    }
+
+    // Fonctions de notification toast (optionnelles, améliorent l'UX)
+    function showSuccessToast(message) {
+        // Si vous utilisez Bootstrap Toast
+        const toastHtml = `
+                <div class="toast align-items-center text-white bg-success border-0" role="alert">
+                    <div class="d-flex">
+                        <div class="toast-body">
+                            <i class="fas fa-check-circle me-2"></i>${message}
+                        </div>
+                        <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+                    </div>
+                </div>
+            `;
+
+        // Sinon utiliser alert classique
+        showToast(message, "success");
+    }
+
+    function showErrorToast(message) {
+        showToast(message, "error");
+    }
+</script>
+{% endblock %}

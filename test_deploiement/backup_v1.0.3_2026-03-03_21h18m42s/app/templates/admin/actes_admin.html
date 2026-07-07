@@ -1,0 +1,388 @@
+{% extends "admin/admin_layout.html" %}
+
+{% block style %}
+<style>
+    .stat-card {
+        border-left: 4px solid;
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .stat-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+    }
+
+    .stat-card.primary {
+        border-left-color: #0d6efd;
+    }
+
+    .stat-card.success {
+        border-left-color: #198754;
+    }
+
+    .stat-card.warning {
+        border-left-color: #ffc107;
+    }
+
+    .stat-icon {
+        width: 60px;
+        height: 60px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.8rem;
+    }
+
+    .modal-header-custom {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+    }
+
+    .price-badge {
+        background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+        color: white;
+        padding: 0.5rem 1rem;
+        border-radius: 2rem;
+        font-weight: 600;
+    }
+
+    .action-btn {
+        transition: all 0.2s ease;
+    }
+
+    .action-btn:hover {
+        transform: scale(1.05);
+    }
+
+    .inactive-row {
+        opacity: 0.6;
+    }
+
+    .badge-status {
+        padding: 0.5rem 1rem;
+        font-weight: 500;
+        font-size: 0.875rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- En-tête avec statistiques -->
+    <div class="row mb-4">
+        <div class="col">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h2 class="mb-1">
+                        <i class="fas fa-stethoscope text-primary"></i>
+                        Gestion des Actes Médicaux
+                    </h2>
+                    <p class="text-muted mb-0">Gérez les actes médicaux et interventions</p>
+                </div>
+                <button class="btn btn-primary btn-lg shadow-sm" data-bs-toggle="modal" data-bs-target="#addActeModal">
+                    <i class="fas fa-plus me-2"></i>Nouvel Acte
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistiques -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-4">
+            <div class="stat-card primary shadow-sm">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <p class="text-muted mb-1 small">Total Actes</p>
+                            <h3 class="mb-0 fw-bold">{{ actes|length }}</h3>
+                        </div>
+                        <div class="stat-icon bg-primary bg-opacity-10 text-primary">
+                            <i class="fas fa-list-check"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="stat-card success shadow-sm">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <p class="text-muted mb-1 small">Actes Actifs</p>
+                            <h3 class="mb-0 fw-bold">{{ actes|selectattr('est_actif', 'equalto', 1)|list|length }}</h3>
+                        </div>
+                        <div class="stat-icon bg-success bg-opacity-10 text-success">
+                            <i class="fas fa-check-circle"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="stat-card warning shadow-sm">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <p class="text-muted mb-1 small">Actes Inactifs</p>
+                            <h3 class="mb-0 fw-bold">{{ actes|selectattr('est_actif', 'equalto', 0)|list|length }}</h3>
+                        </div>
+                        <div class="stat-icon bg-warning bg-opacity-10 text-warning">
+                            <i class="fas fa-pause-circle"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal d'ajout d'acte -->
+    <div class="modal fade" id="addActeModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow-lg">
+                <div class="modal-header modal-header-custom border-0">
+                    <h5 class="modal-title">
+                        <i class="fas fa-plus-circle me-2"></i>Ajouter un Nouvel Acte
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <form method="POST" action="{{ url_for('add_acte_location') }}">
+                    <div class="modal-body p-4">
+                        <div class="mb-3">
+                            <div class="form-floating">
+                                <input type="text" name="nom_acte" class="form-control" id="nom_acte"
+                                    placeholder="Nom de l'acte" required>
+                                <label for="nom_acte">
+                                    <i class="fas fa-stethoscope me-1"></i>Nom de l'Acte <span
+                                        class="text-danger">*</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <div class="form-floating">
+                                <input type="number" name="prix" class="form-control" id="prix" step="0.01" value="0"
+                                    placeholder="Prix">
+                                <label for="prix">
+                                    <i class="fas fa-tag me-1"></i>Prix de Base (DA)
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer border-0 bg-light">
+                        <button type="button" class="btn btn-light" data-bs-dismiss="modal">
+                            <i class="fas fa-times me-1"></i>Annuler
+                        </button>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save me-1"></i>Enregistrer
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tableau des actes -->
+    <div class="shadow-sm border-0">
+        <div class="card-header bg-white border-0 pt-4 pb-3">
+            <h5 class="mb-0">
+                <i class="fas fa-list me-2"></i>Liste des Actes Médicaux
+            </h5>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0" id="actesTable">
+                    <thead class="table-light">
+                        <tr>
+                            <th class="text-center" style="width: 60px;">
+                                <i class="fas fa-hashtag"></i>
+                            </th>
+                            <th>Nom de l'Acte</th>
+                            <th class="text-center">Prix de Base</th>
+                            <th class="text-center">Forfaits</th>
+                            <th class="text-center">Statut</th>
+                            <th class="text-center" style="width: 200px;">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for acte in actes %}
+                        <tr class="{% if not acte.est_actif %}inactive-row{% endif %}">
+                            <td class="text-center fw-bold text-muted">
+                                #{{ acte.id_acte }}
+                            </td>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <div class="bg-success bg-opacity-10 text-success rounded p-2 me-3">
+                                        <i class="fas fa-stethoscope"></i>
+                                    </div>
+                                    <div>
+                                        <div class="fw-bold text-dark">{{ acte.nom_acte }}</div>
+                                        <small class="text-muted">
+                                            <i class="fas fa-calendar-plus"></i>
+                                            Créé
+                                            le {{ acte.date_creation.strftime('%d/%m/%Y') if acte.date_creation else
+                                            'N/A' }}
+                                        </small>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="text-center">
+                                <span class="price-badge">
+                                    {{ acte.prix | format_price }} DA
+                                </span>
+                            </td>
+                            <td class="text-center">
+                                <span class="badge bg-info fs-6">
+                                    <i class="fas fa-box me-1"></i>{{ acte.nbr_forfaits }}
+                                </span>
+                            </td>
+                            <td class="text-center">
+                                {% if acte.est_actif %}
+                                <span class="badge badge-status bg-success">
+                                    <i class="fas fa-check-circle me-1"></i>Actif
+                                </span>
+                                {% else %}
+                                <span class="badge badge-status bg-secondary">
+                                    <i class="fas fa-pause-circle me-1"></i>Inactif
+                                </span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <div class="d-flex gap-1 justify-content-center">
+                                    <!-- Bouton Modifier -->
+                                    <button class="btn btn-warning btn-sm action-btn" data-bs-toggle="modal"
+                                        data-bs-target="#editActeModal{{ acte.id_acte }}" title="Modifier">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+
+                                    <!-- Bouton Activer/Désactiver -->
+                                    <form method="POST"
+                                        action="{{ url_for('toggle_acte_status', id_acte=acte.id_acte) }}"
+                                        class="d-inline">
+                                        <button type="submit"
+                                            class="btn btn-{% if acte.est_actif %}secondary{% else %}success{% endif %} btn-sm action-btn"
+                                            title="{% if acte.est_actif %}Désactiver{% else %}Activer{% endif %}">
+                                            <i class="fas fa-power-off"></i>
+                                        </button>
+                                    </form>
+
+                                    <!-- Bouton Supprimer -->
+                                    <button class="btn btn-danger btn-sm action-btn" data-bs-toggle="modal"
+                                        data-bs-target="#deleteActeModal{{ acte.id_acte }}" title="Supprimer">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+
+                        <!-- Modal Modification -->
+                        <div class="modal fade" id="editActeModal{{ acte.id_acte }}" tabindex="-1" aria-hidden="true">
+                            <div class="modal-dialog modal-dialog-centered">
+                                <div class="modal-content border-0 shadow-lg">
+                                    <div class="modal-header modal-header-custom border-0">
+                                        <h5 class="modal-title">
+                                            <i class="fas fa-edit me-2"></i>Modifier l'Acte
+                                        </h5>
+                                        <button type="button" class="btn-close btn-close-white"
+                                            data-bs-dismiss="modal"></button>
+                                    </div>
+                                    <form method="POST" action="{{ url_for('update_acte_location') }}">
+                                        <input type="hidden" name="id_acte" value="{{ acte.id_acte }}">
+                                        <div class="modal-body p-4">
+                                            <div class="mb-3">
+                                                <div class="form-floating">
+                                                    <input type="text" name="nom_acte" class="form-control"
+                                                        value="{{ acte.nom_acte }}" placeholder="Nom" required>
+                                                    <label>
+                                                        <i class="fas fa-stethoscope me-1"></i>Nom de l'Acte
+                                                    </label>
+                                                </div>
+                                            </div>
+
+                                            <div class="mb-3">
+                                                <div class="form-floating">
+                                                    <input type="number" name="prix" class="form-control"
+                                                        value="{{ acte.prix }}" step="0.01" placeholder="Prix">
+                                                    <label>
+                                                        <i class="fas fa-tag me-1"></i>Prix de Base (DA)
+                                                    </label>
+                                                </div>
+                                            </div>
+
+                                            <div class="form-check form-switch p-3 bg-light rounded">
+                                                <input type="checkbox" name="est_actif" class="form-check-input"
+                                                    id="est_actif{{ acte.id_acte }}" {% if acte.est_actif %}checked{%
+                                                    endif %}>
+                                                <label class="form-check-label fw-bold"
+                                                    for="est_actif{{ acte.id_acte }}">
+                                                    <i class="fas fa-toggle-on me-1"></i>Acte actif
+                                                </label>
+                                            </div>
+                                        </div>
+                                        <div class="modal-footer border-0 bg-light">
+                                            <button type="button" class="btn btn-light" data-bs-dismiss="modal">
+                                                <i class="fas fa-times me-1"></i>Annuler
+                                            </button>
+                                            <button type="submit" class="btn btn-success">
+                                                <i class="fas fa-save me-1"></i>Enregistrer
+                                            </button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Modal Confirmation Suppression -->
+                        <div class="modal fade" id="deleteActeModal{{ acte.id_acte }}" tabindex="-1" aria-hidden="true">
+                            <div class="modal-dialog modal-dialog-centered">
+                                <div class="modal-content border-0 shadow">
+                                    <div class="modal-header bg-danger text-white border-0">
+                                        <h5 class="modal-title">
+                                            <i class="fas fa-exclamation-triangle me-2"></i>Confirmer la suppression
+                                        </h5>
+                                        <button type="button" class="btn-close btn-close-white"
+                                            data-bs-dismiss="modal"></button>
+                                    </div>
+                                    <div class="modal-body p-4">
+                                        <p class="mb-0">Êtes-vous sûr de vouloir supprimer l'acte
+                                            <strong>{{ acte.nom_acte }}</strong> ?
+                                        </p>
+                                        <div class="alert alert-warning mt-3 mb-0">
+                                            <i class="fas fa-info-circle me-2"></i>Cette action est irréversible.
+                                        </div>
+                                    </div>
+                                    <div class="modal-footer border-0 bg-light">
+                                        <button type="button" class="btn btn-light" data-bs-dismiss="modal">
+                                            Annuler
+                                        </button>
+                                        <form method="POST"
+                                            action="{{ url_for('delete_acte_location', id_acte=acte.id_acte) }}"
+                                            class="d-inline">
+                                            <button type="submit" class="btn btn-danger">
+                                                <i class="fas fa-trash me-1"></i>Supprimer
+                                            </button>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Initialisation des tooltips Bootstrap
+    document.addEventListener('DOMContentLoaded', function () {
+        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[title]'))
+        var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl)
+        });
+    });
+</script>
+{% endblock %}

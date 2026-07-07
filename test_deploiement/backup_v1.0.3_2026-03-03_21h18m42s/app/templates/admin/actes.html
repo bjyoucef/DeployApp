@@ -1,0 +1,126 @@
+{% extends 'admin/admin_layout.html' %}
+
+{% block content %}
+
+<!-- Formulaire d'ajout -->
+<button class="btn btn-primary mb-4" data-bs-toggle="modal" data-bs-target="#addActeModal">Ajouter un Acte</button>
+
+<!-- Modal d'ajout -->
+<div class="modal fade" id="addActeModal" tabindex="-1" aria-labelledby="addActeModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addActeModalLabel">Ajouter un Acte</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="POST" action="{{ url_for('add_acte') }}">
+                <div class="modal-body">
+
+                    <div class="mb-3">
+                        <label for="name_acte" class="form-label">Nom d'Acte</label>
+                        <input type="text" name="name_acte" id="name_acte" class="form-control" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="id_service" class="form-label">Service</label>
+                        <select name="id_service" id="id_service" class="form-control" required>
+                            {% for service in services %}
+                            <option value="{{ service.id_service }}">{{ service.service_name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="prix_acte" class="form-label">Prix d'Acte (DZ)</label>
+                        <input type="number" name="prix_acte" id="prix_acte" class="form-control" step="1" min="0"
+                               required>
+                    </div>
+
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fermer</button>
+                    <button type="submit" class="btn btn-primary">Ajouter</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Tableau des actes -->
+<table id="myTable" class="table table-bordered">
+    <thead>
+    <tr>
+        <th>ID</th>
+        <th>Nom</th>
+        <th>Prix</th>
+        <th>Service</th>
+        <th>Actions</th>
+    </tr>
+    </thead>
+    <tbody>
+    {% for acte in actes %}
+    <tr>
+        <td>{{ acte.id_acte }}</td>
+        <td>{{ acte.name_acte }}</td>
+        <td>{{ acte.prix_acte }}</td>
+        <td>{{ acte.service_name }}</td>
+        <td>
+            <!-- Bouton pour ouvrir le modal de modification -->
+            <button class="btn btn-success btn-sm" data-bs-toggle="modal"
+                    data-bs-target="#editActeModal{{ acte.id_acte }}">Modifier
+            </button>
+
+            <!-- Modal de modification -->
+            <div class="modal fade" id="editActeModal{{ acte.id_acte }}" tabindex="-1"
+                 aria-labelledby="editActeModalLabel{{ acte.id_acte }}" aria-hidden="true">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="editActeModalLabel{{ acte.id_acte }}">Modifier l'Acte</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <form method="POST" action="{{ url_for('update_acte') }}">
+                            <div class="modal-body">
+                                <input type="hidden" name="id_acte" value="{{ acte.id_acte }}">
+                                <div class="mb-3">
+                                    <label for="name_acte_{{ acte.id_acte }}" class="form-label">Nom d'Acte</label>
+                                    <input type="text" name="name_acte" id="name_acte_{{ acte.id_acte }}"
+                                           class="form-control" value="{{ acte.name_acte }}" required>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="prix_acte_{{ acte.id_acte }}" class="form-label">Prix d'Acte
+                                        (DZ)</label>
+                                    <input type="number" name="prix_acte" id="prix_acte_{{ acte.id_acte }}"
+                                           class="form-control" value="{{ acte.prix_acte }}" step="1" min="0" required>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="id_service" class="form-label">Service</label>
+                                    <select name="id_service" id="id_service" class="form-control" required>
+                                        {% for service in services %}
+                                        <option value="{{ service.id_service }}">{{ service.service_name }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fermer</button>
+                                <button type="submit" class="btn btn-success">Enregistrer</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+<form method="POST" action="{{ url_for('delete_acte', id_acte=acte.id_acte) }}" class="d-inline">
+                <button type="submit" class="btn btn-danger btn-sm">Supprimer</button>
+            </form>
+
+        </td>
+    </tr>
+    {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

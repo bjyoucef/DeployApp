@@ -1,0 +1,621 @@
+{% extends "layout.html" %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block style %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/daterangepicker.css') }}" />
+<style>
+    :root {
+        --anes-primary: #450A54;
+        --anes-primary-light: #6d28d9;
+        --anes-gradient: linear-gradient(135deg, #450A54 0%, #6d28d9 100%);
+    }
+
+    /* ─── Hero Banner ─── */
+    .hero-banner {
+        background: var(--anes-gradient);
+        border-radius: 1rem;
+        padding: 2rem 2.5rem;
+        color: white;
+        position: relative;
+        overflow: hidden;
+        margin-bottom: 2.5rem;
+    }
+
+    .hero-banner::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -10%;
+        width: 300px;
+        height: 300px;
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 50%;
+        pointer-events: none;
+        z-index: 1;
+    }
+
+    .hero-banner>div {
+        position: relative;
+        z-index: 2;
+    }
+
+    .hero-banner h1 {
+        font-weight: 800;
+        font-size: 1.75rem;
+        margin-bottom: 0.25rem;
+    }
+
+    /* ─── Stat Cards ─── */
+    .stat-card {
+        border-radius: 1rem;
+        padding: 1.25rem;
+        color: white;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        transition: transform 0.25s, box-shadow 0.25s;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .stat-card::after {
+        content: '';
+        position: absolute;
+        top: -20%;
+        right: -15%;
+        width: 80px;
+        height: 80px;
+        background: rgba(255, 255, 255, 0.08);
+        border-radius: 50%;
+    }
+
+    .stat-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+    }
+
+    .stat-card .stat-label {
+        font-size: 0.75rem;
+        opacity: 0.85;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .stat-card .stat-value {
+        font-size: 1.5rem;
+        font-weight: 800;
+    }
+
+    /* ─── Filter Card ─── */
+    .filter-card {
+        background: white;
+        border-radius: 1rem;
+        padding: 1.5rem;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.07);
+        margin-top: -1.5rem;
+        margin-bottom: 2rem;
+        position: relative;
+        z-index: 10;
+        border: 1px solid rgba(0, 0, 0, 0.05);
+    }
+
+    [data-theme="dark"] .filter-card {
+        background: var(--bg-card, #1e1e2e);
+        border-color: var(--border, #2a2a3e);
+    }
+
+    .filter-card .form-control,
+    .filter-card .form-select {
+        border-radius: 0.5rem;
+        border: 1px solid var(--border, #e5e7eb);
+        padding: 0.55rem 0.875rem;
+        font-size: 0.875rem;
+        transition: all 0.2s;
+    }
+
+    .filter-card .form-control:focus,
+    .filter-card .form-select:focus {
+        border-color: var(--anes-primary-light);
+        box-shadow: 0 0 0 3px rgba(109, 40, 217, 0.1);
+    }
+
+    .filter-card label {
+        font-weight: 600;
+        font-size: 0.7rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 0.3rem;
+        color: var(--text-muted, #6b7280);
+    }
+
+    /* ─── Table Card ─── */
+    .table-card {
+        background: white;
+        border-radius: 1rem;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.07);
+        border: none;
+        overflow: hidden;
+    }
+
+    [data-theme="dark"] .table-card {
+        background: var(--bg-card, #1e1e2e);
+    }
+
+    .table-card .card-header-custom {
+        background: var(--anes-gradient);
+        color: white;
+        font-weight: 700;
+        padding: 0.875rem 1.25rem;
+        font-size: 0.95rem;
+    }
+
+    .table-card .table th {
+        background: #f8fafc;
+        font-weight: 700;
+        font-size: 0.78rem;
+        text-transform: uppercase;
+        letter-spacing: 0.3px;
+        color: #64748b;
+        border-bottom: 2px solid #e2e8f0;
+        padding: 0.75rem;
+    }
+
+    [data-theme="dark"] .table-card .table th {
+        background: #1a1a2e;
+        color: #94a3b8;
+        border-color: #2a2a3e;
+    }
+
+    .table-card .table td {
+        padding: 0.7rem 0.75rem;
+        vertical-align: middle;
+        font-size: 0.875rem;
+        border-color: #f1f5f9;
+    }
+
+    [data-theme="dark"] .table-card .table td {
+        border-color: #2a2a3e;
+        color: #e2e8f0;
+    }
+
+    .table-card .table-hover tbody tr:hover {
+        background: rgba(109, 40, 217, 0.04);
+    }
+
+    [data-theme="dark"] .table-card .table-hover tbody tr:hover {
+        background: rgba(109, 40, 217, 0.08);
+    }
+
+    /* ─── Badges ─── */
+    .badge-statut {
+        font-size: 0.75rem;
+        padding: 0.35em 0.7em;
+        border-radius: 6px;
+        font-weight: 600;
+    }
+
+    /* ─── Pagination ─── */
+    .pagination .page-link {
+        border: none;
+        color: var(--anes-primary);
+        padding: 0.5rem 0.875rem;
+        margin: 0 0.125rem;
+        border-radius: 8px;
+        background: transparent;
+        font-weight: 600;
+        font-size: 0.85rem;
+    }
+
+    .pagination .page-link:hover {
+        background: rgba(109, 40, 217, 0.08);
+        color: var(--anes-primary-light);
+    }
+
+    .pagination .page-item.active .page-link {
+        background: var(--anes-gradient);
+        color: white;
+        box-shadow: 0 2px 8px rgba(69, 10, 84, 0.3);
+    }
+
+    .pagination .page-item.disabled .page-link {
+        color: #9ca3af;
+        background: transparent;
+    }
+
+    [data-theme="dark"] .pagination .page-link:hover {
+        background: rgba(109, 40, 217, 0.15);
+    }
+
+    /* ─── Date Range Picker ─── */
+    .daterangepicker {
+        border-radius: 12px;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+        border: none;
+    }
+
+    .daterangepicker td.active,
+    .daterangepicker td.active:hover {
+        background-color: var(--anes-primary) !important;
+    }
+
+    .daterangepicker .ranges li.active {
+        background-color: var(--anes-primary) !important;
+    }
+
+    /* ─── Animations ─── */
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .animate-in {
+        animation: fadeInUp 0.4s ease forwards;
+    }
+
+    .animate-delay-1 {
+        animation-delay: 0.05s;
+    }
+
+    .animate-delay-2 {
+        animation-delay: 0.1s;
+    }
+
+    .animate-delay-3 {
+        animation-delay: 0.15s;
+    }
+
+    .animate-delay-4 {
+        animation-delay: 0.2s;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Hero Banner -->
+    <div class="hero-banner animate-in">
+        <div class="d-flex justify-content-between align-items-start flex-wrap gap-3">
+            <div>
+                <h1><i class="fas fa-file-invoice-dollar me-2"></i>Décharges Anesthésie</h1>
+                <p class="text-white-50 mb-0">Gestion des décharges et paiements par tranche</p>
+            </div>
+            <div class="d-flex gap-2 flex-wrap">
+                <a href="{{ url_for('anesthesie_honoraires_global') }}"
+                    class="btn btn-light text-primary fw-bold btn-sm shadow-sm">
+                    <i class="fas fa-arrow-left me-1"></i> Honoraires
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Stat Cards -->
+    <div class="row g-3 mb-4">
+        <div class="col-6 col-lg-3 animate-in animate-delay-1">
+            <div class="stat-card" style="background: linear-gradient(135deg, #667eea, #764ba2);">
+                <div class="stat-label"><i class="fas fa-file-alt me-1"></i> Total Décharges</div>
+                <div class="stat-value">{{ stats.total or 0 }}</div>
+            </div>
+        </div>
+        <div class="col-6 col-lg-3 animate-in animate-delay-2">
+            <div class="stat-card" style="background: linear-gradient(135deg, #f093fb, #f5576c);">
+                <div class="stat-label"><i class="fas fa-money-bill me-1"></i> Montant Total</div>
+                <div class="stat-value">{{ "%.0f"|format(stats.montant_total or 0) }} <small>DA</small></div>
+            </div>
+        </div>
+        <div class="col-6 col-lg-3 animate-in animate-delay-3">
+            <div class="stat-card" style="background: linear-gradient(135deg, #4facfe, #00f2fe);">
+                <div class="stat-label"><i class="fas fa-hand-holding-usd me-1"></i> Montant Payé</div>
+                <div class="stat-value">{{ "%.0f"|format(stats.montant_paye or 0) }} <small>DA</small></div>
+            </div>
+        </div>
+        <div class="col-6 col-lg-3 animate-in animate-delay-4">
+            <div class="stat-card" style="background: linear-gradient(135deg, #fa709a, #fee140);">
+                <div class="stat-label"><i class="fas fa-exclamation-triangle me-1"></i> Solde Restant</div>
+                <div class="stat-value">{{ "%.0f"|format(stats.solde or 0) }} <small>DA</small></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filter Card -->
+    <div class="filter-card animate-in">
+        <form method="GET" id="filterForm">
+            <input type="hidden" name="date_debut" value="{{ date_debut }}">
+            <input type="hidden" name="date_fin" value="{{ date_fin }}">
+
+            <div class="row g-2 align-items-end">
+                <!-- Personnel -->
+                <div class="col-md-3">
+                    <label class="form-label ps-1">Personnel</label>
+                    <select name="id_personnel" id="select-personnel" class="form-select bg-light border-0">
+                        <option value="all">Tous les intervenants</option>
+                        {% for p in personnel_list %}
+                        <option value="{{ p.id_personnel_anesthesie }}" {% if
+                            id_personnel_selected==p.id_personnel_anesthesie|string %}selected{% endif %}>
+                            {{ p.nom_complet }} ({{ p.nom_type }})
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- Statut -->
+                <div class="col-md-2">
+                    <label class="form-label ps-1">Statut</label>
+                    <select name="statut" class="form-select bg-light border-0">
+                        <option value="all">Tous</option>
+                        <option value="BROUILLON" {% if statut_selected=='BROUILLON' %}selected{% endif %}>Brouillon
+                        </option>
+                        <option value="VALIDE" {% if statut_selected=='VALIDE' %}selected{% endif %}>Validé</option>
+                        <option value="PAIEMENT_PARTIEL" {% if statut_selected=='PAIEMENT_PARTIEL' %}selected{% endif
+                            %}>Partiel</option>
+                        <option value="PAYE" {% if statut_selected=='PAYE' %}selected{% endif %}>Payé</option>
+                        <option value="ANNULE" {% if statut_selected=='ANNULE' %}selected{% endif %}>Annulé</option>
+                    </select>
+                </div>
+
+                <!-- Date Range Picker -->
+                <div class="col-md-3">
+                    <label class="form-label ps-1"><i class="far fa-calendar-alt me-1"></i> Période</label>
+                    <div class="input-group">
+                        <span class="input-group-text bg-light border-end-0 rounded-start-pill ps-3"
+                            style="color: var(--anes-primary);">
+                            <i class="far fa-calendar-alt"></i>
+                        </span>
+                        <input type="text" id="date_range" class="form-control bg-light border-start-0 rounded-end-pill"
+                            placeholder="Sélectionner une période" readonly style="cursor: pointer;">
+                    </div>
+                </div>
+
+                <!-- Actions -->
+                <div class="col-md-auto d-flex gap-2 align-items-end">
+                    <button type="submit" class="btn btn-primary btn-sm rounded-pill px-3 shadow-sm"
+                        style="background: var(--anes-gradient); border: none;">
+                        <i class="fas fa-filter me-1"></i> Filtrer
+                    </button>
+                    <a href="{{ url_for('anesthesie_decharges_list') }}"
+                        class="btn btn-light btn-sm rounded-pill px-3 shadow-sm">
+                        <i class="fas fa-redo-alt text-muted"></i>
+                    </a>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <!-- Table -->
+    <div class="table-card animate-in">
+        <div class="card-header-custom d-flex justify-content-between align-items-center">
+            <span><i class="fas fa-table me-2"></i> Liste des Décharges</span>
+            <span class="badge bg-white bg-opacity-25 rounded-pill px-3">{{ total_count }} résultat(s)</span>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead>
+                    <tr>
+                        <th>N° Décharge</th>
+                        <th>Date</th>
+                        <th>Personnel</th>
+                        <th>Type</th>
+                        <th class="text-center">Actes</th>
+                        <th class="text-end">Montant</th>
+                        <th class="text-end">Payé</th>
+                        <th class="text-end">Solde</th>
+                        <th class="text-center">Statut</th>
+                        <th class="text-center">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for d in decharges %}
+                    <tr {% if d.est_annule %}class="text-decoration-line-through opacity-50" {% endif %}>
+                        <td>
+                            <a href="{{ url_for('anesthesie_decharge_detail', id_decharge=d.id_decharge) }}"
+                                class="fw-bold text-decoration-none" style="color: var(--anes-primary);">
+                                {{ d.numero_decharge }}
+                            </a>
+                        </td>
+                        <td>{{ d.date_decharge.strftime('%d/%m/%Y') if d.date_decharge else '' }}</td>
+                        <td class="fw-medium">{{ d.personnel_name }}</td>
+                        <td>
+                            <span class="badge badge-statut
+                                {% if d.type_intervenant == 'REANIMATEUR' %}bg-success
+                                {% elif d.type_intervenant == 'TECH_ANESTHESISTE' %}bg-info
+                                {% else %}bg-warning{% endif %}">
+                                {{ d.type_intervenant }}
+                            </span>
+                        </td>
+                        <td class="text-center fw-semibold">{{ d.nb_actes }}</td>
+                        <td class="text-end fw-medium">{{ "%.2f"|format(d.montant_total) }}</td>
+                        <td class="text-end">{{ "%.2f"|format(d.montant_paye_total or 0) }}</td>
+                        <td class="text-end">
+                            <strong
+                                class="{% if (d.solde_restant or 0) > 0 %}text-danger{% else %}text-success{% endif %}">
+                                {{ "%.2f"|format(d.solde_restant or 0) }}
+                            </strong>
+                        </td>
+                        <td class="text-center">
+                            {% if d.statut == 'BROUILLON' %}
+                            <span class="badge badge-statut bg-secondary-subtle text-secondary">Brouillon</span>
+                            {% elif d.statut == 'VALIDE' %}
+                            <span class="badge badge-statut bg-primary-subtle text-primary">Validé</span>
+                            {% elif d.statut == 'PAIEMENT_PARTIEL' %}
+                            <span class="badge badge-statut bg-warning-subtle text-warning">Partiel</span>
+                            {% elif d.statut == 'PAYE' %}
+                            <span class="badge badge-statut bg-success-subtle text-success">Payé</span>
+                            {% elif d.statut == 'ANNULE' %}
+                            <span class="badge badge-statut bg-danger-subtle text-danger">Annulé</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-center">
+                            <div class="d-flex gap-1 justify-content-center">
+                                <a href="{{ url_for('anesthesie_decharge_detail', id_decharge=d.id_decharge) }}"
+                                    class="btn btn-sm btn-light rounded-circle" title="Voir"
+                                    style="width:30px;height:30px;padding:0;display:inline-flex;align-items:center;justify-content:center;">
+                                    <i class="fas fa-eye" style="font-size:0.75rem;color:var(--anes-primary);"></i>
+                                </a>
+                                {% if not d.est_annule %}
+                                <a href="{{ url_for('anesthesie_decharge_pdf', id_decharge=d.id_decharge) }}"
+                                    class="btn btn-sm btn-light rounded-circle" title="PDF"
+                                    style="width:30px;height:30px;padding:0;display:inline-flex;align-items:center;justify-content:center;">
+                                    <i class="fas fa-file-pdf" style="font-size:0.75rem;color:#dc3545;"></i>
+                                </a>
+                                {% endif %}
+                            </div>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="10" class="text-center py-5">
+                            <div style="opacity:0.5;">
+                                <i class="fas fa-inbox fa-3x mb-3 d-block"></i>
+                                <p class="mb-0">Aucune décharge trouvée</p>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Pagination -->
+        {% if total_pages > 1 %}
+        <div class="d-flex justify-content-between align-items-center p-3 border-top">
+            <div class="text-muted small">
+                Affichage {{ (page - 1) * per_page + 1 }} — {{ [page * per_page, total_count]|min }}
+                sur {{ total_count }}
+            </div>
+            <nav>
+                <ul class="pagination mb-0">
+                    <li class="page-item {{ 'disabled' if page == 1 }}">
+                        <a class="page-link"
+                            href="{{ url_for('anesthesie_decharges_list', page=page-1, id_personnel=id_personnel_selected, statut=statut_selected, date_debut=date_debut, date_fin=date_fin) if page > 1 else '#' }}">
+                            <i class="fas fa-chevron-left"></i>
+                        </a>
+                    </li>
+
+                    {% set start_page = [1, page - 2]|max %}
+                    {% set end_page = [total_pages, page + 2]|min %}
+
+                    {% if start_page > 1 %}
+                    <li class="page-item"><a class="page-link"
+                            href="{{ url_for('anesthesie_decharges_list', page=1, id_personnel=id_personnel_selected, statut=statut_selected, date_debut=date_debut, date_fin=date_fin) }}">1</a>
+                    </li>
+                    {% if start_page > 2 %}
+                    <li class="page-item disabled"><span class="page-link">…</span></li>
+                    {% endif %}
+                    {% endif %}
+
+                    {% for p in range(start_page, end_page + 1) %}
+                    <li class="page-item {{ 'active' if p == page }}">
+                        <a class="page-link"
+                            href="{{ url_for('anesthesie_decharges_list', page=p, id_personnel=id_personnel_selected, statut=statut_selected, date_debut=date_debut, date_fin=date_fin) }}">{{
+                            p }}</a>
+                    </li>
+                    {% endfor %}
+
+                    {% if end_page < total_pages %} {% if end_page < total_pages - 1 %} <li class="page-item disabled">
+                        <span class="page-link">…</span></li>
+                        {% endif %}
+                        <li class="page-item"><a class="page-link"
+                                href="{{ url_for('anesthesie_decharges_list', page=total_pages, id_personnel=id_personnel_selected, statut=statut_selected, date_debut=date_debut, date_fin=date_fin) }}">{{
+                                total_pages }}</a></li>
+                        {% endif %}
+
+                        <li class="page-item {{ 'disabled' if page == total_pages }}">
+                            <a class="page-link"
+                                href="{{ url_for('anesthesie_decharges_list', page=page+1, id_personnel=id_personnel_selected, statut=statut_selected, date_debut=date_debut, date_fin=date_fin) if page < total_pages else '#' }}">
+                                <i class="fas fa-chevron-right"></i>
+                            </a>
+                        </li>
+                </ul>
+            </nav>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/moment.min.js') }}"></script>
+<script src="{{ url_for('static', filename='js/daterangepicker.min.js') }}"></script>
+<script>
+    $(function () {
+        // ─── Select2 ───
+        if ($.fn.select2) {
+            $('#select-personnel').select2({
+                theme: 'bootstrap-5',
+                placeholder: 'Tous les intervenants',
+                allowClear: true,
+                width: '100%'
+            });
+        }
+
+        // ─── Auto-submit on filter change ───
+        document.querySelectorAll('#filterForm select:not(#select-personnel)').forEach(sel => {
+            sel.addEventListener('change', () => document.getElementById('filterForm').submit());
+        });
+
+        // ─── Date Range Picker ───
+        if (typeof $.fn.daterangepicker === 'undefined') return;
+
+        var startInput = $('input[name="date_debut"]');
+        var endInput = $('input[name="date_fin"]');
+        var rangeInput = $('#date_range');
+
+        moment.locale('fr');
+
+        rangeInput.daterangepicker({
+            autoUpdateInput: false,
+            autoApply: false,
+            opens: 'left',
+            locale: {
+                format: 'DD/MM/YYYY',
+                applyLabel: "Appliquer",
+                cancelLabel: "Effacer",
+                fromLabel: "De",
+                toLabel: "À",
+                customRangeLabel: "Personnalisé",
+                weekLabel: "S",
+                daysOfWeek: ["Di", "Lu", "Ma", "Me", "Je", "Ve", "Sa"],
+                monthNames: ["Janvier", "Février", "Mars", "Avril", "Mai", "Juin", "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre"],
+                firstDay: 1
+            },
+            ranges: {
+                'Aujourd\'hui': [moment(), moment()],
+                'Les 7 derniers jours': [moment().subtract(6, 'days'), moment()],
+                'Ce mois-ci': [moment().startOf('month'), moment().endOf('month')],
+                'Le mois dernier': [moment().subtract(1, 'month').startOf('month'), moment().subtract(1, 'month').endOf('month')],
+                'Cette année': [moment().startOf('year'), moment().endOf('year')]
+            }
+        });
+
+        if (startInput.val() && endInput.val()) {
+            var start = moment(startInput.val());
+            var end = moment(endInput.val());
+            if (start.isValid() && end.isValid()) {
+                rangeInput.val(start.format('DD/MM/YYYY') + ' — ' + end.format('DD/MM/YYYY'));
+                rangeInput.data('daterangepicker').setStartDate(start);
+                rangeInput.data('daterangepicker').setEndDate(end);
+            }
+        }
+
+        rangeInput.on('apply.daterangepicker', function (ev, picker) {
+            $(this).val(picker.startDate.format('DD/MM/YYYY') + ' — ' + picker.endDate.format('DD/MM/YYYY'));
+            startInput.val(picker.startDate.format('YYYY-MM-DD'));
+            endInput.val(picker.endDate.format('YYYY-MM-DD'));
+            document.getElementById('filterForm').submit();
+        });
+
+        rangeInput.on('cancel.daterangepicker', function () {
+            $(this).val('');
+            startInput.val('');
+            endInput.val('');
+            document.getElementById('filterForm').submit();
+        });
+    });
+</script>
+{% endblock %}

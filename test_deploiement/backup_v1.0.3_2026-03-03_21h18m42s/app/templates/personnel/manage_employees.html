@@ -1,0 +1,704 @@
+{% extends "layout.html" %}
+
+{% block title %}Gestion du Personnel{% endblock %}
+
+{% block style %}
+<style>
+    /* Carte Statistique avec effet verre */
+    .stat-card {
+        background: rgba(255, 255, 255, 0.9);
+        border: none;
+        border-radius: 15px;
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+    }
+
+    [data-theme="dark"] .stat-card {
+        background: rgba(30, 30, 40, 0.8);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .stat-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 25px rgba(69, 10, 84, 0.15);
+    }
+
+    .stat-icon_wrapper {
+        width: 48px;
+        height: 48px;
+        border-radius: 12px;
+        background: rgba(69, 10, 84, 0.1);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        color: #450A54;
+    }
+
+    [data-theme="dark"] .stat-icon_wrapper {
+        background: rgba(180, 100, 255, 0.15);
+        color: #bfaee3;
+    }
+
+    /* Avatar avec initiales */
+    .avatar-circle {
+        width: 40px;
+        height: 40px;
+        background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+        color: white;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        font-size: 0.9rem;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    }
+
+    .avatar-online {
+        position: relative;
+    }
+
+    .avatar-online::after {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        right: 0;
+        width: 12px;
+        height: 12px;
+        background-color: #28a745;
+        border: 2px solid white;
+        border-radius: 50%;
+    }
+
+    [data-theme="dark"] .avatar-online::after {
+        border-color: #2c2c3c;
+    }
+
+    .avatar-offline::after {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        right: 0;
+        width: 12px;
+        height: 12px;
+        background-color: #6c757d;
+        border: 2px solid white;
+        border-radius: 50%;
+    }
+
+    [data-theme="dark"] .avatar-offline::after {
+        border-color: #2c2c3c;
+    }
+
+    /* Table Styling */
+    .table-hover tbody tr {
+        transition: all 0.2s ease;
+    }
+
+    .table-hover tbody tr:hover {
+        background-color: rgba(69, 10, 84, 0.05) !important;
+        transform: scale(1.005);
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+        z-index: 10;
+        position: relative;
+    }
+
+    [data-theme="dark"] .table-hover tbody tr:hover {
+        background-color: rgba(255, 255, 255, 0.05) !important;
+    }
+
+
+
+    /* Role Badges */
+    .badge-role {
+        background: linear-gradient(135deg, #f3e5f5 0%, #e1bee7 100%);
+        color: #4a148c;
+        border: 1px solid rgba(74, 20, 140, 0.2);
+        padding: 0.35em 0.8em;
+        border-radius: 50rem;
+        font-weight: 600;
+        letter-spacing: 0.5px;
+        font-size: 0.75rem;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    }
+
+    [data-theme="dark"] .badge-role {
+        background-color: rgba(180, 100, 255, 0.15);
+        color: #e0d0f5;
+        border-color: rgba(180, 100, 255, 0.3);
+    }
+
+    /* Status Badges */
+    .badge-status {
+        padding: 0.5em 1em;
+        border-radius: 6px;
+        font-weight: 500;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .badge-status-online {
+        background-color: rgba(40, 167, 69, 0.1);
+        color: #28a745;
+        border: 1px solid rgba(40, 167, 69, 0.2);
+    }
+
+    .badge-status-offline {
+        background-color: rgba(108, 117, 125, 0.1);
+        color: #6c757d;
+        border: 1px solid rgba(108, 117, 125, 0.2);
+    }
+
+    .badge-status-disabled {
+        background-color: rgba(220, 53, 69, 0.1);
+        color: #dc3545;
+        border: 1px solid rgba(220, 53, 69, 0.2);
+    }
+
+    .status-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        display: inline-block;
+    }
+
+    .status-dot.online {
+        background-color: #28a745;
+        box-shadow: 0 0 5px rgba(40, 167, 69, 0.5);
+    }
+
+    .status-dot.offline {
+        background-color: #6c757d;
+    }
+
+    .status-dot.disabled {
+        background-color: #dc3545;
+    }
+
+    .table-loading {
+        opacity: 0.5;
+        pointer-events: none;
+        transition: opacity 0.2s;
+    }
+
+    /* Actions */
+    .btn-action {
+        width: 36px;
+        height: 36px;
+        padding: 0;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 10px;
+        transition: all 0.2s;
+        border: none;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    }
+
+    .btn-action-info {
+        background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
+        color: white;
+    }
+
+    .btn-action-warning {
+        background: linear-gradient(135deg, #ffc107 0%, #ffb300 100%);
+        color: #000;
+    }
+
+    .btn-action-primary {
+        background: linear-gradient(135deg, #450A54 0%, #6a1b9a 100%);
+        color: white;
+    }
+
+    .btn-action-danger {
+        background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+        color: white;
+    }
+
+    .btn-action-success {
+        background: linear-gradient(135deg, #28a745 0%, #218838 100%);
+        color: white;
+    }
+
+    .btn-action:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+    }
+
+    /* Modal Styling */
+    .modal-header-violet {
+        background: linear-gradient(135deg, #450A54 0%, #6a1b9a 100%);
+        color: white;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+
+    <!-- Stats Row -->
+    <div class="row g-4 mb-4">
+        <div class="col-md-4">
+            <div class="stat-card p-3 h-100 d-flex align-items-center">
+                <div class="stat-icon_wrapper me-3">
+                    <i class="fas fa-users"></i>
+                </div>
+                <div>
+                    <h6 class="text-muted mb-0">Total Personnel</h6>
+                    <h3 class="fw-bold mb-0 text-dark header-title">{{ stats.total }}</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="stat-card p-3 h-100 d-flex align-items-center">
+                <div class="stat-icon_wrapper me-3" style="background: rgba(40, 167, 69, 0.1); color: #28a745;">
+                    <i class="fas fa-toggle-on"></i>
+                </div>
+                <div>
+                    <h6 class="text-muted mb-0">En ligne maintenant</h6>
+                    <h3 class="fw-bold mb-0 text-success">{{ stats.online }}</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="stat-card p-3 h-100 d-flex align-items-center">
+                <div class="stat-icon_wrapper me-3" style="background: rgba(23, 162, 184, 0.1); color: #17a2b8;">
+                    <i class="fas fa-user-shield"></i>
+                </div>
+                <div>
+                    <h6 class="text-muted mb-0">Utilisateurs</h6>
+                    <h3 class="fw-bold mb-0 text-info">{{ stats.users }}</h3>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content Card -->
+    <div class="card shadow-sm border-0">
+        <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center flex-wrap gap-2">
+            <h5 class="mb-0 text-primary fw-bold">
+                <i class="fas fa-users-cog me-2"></i>Liste du Personnel
+            </h5>
+            <div class="d-flex gap-2 align-items-center flex-grow-1 justify-content-end">
+                <div class="input-group" style="max-width: 200px;">
+                    <span class="input-group-text bg-light border-end-0"><i class="fas fa-filter text-muted"></i></span>
+                    <select id="filterStatus" class="form-select border-start-0 bg-light"
+                        aria-label="Filtrer par statut">
+                        <option value="">Tous les statuts</option>
+                        <option value="1">Actif</option>
+                        <option value="0">Désactivé</option>
+                    </select>
+                </div>
+                <div class="input-group" style="max-width: 200px;">
+                    <span class="input-group-text bg-light border-end-0"><i class="fas fa-wifi text-muted"></i></span>
+                    <select id="filterOnline" class="form-select border-start-0 bg-light"
+                        aria-label="Filtrer par présence">
+                        <option value="">Toute présence</option>
+                        <option value="1">En ligne</option>
+                        <option value="0">Hors ligne</option>
+                    </select>
+                </div>
+                <div class="input-group" style="max-width: 300px;">
+                    <span class="input-group-text bg-light border-end-0"><i class="fas fa-search text-muted"></i></span>
+                    <input type="text" id="searchInput" class="form-control border-start-0 bg-light"
+                        placeholder="Rechercher..." value="{{ search_query }}">
+                </div>
+                {% if 'AJOUTER_EMPLOYE' in session.privileges %}
+                <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addEmployeeModal">
+                    <i class="fas fa-plus me-2"></i><span class="d-none d-md-inline">Ajouter</span>
+                </button>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="card-body">
+            <!-- Table wrapper -->
+            <div class="table-responsive">
+                <table id="employeesTable" class="table table-hover align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th style="width: 50px;">#</th>
+                            <th>Employé</th>
+                            <th>Rôle & Service</th>
+                            <th>Contact</th>
+                            <th>Dernière activité</th>
+                            <th>Statut</th>
+                            <th class="text-end">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="employeesTableBody">
+                        {% include 'personnel/manage_employees_rows.html' %}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Pagination Controls -->
+            <div class="d-flex justify-content-between align-items-center mt-4" id="paginationControls">
+                <div class="text-muted small">
+                    Affichage de <span id="startCount">
+                        {% if total_items > 0 %}{{ (current_page - 1) * per_page + 1 }}{% else %}0{% endif %}
+                    </span> à <span id="endCount">
+                        {{ [(current_page * per_page), total_items]|min }}
+                    </span> sur <span id="totalItems">{{ total_items }}</span> entrées
+                </div>
+                <nav aria-label="Page navigation">
+                    <ul class="pagination pagination-sm mb-0">
+                        <li class="page-item {% if current_page == 1 %}disabled{% endif %}">
+                            <button class="page-link" onclick="loadEmployees({{ current_page - 1 }})">
+                                <i class="fas fa-chevron-left"></i>
+                            </button>
+                        </li>
+                        <li class="page-item active">
+                            <span class="page-link" id="pageIndicator">{{ current_page }}</span>
+                        </li>
+                        <li class="page-item {% if current_page >= total_pages %}disabled{% endif %}">
+                            <button class="page-link" onclick="loadEmployees({{ current_page + 1 }})">
+                                <i class="fas fa-chevron-right"></i>
+                            </button>
+                        </li>
+                    </ul>
+                </nav>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Generic Edit Employee Modal -->
+{% if 'MODIFIER_EMPLOYE' in session.privileges %}
+<div class="modal fade" id="genericEditEmployeeModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header modal-header-violet">
+                <h5 class="modal-title"><i class="fas fa-edit me-2"></i>Modifier l'employé</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                    aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form action="{{ url_for('manage_employees') }}" method="POST" class="needs-validation" novalidate>
+                    <input type="hidden" name="action" value="edit_employee" />
+                    <input type="hidden" name="id_personnel" id="edit_id_personnel" />
+
+                    <div class="mb-3">
+                        <label class="form-label">Nom</label>
+                        <input type="text" class="form-control" name="nom" id="edit_nom">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Prénom</label>
+                        <input type="text" class="form-control" name="prenom" id="edit_prenom">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Rôle</label>
+                        <input type="text" class="form-control" name="role" id="edit_role">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Téléphone</label>
+                        <input type="tel" class="form-control" name="telephone" id="edit_telephone">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Service</label>
+                        <select name="service" class="form-select" id="edit_service">
+                            {% for service in services %}
+                            <option value="{{ service['service_name'] }}">
+                                {{ service['service_name'] }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="form-check form-switch mb-3">
+                        <input class="form-check-input" type="checkbox" name="use_in_planning"
+                            id="edit_use_in_planning">
+                        <label class="form-check-label">Affiché dans le planning</label>
+                    </div>
+                    <div class="text-end">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                        <button type="submit" class="btn btn-primary">Enregistrer</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Generic User Credentials Modal -->
+{% if 'MODIFIER_UTILISATEUR' in session.privileges %}
+<div class="modal fade" id="genericEditUserModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title"><i class="fas fa-key me-2"></i>Accès système</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                    aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form action="{{ url_for('manage_employees') }}" method="POST">
+                    <input type="hidden" name="action" value="edit_user" />
+                    <input type="hidden" name="id_personnel" id="user_id_personnel" />
+
+                    <div class="mb-3">
+                        <label class="form-label">Nom d'utilisateur</label>
+                        <input type="text" class="form-control" name="usernameM" id="user_username">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Nouveau mot de passe</label>
+                        <input type="password" class="form-control" name="passwordM">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Confirmer mot de passe</label>
+                        <input type="password" class="form-control" name="confirm_passwordM">
+                    </div>
+                    <div class="text-end">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                        <button type="submit" class="btn btn-primary">Mettre à jour</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Modal Ajout Employé -->
+{% if 'AJOUTER_EMPLOYE' in session.privileges %}
+<div class="modal fade" id="addEmployeeModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header modal-header-violet">
+                <h5 class="modal-title"><i class="fas fa-user-plus me-2"></i>Ajouter un nouvel employé</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                    aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form action="{{ url_for('manage_employees') }}" method="POST" class="needs-validation" novalidate>
+                    <input type="hidden" name="action" value="add_employee" />
+
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <h6 class="text-primary mb-3"><i class="fas fa-user me-2"></i>Infos Personnelles</h6>
+                            <div class="mb-3">
+                                <label class="form-label">Nom *</label>
+                                <input type="text" class="form-control" name="nom" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Prénom *</label>
+                                <input type="text" class="form-control" name="prenom" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Téléphone *</label>
+                                <input type="tel" class="form-control" name="telephone" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Rôle *</label>
+                                <input type="text" class="form-control" name="role" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Service *</label>
+                                <select name="service" class="form-select" required>
+                                    <option value="">-- Sélectionner --</option>
+                                    {% for service in services %}
+                                    <option value="{{ service['service_name'] }}">{{ service['service_name'] }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="use_in_planning_new"
+                                    name="use_in_planning">
+                                <label class="form-check-label" for="use_in_planning_new">Affiché dans le
+                                    planning</label>
+                            </div>
+                        </div>
+
+                        <!-- Section Accès Optionnel -->
+                        {% if 'AJOUTER_UTILISATEUR' in session.privileges %}
+                        <div class="col-md-6">
+                            <h6 class="text-success mb-3"><i class="fas fa-lock me-2"></i>Accès Système (Optionnel)</h6>
+                            <div class="p-3 bg-light border rounded">
+                                <div class="mb-3">
+                                    <label class="form-label">Nom d'utilisateur</label>
+                                    <input type="text" class="form-control" name="usernameI">
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Mot de passe</label>
+                                    <input type="password" class="form-control" name="passwordI">
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Confirmer mot de passe</label>
+                                    <input type="password" class="form-control" name="confirm_passwordI">
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <div class="modal-footer mt-4">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                        <button type="submit" class="btn btn-primary"><i
+                                class="fas fa-save me-2"></i>Enregistrer</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Variables globales
+    let currentPage = {{ current_page }};
+    let totalPages = {{ total_pages }};
+    let searchQuery = "{{ search_query }}";
+    let filterStatus = "";
+    let filterOnline = "";
+
+    $(document).ready(function () {
+        initTooltips();
+
+        // Gestionnaire de recherche (Debounce)
+        let debounceTimer;
+        $('#searchInput').on('input', function () {
+            clearTimeout(debounceTimer);
+            searchQuery = $(this).val();
+            debounceTimer = setTimeout(() => {
+                currentPage = 1;
+                loadEmployees(currentPage);
+            }, 300);
+        });
+
+        // Gestionnaires de filtres
+        $('#filterStatus').on('change', function () {
+            filterStatus = $(this).val();
+            currentPage = 1;
+            loadEmployees(currentPage);
+        });
+
+        $('#filterOnline').on('change', function () {
+            filterOnline = $(this).val();
+            currentPage = 1;
+            loadEmployees(currentPage);
+        });
+    });
+
+    function initTooltips() {
+        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+        var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl)
+        })
+    }
+
+    // Chargement des données AJAX
+    function loadEmployees(page) {
+        if (page < 1 || (totalPages > 0 && page > totalPages)) return;
+
+        $('#employeesTableBody').addClass('table-loading');
+
+        $.ajax({
+            url: "{{ url_for('manage_employees') }}",
+            type: "GET",
+            data: {
+                page: page,
+                search: searchQuery,
+                filter_status: filterStatus,
+                filter_online: filterOnline
+            },
+            headers: { "X-Requested-With": "XMLHttpRequest" },
+            success: function (response) {
+                $('#employeesTableBody').html(response.html).removeClass('table-loading');
+
+                currentPage = response.current_page;
+                totalPages = response.total_pages;
+                let totalItems = response.total_items;
+                let perPage = 10;
+
+                // Mise à jour des compteurs
+                $('#totalItems').text(totalItems);
+                if (totalItems > 0) {
+                    $('#startCount').text((currentPage - 1) * perPage + 1);
+                    $('#endCount').text(Math.min(currentPage * perPage, totalItems));
+                } else {
+                    $('#startCount').text(0);
+                    $('#endCount').text(0);
+                }
+
+                // Mise à jour boutons pagination
+                $('#pageIndicator').text(currentPage);
+
+                // Désactiver bouton Précédent
+                if (currentPage <= 1) {
+                    $('.page-item:first').addClass('disabled');
+                    $('.page-item:first button').attr('onclick', '');
+                } else {
+                    $('.page-item:first').removeClass('disabled');
+                    $('.page-item:first button').attr('onclick', `loadEmployees(${currentPage - 1})`);
+                }
+
+                // Désactiver bouton Suivant
+                if (currentPage >= totalPages) {
+                    $('.page-item:last').addClass('disabled');
+                    $('.page-item:last button').attr('onclick', '');
+                } else {
+                    $('.page-item:last').removeClass('disabled');
+                    $('.page-item:last button').attr('onclick', `loadEmployees(${currentPage + 1})`);
+                }
+
+                initTooltips();
+            },
+            error: function (xhr) {
+                console.error("Erreur chargement employés");
+                $('#employeesTableBody').removeClass('table-loading');
+            }
+        });
+    }
+
+    // NOUVELLE LOGIQUE: On passe l'élément bouton (this) qui contient les data-attributes
+    function openEditModal(button) {
+        // Récupérer les données depuis les attributs data-*
+        const id = button.getAttribute('data-id');
+        const nom = button.getAttribute('data-nom');
+        const prenom = button.getAttribute('data-prenom');
+        const role = button.getAttribute('data-role');
+        const telephone = button.getAttribute('data-telephone');
+        const service = button.getAttribute('data-service');
+        const planning = button.getAttribute('data-planning');
+
+        // Reset & Populate form
+        const modalEl = document.getElementById('genericEditEmployeeModal');
+        const modal = new bootstrap.Modal(modalEl);
+
+        $('#edit_id_personnel').val(id);
+        $('#edit_nom').val(nom);
+        $('#edit_prenom').val(prenom);
+        $('#edit_role').val(role);
+        $('#edit_telephone').val(telephone || '');
+        $('#edit_service').val(service);
+        $('#edit_use_in_planning').prop('checked', planning == 1 || planning == 'True');
+
+        modal.show();
+    };
+
+    function openCredentialsModal(button) {
+        const id = button.getAttribute('data-id');
+        const username = button.getAttribute('data-username');
+
+        const modalEl = document.getElementById('genericEditUserModal');
+        const modal = new bootstrap.Modal(modalEl);
+
+        $('#user_id_personnel').val(id);
+        $('#user_username').val(username || '');
+
+        modal.show();
+    };
+
+    // Rendre accessible globalement
+    window.loadEmployees = loadEmployees;
+    window.openEditModal = openEditModal;
+    window.openCredentialsModal = openCredentialsModal;
+
+</script>
+{% endblock %}

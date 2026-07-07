@@ -1,0 +1,72 @@
+{% extends "layout.html" %}
+
+{% block title %}Types Boîtes - Archivage{% endblock %}
+
+{% block content %}
+<div class="row g-4 justify-content-center">
+    {% for type in types %}
+    <div class="col-md-4">
+        <div class="card shadow-sm border-0 border-top border-4 border-primary" id="config_types_boites_div_1">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5 class="card-title fw-bold text-uppercase mb-0">
+                        <i class="fas fa-box me-2 text-muted"></i>{{ type.nom }}
+                    </h5>
+                    <span class="badge bg-secondary">{{ type.id }}</span>
+                </div>
+
+                <ul class="list-group list-group-flush mb-4">
+                    <li class="list-group-item d-flex justify-content-between">
+                        <span>Hauteur Totale</span>
+                        <strong>{{ type.hauteur_cm }} cm</strong>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between">
+                        <span>Capacité Max (Épaisseur)</span>
+                        <strong class="text-success">{{ type.epaisseur_max_mm }} mm</strong>
+                    </li>
+                </ul>
+
+                <button class="btn btn-outline-primary w-100" data-bs-toggle="modal"
+                    data-bs-target="#editBox{{ type.id }}" id="config_types_boites_button_2">
+                    <i class="fas fa-edit me-2"></i>Modifier Paramètres
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Modification -->
+    <div class="modal fade" id="editBox{{ type.id }}" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <form action="{{ url_for('archivage_update_type_boite') }}" method="POST">
+                    <input type="hidden" name="type_id" value="{{ type.id }}" id="config_types_boites_input_3">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Modifier : {{ type.nom }}</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" id="config_types_boites_button_4"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Hauteur Physique (cm)</label>
+                            <input type="number" step="0.1" class="form-control" name="hauteur_cm"
+                                value="{{ type.hauteur_cm }}" required id="config_types_boites_input_5">
+                            <div class="form-text">Hauteur réelle de la boîte sur l'étagère (9cm, 15cm...)</div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-bold required">Capacité Max (mm)</label>
+                            <input type="number" class="form-control" name="epaisseur_max_mm"
+                                value="{{ type.epaisseur_max_mm }}" required id="config_types_boites_input_6">
+                            <div class="form-text">Épaisseur cumulée max des dossiers acceptée (ex: 80mm pour une boîte
+                                de 9cm).</div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" id="config_types_boites_button_7">Fermer</button>
+                        <button type="submit" class="btn btn-primary" id="config_types_boites_button_8">Enregistrer Modifications</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}

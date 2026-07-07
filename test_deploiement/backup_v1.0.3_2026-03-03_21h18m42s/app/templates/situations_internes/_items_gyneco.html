@@ -1,0 +1,55 @@
+<div class="table-responsive">
+    <table class="table-modern">
+        <thead>
+        <tr>
+            <th>#</th>
+            <th>Date</th>
+            <th>Patiente</th>
+            <th>Type</th>
+            <th>Tarif</th>
+            <th class="text-end">Honoraires</th>
+            <th class="text-center">Payé</th>
+            <th class="text-center">Action</th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for item in items %}
+            <tr>
+                <td><strong>#{{ item.id_dossier }}</strong></td>
+                <td>{{ item.date_accouchement.strftime('%d/%m/%Y') }}</td>
+                <td><strong>{{ item.patiente }}</strong></td>
+                <td>
+                    {% if item.type_accouchement == 'VOIE_BASSE' %}
+                        <span class="badge badge-voie-basse">VB</span>
+                    {% else %}
+                        <span class="badge badge-cesarienne">CS</span>
+                    {% endif %}
+                </td>
+                <td>
+                    {% if item.type_tarification == 'CONVENTION' %}
+                        <span class="badge badge-convention">Conv.</span>
+                    {% else %}
+                        <span class="badge badge-payant">Payant</span>
+                    {% endif %}
+                </td>
+                <td class="text-end">
+                    <strong>{{ "{:,.2f}".format(item.part_gyneco).replace(",", " ") }} DA</strong>
+                </td>
+                <td class="text-center">
+                    {% if item.gyneco_paye %}
+                        <span class="badge bg-success">✓</span>
+                    {% else %}
+                        <span class="badge bg-warning">En attente</span>
+                    {% endif %}
+                </td>
+                <td class="text-center">
+                    <a href="{{ url_for('accouchement_detail', id_dossier=item.id_dossier) }}"
+                       class="btn btn-sm btn-outline-primary" title="Voir détails">
+                        <i class="fas fa-eye"></i>
+                    </a>
+                </td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>

@@ -1,0 +1,1599 @@
+{% extends "layout.html" %}
+{% import 'his/macros/his_direct_selector.html' as his_selector %}
+
+{% block title %}Nouveau Dossier KT{% endblock %}
+
+{% block style %}
+<link href="{{ url_for('static', filename='css/select2.min.css') }}" rel="stylesheet" />
+<link href="{{ url_for('static', filename='css/select2-bootstrap-5-theme.min.css') }}" rel="stylesheet" />
+
+<style>
+    /* ===== VARIABLES & THEME ===== */
+    :root {
+        --primary: #450A54;
+        --primary-light: #f3e5f5;
+        --primary-hover: #5e0e73;
+        --secondary: #9c27b0;
+        --success: #10b981;
+        --warning: #f59e0b;
+        --danger: #ef4444;
+
+        --bg-body: #f8f9fa;
+        --bg-card: #ffffff;
+        --text-main: #1f2937;
+        --text-muted: #6b7280;
+        --border-color: #e5e7eb;
+
+        --radius: 8px;
+        --radius-sm: 6px;
+        --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+        --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        --transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    [data-theme="dark"] {
+        --primary-light: #2d1a36;
+        /* Darker violet for dark mode */
+        --bg-body: #121212;
+        --bg-card: #1e1e1e;
+        --text-main: #e5e7eb;
+        --text-muted: #9ca3af;
+        --border-color: #374151;
+        --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
+    }
+
+    /* ===== BASE STYLES ===== */
+    body {
+        background-color: var(--bg-body);
+        color: var(--text-main);
+        font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    }
+
+    /* ===== STEPPER ===== */
+    .stepper-wrapper {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 1rem;
+        position: relative;
+        padding: 0 0.5rem;
+    }
+
+    .stepper-wrapper::before {
+        content: "";
+        position: absolute;
+        top: 20px;
+        left: 2rem;
+        right: 2rem;
+        height: 2px;
+        background: var(--border-color);
+        z-index: 1;
+    }
+
+    .stepper-item {
+        position: relative;
+        z-index: 2;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        flex: 1;
+        cursor: default;
+    }
+
+    .stepper-circle {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background-color: var(--bg-card);
+        border: 2px solid var(--border-color);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 600;
+        font-size: 1rem;
+        color: var(--text-muted);
+        margin-bottom: 0.25rem;
+        transition: var(--transition);
+        box-shadow: var(--shadow-sm);
+    }
+
+    .stepper-item.active .stepper-circle {
+        border-color: var(--primary);
+        background-color: var(--primary);
+        color: white;
+        box-shadow: 0 0 0 4px var(--primary-light);
+        transform: scale(1.1);
+    }
+
+    .stepper-item.completed .stepper-circle {
+        border-color: var(--success);
+        background-color: var(--success);
+        color: white;
+    }
+
+    .stepper-label {
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: var(--text-muted);
+        transition: var(--transition);
+        margin-top: 2px;
+    }
+
+    .stepper-item.active .stepper-label {
+        color: var(--primary);
+        font-weight: 700;
+    }
+
+    .stepper-item.completed .stepper-label {
+        color: var(--success);
+    }
+
+    /* ===== CARD & CONTENT ===== */
+    .form-card {
+        background: var(--bg-card);
+        border-radius: var(--radius);
+        padding: 1.5rem;
+        border: 1px solid var(--border-color);
+        box-shadow: var(--shadow-lg);
+        animation: slideIn 0.4s ease-out;
+    }
+
+    @keyframes slideIn {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .step-content {
+        display: none;
+        animation: fadeIn 0.3s ease;
+    }
+
+    .step-content.active {
+        display: block;
+    }
+
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+        }
+
+        to {
+            opacity: 1;
+        }
+    }
+
+    /* ===== FORMS & INPUTS ===== */
+    .form-label {
+        font-weight: 600;
+        color: var(--text-main);
+        font-size: 0.8125rem;
+        margin-bottom: 0.25rem;
+    }
+
+    .form-control,
+    .form-select {
+        border-radius: var(--radius-sm);
+        border: 1px solid var(--border-color);
+        background-color: var(--bg-card);
+        color: var(--text-main);
+        padding: 0.5rem 0.75rem;
+        transition: var(--transition);
+        font-size: 0.875rem;
+    }
+
+    .form-control:focus,
+    .form-select:focus {
+        border-color: var(--primary);
+        box-shadow: 0 0 0 4px var(--primary-light);
+        outline: none;
+    }
+
+    /* Input validation styles */
+    .form-control.is-invalid,
+    .form-select.is-invalid {
+        border-color: var(--danger);
+        background-image: none;
+        /* Remove default Bootstrap validation icon if desired */
+    }
+
+    /* Dark mode placeholders */
+    [data-theme="dark"] .form-control::placeholder {
+        color: #6b7280;
+    }
+
+    /* Select2 Dark Mode overrides */
+    [data-theme="dark"] .select2-container--bootstrap-5 .select2-selection {
+        background-color: var(--bg-card);
+        border-color: var(--border-color);
+        color: var(--text-main);
+    }
+
+    [data-theme="dark"] .select2-container--bootstrap-5 .select2-selection__rendered {
+        color: var(--text-main);
+    }
+
+    [data-theme="dark"] .select2-container--bootstrap-5 .select2-dropdown {
+        background-color: var(--bg-card);
+        border-color: var(--border-color);
+    }
+
+    [data-theme="dark"] .select2-container--bootstrap-5 .select2-results__option {
+        color: var(--text-main);
+    }
+
+    [data-theme="dark"] .select2-container--bootstrap-5 .select2-results__option--highlighted {
+        background-color: var(--primary);
+        color: white;
+    }
+
+    /* ===== CUSTOM CARDS (Urgence/VIP) ===== */
+    .custom-option-card {
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius);
+        padding: 0.75rem 1rem;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        background: var(--bg-card);
+        transition: var(--transition);
+        cursor: pointer;
+    }
+
+    .custom-option-card:hover {
+        border-color: var(--primary);
+        background: var(--primary-light);
+    }
+
+    [data-theme="dark"] .custom-option-card:hover {
+        background: rgba(69, 10, 84, 0.3);
+    }
+
+    .custom-option-card.active {
+        border-color: var(--primary);
+        background: var(--primary-light);
+        box-shadow: 0 0 0 1px var(--primary);
+    }
+
+    [data-theme="dark"] .custom-option-card.active {
+        background: rgba(69, 10, 84, 0.5);
+        border-color: var(--primary);
+    }
+
+    .custom-option-card .icon-wrapper {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-right: 1rem;
+        font-size: 1.1rem;
+    }
+
+    /* ===== DYNAMIC LISTS ===== */
+    .dynamic-list-container {
+        background-color: var(--bg-body);
+        border-radius: var(--radius);
+        padding: 1rem;
+        border: 1px dashed var(--border-color);
+    }
+
+    .product-row {
+        background: var(--bg-card);
+        border-radius: var(--radius-sm);
+        padding: 1rem;
+        margin-bottom: 0.75rem;
+        border: 1px solid var(--border-color);
+        box-shadow: var(--shadow-sm);
+        display: flex;
+        align-items: center;
+        transition: var(--transition);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .product-row::before {
+        content: '';
+        position: absolute;
+        left: 0;
+        top: 0;
+        bottom: 0;
+        width: 4px;
+        background: var(--primary);
+    }
+
+    .product-row:hover {
+        transform: translateY(-2px);
+        box-shadow: var(--shadow);
+    }
+
+    /* ===== BUTTONS ===== */
+    .btn {
+        padding: 0.6rem 1.25rem;
+        border-radius: var(--radius-sm);
+        font-weight: 600;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        transition: var(--transition);
+    }
+
+    .btn-primary {
+        background-color: var(--primary);
+        border-color: var(--primary);
+    }
+
+    .btn-primary:hover {
+        background-color: var(--primary-hover);
+        border-color: var(--primary-hover);
+    }
+
+    .btn-outline-primary {
+        color: var(--primary);
+        border-color: var(--primary);
+    }
+
+    .btn-outline-primary:hover {
+        background-color: var(--primary);
+        color: white;
+    }
+
+    /* ===== SECTION TITLES ===== */
+    .section-header {
+        display: flex;
+        align-items: center;
+        margin-bottom: 1rem;
+        gap: 0.75rem;
+        color: var(--primary);
+        border-bottom: 1px solid var(--border-color);
+        padding-bottom: 0.5rem;
+    }
+
+    .section-header i {
+        font-size: 1.25rem;
+        background: var(--primary-light);
+        padding: 0.5rem;
+        border-radius: 8px;
+    }
+
+    .section-header h4 {
+        margin: 0;
+        font-weight: 700;
+        color: var(--text-main);
+    }
+
+    /* ===== SUMMARY BOX ===== */
+    .summary-box {
+        background-color: var(--primary-light);
+        border-radius: var(--radius);
+        padding: 1.5rem;
+        border: 1px solid var(--border-color);
+        color: var(--text-main);
+        /* Ensure contrast */
+    }
+
+    [data-theme="dark"] .summary-box {
+        background-color: rgba(69, 10, 84, 0.2);
+        border-color: var(--primary);
+    }
+
+    /* Error message under input */
+    .input-error-msg {
+        color: var(--danger);
+        font-size: 0.75rem;
+        margin-top: 0.25rem;
+        display: none;
+    }
+
+    .is-invalid+.input-error-msg {
+        display: block;
+    }
+
+    /* ===== FLOATING ACTION BUTTON ===== */
+    .btn-floating-history {
+        position: fixed;
+        bottom: 50%;
+        right: 30px;
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        background-color: var(--secondary);
+        color: white;
+        border: none;
+        box-shadow: var(--shadow-lg);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        z-index: 1050;
+        transition: var(--transition);
+        cursor: pointer;
+    }
+
+    .btn-floating-history:hover {
+        transform: scale(1.1);
+        background-color: var(--primary);
+    }
+
+    .btn-floating-history:disabled {
+        background-color: var(--text-muted);
+        cursor: not-allowed;
+        opacity: 0.6;
+        transform: none;
+        box-shadow: none;
+    }
+
+    .btn-floating-text {
+        position: absolute;
+        right: 70px;
+        background: var(--bg-card);
+        color: var(--text-main);
+        padding: 5px 10px;
+        border-radius: 6px;
+        font-size: 0.8rem;
+        font-weight: bold;
+        box-shadow: var(--shadow);
+        opacity: 0;
+        visibility: hidden;
+        transition: var(--transition);
+        white-space: nowrap;
+    }
+
+    .btn-floating-history:hover .btn-floating-text {
+        opacity: 1;
+        visibility: visible;
+        right: 75px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-3" style="max-width: 1400px;">
+    <!-- Page Header -->
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <div>
+            <h1 class="h4 fw-bold mb-0" style="color: var(--primary);">Nouveau Dossier KT</h1>
+        </div>
+        <a href="{{ url_for('kt_dossier_patient') }}" class="btn btn-sm btn-outline-secondary bg-white"
+            id="kt_dossier_create_a_1">
+            <i class="fas fa-arrow-left"></i> Retour
+        </a>
+    </div>
+
+    <!-- Stepper -->
+    <div class="stepper-wrapper">
+        <div class="stepper-item active" data-step="1">
+            <div class="stepper-circle">1</div>
+            <div class="stepper-label">Patient</div>
+        </div>
+        <div class="stepper-item" data-step="2">
+            <div class="stepper-circle">2</div>
+            <div class="stepper-label">Actes</div>
+        </div>
+        <div class="stepper-item" data-step="3">
+            <div class="stepper-circle">3</div>
+            <div class="stepper-label">Séjour</div>
+        </div>
+        <div class="stepper-item" data-step="4">
+            <div class="stepper-circle">4</div>
+            <div class="stepper-label">Conso</div>
+        </div>
+        <div class="stepper-item" data-step="5">
+            <div class="stepper-circle"><i class="fas fa-check"></i></div>
+            <div class="stepper-label">Validation</div>
+        </div>
+    </div>
+
+    <form method="POST" action="{{ url_for('ajouter_dossier_kt') }}" id="createDossierForm">
+        <!-- Hidden inputs -->
+        <input type="hidden" id="patientNameHidden" name="patient">
+        <input type="hidden" id="patientOidHidden" name="patient_oid_his">
+        <input type="hidden" id="patientAgeHidden" name="patient_age">
+
+        <!-- Main Card -->
+        <div class="form-card position-relative">
+
+            <!-- STEP 1: Informations Patient -->
+            <div class="step-content active" id="step1">
+                <div class="section-header">
+                    <i class="fas fa-user-injured"></i>
+                    <h4>Informations Patient & Admission</h4>
+                </div>
+
+                <div class="row g-3">
+                    <div class="col-md-5">
+                        <label class="form-label">Date de l'Acte <span class="text-danger">*</span></label>
+                        <input type="date" class="form-control" name="acte_date" value="{{ today }}" required
+                            id="kt_dossier_create_input_2">
+                        <div class="input-error-msg">Ce champ est obligatoire.</div>
+                    </div>
+                    <div class="col-md-7">
+                        <label class="form-label">Médecin Traitant <span class="text-danger">*</span></label>
+                        <select class="form-select select2" name="id_doctor" required
+                            data-placeholder="Choisir un médecin..." id="kt_dossier_create_select_3">
+                            <option value=""></option>
+                            {% for doctor in doctors %}
+                            <option value="{{ doctor.id }}">{{ doctor.name }}</option>
+                            {% endfor %}
+                        </select>
+                        <div class="input-error-msg">Veuillez sélectionner un médecin.</div>
+                    </div>
+
+                    <div class="col-12">
+                        <label class="form-label">Recherche Patient (HIS) <span class="text-danger">*</span></label>
+                        <div class="p-2 border rounded bg-body">
+                            {{ his_selector.render(field_name='patient_oid', field_id='patientSelectDirect',
+                            filter_gender='') }}
+                        </div>
+                    </div>
+
+                    <div class="col-12">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="custom-option-card h-100">
+                                    <div class="d-flex align-items-center">
+                                        <div class="icon-wrapper bg-warning bg-opacity-10 text-warning"
+                                            style="width: 32px; height: 32px; font-size: 1rem;">
+                                            <i class="fas fa-exclamation-triangle"></i>
+                                        </div>
+                                        <div>
+                                            <span class="d-block fw-bold small">Urgence</span>
+                                        </div>
+                                    </div>
+                                    <div class="form-check form-switch ms-2">
+                                        <input class="form-check-input" type="checkbox" name="urgenceCheck" value="1"
+                                            id="kt_dossier_create_input_4">
+                                    </div>
+                                </label>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="custom-option-card h-100">
+                                    <div class="d-flex align-items-center">
+                                        <div class="icon-wrapper bg-primary bg-opacity-10 text-primary"
+                                            style="width: 32px; height: 32px; font-size: 1rem;">
+                                            <i class="fas fa-crown"></i>
+                                        </div>
+                                        <div>
+                                            <span class="d-block fw-bold small">Patient VIP</span>
+                                        </div>
+                                    </div>
+                                    <div class="form-check form-switch ms-2">
+                                        <input class="form-check-input" type="checkbox" name="vip" value="1"
+                                            id="kt_dossier_create_input_5">
+                                    </div>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- STEP 2: Actes & Anesthésie -->
+            <div class="step-content" id="step2">
+
+                <!-- Actes Section -->
+                <div class="mb-5">
+                    <div class="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom">
+                        <h5 class="fw-bold mb-0 text-primary"><i class="fas fa-clipboard-list me-2"></i>Actes Médicaux
+                        </h5>
+                        <button type="button" class="btn btn-sm btn-outline-primary" id="btnAddActe">
+                            <i class="fas fa-plus"></i> Ajouter un acte
+                        </button>
+                    </div>
+
+                    <div id="actesContainer" class="dynamic-list-container">
+                        <!-- Actes ajoutés ici dynamiquement -->
+                    </div>
+                </div>
+
+                <!-- Anesthésie Section -->
+                <div class="mt-4">
+                    <h6 class="fw-bold mb-2 text-primary border-bottom pb-2"><i
+                            class="fas fa-syringe me-2"></i>Anesthésie</h6>
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <label class="form-label">Type d'Acte</label>
+                            <select class="form-select select2" name="id_acte_anesthesie"
+                                id="kt_dossier_create_select_6">
+                                <option value="">Aucun</option>
+                                {% for acte in actes_anesthesie %}
+                                <option value="{{ acte.id_acte_anesthesie }}">{{ acte.nom_acte }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label">Durée (min)</label>
+                            <input type="number" class="form-control" name="duree_operation" placeholder="Ex: 90"
+                                id="kt_dossier_create_input_7">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Anesthésiste</label>
+                            <select class="form-select select2" name="id_anesthesiste" id="selectAnesthesiste">
+                                <option value="">Aucun</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Réanimateur</label>
+                            <select class="form-select select2" name="id_reanimateur" id="selectReanimateur">
+                                <option value="">Aucun</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-12">
+                    <label class="form-label">Observations</label>
+                    <textarea class="form-control" name="observations_anesthesie" rows="2"
+                        placeholder="Remarques éventuelles..."></textarea>
+                </div>
+            </div>
+        </div>
+</div>
+
+<!-- STEP 3: Séjour & Facturation -->
+<div class="step-content" id="step3">
+    <div class="section-header mb-3">
+        <i class="fas fa-bed"></i>
+        <h4>Hébergement & Paramètres</h4>
+    </div>
+
+    <div class="row g-3">
+        <div class="col-md-6">
+            <div class="card h-100 shadow-none border" id="kt_dossier_create_div_8">
+                <div class="card-body">
+                    <h6 class="fw-bold mb-3"><i class="fas fa-moon me-2 text-primary"></i>Nuitées</h6>
+                    <div class="mb-3">
+                        <label class="form-label">Nuits Patient</label>
+                        <input type="number" class="form-control text-center fs-5 fw-bold" name="nbr_nuite" value="0"
+                            min="0" id="kt_dossier_create_input_9">
+                    </div>
+                    <div>
+                        <label class="form-label">Nuits Accompagnant</label>
+                        <input type="number" class="form-control text-center" name="nbr_nuite_conjoint" value="0"
+                            min="0" id="kt_dossier_create_input_10">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="card h-100 shadow-none border" id="kt_dossier_create_div_11">
+                <div class="card-body">
+                    <h6 class="fw-bold mb-3"><i class="fas fa-percentage me-2 text-warning"></i>Majorations
+                        & Extras</h6>
+                    <div class="mb-3">
+                        <label class="form-label">Extras (DA)</label>
+                        <input type="number" class="form-control" name="extras" value="0" min="0" step="0.01"
+                            id="kt_dossier_create_input_12">
+                        <div class="d-flex gap-3 mt-2">
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="extraPercentage" id="extra20"
+                                    value="20" checked>
+                                <label class="form-check-label" for="extra20">+20%</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="extraPercentage" id="extra50"
+                                    value="50">
+                                <label class="form-check-label" for="extra50">+50%</label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row g-2">
+                        <div class="col-6">
+                            <label class="form-label small">UP Médecin</label>
+                            <input type="number" class="form-control form-control-sm" name="up_medecin" value="0"
+                                min="0" step="0.01" id="kt_dossier_create_input_13">
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label small">UP Clinique</label>
+                            <input type="number" class="form-control form-control-sm" name="up_clinique" value="0"
+                                min="0" step="0.01" id="kt_dossier_create_input_14">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- STEP 4: Produits Consommés -->
+<div class="step-content" id="step4">
+    <div class="section-header">
+        <i class="fas fa-box-open"></i>
+        <h4>Produits Pharmaceutiques Consommés</h4>
+    </div>
+
+    <div class="d-flex justify-content-end mb-3">
+        <button type="button" class="btn btn-outline-success" id="btnAddProduit">
+            <i class="fas fa-plus"></i> Ajouter un produit
+        </button>
+    </div>
+
+    <div id="produitsContainer"
+        class="dynamic-list-container min-h-200 d-flex flex-column align-items-center justify-content-center">
+        <div class="text-center text-muted" id="noProduitsMsg">
+            <i class="fas fa-prescription-bottle-alt fa-3x mb-3 opacity-25"></i>
+            <p class="mb-0">Aucun produit ajouté pour le moment.</p>
+            <small>Utilisez le bouton "Ajouter" pour saisir la consommation.</small>
+        </div>
+    </div>
+</div>
+
+<!-- STEP 5: Validation -->
+<div class="step-content" id="step5">
+    <div class="text-center py-5">
+        <div class="mb-4 text-success animation-pulse">
+            <i class="fas fa-check-circle fa-5x"></i>
+        </div>
+        <h2 class="fw-bold mb-3">Validation du Dossier</h2>
+        <p class="text-muted mb-4">Veuillez vérifier les informations détaillées ci-dessous avant de confirmer la
+            création.</p>
+
+        <div id="detailedSummary" class="text-start mx-auto" style="max-width: 800px;">
+            <!-- Detailed Summary will be injected here via JS -->
+        </div>
+    </div>
+</div>
+
+<!-- NAVIGATION BUTTONS -->
+<div class="d-flex justify-content-between align-items-center mt-5 pt-4 border-top">
+    <button type="button" class="btn btn-outline-secondary px-4" id="btnPrev" style="display: none;">
+        <i class="fas fa-arrow-left"></i> Précédent
+    </button>
+    <div class="ms-auto">
+        <button type="button" class="btn btn-primary px-4" id="btnNext">
+            Suivant <i class="fas fa-arrow-right"></i>
+        </button>
+        <button type="submit" class="btn btn-success px-5" id="btnSubmit" style="display: none;">
+            <i class="fas fa-check-circle"></i> Confirmer & Créer
+        </button>
+    </div>
+</div>
+</div>
+</form>
+</div>
+
+<!-- TEMPLATES -->
+
+<!-- Template Acte -->
+<template id="templateActe">
+    <div class="product-row acte-row p-3" data-resolved-prix="0" data-resolved-honoraires="0" data-resolved-source="">
+        <div class="row align-items-end g-3 w-100 m-0">
+            <div class="col-md-4">
+                <label class="form-label small mb-1">Acte Médical <span class="text-danger">*</span></label>
+                <select class="form-select acte-select" name="id_acte_INDEX" required id="kt_dossier_create_select_15">
+                    <option value="">Sélectionner un acte...</option>
+                    {% for acte in acts_kt %}
+                    <option value="{{ acte.id_acte }}" data-prix-payant="{{ acte.prix_payant }}"
+                        data-prix-urgence="{{ acte.prix_urgence }}">
+                        {{ acte.name_acte_kt }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label small mb-1">Convention <small class="text-muted">(vide = tarif standard payante
+                        ou urgence)</small></label>
+                <input type="hidden" name="id_convention_INDEX" class="convention-id-hidden" value=""
+                    id="kt_dossier_create_input_16">
+                <select class="form-select convention-select" name="convention_acte_kt_INDEX"
+                    id="kt_dossier_create_select_17">
+                    <option value="payante" data-id-convention="">Aucune (Tarif payante / urgence)</option>
+                    <!-- Options dynamiques chargées via API -->
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label small mb-1">Prix Résolu</label>
+                <div class="prix-resolved-info p-2 rounded border bg-light text-center">
+                    <span class="prix-resolved-amount fw-bold text-primary">—</span>
+                    <br>
+                    <span class="prix-resolved-source badge bg-secondary mt-1" style="font-size:0.7rem;"></span>
+                </div>
+            </div>
+            <div class="col-md-2 text-end">
+                <button type="button" class="btn btn-outline-danger btn-sm btn-remove-acte" title="Supprimer cet acte"
+                    id="kt_dossier_create_button_18">
+                    <i class="fas fa-trash-alt"></i> Supprimer
+                </button>
+            </div>
+        </div>
+    </div>
+</template>
+
+<!-- Template Produit -->
+<template id="templateProduit">
+    <div class="product-row produit-row p-3 w-100">
+        <div class="row align-items-end g-3 w-100 m-0">
+            <div class="col-md-7">
+                <label class="form-label small mb-1">Désignation Produit <span class="text-danger">*</span></label>
+                <select class="form-select produit-select" name="produit_supp_id[]" required
+                    id="kt_dossier_create_select_19">
+                    <option value="">Rechercher un produit...</option>
+                    {% for produit in produits %}
+                    <option value="{{ produit.id_produit }}" data-prix="{{ produit.prix }}">
+                        {{ produit.description }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label small mb-1">Quantité <span class="text-danger">*</span></label>
+                <input type="number" class="form-control" name="produit_supp_qte[]" value="1" min="1" required
+                    id="kt_dossier_create_input_20">
+            </div>
+            <div class="col-md-2 text-end">
+                <button type="button" class="btn btn-outline-danger btn-sm btn-remove-produit" title="Retirer"
+                    id="kt_dossier_create_button_21">
+                    <i class="fas fa-trash-alt"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+</template>
+<!-- Bouton Historique Flottant -->
+<button type="button" class="btn-floating-history" id="btnPatientHistoryDirect" disabled
+    title="Voir l'historique complet du patient">
+    <i class="fas fa-history"></i>
+    <span class="btn-floating-text">Historique</span>
+</button>
+
+<!-- Modal Historique -->
+{{ his_selector.render_modal('modalPatientHistoryDirect') }}
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/select2.min.js') }}"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+
+
+        // --- Init Global ---
+        $('.select2').select2({
+            theme: 'bootstrap-5',
+            width: '100%',
+            placeholder: $(this).data('placeholder')
+        });
+
+        // --- Custom Option Cards Logic ---
+        document.querySelectorAll('.custom-option-card').forEach(card => {
+            const checkbox = card.querySelector('input[type="checkbox"]');
+            if (checkbox) {
+                const updateCardState = () => {
+                    if (checkbox.checked) {
+                        card.classList.add('active');
+                    } else {
+                        card.classList.remove('active');
+                    }
+                };
+                // Init state
+                updateCardState();
+                // Listen for changes
+                checkbox.addEventListener('change', updateCardState);
+            }
+        });
+
+        // --- Stepper Logic ---
+        let currentStep = 1;
+        const totalSteps = 5;
+
+        function updateStepper() {
+            // Update Headers
+            document.querySelectorAll('.stepper-item').forEach(item => {
+                const step = parseInt(item.dataset.step);
+                if (step < currentStep) {
+                    item.classList.add('completed');
+                    item.classList.remove('active');
+                } else if (step === currentStep) {
+                    item.classList.add('active');
+                    item.classList.remove('completed');
+                } else {
+                    item.classList.remove('active', 'completed');
+                }
+            });
+
+            // Update Content
+            document.querySelectorAll('.step-content').forEach(content => content.classList.remove('active'));
+            const activeContent = document.getElementById(`step${currentStep}`);
+            activeContent.classList.add('active');
+
+            // Scroll to top of card for better UX
+            document.querySelector('.form-card').scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+            // Update Buttons
+            document.getElementById('btnPrev').style.display = currentStep > 1 ? 'inline-flex' : 'none';
+
+            if (currentStep === totalSteps) {
+                document.getElementById('btnNext').style.display = 'none';
+                document.getElementById('btnSubmit').style.display = 'inline-flex';
+                updateSummary();
+            } else {
+                document.getElementById('btnNext').style.display = 'inline-flex';
+                document.getElementById('btnSubmit').style.display = 'none';
+            }
+        }
+
+        // --- Validation Logic ---
+        function validateStep(step) {
+            const stepContent = document.getElementById(`step${step}`);
+            // Select all required inputs within the current step
+            const inputs = stepContent.querySelectorAll('input[required], select[required], textarea[required]');
+            let isValid = true;
+            let firstInvalidInput = null;
+
+            inputs.forEach(input => {
+                // Check if hidden or disabled (sometimes select2 hides original select)
+                // For select2, we check the original select value.
+                if (!input.value || input.value.trim() === '') {
+                    isValid = false;
+                    input.classList.add('is-invalid');
+
+                    // Specific handling for Select2 containers
+                    if ($(input).hasClass('select2-hidden-accessible')) {
+                        $(input).next('.select2-container').find('.select2-selection').addClass('border-danger');
+                    }
+
+                    if (!firstInvalidInput) firstInvalidInput = input;
+                } else {
+                    input.classList.remove('is-invalid');
+                    if ($(input).hasClass('select2-hidden-accessible')) {
+                        $(input).next('.select2-container').find('.select2-selection').removeClass('border-danger');
+                    }
+                }
+            });
+
+            // Specific checks for Step 1 (HIS Patient)
+            if (step === 1) {
+                const patientSelect = document.getElementById('patientSelectDirect');
+                // Note: his_selector usually places a required attribute or we manually check
+                if (!patientSelect.value) {
+                    isValid = false;
+                    // Try to highlight the HIS selector container if possible
+                    patientSelect.classList.add('is-invalid');
+                }
+            }
+
+            // Specific checks for Step 2 (At least one Acte)
+            if (step === 2) {
+                const actRows = document.querySelectorAll('.acte-row');
+                if (actRows.length === 0) {
+                    isValid = false;
+                    Toastify({
+                        text: "Veuillez ajouter au moins un acte médical pour continuer.",
+                        duration: 5000,
+                        gravity: "top",
+                        position: "center",
+                        style: {
+                            background: "linear-gradient(to right, #ef4444, #b91c1c)",
+                            boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)"
+                        }
+                    }).showToast();
+                }
+            }
+
+            if (!isValid) {
+                // Visual feedback
+                Toastify({
+                    text: "Veuillez remplir tous les champs obligatoires marqués d'un rouge.",
+                    duration: 4000,
+                    gravity: "top",
+                    position: "center",
+                    style: {
+                        background: "linear-gradient(to right, #ef4444, #b91c1c)",
+                        boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)"
+                    }
+                }).showToast();
+
+                // Focus first invalid
+                if (firstInvalidInput) {
+                    firstInvalidInput.focus();
+                    // If it is a select2, open it
+                    if ($(firstInvalidInput).hasClass('select2-hidden-accessible')) {
+                        $(firstInvalidInput).select2('open');
+                    }
+                }
+            }
+
+            return isValid;
+        }
+
+        // Live Validation Remove Error on Change
+        document.addEventListener('change', function (e) {
+            if (e.target.hasAttribute('required') && e.target.value) {
+                e.target.classList.remove('is-invalid');
+                if ($(e.target).hasClass('select2-hidden-accessible')) {
+                    $(e.target).next('.select2-container').find('.select2-selection').removeClass('border-danger');
+                }
+            }
+        }, true);
+
+        // Listen to Select2 change
+        $(document.body).on("change", ".select2", function (e) {
+            if (this.value) {
+                $(this).next('.select2-container').find('.select2-selection').removeClass('border-danger');
+                this.classList.remove('is-invalid');
+            }
+        });
+
+
+        // Navigation Handlers
+        document.getElementById('btnNext').addEventListener('click', () => {
+            if (validateStep(currentStep)) {
+                if (currentStep < totalSteps) {
+                    currentStep++;
+                    updateStepper();
+                }
+            }
+        });
+
+        document.getElementById('btnPrev').addEventListener('click', () => {
+            if (currentStep > 1) {
+                currentStep--;
+                updateStepper();
+            }
+        });
+
+        // Restore History Button Logic
+        const btnHistory = document.getElementById('btnPatientHistoryDirect');
+        if (btnHistory) {
+            btnHistory.addEventListener('click', function () {
+                const patientOid = this.getAttribute('data-patient-oid');
+                if (patientOid && typeof showPatientHistoryDirect === 'function') {
+                    showPatientHistoryDirect(patientOid);
+                }
+            });
+        }
+
+        // --- Actes Management ---
+        let acteIndex = 0;
+        const actsContainer = document.getElementById('actesContainer');
+        const tplActe = document.getElementById('templateActe');
+
+        // Fonction centrale : résolution du prix via l'API backend
+        function resolvePrice(row) {
+            const acteSelect = row.querySelector('.acte-select');
+            const conventionSelect = row.querySelector('.convention-select');
+            const hiddenConvId = row.querySelector('.convention-id-hidden');
+            const doctorSelect = document.querySelector('select[name="id_doctor"]');
+            const urgenceCheck = document.querySelector('input[name="urgenceCheck"]');
+
+            const idActe = acteSelect?.value;
+            const idDoctor = doctorSelect?.value;
+            const idConvention = hiddenConvId?.value || null;
+            const estUrgence = urgenceCheck?.checked || false;
+
+            // Affichage état de chargement
+            const amountEl = row.querySelector('.prix-resolved-amount');
+            const sourceEl = row.querySelector('.prix-resolved-source');
+
+            if (!idActe || !idDoctor) {
+                row.dataset.resolvedPrix = '0';
+                row.dataset.resolvedHonoraires = '0';
+                row.dataset.resolvedSource = '';
+                if (amountEl) amountEl.textContent = '—';
+                if (sourceEl) { sourceEl.textContent = ''; sourceEl.className = 'prix-resolved-source badge bg-secondary mt-1'; sourceEl.style.fontSize = '0.7rem'; }
+                return;
+            }
+
+            if (amountEl) amountEl.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+
+            fetch('/api/kt/resoudre_prix', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    id_acte: parseInt(idActe),
+                    id_doctor: parseInt(idDoctor),
+                    id_convention: idConvention ? parseInt(idConvention) : null,
+                    est_urgence: estUrgence
+                })
+            })
+                .then(r => r.json())
+                .then(data => {
+                    if (data.success) {
+                        row.dataset.resolvedPrix = data.prix;
+                        row.dataset.resolvedHonoraires = data.part_operateur;
+                        row.dataset.resolvedSource = data.source;
+                        if (amountEl) amountEl.textContent = `${data.prix.toLocaleString('fr-FR')} DA`;
+                        if (sourceEl) {
+                            const sourceLabels = {
+                                'MEDECIN_CONV': 'Tarif Médecin (Conv)',
+                                'MEDECIN_STD': 'Tarif Médecin',
+                                'MEDECIN_URG': 'Tarif Médecin (Urg)',
+                                'CONVENTION': 'Convention',
+                                'PAYANTE': 'Payante',
+                                'URGENCE': 'Urgence'
+                            };
+                            const sourceColors = {
+                                'MEDECIN_CONV': 'bg-info',
+                                'MEDECIN_STD': 'bg-info',
+                                'MEDECIN_URG': 'bg-warning text-dark',
+                                'CONVENTION': 'bg-success',
+                                'PAYANTE': 'bg-secondary',
+                                'URGENCE': 'bg-danger'
+                            };
+                            sourceEl.textContent = sourceLabels[data.source] || data.source;
+                            sourceEl.className = `prix-resolved-source badge ${sourceColors[data.source] || 'bg-secondary'} mt-1`;
+                            sourceEl.style.fontSize = '0.7rem';
+                        }
+                    }
+                })
+                .catch(() => {
+                    if (amountEl) amountEl.textContent = 'Erreur';
+                    row.dataset.resolvedPrix = '0';
+                    row.dataset.resolvedHonoraires = '0';
+                });
+        }
+
+        // Résoudre les prix de TOUS les actes (quand médecin ou urgence change)
+        function resolveAllPrices() {
+            document.querySelectorAll('.acte-row').forEach(row => resolvePrice(row));
+        }
+
+        // Listener global : changement de médecin
+        const doctorSelectGlobal = document.querySelector('select[name="id_doctor"]');
+        if (doctorSelectGlobal) {
+            $(doctorSelectGlobal).on('change', resolveAllPrices);
+        }
+
+        // Listener global : changement d'urgence
+        const urgenceCheckGlobal = document.querySelector('input[name="urgenceCheck"]');
+        if (urgenceCheckGlobal) {
+            urgenceCheckGlobal.addEventListener('change', resolveAllPrices);
+        }
+
+        function addActe() {
+            const clone = tplActe.content.cloneNode(true);
+            const row = clone.querySelector('.acte-row');
+
+            // Generate unique IDs
+            row.innerHTML = row.innerHTML.replace(/INDEX/g, acteIndex);
+
+            // Remove handler
+            row.querySelector('.btn-remove-acte').addEventListener('click', function () {
+                row.remove();
+            });
+
+            actsContainer.appendChild(row);
+
+            // Init Select2 on the acte select only
+            const acteSelect = row.querySelector('.acte-select');
+            $(acteSelect).select2({ theme: 'bootstrap-5', width: '100%' });
+
+            // When acte changes, load conventions for that acte via API, then resolve price
+            $(acteSelect).on('change', function () {
+                const acteId = this.value;
+                const conventionSelect = row.querySelector('.convention-select');
+                const hiddenConvId = row.querySelector('.convention-id-hidden');
+
+                // Reset convention select
+                conventionSelect.innerHTML = '<option value="payante" data-id-convention="">Aucune (Tarif payante / urgence)</option>';
+                hiddenConvId.value = '';
+
+                if (acteId) {
+                    fetch(`/api/conventions_acte_kt/${acteId}`)
+                        .then(r => r.json())
+                        .then(data => {
+                            if (data.success && data.conventions.length > 0) {
+                                data.conventions.forEach(conv => {
+                                    const opt = document.createElement('option');
+                                    opt.value = conv.code_convention.toLowerCase();
+                                    opt.textContent = `${conv.nom_convention} (${conv.prix.toLocaleString()} DA)`;
+                                    opt.dataset.idConvention = conv.id_convention;
+                                    opt.dataset.prix = conv.prix;
+                                    opt.dataset.honoraires = conv.part_operateur;
+                                    conventionSelect.appendChild(opt);
+                                });
+                            }
+                            // Résoudre le prix après chargement des conventions
+                            resolvePrice(row);
+                        });
+                } else {
+                    resolvePrice(row);
+                }
+            });
+
+            // When convention changes, update hidden id_convention + resolve price
+            const conventionSelect = row.querySelector('.convention-select');
+            conventionSelect.addEventListener('change', function () {
+                const selected = this.options[this.selectedIndex];
+                const hiddenConvId = row.querySelector('.convention-id-hidden');
+                hiddenConvId.value = selected.dataset.idConvention || '';
+                resolvePrice(row);
+            });
+
+            acteIndex++;
+        }
+
+        // Init with one acte
+        document.getElementById('btnAddActe').addEventListener('click', addActe);
+        addActe();
+
+        // --- Produits Management ---
+        const prodsContainer = document.getElementById('produitsContainer');
+        const tplProd = document.getElementById('templateProduit');
+        const noProdsMsg = document.getElementById('noProduitsMsg');
+
+        function toggleNoProdMsg() {
+            if (prodsContainer.querySelectorAll('.produit-row').length > 0) {
+                if (noProdsMsg) noProdsMsg.style.display = 'none';
+                prodsContainer.classList.remove('align-items-center', 'justify-content-center');
+            } else {
+                if (noProdsMsg) noProdsMsg.style.display = 'block';
+                prodsContainer.classList.add('align-items-center', 'justify-content-center');
+            }
+        }
+
+        document.getElementById('btnAddProduit').addEventListener('click', function () {
+            const clone = tplProd.content.cloneNode(true);
+            const row = clone.querySelector('.produit-row');
+
+            row.querySelector('.btn-remove-produit').addEventListener('click', function () {
+                row.remove();
+                toggleNoProdMsg();
+            });
+
+            prodsContainer.appendChild(row);
+            // Init Select2 on new elements
+            $(row.querySelectorAll('.select2, select')).select2({
+                theme: 'bootstrap-5',
+                width: '100%'
+            });
+
+            toggleNoProdMsg();
+        });
+
+        // --- Summary Update ---
+        function updateSummary() {
+            // 1. Gather Data
+            const patientSelect = document.getElementById('patientSelectDirect');
+            const patientName = patientSelect.options[patientSelect.selectedIndex]?.text || '-';
+            document.getElementById('patientNameHidden').value = patientName.split(' - ')[0];
+
+            const doctorSelect = document.querySelector('select[name="id_doctor"]');
+            const doctorName = doctorSelect.options[doctorSelect.selectedIndex]?.text || '-';
+
+            const acteDate = document.querySelector('input[name="acte_date"]').value;
+
+            // 2. Calculate Actes (utilise les prix résolus via l'API)
+            let totalActes = 0;
+            let totalHonoraires = 0;
+            const actesDetails = [];
+            document.querySelectorAll('.acte-row').forEach(row => {
+                const selectElement = row.querySelector('.acte-select');
+                const selectedOption = selectElement.options[selectElement.selectedIndex];
+                const conventionSelect = row.querySelector('.convention-select');
+                const convention = conventionSelect ? conventionSelect.value : 'payante';
+                const isUrgence = document.querySelector('input[name="urgenceCheck"]')?.checked;
+
+                if (selectedOption && selectedOption.value) {
+                    const name = selectedOption.text.trim();
+                    // Utiliser le prix résolu par l'API (stocké dans data-resolved-prix)
+                    const appliedPrice = parseFloat(row.dataset.resolvedPrix) || 0;
+                    const honoraires = parseFloat(row.dataset.resolvedHonoraires) || 0;
+                    const source = row.dataset.resolvedSource || '';
+
+                    totalActes += appliedPrice;
+                    totalHonoraires += honoraires;
+                    actesDetails.push({
+                        name,
+                        convention: isUrgence ? 'urgence' : convention,
+                        price: appliedPrice,
+                        honoraires: honoraires,
+                        source: source
+                    });
+                }
+            });
+
+            // 3. Calculate Products
+            let totalProduits = 0;
+            const produitsDetails = [];
+            document.querySelectorAll('.produit-row').forEach(row => {
+                const selectElement = row.querySelector('.produit-select');
+                const selectedOption = selectElement.options[selectElement.selectedIndex];
+                const qtyInput = row.querySelector('input[name^="produit_supp_qte"]');
+                const qty = parseInt(qtyInput ? qtyInput.value : 1) || 0;
+
+                if (selectedOption && selectedOption.value) {
+                    const name = selectedOption.text.trim();
+                    const unitPrice = parseFloat(selectedOption.getAttribute('data-prix')) || 0;
+                    const totalLine = unitPrice * qty;
+
+                    totalProduits += totalLine;
+                    produitsDetails.push({ name, qty, unitPrice, total: totalLine });
+                }
+            });
+
+            // 4. Calculate Hospitalization & Extras
+            const extrasInput = parseFloat(document.querySelector('input[name="extras"]').value) || 0;
+            const extraPercentage = document.querySelector('input[name="extraPercentage"]:checked').value; // 20 or 50
+            const upMedecin = parseFloat(document.querySelector('input[name="up_medecin"]').value) || 0;
+            const upClinique = parseFloat(document.querySelector('input[name="up_clinique"]').value) || 0;
+            const nbrNuite = parseInt(document.querySelector('input[name="nbr_nuite"]').value) || 0;
+
+            // Note: Nuitée price is not explicit in form, usually standard value or handled server side. 
+            // Here we just summary accessible costs.
+
+            // Calculate Supplement based on Extras + Percentage (assuming calculation logic)
+            // Or usually: Supplement is (Actes + ...) * Percentage? Or just Extras * Percentage? 
+            // Based on user request "prix d'acte et honoraires avec supplément", simplistic approach:
+
+            const grandTotal = totalActes + totalProduits + extrasInput + upMedecin + upClinique;
+
+            // 5. Build HTML
+            let html = `
+                <div class="card shadow-sm border mb-3" id="kt_dossier_create_div_22">
+                    <div class="card-header bg-primary text-white py-2">
+                        <h6 class="mb-0"><i class="fas fa-file-medical-alt me-2"></i>Informations Générales</h6>
+                    </div>
+                    <div class="card-body py-2">
+                        <div class="row text-sm">
+                            <div class="col-md-4"><strong>Patient:</strong> ${patientName}</div>
+                            <div class="col-md-4"><strong>Médecin:</strong> ${doctorName}</div>
+                            <div class="col-md-4"><strong>Date:</strong> ${acteDate}</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row g-3 mb-3">
+                    <!-- Acts Table -->
+                    <div class="col-md-12">
+                        <div class="border rounded p-0 overflow-hidden bg-white">
+                            <table class="table table-sm table-striped mb-0 text-sm">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Acte Médical</th>
+                                        <th>Convention</th>
+                                        <th>Source</th>
+                                        <th class="text-end">Prix Clinique</th>
+                                        <th class="text-end">Honoraires</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${actesDetails.map(a => {
+                const sourceLabels = {
+                    'MEDECIN_CONV': 'Tarif Médecin (Conv)',
+                    'MEDECIN_STD': 'Tarif Médecin',
+                    'MEDECIN_URG': 'Tarif Médecin (Urg)',
+                    'CONVENTION': 'Convention',
+                    'PAYANTE': 'Payante',
+                    'URGENCE': 'Urgence'
+                };
+                const sourceColors = {
+                    'MEDECIN_CONV': 'bg-info',
+                    'MEDECIN_STD': 'bg-info',
+                    'MEDECIN_URG': 'bg-warning text-dark',
+                    'CONVENTION': 'bg-success',
+                    'PAYANTE': 'bg-secondary',
+                    'URGENCE': 'bg-danger'
+                };
+                return `
+                                        <tr>
+                                            <td>${a.name}</td>
+                                            <td><span class="badge bg-secondary">${a.convention}</span></td>
+                                            <td><span class="badge ${sourceColors[a.source] || 'bg-secondary'}" style="font-size:0.7rem;">${sourceLabels[a.source] || a.source}</span></td>
+                                            <td class="text-end fw-bold">${a.price.toLocaleString('fr-FR')} DA</td>
+                                            <td class="text-end">${a.honoraires.toLocaleString('fr-FR')} DA</td>
+                                        </tr>
+                                    `}).join('')}
+                                    ${actesDetails.length === 0 ? '<tr><td colspan="5" class="text-center text-muted">Aucun acte</td></tr>' : ''}
+                                </tbody>
+                                <tfoot class="table-light fw-bold">
+                                    <tr>
+                                        <td colspan="3">Sous-total Actes</td>
+                                        <td class="text-end text-primary">${totalActes.toLocaleString('fr-FR')} DA</td>
+                                        <td class="text-end text-info">${totalHonoraires.toLocaleString('fr-FR')} DA</td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row g-3">
+                    <!-- Products Table -->
+                     <div class="col-md-7">
+                        <div class="border rounded p-0 overflow-hidden bg-white">
+                            <div class="p-2 bg-light border-bottom font-weight-bold text-sm">Produits Consommés</div>
+                            <table class="table table-sm mb-0 text-sm">
+                                <thead><tr><th>Produit</th><th>Qte</th><th class="text-end">Total</th></tr></thead>
+                                <tbody>
+                                     ${produitsDetails.map(p => `
+                                        <tr>
+                                            <td class="text-truncate" style="max-width: 150px;">${p.name}</td>
+                                            <td>${p.qty}</td>
+                                            <td class="text-end">${p.total.toFixed(2)}</td>
+                                        </tr>
+                                    `).join('')}
+                                     ${produitsDetails.length === 0 ? '<tr><td colspan="3" class="text-center text-muted small py-2">Aucun produit</td></tr>' : ''}
+                                </tbody>
+                                <tfoot>
+                                    <tr>
+                                        <td colspan="2" class="fw-bold small">Sous-total</td>
+                                        <td class="text-end fw-bold small">${totalProduits.toFixed(2)}</td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Financial Summary -->
+                    <div class="col-md-5">
+                         <div class="card shadow-sm border h-100" id="kt_dossier_create_div_23">
+                             <div class="card-body p-3">
+                                <h6 class="fw-bold text-primary mb-3">Récapitulatif Financier (Est.)</h6>
+                                <div class="d-flex justify-content-between mb-2 text-sm">
+                                    <span>Actes:</span>
+                                    <span>${totalActes.toFixed(2)} DA</span>
+                                </div>
+                                <div class="d-flex justify-content-between mb-2 text-sm">
+                                    <span>Suppléments / Extras:</span>
+                                    <span>${extrasInput.toFixed(2)} DA</span>
+                                </div>
+                                 <div class="d-flex justify-content-between mb-2 text-sm">
+                                    <span>UP (Méd + Cli):</span>
+                                    <span>${(upMedecin + upClinique).toFixed(2)} DA</span>
+                                </div>
+                                <div class="d-flex justify-content-between mb-2 text-sm">
+                                    <span>Produits:</span>
+                                    <span>${totalProduits.toFixed(2)} DA</span>
+                                </div>
+                                <hr class="my-2">
+                                <div class="d-flex justify-content-between fw-bold fs-6 text-success">
+                                    <span>Total Estimé:</span>
+                                    <span>${grandTotal.toFixed(2)} DA</span>
+                                </div>
+
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            document.getElementById('detailedSummary').innerHTML = html;
+        }
+
+        // --- Personnel Data Loading ---
+        async function loadAnesthesiaPersonnel() {
+            try {
+                const response = await fetch('/api/anesthesie/personnel');
+                const personelList = await response.json();
+
+                if (Array.isArray(personelList)) {
+                    const anesSelect = $('#selectAnesthesiste');
+                    const reaSelect = $('#selectReanimateur');
+
+                    anesSelect.empty().append(new Option("Aucun", ""));
+                    reaSelect.empty().append(new Option("Aucun", ""));
+
+                    personelList.forEach(p => {
+                        const typeName = (p.nom_type || "").toLowerCase();
+                        const normalizedType = typeName.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+                        const option = new Option(p.nom_complet, p.id_personnel_anesthesie);
+
+                        // Logic from original file
+                        if (normalizedType.includes('anesth')) {
+                            anesSelect.append(option.cloneNode(true));
+                        }
+                        if (normalizedType.includes('rean')) {
+                            reaSelect.append(option.cloneNode(true));
+                        }
+                    });
+
+                    anesSelect.trigger('change');
+                    reaSelect.trigger('change');
+                }
+            } catch (e) {
+                console.error("Erreur chargement personnel", e);
+            }
+        }
+
+        loadAnesthesiaPersonnel();
+
+
+        // --- Anesthesia Validation Logic ---
+        const anesthesiaTypeSelect = $('select[name="id_acte_anesthesie"]');
+        const anesthesiaDependents = [
+            $('input[name="duree_operation"]'),
+            $('#selectAnesthesiste'),
+            $('#selectReanimateur')
+        ];
+
+        function toggleAnesthesiaRequired() {
+            const isAnesthesiaSelected = anesthesiaTypeSelect.val() !== "";
+
+            anesthesiaDependents.forEach(field => {
+                const label = field.closest('.col-md-2, .col-md-3').find('.form-label');
+
+                if (isAnesthesiaSelected) {
+                    field.attr('required', true);
+                    if (!label.find('.text-danger').length) {
+                        label.append(' <span class="text-danger">*</span>');
+                    }
+                } else {
+                    field.removeAttr('required');
+                    field.removeClass('is-invalid'); // Clear potential error state
+                    label.find('.text-danger').remove();
+                }
+            });
+        }
+
+        // Listen for changes
+        anesthesiaTypeSelect.on('change', toggleAnesthesiaRequired);
+
+        // Init Check
+        toggleAnesthesiaRequired();
+    });
+
+    // CHECK DUPLICATE DOSSIER
+    document.addEventListener('DOMContentLoaded', function () {
+        const patientSelectCheck = document.getElementById('patientSelectDirect');
+        if (patientSelectCheck) {
+            patientSelectCheck.addEventListener('change', function (e) {
+                const select = e.target;
+                // Choices.js updates the underlying select, so we can read from it
+                const selectedOption = select.options[select.selectedIndex];
+                const btnHistory = document.getElementById('btnPatientHistoryDirect');
+
+                if (selectedOption && selectedOption.value) {
+                    // Update hidden OID field
+                    const hiddenOid = document.getElementById('patientOidHidden');
+                    if (hiddenOid) hiddenOid.value = selectedOption.value;
+
+                    // Enable History Button
+                    if (btnHistory) {
+                        btnHistory.disabled = false;
+                        btnHistory.setAttribute('data-patient-oid', selectedOption.value);
+                    }
+
+                    const label = selectedOption.text;
+                    // Extract name to match what is saved in DB (same logic as his_selector)
+                    const patientName = label.split(' - ')[0];
+
+                    if (patientName && patientName.trim() !== '') {
+                        fetch(`/api/kt_dossier/check_dossier?patient_name=${encodeURIComponent(patientName)}`)
+                            .then(response => response.json())
+                            .then(data => {
+                                if (data.exists) {
+                                    if (typeof Toastify === 'function') {
+                                        Toastify({
+                                            text: data.message,
+                                            duration: 8000,
+                                            close: true,
+                                            gravity: "top",
+                                            position: "center",
+                                            style: {
+                                                background: "linear-gradient(to right, #ff5f6d, #ffc371)",
+                                                color: "white",
+                                                fontWeight: "bold",
+                                                fontSize: "16px",
+                                                boxShadow: "0 4px 15px rgba(0,0,0,0.2)",
+                                                borderRadius: "8px",
+                                                padding: "12px 20px"
+                                            }
+                                        }).showToast();
+                                    } else {
+                                        showToast(data.message, "warning");
+                                    }
+                                }
+                            })
+                            .catch(err => console.error('Error checking dossier:', err));
+                    }
+                } else {
+                    // Disable History Button
+                    if (btnHistory) {
+                        btnHistory.disabled = true;
+                        btnHistory.removeAttribute('data-patient-oid');
+                    }
+                }
+            });
+        }
+    });
+</script>
+{% endblock %}

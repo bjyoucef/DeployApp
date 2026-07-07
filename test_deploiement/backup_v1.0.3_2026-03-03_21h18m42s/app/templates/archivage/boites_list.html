@@ -1,0 +1,326 @@
+{% extends "layout.html" %}
+
+{% block title %}Gestion des Boîtes d'Archives{% endblock %}
+
+{% block style %}
+<style>
+    /* Styling for glassmorphism and data table */
+    .modern-card {
+        background: var(--bg-card);
+        border: 1px solid var(--border-color);
+        border-radius: 12px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+        margin-bottom: 1.5rem;
+        overflow: hidden;
+    }
+
+    .card-header-modern {
+        background: linear-gradient(45deg, rgba(69, 10, 84, 0.05), transparent);
+        border-bottom: 1px solid var(--border-color);
+        padding: 1rem 1.5rem;
+    }
+
+    [data-theme="dark"] .card-header-modern {
+        background: linear-gradient(45deg, rgba(69, 10, 84, 0.2), transparent);
+    }
+
+    .modern-table {
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0;
+    }
+
+    .modern-table th {
+        background: var(--bg-body);
+        color: var(--text-muted);
+        font-weight: 600;
+        text-transform: uppercase;
+        font-size: 0.75rem;
+        letter-spacing: 0.5px;
+        padding: 1rem 1.5rem;
+        border-bottom: 2px solid var(--border-color);
+    }
+
+    .modern-table td {
+        padding: 1rem 1.5rem;
+        vertical-align: middle;
+        border-bottom: 1px solid var(--border-color);
+        color: var(--text-main);
+    }
+
+    .modern-table tbody tr:hover {
+        background: rgba(69, 10, 84, 0.02);
+    }
+
+    [data-theme="dark"] .modern-table tbody tr:hover {
+        background: rgba(255, 255, 255, 0.02);
+    }
+
+    .status-badge {
+        padding: 0.35rem 0.75rem;
+        border-radius: 50px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+    }
+
+    .status-full {
+        background: rgba(220, 53, 69, 0.1);
+        color: #dc3545;
+        border: 1px solid rgba(220, 53, 69, 0.2);
+    }
+
+    .status-partial {
+        background: rgba(40, 167, 69, 0.1);
+        color: #28a745;
+        border: 1px solid rgba(40, 167, 69, 0.2);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Hero Header -->
+    <div class="modern-card mb-4 border-0"
+        style="background: linear-gradient(135deg, #450A54 0%, #2a0633 100%); color: white;">
+        <div class="card-body p-4 p-md-5 position-relative overflow-hidden">
+            <div class="row align-items-center position-relative z-1">
+                <div class="col-md-8">
+                    <h2 class="fw-bold mb-2">Gestion des Boîtes d'Archives</h2>
+                    <p class="mb-0 opacity-75">Liste de toutes les boîtes, impression de code QR et suivi des
+                        emplacements.</p>
+                </div>
+                <div class="col-md-4 text-md-end mt-3 mt-md-0">
+                    <a href="{{ url_for('archivage_index') }}" class="btn btn-light btn-sm rounded-pill px-3">
+                        <i class="fas fa-arrow-left me-2"></i> Tableau de bord
+                    </a>
+                </div>
+            </div>
+            <i class="fas fa-boxes position-absolute"
+                style="font-size: 8rem; right: -1rem; top: -1rem; opacity: 0.1; transform: rotate(15deg);"></i>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="modern-card mb-4">
+        <div class="card-header-modern">
+            <h5 class="mb-0 d-flex align-items-center gap-2">
+                <i class="fas fa-filter text-primary"></i> Filtres de recherche
+            </h5>
+        </div>
+        <div class="card-body p-4">
+            <form method="GET" action="{{ url_for('archivage_boites_list') }}" class="row g-3 align-items-end"
+                id="filterForm">
+                <div class="col-md-4">
+                    <label class="form-label text-muted small fw-bold">Recherche (N° Archive, Médecin)</label>
+                    <div class="input-group">
+                        <span class="input-group-text bg-transparent border-end-0"><i
+                                class="fas fa-search text-muted"></i></span>
+                        <input type="text" name="q" class="form-control border-start-0 ps-0" value="{{ filters.q }}"
+                            placeholder="Entrez un numéro ou un nom...">
+                    </div>
+                </div>
+
+                <div class="col-md-4">
+                    <label class="form-label text-muted small fw-bold">Médecin affilié</label>
+                    <select name="medecin" class="form-select"
+                        onchange="document.getElementById('filterForm').submit()">
+                        <option value="all">Tous les médecins</option>
+                        {% for doc in doctors %}
+                        <option value="{{ doc.id }}" {% if filters.medecin|string==doc.id|string %}selected{% endif %}>
+                            {{ doc.titre }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="col-md-4 d-flex gap-2">
+                    <button type="submit" class="btn btn-primary flex-grow-1">
+                        <i class="fas fa-search me-2"></i> Rechercher
+                    </button>
+                    <a href="{{ url_for('archivage_boites_list') }}" class="btn btn-outline-secondary"
+                        title="Réinitialiser">
+                        <i class="fas fa-undo"></i>
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Data Table -->
+    <div class="modern-card">
+        <form method="POST" action="{{ url_for('archivage_boites_print') }}" target="_blank" id="batchPrintForm">
+            <div class="card-header-modern d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">
+                    <i class="fas fa-list text-primary me-2"></i> Toutes les boîtes
+                    <span class="badge bg-secondary ms-2">{{ total_records }}</span>
+                </h5>
+                <button type="submit" class="btn btn-sm btn-primary rounded-pill px-3" id="batchPrintBtn" disabled>
+                    <i class="fas fa-print me-2"></i> Imprimer Sélection (<span id="selectedCount">0</span>)
+                </button>
+            </div>
+            <div class="table-responsive">
+                <table class="modern-table">
+                    <thead>
+                        <tr>
+                            <th style="width: 40px;">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="selectAll">
+                                </div>
+                            </th>
+                            <th>Réf. Archive</th>
+                            <th>Identité / Spécialité</th>
+                            <th>Emplacement (Zone / Étagère)</th>
+                            <th>Contenu</th>
+                            <th>État</th>
+                            <th class="text-end">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for boite in boites %}
+                        <tr>
+                            <td>
+                                <div class="form-check">
+                                    <input class="form-check-input box-checkbox" type="checkbox"
+                                        name="numeros_archives[]" value="{{ boite.numero_archive }}">
+                                </div>
+                            </td>
+                            <td>
+                                <div class="fw-bold text-primary fs-5">{{ boite.numero_archive }}</div>
+                                <small class="text-muted"><i class="fas fa-calendar-alt me-1"></i> {{
+                                    boite.date_creation.strftime('%d/%m/%Y') }}</small>
+                            </td>
+                            <td>
+                                <div class="fw-bold"><i class="fas fa-user-md me-1 text-muted"></i> {{ boite.doctor_name
+                                    or
+                                    'Non assigné' }}</div>
+                                {% if boite.specialite_nom %}
+                                <span class="badge bg-light text-dark mt-1 border"><i
+                                        class="fas fa-stethoscope me-1 text-primary"></i> {{ boite.specialite_nom
+                                    }}</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if boite.id_emplacement %}
+                                <div class="fw-bold"><i class="fas fa-map-marker-alt text-danger me-1"></i> {{
+                                    boite.nom_zone }}</div>
+                                <small class="text-muted">Étagère {{ boite.code_etagere }} (L{{ boite.ligne_y }} / C{{
+                                    boite.colonne_x }})</small>
+                                {% else %}
+                                <span class="text-warning"><i class="fas fa-exclamation-triangle me-1"></i> Non
+                                    placée</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <div class="fw-bold"><i class="fas fa-folder-open text-primary me-1"></i> {{
+                                    boite.nb_dossiers }} dossiers</div>
+                            </td>
+                            <td>
+                                {% if boite.est_pleine %}
+                                <span class="status-badge status-full">
+                                    <i class="fas fa-battery-full"></i> Pleine
+                                </span>
+                                {% else %}
+                                <span class="status-badge status-partial"
+                                    title="Remplissage: {{ boite.remplissage_pct }}%">
+                                    <i class="fas fa-battery-half"></i> Active
+                                </span>
+                                {% endif %}
+                            </td>
+                            <td class="text-end">
+                                <!-- Print QR -->
+                                <a href="{{ url_for('archivage_boites_print', numero_archive=boite.numero_archive) }}"
+                                    target="_blank" class="btn btn-sm btn-outline-primary rounded-pill me-1"
+                                    title="Imprimer l'étiquette">
+                                    <i class="fas fa-print"></i> Étiquette
+                                </a>
+                                <!-- Open Landing Page in new tab -->
+                                <a href="{{ url_for('archivage_boite_detail', numero_archive=boite.numero_archive) }}"
+                                    class="btn btn-sm btn-outline-info rounded-pill" title="Voir les détails">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="7" class="text-center py-5 text-muted">
+                                <i class="fas fa-box-open fa-3x mb-3 opacity-25"></i>
+                                <p class="mb-0">Aucune boîte trouvée pour ces critères.</p>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </form>
+
+        <!-- Pagination -->
+        {% if total_pages > 1 %}
+        <div class="card-footer bg-transparent border-top p-4">
+            <nav aria-label="Page navigation">
+                <ul class="pagination mb-0 justify-content-center">
+                    <li class="page-item {% if page <= 1 %}disabled{% endif %}">
+                        <a class="page-link"
+                            href="{{ url_for('archivage_boites_list', page=page-1, q=filters.q, medecin=filters.medecin) }}">Précédent</a>
+                    </li>
+
+                    {% for p in range(1, total_pages + 1) %}
+                    {% if p == 1 or p == total_pages or (page - p)|abs <= 2 %} <li
+                        class="page-item {% if p == page %}active{% endif %}">
+                        <a class="page-link"
+                            href="{{ url_for('archivage_boites_list', page=p, q=filters.q, medecin=filters.medecin) }}">{{
+                            p }}</a>
+                        </li>
+                        {% elif (page - p)|abs == 3 %}
+                        <li class="page-item disabled"><span class="page-link">...</span></li>
+                        {% endif %}
+                        {% endfor %}
+
+                        <li class="page-item {% if page >= total_pages %}disabled{% endif %}">
+                            <a class="page-link"
+                                href="{{ url_for('archivage_boites_list', page=page+1, q=filters.q, medecin=filters.medecin) }}">Suivant</a>
+                        </li>
+                </ul>
+            </nav>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const selectAllCheckbox = document.getElementById('selectAll');
+        const boxCheckboxes = document.querySelectorAll('.box-checkbox');
+        const selectedCountSpan = document.getElementById('selectedCount');
+        const batchPrintBtn = document.getElementById('batchPrintBtn');
+
+        function updateSelectedCount() {
+            const checkedCount = document.querySelectorAll('.box-checkbox:checked').length;
+            selectedCountSpan.textContent = checkedCount;
+            batchPrintBtn.disabled = checkedCount === 0;
+
+            if (checkedCount > 0 && checkedCount < boxCheckboxes.length) {
+                selectAllCheckbox.indeterminate = true;
+            } else {
+                selectAllCheckbox.indeterminate = false;
+                selectAllCheckbox.checked = checkedCount === boxCheckboxes.length && boxCheckboxes.length > 0;
+            }
+        }
+
+        selectAllCheckbox.addEventListener('change', function () {
+            const isChecked = this.checked;
+            boxCheckboxes.forEach(checkbox => {
+                checkbox.checked = isChecked;
+            });
+            updateSelectedCount();
+        });
+
+        boxCheckboxes.forEach(checkbox => {
+            checkbox.addEventListener('change', updateSelectedCount);
+        });
+    });
+</script>
+{% endblock %}

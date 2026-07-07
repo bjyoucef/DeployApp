@@ -1,0 +1,247 @@
+{% extends "layout.html" %}
+{% block content %}
+<!-- Bouton pour rédiger un nouveau rapport -->
+<div class="d-flex justify-content-center mt-4 mb-2">
+    <button
+            class="btn btn-primary btn-lg shadow"
+            data-bs-toggle="modal"
+            data-bs-target="#modalRedigerRapport"
+    >
+        <i class="fas fa-plus me-2"></i> Rédiger un nouveau rapport
+    </button>
+</div>
+
+<!-- Liste des rapports en tableau -->
+            <table id="myTable" class="table table-hover">
+        <thead class="table-primary">
+            <tr>
+                <th>#</th>
+                <th>Titre</th>
+                <th>Détails</th>
+                <th>Date</th>
+                <th>Pièces jointes</th>
+                <th>Audio</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for rapport in rapports %}
+            <tr>
+                <td>{{ loop.index }}</td>
+                <td>{{ rapport.titre }}</td>
+                <td>{{ rapport.details[:50] }}...</td>
+                <td>{{ rapport.date }}</td>
+                <td>
+                    {% if rapport.file_path %}
+                    <i class="fas fa-paperclip text-success" title="Pièce jointe"></i>
+                    {% else %}
+                    -
+                    {% endif %}
+                </td>
+                <td>
+                    {% if rapport.audio_path %}
+                    <i class="fas fa-volume-up text-warning" title="Audio disponible"></i>
+                    {% else %}
+                    -
+                    {% endif %}
+                </td>
+                <td>
+                    <button
+                        class="btn btn-info btn-sm"
+                        data-bs-toggle="modal"
+                        data-bs-target="#modalDetails{{ rapport.id }}"
+                    >
+                        Voir
+                    </button>
+                </td>
+            </tr>
+
+            <!-- Modal pour les détails du rapport -->
+            <div
+                    class="modal fade"
+                    id="modalDetails{{ rapport.id }}"
+                    tabindex="-1"
+                    aria-labelledby="modalDetailsLabel{{ rapport.id }}"
+                    aria-hidden="true"
+            >
+                <div class="modal-dialog modal-lg">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="modalDetailsLabel{{ rapport.id }}">
+                                📄 Détails du rapport
+                            </h5>
+                            <button
+                                    type="button"
+                                    class="btn-close btn-sm"
+                                    data-bs-dismiss="modal"
+                                    aria-label="Close"
+                            ></button>
+                        </div>
+                        <div class="modal-body">
+                            <h5>{{ rapport.titre }}</h5>
+                            <p>{{ rapport.details }}</p>
+                            <!-- Affichage de la pièce jointe -->
+                            {% if rapport.file_path %}
+                            <h6 class="text-primary mt-3"><strong>📎 Pièce jointe:</strong></h6>
+                            <div class="mt-2">
+                                {% for file in rapport.file_path.split(',') %}
+                                <a
+                                        href="{{ url_for('download_file', filename=file) }}"
+                                        class="btn btn-outline-primary btn-sm me-1"
+                                >
+                                    Télécharger fichier {{ loop.index }}
+                                </a>
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+                            <!-- Affichage de l'enregistrement audio -->
+                            {% if rapport.audio_path %}
+                            <div class="mb-3">
+                                <strong>🎤 Enregistrement vocal:</strong>
+                                <audio controls class="w-100 mt-2">
+                                    <source
+                                            src="{{ url_for('download_file', filename=rapport.audio_path) }}"
+                                            type="audio/wav"
+                                    />
+                                    Votre navigateur ne prend pas en charge l'audio.
+                                </audio>
+                            </div>
+                            {% endif %}
+                        </div>
+                        <div class="modal-footer">
+                            <p>
+                                <strong>Auteur: </strong>{{ rapport.auteur }}
+                                <strong>Date: </strong>{{ rapport.date }}
+                            </p>
+                            <button
+                                    type="button"
+                                    class="btn btn-secondary btn-sm"
+                                    data-bs-dismiss="modal"
+                            >
+                                Fermer
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+        </tbody>
+    </table>
+
+
+    <!-- Modal Rédiger un rapport -->
+    <div
+            class="modal fade"
+            id="modalRedigerRapport"
+            tabindex="-1"
+            aria-labelledby="modalRedigerRapportLabel"
+            aria-hidden="true"
+    >
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="modalRedigerRapportLabel">
+                        📝 Rédiger un nouveau rapport
+                    </h5>
+                    <button
+                            type="button"
+                            class="btn-close btn-sm"
+                            data-bs-dismiss="modal"
+                            aria-label="Close"
+                    ></button>
+                </div>
+                <div class="modal-body">
+                    <form
+                            action="{{ url_for('submit_report') }}"
+                            method="POST"
+                            enctype="multipart/form-data"
+                    >
+                    <!-- Formulaire pour rédiger un rapport -->
+                        <div class="mb-3">
+                            <label for="title" class="form-label">Titre du rapport</label>
+                            <input
+                                    type="text"
+                                    class="form-control shadow-sm"
+                                    id="title"
+                                    name="title"
+                                    required
+                            />
+                        </div>
+                        <div class="mb-3">
+                            <label for="details" class="form-label">Détails</label>
+                            <textarea
+                                    class="form-control shadow-sm"
+                                    id="details"
+                                    name="details"
+                                    rows="4"
+                                    required
+                            ></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <input
+                                    type="file"
+                                    class="form-control shadow-sm"
+                                    id="file"
+                                    name="file"
+                                    multiple
+                                    onchange="validateFileCount(this)"
+                            />
+                        <small class="text-muted">
+                            Vous pouvez télécharger jusqu'à 10 fichiers.
+                        </small>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Enregistrement vocal</label>
+                            <button
+                                    type="button"
+                                    class="btn btn-secondary shadow-sm btn-sm"
+                                    id="recordAudio"
+                            >
+                                🎤 Enregistrer
+                            </button>
+                            <audio
+                                    controls
+                                    id="audioPlayback"
+                                    style="display: none"
+                                    class="mt-2 w-100"
+                            ></audio>
+                        <input type="hidden" id="audioData" name="audioData" />
+                        </div>
+                    <button
+                        type="submit"
+                        class="btn btn-primary w-100 shadow-sm btn-sm"
+                    >
+                            📨 Soumettre
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+</div>
+
+<script>
+    document.getElementById("file").addEventListener("change", function(event) {
+    const fileInput = event.target;
+    const files = fileInput.files;
+    const formData = new FormData();
+    const progressBar = document.getElementById("progressBar");
+    const uploadProgress = document.getElementById("uploadProgress");
+
+    if (files.length === 0) {
+        return;
+    }
+
+    // Disable the submit button while uploading
+    uploadProgress.style.display = "block";  // Show progress bar
+
+    // Append files to form data
+    for (let i = 0; i < files.length; i++) {
+        formData.append("file_upload[]", files[i]);
+    }
+
+    const xhr = new XMLHttpRequest();
+
+});
+</script>
+
+    {% endblock %}

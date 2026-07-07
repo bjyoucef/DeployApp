@@ -1,0 +1,187 @@
+{% extends 'layout.html' %}
+{% block content %}
+
+<!-- Section des boutons de navigation -->
+<div class="d-flex justify-content-center">
+
+    <a href="{{ url_for('stock') }}" class="btn btn-primary mr-2 {% if request.path == '/stock' %}active{% endif %}">Stock</a>
+    <a href="{{ url_for('view_movements_stock') }}"
+       class="btn btn-primary {% if request.path == '/movements_stock' %}active{% endif %}">Movements Stock</a>
+</div>
+
+<!-- Bouton pour ajouter un nouvel article -->
+<button class="btn btn-success mb-3" data-bs-toggle="modal" data-bs-target="#addItemModal">Ajouter un nouvel article
+</button>
+
+<!-- Modals -->
+<!-- Modal Ajouter un nouvel article -->
+<div class="modal fade" id="addItemModal" tabindex="-1" aria-labelledby="addItemModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addItemModalLabel">Ajouter un nouvel article</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
+            </div>
+            <div class="modal-body">
+                <form method="POST" action="{{ url_for('add_item') }}">
+                    <div class="mb-3">
+                        <label for="name" class="form-label">Nom de l'article</label>
+                        <input type="text" class="form-control" id="name" name="name" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="category" class="form-label">Catégorie</label>
+                        <input type="text" class="form-control" id="category" name="category" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="quantity" class="form-label">Quantité</label>
+                        <input type="number" class="form-control" id="quantity" name="quantity" min="1" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="description" class="form-label">Description</label>
+                        <textarea class="form-control" id="description" name="description" rows="3"></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Ajouter l'article</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Tableau des produits -->
+<div class="scrollable-table mb-3" tabindex="0"
+     style="box-shadow: 0px 0px 5px var(--primary-color); border-radius: 25px; overflow-x: auto;">
+    <table id="myTable" class="table table-hover">
+        <thead class="table-light">
+        <tr>
+            <th class="icon-cell"><i class="fas fa-file-alt"></i> Nom de l'article</th>
+            <th class="icon-cell"><i class="fas fa-tags"></i> Catégorie</th>
+            <th class="icon-cell"><i class="fas fa-chart-bar"></i> Quantité</th>
+            <th class="icon-cell"><i class="fas fa-info-circle"></i> Description</th>
+            <th class="icon-cell"><i class="fas fa-cogs"></i> Action</th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for item in items %}
+        <tr>
+            <td>{{ item['item'] }}</td>
+            <td>{{ item['category'] }}</td>
+            <td>{{ item['quantity'] }}</td>
+            <td>{{ item['description'] }}</td>
+            <td>
+                <!-- Modify Button -->
+                <button class="btn btn-warning btn-sm" data-bs-toggle="modal"
+                        data-bs-target="#editModal{{ loop.index }}" title="Modifier">
+                    <i class="fas fa-edit"></i> Modifier
+                </button>
+                <!-- Modal Modifier l'article -->
+                <div class="modal fade" id="editModal{{ loop.index }}" tabindex="-1"
+                     aria-labelledby="editModalLabel{{ loop.index }}" aria-hidden="true">
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title" id="editModalLabel{{ loop.index }}">Modifier l'article</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal"
+                                        aria-label="Fermer"></button>
+                            </div>
+                            <div class="modal-body">
+                                <form method="POST" action="{{ url_for('edit_item', item_id=item['id']) }}">
+                                    <div class="mb-3">
+                                        <label for="name" class="form-label">Nom de l'article</label>
+                                        <input type="text" class="form-control" id="name" name="name"
+                                               value="{{ item['item'] }}" required>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="category" class="form-label">Catégorie</label>
+                                        <input type="text" class="form-control" id="category" name="category"
+                                               value="{{ item['category'] }}" required>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="description" class="form-label">Description</label>
+                                        <textarea class="form-control" id="description" name="description" rows="3">{{ item['description'] }}</textarea>
+                                    </div>
+                                    <button type="submit" class="btn btn-primary">Mettre à jour</button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Add Stock Button -->
+                <button class="btn btn-success btn-sm ms-2" data-bs-toggle="modal"
+                        data-bs-target="#addStockModal{{ loop.index }}" title="Ajouter au stock">
+                    <i class="fas fa-plus-circle"></i> Ajouter
+                </button>
+                <!-- Modal Ajouter au stock -->
+                <div class="modal fade" id="addStockModal{{ loop.index }}" tabindex="-1"
+                     aria-labelledby="addStockModalLabel{{ loop.index }}" aria-hidden="true">
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title" id="addStockModalLabel{{ loop.index }}">Ajouter au stock</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal"
+                                        aria-label="Close"></button>
+                            </div>
+                            <div class="modal-body">
+                                <form method="POST" action="{{ url_for('add_stock_entry', product_id=item['id']) }}">
+                                    <div class="mb-3">
+                                        <label for="quantity" class="form-label">Quantité</label>
+                                        <input type="number" class="form-control" id="quantity" name="quantity" min="1"
+                                               required>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="supplier" class="form-label">Fournisseur</label>
+                                        <input type="text" class="form-control" id="supplier" name="supplier" required>
+                                    </div>
+                                    <button type="submit" class="btn btn-primary">Ajouter</button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Distribute Stock Button -->
+                <button class="btn btn-info btn-sm ms-2" data-bs-toggle="modal"
+                        data-bs-target="#distributeModal{{ loop.index }}" title="Distribuer le stock">
+                    <i class="fas fa-share-alt"></i> Distribuer
+                </button>
+                <!-- Modal Distribuer le stock -->
+                <div class="modal fade" id="distributeModal{{ loop.index }}" tabindex="-1"
+                     aria-labelledby="distributeModalLabel{{ loop.index }}" aria-hidden="true">
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title" id="distributeModalLabel{{ loop.index }}">Distribuer le
+                                    stock</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal"
+                                        aria-label="Fermer"></button>
+                            </div>
+                            <div class="modal-body">
+                                <form method="POST" action="{{ url_for('add_stock_exit', product_id=item['id']) }}">
+                                    <div class="mb-3">
+                                        <label for="quantity" class="form-label">Quantité</label>
+                                        <input type="number" class="form-control" id="quantity" name="quantity" min="1"
+                                               required>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="person" class="form-label">Personne prenant le produit</label>
+                                        <input type="text" class="form-control" id="person" name="person" required>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="service" class="form-label">Service/Département</label>
+                                        <input type="text" class="form-control" id="service" name="service" required>
+                                    </div>
+                                    <button type="submit" class="btn btn-primary">Distribuer</button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </td>
+        </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+
+{% endblock %}

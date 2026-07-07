@@ -1,0 +1,249 @@
+{% extends "admin/admin_layout.html" %}
+
+{% block title %}Dashboard Bot Telegram{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <h2><i class="fas fa-chart-bar"></i> Dashboard Bot Telegram</h2>
+                <div>
+                    <a href="{{ url_for('bot_logs_index') }}" class="btn btn-secondary">
+                        <i class="fas fa-list"></i> Voir les logs
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filtres période -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="btn-group" role="group">
+                <a href="{{ url_for('bot_logs_dashboard', days=1) }}"
+                   class="btn {% if days == 1 %}btn-primary{% else %}btn-outline-primary{% endif %}">
+                    Aujourd'hui
+                </a>
+                <a href="{{ url_for('bot_logs_dashboard', days=7) }}"
+                   class="btn {% if days == 7 %}btn-primary{% else %}btn-outline-primary{% endif %}">
+                    7 jours
+                </a>
+                <a href="{{ url_for('bot_logs_dashboard', days=30) }}"
+                   class="btn {% if days == 30 %}btn-primary{% else %}btn-outline-primary{% endif %}">
+                    30 jours
+                </a>
+                <a href="{{ url_for('bot_logs_dashboard', days=90) }}"
+                   class="btn {% if days == 90 %}btn-primary{% else %}btn-outline-primary{% endif %}">
+                    90 jours
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- KPIs -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="mb-0">Utilisateurs actifs</h6>
+                            <h2 class="mb-0">{{ stats.total_users }}</h2>
+                        </div>
+                        <div>
+                            <i class="fas fa-users fa-3x opacity-50"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card bg-success text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="mb-0">Actifs aujourd'hui</h6>
+                            <h2 class="mb-0">{{ stats.active_today }}</h2>
+                        </div>
+                        <div>
+                            <i class="fas fa-user-check fa-3x opacity-50"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card bg-info text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="mb-0">Actions ({{ days }}j)</h6>
+                            <h2 class="mb-0">{{ stats.actions_period }}</h2>
+                        </div>
+                        <div>
+                            <i class="fas fa-mouse-pointer fa-3x opacity-50"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card {% if stats.error_rate > 5 %}bg-danger{% else %}bg-warning{% endif %} text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="mb-0">Taux d'erreur</h6>
+                            <h2 class="mb-0">{{ "%.1f"|format(stats.error_rate) }}%</h2>
+                            <small>{{ stats.total_errors }} erreur(s)</small>
+                        </div>
+                        <div>
+                            <i class="fas fa-exclamation-triangle fa-3x opacity-50"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Graphiques -->
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Activité quotidienne (30 derniers jours)</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="dailyActivityChart" height="80"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Actions par type</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="actionTypeChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tables -->
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Top 10 utilisateurs</h5>
+                </div>
+                <div class="card-body p-0">
+                    <table class="table table-sm mb-0">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Utilisateur</th>
+                                <th class="text-right">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for user in stats.top_users %}
+                            <tr>
+                                <td>{{ loop.index }}</td>
+                                <td>
+                                    <a href="{{ url_for('bot_logs_user_detail', user_id=user.user_id) }}">
+                                        {{ user.first_name }} {{ user.last_name }}
+                                        {% if user.username %}<br><small class="text-muted">@{{ user.username }}</small>{% endif %}
+                                    </a>
+                                </td>
+                                <td class="text-right"><strong>{{ user.count }}</strong></td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Top 10 actions</h5>
+                </div>
+                <div class="card-body p-0">
+                    <table class="table table-sm mb-0">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Action</th>
+                                <th class="text-right">Utilisations</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for action in stats.top_actions %}
+                            <tr>
+                                <td>{{ loop.index }}</td>
+                                <td>{{ action.action_name }}</td>
+                                <td class="text-right"><strong>{{ action.count }}</strong></td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+<script>
+// Activité quotidienne
+const dailyCtx = document.getElementById('dailyActivityChart').getContext('2d');
+new Chart(dailyCtx, {
+    type: 'line',
+    data: {
+        labels: {{ stats.daily_activity | map(attribute='date') | map('string') | list | tojson }},
+        datasets: [{
+            label: 'Actions',
+            data: {{ stats.daily_activity | map(attribute='count') | list | tojson }},
+            borderColor: 'rgb(75, 192, 192)',
+            tension: 0.1,
+            fill: false
+        }, {
+            label: 'Utilisateurs uniques',
+            data: {{ stats.daily_activity | map(attribute='unique_users') | list | tojson }},
+            borderColor: 'rgb(255, 99, 132)',
+            tension: 0.1,
+            fill: false
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: true
+    }
+});
+
+// Actions par type
+const typeCtx = document.getElementById('actionTypeChart').getContext('2d');
+new Chart(typeCtx, {
+    type: 'doughnut',
+    data: {
+        labels: {{ stats.actions_by_type | map(attribute='action_type') | list | tojson }},
+        datasets: [{
+            data: {{ stats.actions_by_type | map(attribute='count') | list | tojson }},
+            backgroundColor: [
+                'rgb(54, 162, 235)',
+                'rgb(255, 99, 132)',
+                'rgb(255, 205, 86)',
+                'rgb(75, 192, 192)',
+                'rgb(153, 102, 255)'
+            ]
+        }]
+    }
+});
+</script>
+{% endblock %}

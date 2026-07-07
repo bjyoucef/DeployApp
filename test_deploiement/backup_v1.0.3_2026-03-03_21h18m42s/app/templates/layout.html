@@ -1,0 +1,881 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+
+  <script>
+    (function () {
+      // Theme Restoration
+      const storedTheme = localStorage.getItem('theme');
+      if (storedTheme === 'dark') {
+        document.documentElement.setAttribute('data-theme', 'dark');
+      }
+
+      // Sidebar State Restoration (Prevent FOUC)
+      const storedSidebarState = localStorage.getItem('sidebarState');
+      if (storedSidebarState === 'collapsed') {
+        // We'll apply this to the body or specific element once DOM loads, 
+        // but for immediate effect we can add a class to documentElement if we styled it that way.
+        // Since our sidebar is inside body, we might need to wait, but adding a marker class helps.
+        document.documentElement.classList.add('sidebar-init-collapsed');
+      }
+    })();
+  </script>
+
+  <meta charset="UTF-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta name="description" content="Inaya - Application de gestion" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <title>
+    {% block title %}INAYA - {{ title|default('', true) }}{% endblock %}
+  </title>
+
+  <link rel="icon" href="{{ url_for('static', filename='icon/favicon.ico') }}" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap-icons.css') }}" />
+
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/all.min.css') }}" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}" />
+
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/modern_toast.css') }}" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/datatables.css') }}" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/datatables.min.css') }}" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/choices.min.css') }}" />
+
+  <style>
+    /* Sidebar Styles */
+    .sidebar-link {
+      color: rgba(255, 255, 255, 0.75);
+      text-decoration: none;
+      padding: 12px 20px;
+      display: flex;
+      align-items: center;
+      border-radius: 8px;
+      transition: all 0.2s ease;
+      margin-bottom: 4px;
+    }
+
+    .sidebar-link:hover {
+      color: white;
+      background-color: rgba(255, 255, 255, 0.1);
+    }
+
+    .sidebar-link.active {
+      color: #450A54;
+      background-color: #f5f6fa;
+      font-weight: 600;
+    }
+
+    .sidebar-brand {
+      padding: 24px 20px;
+      color: white;
+      font-size: 1.5rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      text-decoration: none;
+    }
+
+    .sidebar-icon {
+      width: 24px;
+      margin-right: 12px;
+      text-align: center;
+    }
+
+    /* Submenu Styles */
+    .submenu .nav-link {
+      padding-left: 50px;
+      font-size: 0.9em;
+    }
+
+    /* Dashboard Card Styles */
+    .dashboard-card {
+      background: var(--bg-card);
+      border-radius: 12px;
+      padding: 24px;
+      box-shadow: var(--card-shadow, 0 4px 6px rgba(0, 0, 0, 0.02));
+      border: 1px solid var(--border-color, rgba(0, 0, 0, 0.04));
+      transition: transform 0.2s, box-shadow 0.2s;
+      height: 100%;
+      text-decoration: none;
+      display: block;
+      color: var(--text-main);
+    }
+
+    .dashboard-card:hover {
+      transform: translateY(-5px);
+      box-shadow: var(--card-hover-shadow, 0 10px 15px rgba(0, 0, 0, 0.05));
+      color: var(--text-main);
+    }
+
+    .card-icon-wrapper {
+      background-color: #f3e5f5;
+      color: #450A54;
+      width: 48px;
+      height: 48px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.2rem;
+      margin-bottom: 16px;
+    }
+
+    [data-theme="dark"] .card-icon-wrapper {
+      background-color: rgba(255, 255, 255, 0.1);
+      color: var(--primary-color);
+    }
+
+    /* ━━━ Documentation Premium Bottom-Sheet ━━━ */
+    .doc-offcanvas-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.6);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.35s ease, visibility 0.35s ease;
+      z-index: 1060;
+    }
+
+    .doc-offcanvas-backdrop.active {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    .doc-offcanvas-panel {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 90vh;
+      max-height: 90vh;
+      background: var(--bg-card, #ffffff);
+      color: var(--text-main, #212529);
+      border-top-left-radius: 28px;
+      border-top-right-radius: 28px;
+      transform: translateY(100%);
+      transition: transform 0.5s cubic-bezier(0.32, 0.72, 0, 1);
+      z-index: 1070;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      border-top: 1px solid var(--border-color, rgba(0, 0, 0, 0.08));
+      box-shadow: 0 -20px 80px rgba(0, 0, 0, 0.25);
+    }
+
+    .doc-offcanvas-panel.active {
+      transform: translateY(0);
+    }
+
+    [data-theme="dark"] .doc-offcanvas-panel {
+      box-shadow: 0 -20px 80px rgba(0, 0, 0, 0.6);
+      border-top-color: rgba(255, 255, 255, 0.08);
+    }
+
+    .doc-drag-handle {
+      display: flex;
+      justify-content: center;
+      padding: 14px 0 6px 0;
+      cursor: grab;
+    }
+
+    .doc-drag-handle:active {
+      cursor: grabbing;
+    }
+
+    .doc-drag-indicator {
+      width: 48px;
+      height: 5px;
+      background: var(--border-color, #dee2e6);
+      border-radius: 3px;
+      transition: background 0.2s ease, width 0.2s ease;
+    }
+
+    .doc-drag-handle:hover .doc-drag-indicator {
+      background: #999;
+      width: 56px;
+    }
+
+    [data-theme="dark"] .doc-drag-indicator {
+      background: rgba(255, 255, 255, 0.15);
+    }
+
+    [data-theme="dark"] .doc-drag-handle:hover .doc-drag-indicator {
+      background: rgba(255, 255, 255, 0.3);
+    }
+
+    .doc-offcanvas-header {
+      padding: 12px 24px 16px;
+      background: linear-gradient(135deg, #450A54 0%, #764ba2 100%);
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .doc-btn-edit {
+      background: rgba(255, 255, 255, 0.15);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      color: white;
+      padding: 6px 16px;
+      border-radius: 20px;
+      font-size: 0.825rem;
+      font-weight: 500;
+      transition: all 0.2s ease;
+      cursor: pointer;
+    }
+
+    .doc-btn-edit:hover {
+      background: rgba(255, 255, 255, 0.25);
+      border-color: rgba(255, 255, 255, 0.5);
+    }
+
+    .doc-btn-close {
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      color: white;
+      width: 36px;
+      height: 36px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .doc-btn-close:hover {
+      background: rgba(255, 255, 255, 0.2);
+      border-color: rgba(255, 255, 255, 0.4);
+    }
+
+    .doc-offcanvas-body {
+      flex: 1;
+      overflow-y: auto;
+      padding: 2rem;
+    }
+
+    /* Custom Scrollbar */
+    .doc-custom-scroll::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    .doc-custom-scroll::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    .doc-custom-scroll::-webkit-scrollbar-thumb {
+      background: var(--border-color, #dee2e6);
+      border-radius: 3px;
+    }
+
+    .doc-custom-scroll::-webkit-scrollbar-thumb:hover {
+      background: #999;
+    }
+
+    [data-theme="dark"] .doc-custom-scroll::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.12);
+    }
+
+    [data-theme="dark"] .doc-custom-scroll::-webkit-scrollbar-thumb:hover {
+      background: rgba(255, 255, 255, 0.25);
+    }
+
+    /* Empty State */
+    .doc-empty-state {
+      text-align: center;
+      padding: 4rem 2rem;
+      border-radius: 16px;
+      background: rgba(69, 10, 84, 0.03);
+      border: 1px dashed rgba(69, 10, 84, 0.15);
+    }
+
+    [data-theme="dark"] .doc-empty-state {
+      background: rgba(255, 255, 255, 0.02);
+      border-color: rgba(255, 255, 255, 0.08);
+    }
+
+    .doc-empty-icon {
+      margin-bottom: 1.5rem;
+      color: #450A54;
+      opacity: 0.35;
+    }
+
+    [data-theme="dark"] .doc-empty-icon {
+      color: #b47cc5;
+      opacity: 0.5;
+    }
+
+    /* Reduced Motion */
+    @media (prefers-reduced-motion: reduce) {
+
+      .doc-offcanvas-panel,
+      .doc-offcanvas-backdrop {
+        transition: none !important;
+      }
+    }
+
+    /* Mobile adjustments */
+    @media (max-width: 768px) {
+      .doc-offcanvas-panel {
+        height: 95vh;
+        max-height: 95vh;
+        border-top-left-radius: 20px;
+        border-top-right-radius: 20px;
+      }
+
+      .doc-offcanvas-body {
+        padding: 1rem;
+      }
+
+      .doc-offcanvas-header {
+        padding: 10px 16px 14px;
+      }
+    }
+  </style>
+
+  {% block style %}{% endblock %}
+</head>
+
+<body class="d-flex flex-column min-vh-100 bg-light">
+  {% block layout_body %}
+  <!-- Mobile Navbar (Visible on small screens) -->
+  <div class="mobile-navbar d-lg-none">
+    <button class="btn btn-link text-white p-0" type="button" data-bs-toggle="offcanvas"
+      data-bs-target="#sidebarOffcanvas">
+      <i class="fas fa-bars fa-lg"></i>
+    </button>
+    <span class="fw-bold">INAYA</span>
+    <div style="width: 24px;"></div> <!-- Spacer -->
+  </div>
+
+  <div class="d-flex min-vh-100">
+    <!-- Sidebar (Desktop) -->
+    <aside class="sidebar d-none d-lg-flex flex-column text-white flex-shrink-0" id="mainSidebar">
+
+      <div class="px-3 pt-3 pb-2 d-flex align-items-center justify-content-between border-bottom border-white-50 mb-2">
+        <div class="d-flex align-items-center gap-3">
+          <button class="btn btn-link text-white p-0 text-decoration-none" id="sidebarToggle" title="Toggle Sidebar"
+            style="font-size: 1.2rem;">
+            <i class="fas fa-bars"></i>
+          </button>
+          <a href="{{ url_for('index') }}" class="btn btn-link text-white p-0 text-decoration-none" title="Accueil">
+            <i class="fas fa-home"></i>
+          </a>
+        </div>
+        <div class="d-flex align-items-center gap-3">
+          <a href="{{ url_for('demande_assistance') }}" class="text-white text-decoration-none" title="Assistance">
+            <i class="far fa-question-circle"></i>
+          </a>
+          <a href="{{ url_for('phone') }}" class="text-white text-decoration-none" title="contact">
+            <i class="fas fa-phone-volume"></i>
+          </a>
+        </div>
+      </div>
+
+
+      <div class="px-3 pb-4 overflow-auto custom-scrollbar" style="flex-grow: 1;">
+        <ul class="nav flex-column sidebar-menu w-100" id="sidebarMenu">
+          {% for item in menu_items %}
+          {% if not item.parent_id and (not item.privilege or has_permission(item.privilege)) %}
+          {% set children = menu_items|selectattr('parent_id', 'equalto', item.id)|list %}
+          {% set visible_children = [] %}
+          {% for child in children %}
+          {% if not child.privilege or has_permission(child.privilege) %}
+          {% set _ = visible_children.append(child) %}
+          {% endif %}
+          {% endfor %}
+          {% set has_children = visible_children|length > 0 %}
+
+          <li class="nav-item mb-1">
+            {% if has_children %}
+            <a class="sidebar-link justify-content-between" href="#submenu{{ item.id }}" data-bs-toggle="collapse"
+              role="button" aria-expanded="{{ 'true' if expand_parent else 'false' }}">
+              <div class="d-flex align-items-center">
+                <i class="{{ item.icon }} sidebar-icon"></i>
+                <span>{{ item.label }}</span>
+              </div>
+              <i class="fas fa-chevron-down small"></i>
+            </a>
+
+            <div class="collapse submenu {{ 'show' if expand_parent }}" id="submenu{{ item.id }}"
+              data-bs-parent="#sidebarMenu">
+              <ul class="nav flex-column ms-3 mt-1 ps-3 border-start border-white-50">
+                {% for child in visible_children %}
+                <li class="nav-item">
+                  <a class="sidebar-link py-2 fs-6 {% if request.path == url_for(child.route) or request.path.startswith(url_for(child.route) + '/') %}active{% endif %}"
+                    href="{{ url_for(child.route) }}" {% if child.tooltip %}data-bs-toggle="tooltip"
+                    data-bs-placement="right" title="{{ child.tooltip }}" {% endif %}>
+                    {% if child.icon %}
+                    <i class="{{ child.icon }} sidebar-icon"
+                      style="font-size: 0.9em; width: 20px; margin-right: 8px;"></i>
+                    {% endif %}
+                    <span>{{ child.label }}</span>
+                    {% if child.badge and child.badge > 0 %}
+                    <span class="badge bg-danger ms-auto">{{ child.badge }}</span>
+                    {% endif %}
+                  </a>
+                </li>
+                {% endfor %}
+              </ul>
+            </div>
+            {% else %}
+            <a class="sidebar-link {% if item.route != '#' and (request.path == url_for(item.route) or request.path.startswith(url_for(item.route) + '/')) %}active{% endif %}"
+              href="{% if item.route != '#' %}{{ url_for(item.route) }}{% else %}#{% endif %}" {% if item.tooltip
+              %}data-bs-toggle="tooltip" data-bs-placement="right" title="{{ item.tooltip }}" {% endif %}>
+              <div class="d-flex align-items-center">
+                <i class="{{ item.icon }} sidebar-icon"></i>
+                <span>{{ item.label }}</span>
+              </div>
+              {% if item.badge and item.badge > 0 %}
+              <span class="badge bg-danger ms-auto">{{ item.badge }}</span>
+              {% endif %}
+            </a>
+            {% endif %}
+          </li>
+          {% endif %}
+          {% endfor %}
+        </ul>
+      </div>
+
+      <!-- User Profile at Bottom -->
+      <div class="px-3 pb-4">
+        {% if user['username'] %}
+        <div class="d-flex align-items-center justify-content-between w-100">
+          <div class="dropdown dropup flex-grow-1">
+            <a href="#" class="d-flex align-items-center text-decoration-none text-white w-100"
+              data-bs-toggle="dropdown" aria-expanded="false">
+              <div
+                class="rounded-circle bg-white text-primary fw-bold d-flex align-items-center justify-content-center border me-2 flex-shrink-0"
+                style="width: 40px; height: 40px;">
+                {{ g.user.nom[0] | upper }}{{ g.user.prenom[0] | upper }}
+              </div>
+              <div class="d-flex flex-column sidebar-user-info overflow-hidden">
+                <span class="fw-bold small text-truncate" style="max-width: 140px;">{{ g.user.nom|upper }} {{
+                  g.user.prenom|capitalize }}</span>
+                <span class="small text-white-50">En ligne</span>
+              </div>
+            </a>
+            <ul class="dropdown-menu shadow mt-2" style="min-width: 200px;">
+              <li>
+                <h6 class="dropdown-header">{{ (g.user.nom + ' ' + g.user.prenom) | e }}</h6>
+              </li>
+              <li><a class="dropdown-item py-2" href="{{ url_for('user_settings') }}"><i
+                    class="fas fa-cog me-2 text-muted"></i> Paramètres</a></li>
+              {% if user.get('role') == 'admin' or g.user.role == 'admin' %}
+              <li><a class="dropdown-item py-2" href="{{ url_for('index_admin') }}"><i
+                    class="fas fa-user-shield me-2 text-muted"></i> Admin</a></li>
+              {% endif %}
+
+
+              <li>
+                <a class="dropdown-item py-2" href="#" id="nav-config-mode"
+                  onclick="ConfigMode.toggle(); return false;">
+                  <i class="fas fa-tools me-2 text-warning"></i> Mode Config
+                </a>
+              </li>
+
+              <li>
+                <a class="dropdown-item py-2" href="#" id="themeToggleDropdown">
+                  <i class="fas fa-moon me-2 text-muted" id="themeIcon"></i> Mode sombre
+                </a>
+              </li>
+
+              <li>
+                <hr class="dropdown-divider">
+              </li>
+              <li><a class="dropdown-item py-2 text-danger" href="{{ url_for('logout') }}"><i
+                    class="fas fa-sign-out-alt me-2"></i> Déconnexion</a></li>
+            </ul>
+          </div>
+
+          <button class="btn btn-link text-white p-0 text-decoration-none position-relative sidebar-user-info ms-2"
+            type="button" id="btn-open-doc">
+            <i class="fa-solid fa-book-open fa-fade"></i>
+            <span id="doc-badge"
+              class="position-absolute top-0 start-100 translate-middle p-1 bg-danger border border-light rounded-circle"
+              style="width: 8px; height: 8px; padding: 0; display: none;">
+              <span class="visually-hidden">documentation disponibles</span>
+            </span>
+          </button>
+        </div>
+        {% else %}
+        <a href="#" class="btn btn-primary btn-sm px-3 w-100" data-bs-toggle="modal"
+          data-bs-target="#loginModal">Connexion</a>
+        {% endif %}
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <div class="d-flex flex-column flex-grow-1 w-100"
+      style="background-color: var(--bg-body); color: var(--text-main);">
+
+
+
+      <!-- Content Body -->
+      <main class="flex-grow-1 overflow-auto p-4">
+        {% block content %} {% endblock %}
+      </main>
+    </div>
+  </div>
+
+  <!-- Mobile Sidebar (Offcanvas) -->
+  <div class="offcanvas offcanvas-start text-white" tabindex="-1" id="sidebarOffcanvas"
+    style="background: var(--bg-sidebar); width: 280px;">
+    <div class="offcanvas-header border-bottom border-white-50"
+      style="background: linear-gradient(135deg, #450A54 0%, #2a0633 100%); color: white; position: relative; overflow: hidden;">
+      <h5 class="offcanvas-title fw-bold">INAYA</h5>
+      <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+      <!-- Decorative icon -->
+      <i class="fas fa-folder-open position-absolute"
+        style="font-size: 8rem; right: -1rem; top: -1rem; opacity: 0.1; transform: rotate(15deg);"></i>
+    </div>
+    <div class="offcanvas-body">
+      <ul class="nav flex-column sidebar-menu w-100" id="sidebarMobileMenu">
+        <!-- Mobile Menu Loop duplicated (can be optimized but keeping it simple for template) -->
+        {% for item in menu_items %}
+        {% if not item.parent_id and (not item.privilege or has_permission(item.privilege)) %}
+        {% set children = menu_items|selectattr('parent_id', 'equalto', item.id)|list %}
+        {% set visible_children = [] %}
+        {% for child in children %}
+        {% if not child.privilege or has_permission(child.privilege) %}
+        {% set _ = visible_children.append(child) %}
+        {% endif %}
+        {% endfor %}
+        {% set has_children = visible_children|length > 0 %}
+
+        <li class="nav-item mb-1">
+          {% if has_children %}
+          <a class="sidebar-link justify-content-between" href="#mobileSubmenu{{ item.id }}" data-bs-toggle="collapse">
+            <div class="d-flex align-items-center">
+              <i class="{{ item.icon }} sidebar-icon"></i>
+              <span>{{ item.label }}</span>
+            </div>
+            <i class="fas fa-chevron-down small"></i>
+          </a>
+          <div class="collapse submenu" id="mobileSubmenu{{ item.id }}" data-bs-parent="#sidebarMobileMenu">
+            <ul class="nav flex-column ms-3 mt-1 ps-3 border-start border-white-50">
+              {% for child in visible_children %}
+              <li class="nav-item">
+                <a class="sidebar-link py-2 fs-6" href="{{ url_for(child.route) }}" {% if child.tooltip
+                  %}data-bs-toggle="tooltip" data-bs-placement="right" title="{{ child.tooltip }}" {% endif %}>
+                  {% if child.icon %}
+                  <i class="{{ child.icon }} sidebar-icon"
+                    style="font-size: 0.9em; width: 20px; margin-right: 8px;"></i>
+                  {% endif %}
+                  <span>{{ child.label }}</span>
+                </a>
+              </li>
+              {% endfor %}
+            </ul>
+          </div>
+          {% else %}
+          <a class="sidebar-link" href="{% if item.route != '#' %}{{ url_for(item.route) }}{% else %}#{% endif %}" {% if
+            item.tooltip %}data-bs-toggle="tooltip" data-bs-placement="right" title="{{ item.tooltip }}" {% endif %}>
+            <div class="d-flex align-items-center">
+              <i class="{{ item.icon }} sidebar-icon"></i>
+              <span>{{ item.label }}</span>
+            </div>
+          </a>
+          {% endif %}
+        </li>
+        {% endif %}
+        {% endfor %}
+      </ul>
+    </div>
+  </div>
+
+  <!-- Documentation Offcanvas - Premium Bottom Sheet -->
+  <div class="doc-offcanvas-backdrop" id="docOffcanvasBackdrop" aria-hidden="true"></div>
+  <div class="doc-offcanvas-panel" id="docOffcanvasPanel" role="dialog" aria-modal="true"
+    aria-labelledby="docOffcanvasLabel">
+    <!-- Drag Handle -->
+    <div class="doc-drag-handle" id="docDragHandle">
+      <div class="doc-drag-indicator"></div>
+    </div>
+
+    <!-- Header -->
+    <div class="doc-offcanvas-header">
+      <div>
+        <h5 class="fw-bold mb-0" id="docOffcanvasLabel"><i class="fas fa-book me-2"></i> Documentation Contextuelle</h5>
+        <p class="mb-0 mt-1 small" style="opacity: 0.7;">Aide contextuelle pour cette interface</p>
+      </div>
+      <div class="d-flex align-items-center gap-2">
+        {% if g.user and (g.user.role == 'admin' or has_permission('ADMIN')) %}
+        <button type="button" class="doc-btn-edit" id="btn-edit-doc">
+          <i class="fas fa-edit me-1"></i> Édition
+        </button>
+        {% endif %}
+        <button type="button" class="doc-btn-close" id="closeDocOffcanvasBtn" aria-label="Fermer le panneau">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+            stroke-linecap="round" stroke-linejoin="round">
+            <path d="M18 6L6 18" />
+            <path d="M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- Scrollable Body -->
+    <div class="doc-offcanvas-body doc-custom-scroll" id="docOffcanvasBody">
+      <!-- View Mode container -->
+      <div id="doc-view-container" class="container" style="max-width: 900px;">
+        <!-- Empty State -->
+        <div class="doc-empty-state" id="doc-empty-state" style="display: none;">
+          <div class="doc-empty-icon">
+            <i class="fas fa-file-alt fa-4x"></i>
+          </div>
+          <h4 class="fw-bold mb-2">Aucune documentation disponible</h4>
+          <p class="mb-0 text-muted">Il n'y a pas encore de documentation pour cette interface.</p>
+        </div>
+
+        <!-- Content Display -->
+        <div id="doc-content-display" class="doc-content px-3 py-4" style="font-size: 1.05rem; line-height: 1.8;"></div>
+
+        <!-- Loading Spinner -->
+        <div id="doc-loading" class="text-center py-5" style="display: none;">
+          <div class="doc-loading-spinner">
+            <div class="spinner-border" role="status" style="color: #450A54;">
+              <span class="visually-hidden">Chargement...</span>
+            </div>
+            <p class="mt-3 text-muted small">Chargement de la documentation...</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Edit Mode container -->
+      <div id="doc-edit-container" class="container-fluid" style="display: none; max-width: 1200px;">
+        <form id="doc-form">
+          <input type="hidden" id="doc-id" name="doc_id">
+          <div class="row mb-4">
+            <div class="col-md-6">
+              <label class="form-label fw-bold" style="color: #450A54;"><i class="fas fa-heading me-1"></i> Titre de la
+                documentation</label>
+              <input type="text" class="form-control form-control-lg shadow-sm" id="doc-titre" required
+                style="border-color: rgba(69,10,84,0.3); border-radius: 12px;">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-bold" style="color: #450A54;"><i class="fas fa-route me-1"></i> Routes
+                associées</label>
+              <select class="form-select shadow-sm" id="doc-routes" multiple required>
+                <!-- Options loaded via AJAX -->
+              </select>
+              <div class="form-text mt-1 text-muted">Sélectionnez les pages qui afficheront cette documentation.</div>
+            </div>
+          </div>
+          <div class="mb-4">
+            <label class="form-label fw-bold" style="color: #450A54;"><i class="fas fa-align-left me-1"></i>
+              Contenu</label>
+            <textarea id="doc-editor" name="content"></textarea>
+          </div>
+          <div class="d-flex justify-content-end gap-2 border-top pt-3">
+            <button type="button" class="btn btn-light border px-4" id="btn-cancel-edit-doc"
+              style="border-radius: 12px;">Annuler</button>
+            <button type="submit" class="btn px-4" id="btn-save-doc"
+              style="background: linear-gradient(135deg, #450A54, #764ba2); border: none; color: white; border-radius: 12px;">
+              <i class="fas fa-save me-2"></i>Enregistrer
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  {% endblock %}
+
+  <div aria-hidden="true" aria-labelledby="loginModalLabel" class="modal fade" id="loginModal" tabindex="-1">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="loginModalLabel">Connexion</h5>
+          <button aria-label="Close" class="btn-close" data-bs-dismiss="modal" type="button"></button>
+        </div>
+        <div class="modal-body">
+          <form action="{{ url_for('login') }}" class="needs-validation" method="POST" novalidate>
+            <div class="mb-3">
+              <label class="form-label" for="username">Nom d'utilisateur</label>
+              <input class="form-control" id="username" name="username" required type="text" />
+            </div>
+            <div class="mb-3">
+              <label class="form-label" for="password">Mot de passe</label>
+              <div class="input-group">
+                <input class="form-control" id="password" name="password" required type="password" />
+                <button class="btn btn-outline-secondary" id="togglePassword" type="button"><i
+                    class="fas fa-eye"></i></button>
+              </div>
+            </div>
+            <div class="form-group form-check">
+              <input class="form-check-input" id="remember_me" name="remember_me" type="checkbox" />
+              <label class="form-check-label" for="remember_me">Garder la session active</label>
+            </div>
+            <div class="modal-footer">
+              <button class="btn btn-primary" type="submit">Se connecter</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+
+  <script src="{{ url_for('static', filename='js/jquery-3.7.1.min.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/bootstrap.bundle.min.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/datatables.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/datatables.min.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/modern_toast.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/custom.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/choices.min.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/html2canvas.min.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/jspdf.umd.min.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/jspdf.plugin.autotable.min.js') }}"></script>
+
+  <!-- Dynamic Permissions -->
+  <script>
+    // System Endpoint
+    window.current_endpoint = "{{ request.endpoint }}";
+    // Injection des configurations UI pour la page courante
+    window.uiPermissions = {{ dynamic_ui_permissions | default ([], true) | tojson | safe }};
+    // Injection des privilèges de l'utilisateur connecté
+    window.userPrivileges = {{ session.get('privileges', []) | tojson | safe }};
+    window.protectedRoutes = {{ protected_routes_map |default ({}) | tojson | safe }};
+  </script>
+  <script src="{{ url_for('static', filename='js/permission_guard.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/config_mode.js') }}"></script>
+
+
+  <script>
+    document.addEventListener("DOMContentLoaded", function () {
+      // Initialize Tooltips
+      var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+      var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl)
+      })
+
+      // Logic for Sidebar Menu Toggling
+      const sidebarMenu = document.getElementById("sidebarMenu");
+      if (sidebarMenu) {
+        const activeLink = sidebarMenu.querySelector(".sidebar-link.active");
+        if (activeLink) {
+          const parentSubmenu = activeLink.closest(".submenu");
+          if (parentSubmenu) {
+            new bootstrap.Collapse(parentSubmenu, { show: true });
+            const parentLink = document.querySelector(`[href="#${parentSubmenu.id}"]`);
+            if (parentLink) parentLink.setAttribute("aria-expanded", "true");
+          }
+        }
+      }
+
+      {% with messages = get_flashed_messages(with_categories = True) %}
+      {% if messages %}
+      {% for category, message in messages %}
+      showToast({{ message | tojson }}, "{{ category }}");
+    {% endfor %}
+    {% endif %}
+    {% endwith %}
+
+    {% if request.args.get('message') %}
+    showToast({{ request.args.get('message') | tojson }}, "{{ request.args.get('category', 'info') }}");
+    {% endif %}
+
+    // Toggle Password
+    const togglePassword = document.querySelector('#togglePassword');
+    const password = document.querySelector('#password');
+    if (togglePassword && password) {
+      togglePassword.addEventListener('click', function (e) {
+        const type = password.getAttribute('type') === 'password' ? 'text' : 'password';
+        password.setAttribute('type', type);
+        this.querySelector('i').classList.toggle('fa-eye-slash');
+      });
+    }
+
+    // Sidebar Toggle Logic
+    const sidebarToggle = document.getElementById('sidebarToggle');
+    const sidebar = document.getElementById('mainSidebar');
+
+    if (sidebarToggle && sidebar) {
+      // Initialize state from localStorage
+      const storedState = localStorage.getItem('sidebarState');
+      // If we used the html class earlier, we can check that too, but localStorage is source of truth
+      if (storedState === 'collapsed') {
+        sidebar.classList.add('collapsed');
+      }
+
+      // Remove FOUC prevention class now that JS has taken over
+      document.documentElement.classList.remove('sidebar-init-collapsed');
+
+      sidebarToggle.addEventListener('click', function (e) {
+        e.preventDefault();
+        sidebar.classList.toggle('collapsed');
+
+        // Save state
+        const isCollapsed = sidebar.classList.contains('collapsed');
+        localStorage.setItem('sidebarState', isCollapsed ? 'collapsed' : 'expanded');
+
+        // Close any open submenus when collapsing
+        if (isCollapsed) {
+          const openSubmenus = sidebar.querySelectorAll('.submenu.show');
+          openSubmenus.forEach(submenu => {
+            const bsCollapse = bootstrap.Collapse.getInstance(submenu);
+            if (bsCollapse) bsCollapse.hide();
+          });
+        }
+      });
+    }
+    // Theme Toggle Logic
+    const themeToggleBtn = document.getElementById('themeToggleDropdown');
+    const themeIcon = document.getElementById('themeIcon');
+    const htmlElement = document.documentElement;
+
+    // Function to update icon
+    function updateThemeIcon(theme) {
+      if (!themeIcon) return;
+      if (theme === 'dark') {
+        themeIcon.classList.remove('fa-moon');
+        themeIcon.classList.add('fa-sun');
+        themeToggleBtn.innerHTML = '<i class="fas fa-sun me-2 text-muted" id="themeIcon"></i> Mode clair';
+      } else {
+        themeIcon.classList.remove('fa-sun');
+        themeIcon.classList.add('fa-moon');
+        themeToggleBtn.innerHTML = '<i class="fas fa-moon me-2 text-muted" id="themeIcon"></i> Mode sombre';
+      }
+    }
+
+    // Check local storage on load
+    const currentTheme = localStorage.getItem('theme');
+    if (currentTheme === 'dark') {
+      htmlElement.setAttribute('data-theme', 'dark');
+      updateThemeIcon('dark');
+    }
+
+    if (themeToggleBtn) {
+      themeToggleBtn.addEventListener('click', function (e) {
+        e.preventDefault(); // Prevent default link behavior
+        const isDark = htmlElement.getAttribute('data-theme') === 'dark';
+
+        if (isDark) {
+          htmlElement.removeAttribute('data-theme');
+          localStorage.setItem('theme', 'light');
+          updateThemeIcon('light');
+        } else {
+          htmlElement.setAttribute('data-theme', 'dark');
+          localStorage.setItem('theme', 'dark');
+          updateThemeIcon('dark');
+        }
+      });
+    }
+
+    });
+
+  </script>
+  {% block scripts %}{% endblock %}
+
+  <!-- Documentation System -->
+  <script src="{{ url_for('static', filename='tinymce/tinymce.min.js') }}" referrerpolicy="origin"></script>
+  <script src="{{ url_for('static', filename='js/documentation.js') }}"></script>
+
+</html>

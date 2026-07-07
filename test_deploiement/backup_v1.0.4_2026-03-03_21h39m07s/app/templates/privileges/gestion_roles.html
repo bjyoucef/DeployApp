@@ -1,0 +1,219 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<!-- Bouton pour afficher le modal d'ajout -->
+<button type="button" class="btn btn-primary mb-3" data-bs-toggle="modal" data-bs-target="#ajouterRoleModal">
+    Ajouter un Rôle
+</button>
+
+<!-- Modal pour ajouter un rôle -->
+<div class="modal fade" id="ajouterRoleModal" tabindex="-1" aria-labelledby="ajouterRoleModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="ajouterRoleModalLabel">Ajouter un Rôle</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form method="POST" action="/roles" class="mb-3">
+                    <div class="mb-3">
+                        <label for="nom_role" class="form-label">Nom du rôle</label>
+                        <input type="text" id="nom_role" name="nom_role" class="form-control" required>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fermer</button>
+                        <button type="submit" class="btn btn-primary">Ajouter</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Liste des rôles -->
+<table id="myTable" class="table table-hover">
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>Nom</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for role in roles %}
+        <tr>
+            <td>{{ role.id_role }}</td>
+            <td>{{ role.nom_role }}</td>
+            <td>
+                <button type="button" class="btn btn-sm btn-secondary" data-bs-toggle="modal" data-bs-target="#associerPrivilegesModal{{ role.id_role }}">
+                    Associer des Privilèges
+                </button>
+                <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#modifierRoleModal{{ role.id_role }}">
+                    Modifier
+                </button>
+            </td>
+        </tr>
+
+        <!-- Modal pour associer des privilèges -->
+        <div class="modal fade" id="associerPrivilegesModal{{ role.id_role }}" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-lg modal-dialog-scrollable">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Associer des Privilèges à {{ role.nom_role }}</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        <div id="loadingSpinner{{ role.id_role }}" class="text-center my-3 d-none">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Chargement...</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-body">
+                        <div class="accordion d-none" id="privilegesAccordion{{ role.id_role }}" data-bs-parent="#privilegesAccordion{{ role.id_role }}">
+                            <!-- Privilèges seront injectés ici dynamiquement -->
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fermer</button>
+                        <button type="button" class="btn btn-primary" onclick="savePrivileges({{ role.id_role }})">Sauvegarder</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal pour modifier un rôle -->
+        <div class="modal fade" id="modifierRoleModal{{ role.id_role }}" tabindex="-1" aria-labelledby="modifierRoleModalLabel{{ role.id_role }}" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-scrollable">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="modifierRoleModalLabel{{ role.id_role }}">Modifier le Rôle</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <form method="POST" action="{{ url_for('modifier_role', id_role=role.id_role) }}">
+                            <div class="mb-3">
+                                <label for="nom_role_{{ role.id_role }}" class="form-label">Nom du rôle</label>
+                                <input type="text" id="nom_role_{{ role.id_role }}" name="nom_role" class="form-control" value="{{ role.nom_role }}" required>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fermer</button>
+                                <button type="submit" class="btn btn-primary">Enregistrer</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </tbody>
+</table>
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        // Ajout dynamique des privilèges dans l'accordéon pour chaque modal
+        document.querySelectorAll('[id^="associerPrivilegesModal"]').forEach(modal => {
+            modal.addEventListener('show.bs.modal', function () {
+                const id_role = this.id.replace("associerPrivilegesModal", "");
+                const spinner = this.querySelector(`#loadingSpinner${id_role}`);
+                const privilegesAccordion = this.querySelector(`#privilegesAccordion${id_role}`);
+
+                // Afficher le spinner et masquer l'accordéon
+                spinner.classList.remove('d-none');
+                privilegesAccordion.classList.add('d-none');
+
+                fetch(`/roles/${id_role}/privileges/grouped`)
+                    .then(response => response.json())
+                    .then(data => {
+                        privilegesAccordion.innerHTML = '';
+                        Object.keys(data).forEach((type_privilege, index) => {
+                            const privileges = data[type_privilege];
+                            const collapseId = `collapse${id_role}_${index}`;
+                            const headerId = `heading${id_role}_${index}`;
+
+                            privilegesAccordion.innerHTML += `
+                                <div class="accordion-item">
+                                    <h2 class="accordion-header" id="${headerId}">
+                                        <button class="accordion-button collapsed" type="button"
+                                                data-bs-toggle="collapse" data-bs-target="#${collapseId}">
+                                            ${type_privilege}
+                                        </button>
+                                    </h2>
+                                    <div id="${collapseId}" class="accordion-collapse collapse">
+                                        <div class="accordion-body">
+                                            <ul class="list-group">
+                                                ${privileges.map(privilege => `
+                                                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                                                        <span>${privilege.nom_privilege}</span>
+                                                        <input type="checkbox" class="form-check-input"
+                                                               ${privilege.associe ? 'checked' : ''}
+                                                               data-id-privilege="${privilege.id_privilege}">
+                                                    </li>
+                                                `).join('')}
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>`;
+                        });
+
+                        // Masquer le spinner et afficher l'accordéon
+                        spinner.classList.add('d-none');
+                        privilegesAccordion.classList.remove('d-none');
+                    })
+                    .catch(error => {
+                        console.error("Erreur lors du chargement des privilèges :", error);
+                        spinner.innerHTML = `<p class="text-danger">Erreur de chargement.</p>`;
+                    });
+            });
+        });
+    });
+
+    function savePrivileges(id_role) {
+        const modal = document.querySelector(`#associerPrivilegesModal${id_role}`);
+        const checkboxes = modal.querySelectorAll('input[type="checkbox"]');
+        const changes = [];
+
+        checkboxes.forEach(checkbox => {
+            const id_privilege = checkbox.getAttribute('data-id-privilege');
+            changes.push({
+                id_privilege: parseInt(id_privilege, 10),
+                associe: checkbox.checked
+            });
+        });
+
+        fetch(`/roles/${id_role}/privileges/sauvegarder`, {
+            method: 'POST',
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ changes })
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    alert(data.error);
+                } else {
+                    alert("Changements sauvegardés avec succès !");
+                }
+            })
+            .catch(error => console.error("Erreur :", error));
+    }
+
+    function togglePrivilege(id_role, id_privilege, isChecked) {
+        const method = isChecked ? "POST" : "DELETE";
+        const url = isChecked
+            ? `/roles/${id_role}/privileges`
+            : `/roles/${id_role}/privileges/supprimer/${id_privilege}`;
+
+        fetch(url, {
+            method: method,
+            headers: { "Content-Type": "application/json" },
+            body: isChecked ? JSON.stringify({ id_privilege }) : null
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    alert(data.error);
+                } else {
+                    console.log("Privilège mis à jour");
+                }
+            });
+    }
+</script>
+{% endblock %}

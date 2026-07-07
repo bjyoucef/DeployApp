@@ -1,0 +1,22 @@
+<table class="table table-sm">
+    <thead>
+    <tr>
+        <th>Type d'acte</th>
+        <th class="text-center">Nombre</th>
+        <th class="text-end">Honoraires totaux</th>
+        <th class="text-end">Honoraires moyens</th>
+    </tr>
+    </thead>
+    <tbody>
+    {% for r in repartition %}
+        <tr>
+            <td><strong>{{ r.nom_acte }}</strong></td>
+            <td class="text-center"><strong>{{ r.nombre }}</strong></td>
+            <td class="text-end">
+                <strong>{{ "{:,.2f}".format(r.honoraires_totaux).replace(",", " ") }} DA</strong>
+            </td>
+            <td class="text-end">{{ "{:,.2f}".format(r.honoraires_moyens).replace(",", " ") }} DA</td>
+        </tr>
+    {% endfor %}
+    </tbody>
+</table>

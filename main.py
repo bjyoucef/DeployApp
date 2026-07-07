@@ -1058,6 +1058,22 @@ class SSHDeployer:
         except IOError:
             return False
 
+    def get_remote_file_hash(
+        self, remote_path: str, block_size: int = 65536
+    ) -> Optional[str]:
+        """Computes an MD5 hash directly over SFTP for cross-platform consistency."""
+        if not self.sftp:
+            return None
+
+        try:
+            hasher = hashlib.md5()
+            with self.sftp.file(remote_path, "rb") as remote_file:
+                for block in iter(lambda: remote_file.read(block_size), b""):
+                    hasher.update(block)
+            return hasher.hexdigest()
+        except (IOError, OSError):
+            return None
+
     def list_remote_files(self, remote_dir, ignore_patterns):
         """Recursively lists files on the server to detect deletions."""
         files = []
@@ -1109,17 +1125,12 @@ class SSHDeployer:
             return FileStatus.MODIFIED
 
         if abs(local_mtime - remote_mtime) > FileComparator.TIME_TOLERANCE:
-            # Hash calculation sur SSH n'est pas simple sans exec_command.
-            # Reste sur modified ou exécute un md5sum (Linux).
             if use_hash:
-                stdin, stdout, stderr = self.ssh.exec_command(f'md5sum "{remote_path}"')
-                out = stdout.read().decode().strip()
-                if out:
-                    remote_hash = out.split()[0]
-                    local_hash = FileComparator.get_file_hash(local_path)
-                    if local_hash != remote_hash:
-                        return FileStatus.MODIFIED
-                else:
+                local_hash = FileComparator.get_file_hash(local_path)
+                remote_hash = self.get_remote_file_hash(remote_path)
+                if not local_hash or not remote_hash:
+                    return FileStatus.MODIFIED
+                if local_hash != remote_hash:
                     return FileStatus.MODIFIED
             else:
                 return FileStatus.MODIFIED
@@ -1154,6 +1165,13 @@ class SSHDeployer:
         if self.remote_exists(remote_path):
             self.sftp.remove(remote_path)
         self.sftp.rename(remote_path + ".tmp", remote_path)
+
+        # Preserve the source mtime so the next scan does not flag unchanged files.
+        local_mtime = int(os.path.getmtime(local_path))
+        try:
+            self.sftp.utime(remote_path, (local_mtime, local_mtime))
+        except IOError:
+            pass
 
         # Check size
         local_size = os.path.getsize(local_path)

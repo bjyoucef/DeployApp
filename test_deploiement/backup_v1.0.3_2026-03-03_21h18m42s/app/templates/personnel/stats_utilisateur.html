@@ -1,0 +1,1014 @@
+{% extends "admin/admin_layout.html" %}
+
+{% block title %}Statistiques du Personnel{% endblock %}
+
+{% block style %}
+<style>
+    .stats-card {
+        border-radius: 10px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        transition: transform 0.2s;
+    }
+
+    .stats-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+    }
+
+    .stat-number {
+        font-size: 2rem;
+        font-weight: bold;
+        color: #2c3e50;
+    }
+
+    .stat-label {
+        font-size: 0.9rem;
+        color: #7f8c8d;
+        text-transform: uppercase;
+    }
+
+    .table-stats {
+        font-size: 0.9rem;
+    }
+
+    .table-stats thead {
+        background-color: #34495e;
+        color: white;
+        position: sticky;
+        top: 0;
+        z-index: 10;
+    }
+
+    .table-stats tbody tr:hover {
+        background-color: #ecf0f1;
+        cursor: pointer;
+    }
+
+    .badge-metric {
+        padding: 0.4em 0.7em;
+        font-size: 0.85rem;
+        border-radius: 12px;
+    }
+
+    .metric-high {
+        background-color: #27ae60;
+        color: white;
+    }
+
+    .metric-medium {
+        background-color: #f39c12;
+        color: white;
+    }
+
+    .metric-low {
+        background-color: #95a5a6;
+        color: white;
+    }
+
+    .filter-section {
+        background-color: #f8f9fa;
+        border-radius: 8px;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+    }
+
+    .loading-overlay {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.5);
+        z-index: 9999;
+        justify-content: center;
+        align-items: center;
+    }
+
+    .loading-overlay.active {
+        display: flex;
+    }
+
+    .spinner {
+        border: 5px solid #f3f3f3;
+        border-top: 5px solid #3498db;
+        border-radius: 50%;
+        width: 50px;
+        height: 50px;
+        animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+        0% {
+            transform: rotate(0deg);
+        }
+
+        100% {
+            transform: rotate(360deg);
+        }
+    }
+
+    .montant-cell {
+        text-align: right;
+        font-family: 'Courier New', monospace;
+        font-weight: 500;
+    }
+
+    .chart-container {
+        position: relative;
+        height: 400px;
+        margin-bottom: 2rem;
+    }
+
+    .personnel-avatar {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-weight: bold;
+        margin-right: 10px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="spinner"></div>
+    </div>
+
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <h2 class="mb-0">
+                <i class="fas fa-chart-line text-primary"></i>
+                Statistiques d'Activité du Personnel
+            </h2>
+            <p class="text-muted">Suivi et comparaison des performances du personnel</p>
+        </div>
+    </div>
+
+    <!-- Filtres -->
+    <div class="filter-section">
+        <form id="filterForm" class="row g-3">
+            <div class="col-md-3">
+                <label for="dateDebut" class="form-label">
+                    <i class="far fa-calendar"></i> Date début
+                </label>
+                <input type="date" class="form-control" id="dateDebut" name="date_debut" required>
+            </div>
+
+            <div class="col-md-3">
+                <label for="dateFin" class="form-label">
+                    <i class="far fa-calendar"></i> Date fin
+                </label>
+                <input type="date" class="form-control" id="dateFin" name="date_fin" required>
+            </div>
+
+            <div class="col-md-4">
+                <label for="personnelFilter" class="form-label">
+                    <i class="fas fa-user"></i> Personnel spécifique (optionnel)
+                </label>
+                <select class="form-select" id="personnelFilter" name="id_personnel">
+                    <option value="">Tous le personnel</option>
+                </select>
+            </div>
+
+            <div class="col-md-2 d-flex align-items-end">
+                <button type="submit" class="btn btn-primary w-100">
+                    <i class="fas fa-search"></i> Filtrer
+                </button>
+            </div>
+        </form>
+
+        <div class="mt-3">
+            <button type="button" class="btn btn-outline-secondary btn-sm me-2" onclick="setDateRange('today')">
+                Aujourd'hui
+            </button>
+            <button type="button" class="btn btn-outline-secondary btn-sm me-2" onclick="setDateRange('week')">
+                Cette semaine
+            </button>
+            <button type="button" class="btn btn-outline-secondary btn-sm me-2" onclick="setDateRange('month')">
+                Ce mois
+            </button>
+            <button type="button" class="btn btn-outline-success btn-sm float-end" onclick="exportExcel()">
+                <i class="fas fa-file-excel"></i> Exporter Excel
+            </button>
+        </div>
+    </div>
+
+    <!-- Cartes de résumé -->
+    <div class="row mb-4" id="summaryCards">
+        <div class="col-md-3">
+            <div class="card stats-card border-0 bg-gradient-primary text-white">
+                <div class="card-body">
+                    <div class="stat-number" id="totalPersonnel">0</div>
+                    <div class="stat-label">Personnel actif</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card stats-card border-0 bg-gradient-success text-white">
+                <div class="card-body">
+                    <div class="stat-number" id="totalActions">0</div>
+                    <div class="stat-label">Actions totales</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card stats-card border-0 bg-gradient-info text-white">
+                <div class="card-body">
+                    <div class="stat-number" id="avgActionsPerPerson">0</div>
+                    <div class="stat-label">Moyenne par personne</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card stats-card border-0 bg-gradient-warning text-white">
+                <div class="card-body">
+                    <div class="stat-number" id="totalMontants">0 DA</div>
+                    <div class="stat-label">Montants générés</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Graphiques -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-chart-bar"></i> Top 10 Personnel par Activité
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="chart-container">
+                        <canvas id="topPersonnelChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-chart-pie"></i> Répartition par Type d'Activité
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="chart-container">
+                        <canvas id="activityTypeChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tableau détaillé -->
+    <div class="card">
+        <div class="card-header bg-dark text-white">
+            <h5 class="mb-0">
+                <i class="fas fa-table"></i> Détail par Personnel
+            </h5>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive" style="max-height: 600px;">
+                <table class="table table-stats table-hover mb-0" id="statsTable">
+                    <thead>
+                        <tr>
+                            <th style="min-width: 200px;">Personnel</th>
+                            <th>Rôle</th>
+                            <th>Service</th>
+                            <th class="text-center">Accouchements</th>
+                            <th class="text-center">Décharges Gynéco</th>
+                            <th class="text-center">Décharges KT</th>
+                            <th class="text-center">Décharges Méd. Int.</th>
+                            <th class="text-center">Location Bloc</th>
+                            <th class="text-center">Actes Méd. Int.</th>
+                            <th class="text-center">Paiements</th>
+                            <th class="text-end">Montants Total</th>
+                            <th class="text-center">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="statsTableBody">
+                        <tr>
+                            <td colspan="12" class="text-center py-5">
+                                <i class="fas fa-spinner fa-spin fa-2x text-muted"></i>
+                                <p class="mt-2 text-muted">Chargement des données...</p>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<!-- Modal Détail Personnel -->
+<div class="modal fade" id="detailModal" tabindex="-1">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title">
+                    <i class="fas fa-user-chart"></i> Détail d'Activité
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="detailModalBody">
+                <!-- Contenu chargé dynamiquement -->
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+
+<script src="{{ url_for('static', filename='js/chart.min.js') }}"></script>
+
+<script>
+    let topPersonnelChart = null;
+    let activityTypeChart = null;
+
+    // Initialisation
+    document.addEventListener('DOMContentLoaded', function () {
+        // Définir les dates par défaut (dernier mois)
+        setDateRange('month');
+
+        // Charger les données initiales
+        loadData();
+
+        // Gérer la soumission du formulaire
+        document.getElementById('filterForm').addEventListener('submit', function (e) {
+            e.preventDefault();
+            loadData();
+        });
+    });
+
+    // Définir les plages de dates
+    function setDateRange(range) {
+        const today = new Date();
+        let startDate, endDate;
+
+        endDate = today.toISOString().split('T')[0];
+
+        switch (range) {
+            case 'today':
+                startDate = endDate;
+                break;
+            case 'week':
+                const weekAgo = new Date(today);
+                weekAgo.setDate(weekAgo.getDate() - 7);
+                startDate = weekAgo.toISOString().split('T')[0];
+                break;
+            case 'month':
+            default:
+                const monthAgo = new Date(today);
+                monthAgo.setMonth(monthAgo.getMonth() - 1);
+                startDate = monthAgo.toISOString().split('T')[0];
+                break;
+        }
+
+        document.getElementById('dateDebut').value = startDate;
+        document.getElementById('dateFin').value = endDate;
+
+        loadData();
+    }
+
+    // Charger les données
+    function loadData() {
+        const form = document.getElementById('filterForm');
+        const formData = new FormData(form);
+        const params = new URLSearchParams(formData);
+
+        showLoading(true);
+
+        fetch(`/api/stats-personnel/data?${params}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    updateSummaryCards(data.stats);
+                    updateTable(data.stats);
+                    updateCharts(data.stats);
+                    updatePersonnelFilter(data.personnel_list);
+                } else {
+                    showError('Erreur lors du chargement des données: ' + data.error);
+                }
+            })
+            .catch(error => {
+                showError('Erreur réseau: ' + error);
+            })
+            .finally(() => {
+                showLoading(false);
+            });
+    }
+
+    // Mettre à jour les cartes de résumé
+    function updateSummaryCards(stats) {
+        const totalPersonnel = stats.length;
+        let totalActions = 0;
+        let totalMontants = 0;
+
+        stats.forEach(stat => {
+            const actions = (
+                stat.nb_accouchements_crees +
+                stat.nb_decharges_gyneco_creees +
+                stat.nb_decharges_kt_creees +
+                stat.nb_decharges_medint_creees +
+                stat.nb_dossiers_location_bloc +
+                stat.nb_actes_medint_crees +
+                stat.nb_paiements_accouchement +
+                stat.nb_paiements_medint
+            );
+            totalActions += actions;
+
+            const montants = (
+                parseFloat(stat.montant_decharges_gyneco || 0) +
+                parseFloat(stat.montant_decharges_kt || 0) +
+                parseFloat(stat.montant_decharges_medint || 0) +
+                parseFloat(stat.montant_location_bloc || 0)
+            );
+            totalMontants += montants;
+        });
+
+        const avgActions = totalPersonnel > 0 ? Math.round(totalActions / totalPersonnel) : 0;
+
+        document.getElementById('totalPersonnel').textContent = totalPersonnel;
+        document.getElementById('totalActions').textContent = totalActions;
+        document.getElementById('avgActionsPerPerson').textContent = avgActions;
+        document.getElementById('totalMontants').textContent = formatCurrency(totalMontants);
+    }
+
+    // Mettre à jour le tableau
+    function updateTable(stats) {
+        const tbody = document.getElementById('statsTableBody');
+        tbody.innerHTML = '';
+
+        if (stats.length === 0) {
+            tbody.innerHTML = `
+            <tr>
+                <td colspan="12" class="text-center py-5">
+                    <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
+                    <p class="text-muted">Aucune donnée pour cette période</p>
+                </td>
+            </tr>
+        `;
+            return;
+        }
+
+        stats.forEach(stat => {
+            const totalActions = (
+                stat.nb_accouchements_crees +
+                stat.nb_decharges_gyneco_creees +
+                stat.nb_decharges_kt_creees +
+                stat.nb_decharges_medint_creees +
+                stat.nb_dossiers_location_bloc +
+                stat.nb_actes_medint_crees
+            );
+
+            const totalPaiements = (
+                stat.nb_paiements_accouchement +
+                stat.nb_paiements_medint +
+                stat.nb_tranches_kt +
+                stat.nb_tranches_gyneco +
+                stat.nb_tranches_medint
+            );
+
+            const totalMontants = (
+                parseFloat(stat.montant_accouchements || 0) +
+                parseFloat(stat.montant_decharges_gyneco || 0) +
+                parseFloat(stat.montant_decharges_kt || 0) +
+                parseFloat(stat.montant_decharges_medint || 0) +
+                parseFloat(stat.montant_location_bloc || 0) +
+                parseFloat(stat.montant_actes_medint || 0) +
+                parseFloat(stat.montant_factures_creees || 0)
+            );
+
+            const initiales = `${stat.prenom.charAt(0)}${stat.nom.charAt(0)}`.toUpperCase();
+
+            const row = `
+            <tr onclick="showDetail(${stat.id_personnel})" style="cursor: pointer;">
+                <td>
+                    <div class="d-flex align-items-center">
+                        <div class="personnel-avatar">${initiales}</div>
+                        <div>
+                            <strong>${stat.nom} ${stat.prenom}</strong>
+                        </div>
+                    </div>
+                </td>
+                <td><span class="badge bg-secondary">${stat.role || 'N/A'}</span></td>
+                <td>${stat.service_name || 'N/A'}</td>
+                <td class="text-center">
+                    ${getBadge(stat.nb_accouchements_crees, totalActions)}
+                    <div class="small text-muted">${formatCurrency(stat.montant_accouchements)}</div>
+                </td>
+                <td class="text-center">
+                    ${getBadge(stat.nb_decharges_gyneco_creees, totalActions)}
+                    <div class="small text-success">V:${stat.nb_decharges_gyneco_validees}</div>
+                    <div class="small text-info">P:${stat.nb_decharges_gyneco_payees}</div>
+                    <div class="small text-muted">${formatCurrency(stat.montant_decharges_gyneco)}</div>
+                </td>
+                <td class="text-center">
+                    ${getBadge(stat.nb_decharges_kt_creees, totalActions)}
+                    <div class="small text-success">S:${stat.nb_decharges_kt_soldees}</div>
+                    <div class="small text-warning">Pa:${stat.nb_decharges_kt_partielles}</div>
+                    <div class="small text-muted">${formatCurrency(stat.montant_decharges_kt)}</div>
+                </td>
+                <td class="text-center">
+                    ${getBadge(stat.nb_decharges_medint_creees, totalActions)}
+                    <div class="small text-success">V:${stat.nb_decharges_medint_validees}</div>
+                    <div class="small text-info">P:${stat.nb_decharges_medint_payees}</div>
+                    <div class="small text-muted">${formatCurrency(stat.montant_decharges_medint)}</div>
+                </td>
+                <td class="text-center">
+                    ${getBadge(stat.nb_dossiers_location_bloc, totalActions)}
+                    <div class="small text-muted">${formatCurrency(stat.montant_location_bloc)}</div>
+                </td>
+                <td class="text-center">
+                    ${getBadge(stat.nb_actes_medint_crees, totalActions)}
+                    <div class="small text-success">${formatCurrency(stat.part_medecin_actes)}</div>
+                    <div class="small text-muted">${formatCurrency(stat.montant_actes_medint)}</div>
+                </td>
+                <td class="text-center">
+                    <span class="badge bg-info">${totalPaiements}</span>
+                    <div class="small text-muted">
+                        Acc: ${stat.nb_paiements_accouchement}<br>
+                        Med: ${stat.nb_paiements_medint}<br>
+                        Tr: ${stat.nb_tranches_kt + stat.nb_tranches_gyneco + stat.nb_tranches_medint}
+                    </div>
+                </td>
+                <td class="text-center">
+                    ${getBadge(stat.nb_factures_creees, totalActions)}
+                    <div class="small text-success">V:${stat.nb_factures_validees}</div>
+                    <div class="small text-primary">Fact:${stat.nb_factures_definitives}</div>
+                    <div class="small text-warning">Prof:${stat.nb_proformas}</div>
+                    <div class="small text-muted">${formatCurrency(stat.montant_factures_creees)}</div>
+                </td>
+                <td class="montant-cell">
+                    <strong class="text-primary">${formatCurrency(totalMontants)}</strong>
+                </td>
+            </tr>
+        `;
+            tbody.innerHTML += row;
+        });
+    }
+
+    // Obtenir un badge coloré selon la valeur
+    function getBadge(value, total) {
+        if (value === 0) return '<span class="badge metric-low">0</span>';
+
+        const percentage = (value / total) * 100;
+        let badgeClass = 'metric-low';
+
+        if (percentage > 30) badgeClass = 'metric-high';
+        else if (percentage > 15) badgeClass = 'metric-medium';
+
+        return `<span class="badge ${badgeClass}">${value}</span>`;
+    }
+
+    // Mettre à jour les graphiques
+    function updateCharts(stats) {
+        // Trier par nombre total d'actions
+        const sortedStats = [...stats].sort((a, b) => {
+            const actionsA = a.nb_accouchements_crees + a.nb_decharges_gyneco_creees +
+                a.nb_decharges_kt_creees + a.nb_decharges_medint_creees +
+                a.nb_dossiers_location_bloc + a.nb_actes_medint_crees;
+            const actionsB = b.nb_accouchements_crees + b.nb_decharges_gyneco_creees +
+                b.nb_decharges_kt_creees + b.nb_decharges_medint_creees +
+                b.nb_dossiers_location_bloc + b.nb_actes_medint_crees;
+            return actionsB - actionsA;
+        });
+
+        const top10 = sortedStats.slice(0, 10);
+
+        // Graphique Top 10 Personnel
+        const ctx1 = document.getElementById('topPersonnelChart').getContext('2d');
+
+        if (topPersonnelChart) {
+            topPersonnelChart.destroy();
+        }
+
+        topPersonnelChart = new Chart(ctx1, {
+            type: 'bar',
+            data: {
+                labels: top10.map(s => `${s.nom} ${s.prenom}`),
+                datasets: [
+                    {
+                        label: 'Accouchements',
+                        data: top10.map(s => s.nb_accouchements_crees),
+                        backgroundColor: 'rgba(52, 152, 219, 0.7)'
+                    },
+                    {
+                        label: 'Décharges',
+                        data: top10.map(s => s.nb_decharges_gyneco_creees + s.nb_decharges_kt_creees + s.nb_decharges_medint_creees),
+                        backgroundColor: 'rgba(46, 204, 113, 0.7)'
+                    },
+                    {
+                        label: 'Actes/Dossiers',
+                        data: top10.map(s => s.nb_dossiers_location_bloc + s.nb_actes_medint_crees),
+                        backgroundColor: 'rgba(155, 89, 182, 0.7)'
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    x: { stacked: true },
+                    y: { stacked: true, beginAtZero: true }
+                },
+                plugins: {
+                    legend: { position: 'top' }
+                }
+            }
+        });
+
+        // Graphique Répartition par Type
+        const ctx2 = document.getElementById('activityTypeChart').getContext('2d');
+
+        if (activityTypeChart) {
+            activityTypeChart.destroy();
+        }
+
+        const totals = {
+            accouchements: stats.reduce((sum, s) => sum + s.nb_accouchements_crees, 0),
+            dechargesGyneco: stats.reduce((sum, s) => sum + s.nb_decharges_gyneco_creees, 0),
+            dechargesKT: stats.reduce((sum, s) => sum + s.nb_decharges_kt_creees, 0),
+            dechargesMedInt: stats.reduce((sum, s) => sum + s.nb_decharges_medint_creees, 0),
+            locationBloc: stats.reduce((sum, s) => sum + s.nb_dossiers_location_bloc, 0),
+            actesMedInt: stats.reduce((sum, s) => sum + s.nb_actes_medint_crees, 0)
+        };
+
+        activityTypeChart = new Chart(ctx2, {
+            type: 'doughnut',
+            data: {
+                labels: [
+                    'Accouchements',
+                    'Décharges Gynéco',
+                    'Décharges KT',
+                    'Décharges Méd. Int.',
+                    'Location Bloc',
+                    'Actes Méd. Int.'
+                ],
+                datasets: [{
+                    data: [
+                        totals.accouchements,
+                        totals.dechargesGyneco,
+                        totals.dechargesKT,
+                        totals.dechargesMedInt,
+                        totals.locationBloc,
+                        totals.actesMedInt
+                    ],
+                    backgroundColor: [
+                        'rgba(52, 152, 219, 0.7)',
+                        'rgba(46, 204, 113, 0.7)',
+                        'rgba(155, 89, 182, 0.7)',
+                        'rgba(241, 196, 15, 0.7)',
+                        'rgba(230, 126, 34, 0.7)',
+                        'rgba(231, 76, 60, 0.7)'
+                    ]
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { position: 'right' }
+                }
+            }
+        });
+    }
+
+    // Mettre à jour le filtre personnel
+    function updatePersonnelFilter(personnelList) {
+        const select = document.getElementById('personnelFilter');
+        const currentValue = select.value;
+
+        select.innerHTML = '<option value="">Tous le personnel</option>';
+
+        personnelList.forEach(p => {
+            const option = document.createElement('option');
+            option.value = p.id_personnel;
+            option.textContent = `${p.nom} ${p.prenom} - ${p.role || 'N/A'}`;
+            select.appendChild(option);
+        });
+
+        if (currentValue) {
+            select.value = currentValue;
+        }
+    }
+
+    // Afficher le détail d'un personnel
+    function showDetail(idPersonnel) {
+        const form = document.getElementById('filterForm');
+        const formData = new FormData(form);
+        const params = new URLSearchParams(formData);
+
+        fetch(`/api/stats-personnel/detail/${idPersonnel}?${params}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    displayDetailModal(data);
+                } else {
+                    showError('Erreur: ' + data.error);
+                }
+            })
+            .catch(error => {
+                showError('Erreur réseau: ' + error);
+            });
+    }
+
+
+    // Afficher la modal de détail avec plus d'informations
+    function displayDetailModal(data) {
+        const personnel = data.personnel;
+        const details = data.details;
+        const activite = data.activite_journaliere;
+
+        // Construire le HTML des onglets de détails
+        let detailsHtml = `
+        <div class="row mb-4">
+            <div class="col-md-12">
+                <h4>${personnel.nom} ${personnel.prenom}</h4>
+                <p class="text-muted">
+                    <span class="badge bg-secondary">${personnel.role || 'N/A'}</span>
+                    <span class="badge bg-info">${personnel.service_name || 'N/A'}</span>
+                </p>
+            </div>
+        </div>
+
+        <ul class="nav nav-tabs mb-3" role="tablist">
+            <li class="nav-item">
+                <a class="nav-link active" data-bs-toggle="tab" href="#tab-accouchements">
+                    <i class="fas fa-baby"></i> Accouchements <span class="badge bg-primary">${details.accouchements.length}</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" data-bs-toggle="tab" href="#tab-decharges-gyneco">
+                    <i class="fas fa-file-invoice"></i> Déch. Gynéco <span class="badge bg-primary">${details.decharges_gyneco.length}</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" data-bs-toggle="tab" href="#tab-decharges-kt">
+                    <i class="fas fa-file-medical"></i> Déch. KT <span class="badge bg-primary">${details.decharges_kt.length}</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" data-bs-toggle="tab" href="#tab-decharges-medint">
+                    <i class="fas fa-file-medical-alt"></i> Déch. Méd.Int <span class="badge bg-primary">${details.decharges_medint.length}</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" data-bs-toggle="tab" href="#tab-location">
+                    <i class="fas fa-hospital"></i> Location Bloc <span class="badge bg-primary">${details.location_bloc.length}</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" data-bs-toggle="tab" href="#tab-actes">
+                    <i class="fas fa-procedures"></i> Actes <span class="badge bg-primary">${details.actes_medint.length}</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" data-bs-toggle="tab" href="#tab-factures">
+                    <i class="fas fa-file-invoice-dollar"></i> Factures <span class="badge bg-primary">${details.factures.length}</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" data-bs-toggle="tab" href="#tab-paiements">
+                    <i class="fas fa-cash-register"></i> Paiements <span class="badge bg-primary">${details.paiements.length}</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" data-bs-toggle="tab" href="#tab-activite">
+                    <i class="fas fa-chart-area"></i> Activité
+                </a>
+            </li>
+        </ul>
+
+        <div class="tab-content">
+            <!-- Tab Accouchements -->
+            <div class="tab-pane fade show active" id="tab-accouchements">
+                ${buildTableHtml(details.accouchements, [
+            { key: 'date_acte', label: 'Date', format: 'date' },
+            { key: 'patiente', label: 'Patiente' },
+            { key: 'type_accouchement', label: 'Type' },
+            { key: 'type_tarification', label: 'Tarif' },
+            { key: 'prix_total', label: 'Montant', format: 'currency' },
+            { key: 'statut_paiement', label: 'Statut', format: 'badge' }
+        ])}
+            </div>
+
+            <!-- Tab Décharges Gynéco -->
+            <div class="tab-pane fade" id="tab-decharges-gyneco">
+                ${buildTableHtml(details.decharges_gyneco, [
+            { key: 'date_acte', label: 'Date', format: 'date' },
+            { key: 'numero_decharge', label: 'N° Décharge' },
+            { key: 'action_type', label: 'Action', format: 'badge' },
+            { key: 'montant_total', label: 'Montant Total', format: 'currency' },
+            { key: 'montant_paye_total', label: 'Payé', format: 'currency' },
+            { key: 'statut', label: 'Statut', format: 'badge' }
+        ])}
+            </div>
+
+            <!-- Tab Décharges KT -->
+            <div class="tab-pane fade" id="tab-decharges-kt">
+                ${buildTableHtml(details.decharges_kt, [
+            { key: 'date_acte', label: 'Date', format: 'date' },
+            { key: 'numero_decharge', label: 'N° Décharge' },
+            { key: 'nb_dossiers', label: 'Nb Dossiers' },
+            { key: 'montant_total', label: 'Montant Total', format: 'currency' },
+            { key: 'montant_paye', label: 'Payé', format: 'currency' },
+            { key: 'statut', label: 'Statut', format: 'badge' }
+        ])}
+            </div>
+
+            <!-- Tab Décharges Médecin Interne -->
+            <div class="tab-pane fade" id="tab-decharges-medint">
+                ${buildTableHtml(details.decharges_medint, [
+            { key: 'date_acte', label: 'Date', format: 'date' },
+            { key: 'numero_decharge', label: 'N° Décharge' },
+            { key: 'action_type', label: 'Action', format: 'badge' },
+            { key: 'nb_actes', label: 'Nb Actes' },
+            { key: 'montant_total', label: 'Montant Total', format: 'currency' },
+            { key: 'montant_paye_total', label: 'Payé', format: 'currency' },
+            { key: 'statut', label: 'Statut', format: 'badge' }
+        ])}
+            </div>
+
+            <!-- Tab Location Bloc -->
+            <div class="tab-pane fade" id="tab-location">
+                ${buildTableHtml(details.location_bloc, [
+            { key: 'date_acte', label: 'Date', format: 'date' },
+            { key: 'patient', label: 'Patient' },
+            { key: 'nom_acte', label: 'Intervention' },
+            { key: 'prix_total', label: 'Prix Total', format: 'currency' },
+            { key: 'statut_paiement', label: 'Statut', format: 'badge' }
+        ])}
+            </div>
+
+            <!-- Tab Actes Médecin Interne -->
+            <div class="tab-pane fade" id="tab-actes">
+                ${buildTableHtml(details.actes_medint, [
+            { key: 'date_acte', label: 'Date', format: 'date' },
+            { key: 'patient', label: 'Patient' },
+            { key: 'nom_acte', label: 'Acte' },
+            { key: 'prix_acte_base', label: 'Prix Base', format: 'currency' },
+            { key: 'part_medecin', label: 'Part Médecin', format: 'currency' },
+            { key: 'statut_paiement', label: 'Statut', format: 'badge' }
+        ])}
+            </div>
+
+            <!-- Tab Factures -->
+            <div class="tab-pane fade" id="tab-factures">
+                ${buildTableHtml(details.factures, [
+            { key: 'date_acte', label: 'Date', format: 'date' },
+            { key: 'numero_facture', label: 'N° Facture' },
+            { key: 'type_facture', label: 'Type', format: 'badge' },
+            { key: 'action_type', label: 'Action', format: 'badge' },
+            { key: 'patient_nom', label: 'Patient' },
+            { key: 'total_ttc', label: 'Montant TTC', format: 'currency' },
+            { key: 'statut', label: 'Statut', format: 'badge' }
+        ])}
+            </div>
+
+            <!-- Tab Paiements -->
+            <div class="tab-pane fade" id="tab-paiements">
+                ${buildTableHtml(details.paiements, [
+            { key: 'date_acte', label: 'Date', format: 'date' },
+            { key: 'type', label: 'Type' },
+            { key: 'montant', label: 'Montant', format: 'currency' },
+            { key: 'mode_paiement', label: 'Mode', format: 'badge' }
+        ])}
+            </div>
+
+            <!-- Tab Activité -->
+            <div class="tab-pane fade" id="tab-activite">
+                <div class="table-responsive">
+                    <table class="table table-striped table-sm">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Type</th>
+                                <th>Nombre</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${activite.map(a => `
+                                <tr>
+                                    <td>${formatDate(a.date)}</td>
+                                    <td>${getTypeLabel(a.type)}</td>
+                                    <td><span class="badge bg-primary">${a.nb_actions}</span></td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    `;
+
+        document.getElementById('detailModalBody').innerHTML = detailsHtml;
+
+        const modal = new bootstrap.Modal(document.getElementById('detailModal'));
+        modal.show();
+    }
+
+    // Fonction utilitaire pour construire les tableaux de détails
+    function buildTableHtml(data, columns) {
+        if (!data || data.length === 0) {
+            return '<p class="text-muted text-center py-3">Aucune donnée</p>';
+        }
+
+        let html = '<div class="table-responsive" style="max-height: 400px;"><table class="table table-sm table-striped">';
+        html += '<thead><tr>';
+
+        columns.forEach(col => {
+            html += `<th>${col.label}</th>`;
+        });
+
+        html += '</tr></thead><tbody>';
+
+        data.forEach(row => {
+            html += '<tr>';
+            columns.forEach(col => {
+                let value = row[col.key];
+
+                if (col.format === 'date') {
+                    value = formatDate(value);
+                } else if (col.format === 'currency') {
+                    value = formatCurrency(value);
+                } else if (col.format === 'badge') {
+                    value = `<span class="badge bg-secondary">${value}</span>`;
+                }
+
+                html += `<td>${value || '-'}</td>`;
+            });
+            html += '</tr>';
+        });
+
+        html += '</tbody></table></div>';
+        return html;
+    }
+
+    // Obtenir le label du type d'activité
+    function getTypeLabel(type) {
+        const labels = {
+            'accouchement': 'Accouchement',
+            'decharge_gyneco': 'Décharge Gynéco',
+            'decharge_kt': 'Décharge KT',
+            'decharge_medint': 'Décharge Méd. Int.',
+            'location_bloc': 'Location Bloc',
+            'acte_medint': 'Acte Méd. Int.',
+            'facture': 'Facture'
+        };
+        return labels[type] || type;
+    }
+    // Exporter en Excel
+    function exportExcel() {
+        const form = document.getElementById('filterForm');
+        const formData = new FormData(form);
+        const params = new URLSearchParams(formData);
+
+        window.open(`/api/stats-personnel/export?${params}`, '_blank');
+    }
+
+    // Utilitaires
+    function formatCurrency(amount) {
+        return new Intl.NumberFormat('fr-DZ', {
+            style: 'decimal',
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
+        }).format(amount) + ' DA';
+    }
+
+    function formatDate(dateString) {
+        const date = new Date(dateString);
+        return date.toLocaleDateString('fr-FR');
+    }
+
+    function showLoading(show) {
+        const overlay = document.getElementById('loadingOverlay');
+        if (show) {
+            overlay.classList.add('active');
+        } else {
+            overlay.classList.remove('active');
+        }
+    }
+
+    function showError(message) {
+        showToast(message, "warning");
+    }
+</script>
+{% endblock %}

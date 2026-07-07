@@ -1,0 +1,625 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% if error %}Erreur{% elif dossier %}Dossier {{ dossier.patient }}{% else %}QR Dossier{% endif %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/modern_toast.css') }}" />
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #1a0a2e 0%, #2d1b4e 50%, #1a0a2e 100%);
+            min-height: 100vh;
+            color: #e0d6f0;
+        }
+
+        .container {
+            max-width: 480px;
+            margin: 0 auto;
+            padding: 16px;
+        }
+
+        /* ─── Header ─── */
+        .header {
+            text-align: center;
+            padding: 20px 0 16px;
+        }
+
+        .header .logo {
+            font-size: 14px;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            color: #a78bfa;
+            font-weight: 600;
+        }
+
+        .header .subtitle {
+            font-size: 11px;
+            color: #8b7daa;
+            margin-top: 4px;
+        }
+
+        /* ─── Card ─── */
+        .card {
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 12px;
+            backdrop-filter: blur(10px);
+        }
+
+        .card-title {
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: #a78bfa;
+            margin-bottom: 14px;
+            font-weight: 600;
+        }
+
+        /* ─── Info Row ─── */
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .info-row:last-child {
+            border-bottom: none;
+        }
+
+        .info-label {
+            font-size: 12px;
+            color: #8b7daa;
+            flex-shrink: 0;
+            min-width: 90px;
+        }
+
+        .info-value {
+            font-size: 14px;
+            color: #f0e8ff;
+            text-align: right;
+            font-weight: 500;
+            word-break: break-word;
+        }
+
+        /* ─── Status Badge ─── */
+        .badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .badge-archive {
+            background: rgba(34, 197, 94, 0.15);
+            color: #4ade80;
+            border: 1px solid rgba(34, 197, 94, 0.3);
+        }
+
+        .badge-non-archive {
+            background: rgba(250, 204, 21, 0.15);
+            color: #fde047;
+            border: 1px solid rgba(250, 204, 21, 0.3);
+        }
+
+        .badge-sorti {
+            background: rgba(239, 68, 68, 0.15);
+            color: #f87171;
+            border: 1px solid rgba(239, 68, 68, 0.3);
+        }
+
+        /* ─── Location Box ─── */
+        .location-box {
+            background: rgba(34, 197, 94, 0.08);
+            border: 1px solid rgba(34, 197, 94, 0.2);
+            border-radius: 12px;
+            padding: 16px;
+            margin-top: 10px;
+        }
+
+        .location-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 4px 0;
+            font-size: 13px;
+        }
+
+        .location-icon {
+            font-size: 16px;
+        }
+
+        /* ─── Error ─── */
+        .error-container {
+            text-align: center;
+            padding: 60px 20px;
+        }
+
+        .error-icon {
+            font-size: 64px;
+            margin-bottom: 16px;
+        }
+
+        .error-title {
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #f87171;
+        }
+
+        .error-message {
+            font-size: 14px;
+            color: #8b7daa;
+        }
+
+        /* ─── Paiement ─── */
+        .paiement-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            margin-top: 8px;
+        }
+
+        .paiement-item {
+            background: rgba(255, 255, 255, 0.04);
+            border-radius: 8px;
+            padding: 10px;
+            text-align: center;
+        }
+
+        .paiement-item .label {
+            font-size: 10px;
+            color: #8b7daa;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .paiement-item .value {
+            font-size: 16px;
+            font-weight: 700;
+            color: #e0d6f0;
+            margin-top: 4px;
+        }
+
+        .paiement-item .value.green {
+            color: #4ade80;
+        }
+
+        .paiement-item .value.red {
+            color: #f87171;
+        }
+
+        .paiement-item .value.yellow {
+            color: #fde047;
+        }
+
+        /* ─── Footer ─── */
+        .footer {
+            text-align: center;
+            padding: 16px 0;
+            font-size: 10px;
+            color: #6b5b8a;
+        }
+
+        /* ─── Action Buttons ─── */
+        .action-btn {
+            padding: 10px 16px;
+            border: none;
+            border-radius: 10px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            color: white;
+            background: rgba(255, 255, 255, 0.08);
+            transition: all 0.2s;
+        }
+
+        .action-btn:hover {
+            opacity: 0.85;
+        }
+
+        .action-sortie {
+            background: rgba(239, 68, 68, 0.25);
+            color: #f87171;
+        }
+
+        .action-retour {
+            background: rgba(34, 197, 94, 0.25);
+            color: #4ade80;
+        }
+
+        .action-historique {
+            background: rgba(167, 139, 250, 0.2);
+            color: #a78bfa;
+        }
+
+        /* ─── Modal ─── */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.7);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            padding: 16px;
+        }
+
+        .modal-overlay.hidden {
+            display: none;
+        }
+
+        .modal-box {
+            background: #2d1b4e;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            padding: 24px;
+            width: 100%;
+            max-width: 420px;
+        }
+
+        .modal-title {
+            font-size: 16px;
+            font-weight: 700;
+            color: #e0d6f0;
+            margin-bottom: 16px;
+        }
+
+        .modal-label {
+            display: block;
+            font-size: 12px;
+            color: #a78bfa;
+            font-weight: 600;
+            margin-bottom: 6px;
+        }
+
+        .modal-input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.06);
+            color: #e0d6f0;
+            font-size: 14px;
+            outline: none;
+        }
+
+        .modal-input:focus {
+            border-color: #a78bfa;
+        }
+
+        /* ─── Timeline ─── */
+        .timeline-entry {
+            padding: 10px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+        }
+
+        .timeline-entry:last-child {
+            border-bottom: none;
+        }
+
+        .timeline-action {
+            font-weight: 700;
+            font-size: 14px;
+            color: #e0d6f0;
+        }
+
+        .timeline-meta {
+            font-size: 11px;
+            color: #8b7daa;
+            margin-top: 2px;
+        }
+
+        .timeline-detail {
+            font-size: 12px;
+            color: #a78bfa;
+            margin-top: 4px;
+            font-style: italic;
+        }
+
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="logo">Clinique Inaya</div>
+            <div class="subtitle">Système d'Archivage Médical</div>
+        </div>
+
+        {% if error %}
+        <!-- ─── Erreur ─── -->
+        <div class="error-container">
+            <div class="error-icon">🚫</div>
+            <div class="error-title">QR Code Invalide</div>
+            <div class="error-message">{{ error }}</div>
+        </div>
+
+        {% elif dossier %}
+        <!-- ─── Statut ─── -->
+        <div style="text-align: center; margin-bottom: 12px;">
+            {% if statut_archivage == 'ARCHIVE' %}
+            <span class="badge badge-archive">📦 Archivé</span>
+            {% elif statut_archivage == 'SORTI' %}
+            <span class="badge badge-sorti">🔴 Sorti</span>
+            {% else %}
+            <span class="badge badge-non-archive">⚪ Non archivé</span>
+            {% endif %}
+        </div>
+
+        <!-- ─── Infos Dossier ─── -->
+        <div class="card">
+            <div class="card-title">📋 Informations du Dossier</div>
+            <div class="info-row">
+                <span class="info-label">Patient</span>
+                <span class="info-value">{{ dossier.patient }}</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Module</span>
+                <span class="info-value">{{ module_label }}</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Date</span>
+                <span class="info-value">{{ dossier.date_acte.strftime('%d/%m/%Y') if dossier.date_acte else '—'
+                    }}</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Médecin</span>
+                <span class="info-value">{{ dossier.medecin or '—' }}</span>
+            </div>
+            {% if dossier.specialite %}
+            <div class="info-row">
+                <span class="info-label">Spécialité</span>
+                <span class="info-value">{{ dossier.specialite }}</span>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- ─── Paiement ─── -->
+        {% if paiement_info %}
+        <div class="card">
+            <div class="card-title">💰 Statut Financier</div>
+            <div class="paiement-grid">
+                <div class="paiement-item">
+                    <div class="label">Payé Caisse</div>
+                    <div class="value green">{{ '{:,.0f}'.format(paiement_info.montant_paye_caisse) }} DA</div>
+                </div>
+                <div class="paiement-item">
+                    <div class="label">Prix Total</div>
+                    <div class="value">{{ '{:,.0f}'.format(paiement_info.prix_total) }} DA</div>
+                </div>
+                <div class="paiement-item">
+                    <div class="label">Part Médecin</div>
+                    <div class="value yellow">{{ '{:,.0f}'.format(paiement_info.balance_medecin) }} DA</div>
+                </div>
+                <div class="paiement-item">
+                    <div class="label">Statut</div>
+                    <div
+                        class="value {% if 'SOLDE' in (paiement_info.statut_paiement or '') or 'EQUILIBRE' in (paiement_info.statut_paiement or '') %}green{% elif 'COMPLEMENT' in (paiement_info.statut_paiement or '') %}red{% else %}yellow{% endif %}">
+                        {{ paiement_info.statut_paiement or '—' }}
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- ─── Localisation (si archivé) ─── -->
+        {% if emplacement %}
+        <div class="card">
+            <div class="card-title">📍 Localisation</div>
+            <div class="location-box">
+                {% if emplacement.zone %}
+                <div class="location-item">
+                    <span class="location-icon">🗂️</span>
+                    <span><strong>Zone :</strong> {{ emplacement.zone }}</span>
+                </div>
+                {% endif %}
+                {% if emplacement.etagere %}
+                <div class="location-item">
+                    <span class="location-icon">📁</span>
+                    <span><strong>Étagère :</strong> {{ emplacement.etagere }}{% if emplacement.ligne %}, L{{
+                        emplacement.ligne }}{% endif %}{% if emplacement.colonne %}-C{{ emplacement.colonne }}{% endif
+                        %}</span>
+                </div>
+                {% endif %}
+                {% if emplacement.boite %}
+                <div class="location-item">
+                    <span class="location-icon">📦</span>
+                    <span><strong>Boîte :</strong> {{ emplacement.boite }}</span>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- ─── Sortie Temporaire (si sorti) ─── -->
+        {% if sortie_info %}
+        <div class="card" style="border-color: rgba(239, 68, 68, 0.3);">
+            <div class="card-title" style="color: #f87171;">🔴 Sortie Temporaire</div>
+            <div class="info-row">
+                <span class="info-label">Motif</span>
+                <span class="info-value" style="color: #f87171;">{{ sortie_info.motif }}</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Sorti par</span>
+                <span class="info-value">{{ sortie_info.sorti_par_nom or '—' }}</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Date sortie</span>
+                <span class="info-value">{{ sortie_info.date_sortie.strftime('%d/%m/%Y %H:%M') if
+                    sortie_info.date_sortie else '—' }}</span>
+            </div>
+            {% if sortie_info.date_retour_prevue %}
+            <div class="info-row">
+                <span class="info-label">Retour prévu</span>
+                <span class="info-value" style="color: #fde047;">{{ sortie_info.date_retour_prevue.strftime('%d/%m/%Y')
+                    }}</span>
+            </div>
+            {% endif %}
+        </div>
+        {% endif %}
+
+        {% endif %}
+
+        <!-- ─── Actions (uniquement si connecté + archivé) ─── -->
+        {% if is_logged_in and id_archive %}
+        <div class="card" style="border-color: rgba(167, 139, 250, 0.3);">
+            <div class="card-title">⚡ Actions</div>
+            <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                {% if statut_archivage == 'ARCHIVE' %}
+                <button onclick="ouvrirModalSortie()" class="action-btn action-sortie">🔴 Sortie</button>
+                {% elif statut_archivage == 'SORTI' %}
+                <button onclick="enregistrerRetour()" class="action-btn action-retour">↩️ Retour</button>
+                {% endif %}
+                <button onclick="ouvrirHistorique()" class="action-btn action-historique">📜 Historique</button>
+            </div>
+        </div>
+        {% endif %}
+
+        <div class="footer">
+            Clinique Inaya — Archivage Médical<br>
+            <span id="scan-time"></span>
+        </div>
+        <script>
+            const d = new Date();
+            document.getElementById('scan-time').textContent =
+                'Scan effectué le ' + d.toLocaleDateString('fr-FR') + ' à ' + d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+        </script>
+    </div>
+
+    {% if is_logged_in and id_archive %}
+    <!-- Modal Sortie -->
+    <div class="modal-overlay hidden" id="modalSortie">
+        <div class="modal-box">
+            <div class="modal-title">🔴 Sortie Temporaire</div>
+            <div style="margin-bottom: 12px;">
+                <label class="modal-label">Motif <span style="color:#f87171;">*</span></label>
+                <textarea id="sortie_motif" class="modal-input" rows="3"
+                    placeholder="Ex: Consultation par le médecin traitant..."></textarea>
+            </div>
+            <div style="margin-bottom: 16px;">
+                <label class="modal-label">Date retour prévue</label>
+                <input type="date" id="sortie_date_retour" class="modal-input">
+            </div>
+            <div style="display: flex; gap: 8px;">
+                <button onclick="fermerModal('modalSortie')" class="action-btn"
+                    style="flex:1; background: rgba(255,255,255,0.1);">Annuler</button>
+                <button onclick="confirmerSortie()" class="action-btn action-sortie" style="flex:1;">Confirmer</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Historique -->
+    <div class="modal-overlay hidden" id="modalHistorique">
+        <div class="modal-box" style="max-height: 80vh; overflow-y: auto;">
+            <div class="modal-title">📜 Historique des mouvements</div>
+            <div id="historique_body">
+                <div style="text-align:center; padding: 20px; color: #8b7daa;">Chargement...</div>
+            </div>
+            <button onclick="fermerModal('modalHistorique')" class="action-btn"
+                style="width:100%; margin-top:12px; background: rgba(255,255,255,0.1);">Fermer</button>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/modern_toast.js') }}"></script>
+    <script>
+        const ID_ARCHIVE = {{ id_archive }};
+
+        // Note: Global showToast is now available via modern_toast.js
+
+        function ouvrirModalSortie() {
+            document.getElementById('sortie_motif').value = '';
+            document.getElementById('sortie_date_retour').value = '';
+            document.getElementById('modalSortie').classList.remove('hidden');
+        }
+
+        function fermerModal(id) {
+            document.getElementById(id).classList.add('hidden');
+        }
+
+        function confirmerSortie() {
+            const motif = document.getElementById('sortie_motif').value.trim();
+            const dateRetour = document.getElementById('sortie_date_retour').value || null;
+            if (!motif) { showToast('Le motif est obligatoire.', 'error'); return; }
+
+            fetch(`/archivage/api/dossier/${ID_ARCHIVE}/sortie`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ motif, date_retour_prevue: dateRetour })
+            })
+                .then(r => r.json())
+                .then(data => {
+                    if (data.success) { showToast(data.message, 'success'); setTimeout(() => location.reload(), 1500); }
+                    else { showToast(data.message, 'error'); }
+                })
+                .catch(() => showToast('Erreur réseau.', 'error'));
+        }
+
+        function enregistrerRetour() {
+            if (!confirm('Confirmer le retour de ce dossier ?')) return;
+            fetch(`/archivage/api/dossier/${ID_ARCHIVE}/retour`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' }
+            })
+                .then(r => r.json())
+                .then(data => {
+                    if (data.success) { showToast(data.message, 'success'); setTimeout(() => location.reload(), 1500); }
+                    else { showToast(data.message, 'error'); }
+                });
+        }
+
+        const ACTION_LABELS = {
+            'CREATION': '🟢 Création',
+            'DEPLACEMENT_BOITE': '🟡 Déplacement (Boîte)',
+            'DEPLACEMENT_ZONE': '🟡 Déplacement (Zone)',
+            'SORTIE_TEMPORAIRE': '🔴 Sortie temporaire',
+            'RETOUR': '🔵 Retour',
+            'DESARCHIVE': '⚪ Désarchivé',
+        };
+
+        function ouvrirHistorique() {
+            const body = document.getElementById('historique_body');
+            body.innerHTML = '<div style="text-align:center; padding:20px; color:#8b7daa;">Chargement...</div>';
+            document.getElementById('modalHistorique').classList.remove('hidden');
+
+            fetch(`/archivage/api/dossier/${ID_ARCHIVE}/historique`)
+                .then(r => r.json())
+                .then(data => {
+                    if (!data.success || !data.historique.length) {
+                        body.innerHTML = '<div style="text-align:center; padding:20px; color:#8b7daa;">Aucun historique.</div>';
+                        return;
+                    }
+                    body.innerHTML = data.historique.map(h => `
+                <div class="timeline-entry">
+                    <div class="timeline-action">${ACTION_LABELS[h.action] || h.action}</div>
+                    <div class="timeline-meta">${h.date_action || ''} — ${h.effectue_par || ''}</div>
+                    ${h.boite_avant && h.boite_apres ? `<div class="timeline-detail">Boîte: ${h.boite_avant} → ${h.boite_apres}</div>` : ''}
+                    ${h.zone_avant && h.zone_apres ? `<div class="timeline-detail">Zone: ${h.zone_avant} → ${h.zone_apres}</div>` : ''}
+                    ${h.commentaire ? `<div class="timeline-detail">${h.commentaire}</div>` : ''}
+                </div>
+            `).join('');
+                })
+                .catch(() => { body.innerHTML = '<div style="text-align:center; color:#f87171;">Erreur de chargement.</div>'; });
+        }
+    </script>
+    {% endif %}
+</body>
+
+</html>

@@ -1,0 +1,1080 @@
+{% extends "layout.html" %}
+
+{% block title %}Decharge - Raccourcis{% endblock %}
+
+{% block style %}
+<style>
+    *,
+    *::before,
+    *::after {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+    }
+
+    :root {
+        /* ── BASE VARIABLES (Light Theme Default) ── */
+        --bg: #f8f9fa;
+        --surface: #ffffff;
+        --surface-2: #f1f5f9;
+        --border: #e2e8f0;
+        --border-hover: #cbd5e1;
+        --text: #0f172a;
+        --muted: #64748b;
+
+        --topbar-bg: rgba(255, 255, 255, 0.85);
+        --card-shadow-hover: 0 4px 20px rgba(0, 0, 0, 0.08);
+
+        /* Colors */
+        --blue: #3b82f6;
+        --blue-glow: rgba(59, 130, 246, 0.10);
+        --green: #22c55e;
+        --green-glow: rgba(34, 197, 94, 0.10);
+        --purple: #a78bfa;
+        --purple-glow: rgba(167, 139, 250, 0.10);
+        --orange: #fb923c;
+        --orange-glow: rgba(251, 146, 60, 0.10);
+        --slate: #94a3b8;
+        --slate-glow: rgba(148, 163, 184, 0.10);
+
+        --radius: 10px;
+        --radius-sm: 7px;
+    }
+
+    [data-theme="dark"] {
+        /* ── DARK THEME OVERRIDES ── */
+        --bg: #0d1117;
+        --surface: #161b22;
+        --surface-2: #1c2128;
+        --border: rgba(255, 255, 255, 0.07);
+        --border-hover: rgba(255, 255, 255, 0.15);
+        --text: #e6edf3;
+        --muted: #7d8590;
+
+        --topbar-bg: rgba(13, 17, 23, 0.85);
+        --card-shadow-hover: 0 4px 20px rgba(0, 0, 0, .3);
+
+        --blue-glow: rgba(59, 130, 246, 0.15);
+        --green-glow: rgba(34, 197, 94, 0.15);
+        --purple-glow: rgba(167, 139, 250, 0.15);
+        --orange-glow: rgba(251, 146, 60, 0.15);
+        --slate-glow: rgba(148, 163, 184, 0.12);
+    }
+
+    body {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+        background: var(--bg);
+        color: var(--text);
+        min-height: 100vh;
+        -webkit-font-smoothing: antialiased;
+    }
+
+    /* ── TOPBAR ── */
+    .topbar {
+        position: sticky;
+        top: 0;
+        z-index: 50;
+        background: var(--topbar-bg);
+        backdrop-filter: blur(12px);
+        border-bottom: 1px solid var(--border);
+        padding: 0 1.5rem;
+        height: 56px;
+        display: flex;
+        align-items: center;
+        gap: 1.25rem;
+    }
+
+    .topbar-brand {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 0.9rem;
+        font-weight: 600;
+        color: var(--text);
+        white-space: nowrap;
+        text-decoration: none;
+    }
+
+    .brand-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: var(--blue);
+        box-shadow: 0 0 8px var(--blue);
+    }
+
+    .topbar-sep {
+        color: var(--border);
+        font-size: 1.2rem;
+        user-select: none;
+    }
+
+    .search-wrap {
+        flex: 1;
+        max-width: 380px;
+        position: relative;
+        display: flex;
+        align-items: center;
+    }
+
+    .search-ico {
+        position: absolute;
+        left: 0.75rem;
+        color: var(--muted);
+        pointer-events: none;
+        display: flex;
+    }
+
+    .search-wrap input {
+        width: 100%;
+        padding: 0.45rem 1rem 0.45rem 2.4rem;
+        background: var(--surface-2);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-sm);
+        color: var(--text);
+        font-size: 0.85rem;
+        outline: none;
+        transition: border-color .15s, box-shadow .15s;
+    }
+
+    .search-wrap input::placeholder {
+        color: var(--muted);
+    }
+
+    .search-wrap input:focus {
+        border-color: rgba(59, 130, 246, .5);
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, .1);
+    }
+
+    .kbd {
+        position: absolute;
+        right: 0.6rem;
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 4px;
+        padding: 0.1rem 0.4rem;
+        font-size: 0.7rem;
+        color: var(--muted);
+        font-family: monospace;
+        pointer-events: none;
+    }
+
+    .topbar-right {
+        margin-left: auto;
+        display: flex;
+        align-items: center;
+        gap: .5rem;
+    }
+
+    .badge-total {
+        font-size: .75rem;
+        color: var(--muted);
+        background: var(--surface-2);
+        border: 1px solid var(--border);
+        border-radius: 20px;
+        padding: .25rem .7rem;
+    }
+
+    /* ── PAGE ── */
+    .page {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 1.5rem 1.5rem 3rem;
+    }
+
+    /* ── SECTION TABS ── */
+    .tabs-bar {
+        display: flex;
+        gap: .5rem;
+        flex-wrap: wrap;
+        margin-bottom: 1.5rem;
+        padding-bottom: 1rem;
+        border-bottom: 1px solid var(--border);
+    }
+
+    .tab-btn {
+        display: flex;
+        align-items: center;
+        gap: .45rem;
+        padding: .35rem .85rem;
+        border-radius: 20px;
+        font-size: .8rem;
+        font-weight: 500;
+        cursor: pointer;
+        border: 1px solid var(--border);
+        background: transparent;
+        color: var(--muted);
+        transition: all .15s;
+        white-space: nowrap;
+    }
+
+    .tab-btn .tab-dot {
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        flex-shrink: 0;
+    }
+
+    .tab-btn:hover {
+        border-color: var(--border-hover);
+        color: var(--text);
+    }
+
+    .tab-btn.active {
+        color: var(--text);
+        border-color: transparent;
+    }
+
+    .tab-btn[data-tab="bloc"].active {
+        background: var(--blue-glow);
+        border-color: rgba(59, 130, 246, .3);
+    }
+
+    .tab-btn[data-tab="externe"].active {
+        background: var(--green-glow);
+        border-color: rgba(34, 197, 94, .3);
+    }
+
+    .tab-btn[data-tab="internes"].active {
+        background: var(--purple-glow);
+        border-color: rgba(167, 139, 250, .3);
+    }
+
+    .tab-btn[data-tab="kt"].active {
+        background: var(--orange-glow);
+        border-color: rgba(251, 146, 60, .3);
+    }
+
+    .tab-btn[data-tab="services"].active {
+        background: var(--slate-glow);
+        border-color: rgba(148, 163, 184, .25);
+    }
+
+    .tab-btn[data-tab="anes"].active {
+        background: var(--blue-glow);
+        border-color: rgba(59, 130, 246, .3);
+    }
+
+    .tab-btn[data-tab="all"].active {
+        background: var(--surface-2);
+        border-color: var(--border-hover);
+        color: var(--text);
+    }
+
+    .tab-dot-blue {
+        background: var(--blue);
+    }
+
+    .tab-dot-green {
+        background: var(--green);
+    }
+
+    .tab-dot-purple {
+        background: var(--purple);
+    }
+
+    .tab-dot-orange {
+        background: var(--orange);
+    }
+
+    .tab-dot-slate {
+        background: var(--slate);
+    }
+
+    /* ── SECTION GROUP ── */
+    .section-group {
+        margin-bottom: 2rem;
+        transition: opacity .2s;
+    }
+
+    .section-group.hidden {
+        display: none;
+    }
+
+    .section-label {
+        display: flex;
+        align-items: center;
+        gap: .6rem;
+        margin-bottom: .85rem;
+    }
+
+    .section-label-icon {
+        width: 24px;
+        height: 24px;
+        border-radius: 6px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+    }
+
+    .section-label-text {
+        font-size: .78rem;
+        font-weight: 600;
+        letter-spacing: .06em;
+        text-transform: uppercase;
+        color: var(--muted);
+    }
+
+    /* ── CARDS GRID ── */
+    .cards-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        gap: 1rem;
+    }
+
+    .shortcut-card {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        padding: 1.25rem 1.5rem;
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        text-decoration: none;
+        color: inherit;
+        position: relative;
+        overflow: hidden;
+        transition: border-color .15s, background .15s, transform .15s, box-shadow .15s;
+        cursor: pointer;
+    }
+
+    .shortcut-card::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        opacity: 0;
+        transition: opacity .15s;
+        pointer-events: none;
+    }
+
+    .shortcut-card:hover {
+        transform: translateY(-1px);
+        border-color: var(--border-hover);
+        box-shadow: var(--card-shadow-hover);
+    }
+
+    .shortcut-card:hover::before {
+        opacity: 1;
+    }
+
+    .shortcut-card:active {
+        transform: translateY(0);
+    }
+
+    .card-ico {
+        width: 48px;
+        height: 48px;
+        border-radius: 12px;
+        flex-shrink: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: background .15s;
+    }
+
+    .card-ico svg {
+        width: 24px;
+        height: 24px;
+    }
+
+    .card-body {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .card-name {
+        font-size: 1rem;
+        font-weight: 600;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        line-height: 1.3;
+        margin-bottom: 0.15rem;
+    }
+
+    .card-sub {
+        font-size: .85rem;
+        color: var(--muted);
+        margin-top: .1rem;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        line-height: 1.3;
+    }
+
+    .card-chevron {
+        color: var(--muted);
+        flex-shrink: 0;
+        opacity: 0;
+        transition: opacity .15s, transform .15s;
+        transform: translateX(-4px);
+    }
+
+    .shortcut-card:hover .card-chevron {
+        opacity: 1;
+        transform: translateX(0);
+    }
+
+    /* ── THEME COLORS ── */
+    /* Blue */
+    .t-blue .card-ico {
+        background: rgba(59, 130, 246, .12);
+        color: var(--blue);
+    }
+
+    .t-blue:hover {
+        background: rgba(59, 130, 246, .06);
+        border-color: rgba(59, 130, 246, .35);
+        box-shadow: 0 4px 20px rgba(59, 130, 246, .1);
+    }
+
+    .t-blue:hover .card-ico {
+        background: rgba(59, 130, 246, .2);
+    }
+
+    .t-blue::before {
+        background: linear-gradient(90deg, rgba(59, 130, 246, .05), transparent);
+    }
+
+    .t-blue .si-icon {
+        background: rgba(59, 130, 246, .12);
+        color: var(--blue);
+    }
+
+    /* Green */
+    .t-green .card-ico {
+        background: rgba(34, 197, 94, .12);
+        color: var(--green);
+    }
+
+    .t-green:hover {
+        background: rgba(34, 197, 94, .05);
+        border-color: rgba(34, 197, 94, .35);
+        box-shadow: 0 4px 20px rgba(34, 197, 94, .1);
+    }
+
+    .t-green:hover .card-ico {
+        background: rgba(34, 197, 94, .2);
+    }
+
+    .t-green::before {
+        background: linear-gradient(90deg, rgba(34, 197, 94, .05), transparent);
+    }
+
+    .t-green .si-icon {
+        background: rgba(34, 197, 94, .12);
+        color: var(--green);
+    }
+
+    /* Purple */
+    .t-purple .card-ico {
+        background: rgba(167, 139, 250, .12);
+        color: var(--purple);
+    }
+
+    .t-purple:hover {
+        background: rgba(167, 139, 250, .05);
+        border-color: rgba(167, 139, 250, .35);
+        box-shadow: 0 4px 20px rgba(167, 139, 250, .1);
+    }
+
+    .t-purple:hover .card-ico {
+        background: rgba(167, 139, 250, .2);
+    }
+
+    .t-purple::before {
+        background: linear-gradient(90deg, rgba(167, 139, 250, .05), transparent);
+    }
+
+    .t-purple .si-icon {
+        background: rgba(167, 139, 250, .12);
+        color: var(--purple);
+    }
+
+    /* Orange */
+    .t-orange .card-ico {
+        background: rgba(251, 146, 60, .12);
+        color: var(--orange);
+    }
+
+    .t-orange:hover {
+        background: rgba(251, 146, 60, .05);
+        border-color: rgba(251, 146, 60, .35);
+        box-shadow: 0 4px 20px rgba(251, 146, 60, .1);
+    }
+
+    .t-orange:hover .card-ico {
+        background: rgba(251, 146, 60, .2);
+    }
+
+    .t-orange::before {
+        background: linear-gradient(90deg, rgba(251, 146, 60, .05), transparent);
+    }
+
+    .t-orange .si-icon {
+        background: rgba(251, 146, 60, .12);
+        color: var(--orange);
+    }
+
+    /* Slate */
+    .t-slate .card-ico {
+        background: rgba(148, 163, 184, .1);
+        color: var(--slate);
+    }
+
+    .t-slate:hover {
+        background: rgba(148, 163, 184, .04);
+        border-color: rgba(148, 163, 184, .3);
+        box-shadow: 0 4px 20px rgba(148, 163, 184, .08);
+    }
+
+    .t-slate:hover .card-ico {
+        background: rgba(148, 163, 184, .18);
+    }
+
+    .t-slate::before {
+        background: linear-gradient(90deg, rgba(148, 163, 184, .04), transparent);
+    }
+
+    .t-slate .si-icon {
+        background: rgba(148, 163, 184, .1);
+        color: var(--slate);
+    }
+
+    /* Section icon helper */
+    .si-icon {
+        width: 24px;
+        height: 24px;
+        border-radius: 6px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .si-icon svg {
+        width: 13px;
+        height: 13px;
+    }
+
+    /* ── NO RESULTS ── */
+    .no-results {
+        display: none;
+        text-align: center;
+        padding: 3rem 1rem;
+        color: var(--muted);
+    }
+
+    .no-results svg {
+        margin: 0 auto 1rem;
+        opacity: .3;
+    }
+
+    .no-results p {
+        font-size: .9rem;
+    }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 640px) {
+        .page {
+            padding: 1rem;
+        }
+
+        .kbd {
+            display: none;
+        }
+
+        .cards-grid {
+            grid-template-columns: 1fr 1fr;
+        }
+
+        .topbar {
+            padding: 0 1rem;
+            gap: .75rem;
+        }
+    }
+
+    @media (max-width: 400px) {
+        .cards-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<!-- TOP BAR -->
+<header class="topbar">
+    <a href="#" class="topbar-brand" id="decharges_raccourcis_a_1">
+        <div class="brand-dot"></div>
+        Decharges
+    </a>
+    <span class="topbar-sep">/</span>
+    <span style="font-size:.85rem;color:var(--muted);font-weight:500;">Raccourcis</span>
+
+    <div class="search-wrap">
+        <span class="search-ico">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="11" cy="11" r="8" />
+                <line x1="21" y1="21" x2="16.65" y2="16.65" />
+            </svg>
+        </span>
+        <input id="searchInput" type="text" placeholder="Rechercher un raccourci…" autocomplete="off">
+        <span class="kbd">⌘K</span>
+    </div>
+</header>
+
+<!-- PAGE -->
+<div class="page">
+
+    <!-- TABS -->
+    <div class="tabs-bar" id="tabsBar">
+        <button class="tab-btn active" data-tab="all" id="decharges_raccourcis_button_2">
+            <span class="tab-dot" style="background:var(--muted)"></span> Tous
+        </button>
+        <button class="tab-btn" data-tab="bloc" id="decharges_raccourcis_button_3">
+            <span class="tab-dot tab-dot-blue"></span> Bloc Op.
+        </button>
+        <button class="tab-btn" data-tab="externe" id="decharges_raccourcis_button_4">
+            <span class="tab-dot tab-dot-green"></span> Externe
+        </button>
+        <button class="tab-btn" data-tab="internes" id="decharges_raccourcis_button_5">
+            <span class="tab-dot tab-dot-purple"></span> Internes
+        </button>
+        <button class="tab-btn" data-tab="kt" id="decharges_raccourcis_button_6">
+            <span class="tab-dot tab-dot-orange"></span> KT
+        </button>
+        <button class="tab-btn" data-tab="anes" id="decharges_raccourcis_button_8">
+            <span class="tab-dot tab-dot-blue"></span> Anesthésie
+        </button>
+        <button class="tab-btn" data-tab="services" id="decharges_raccourcis_button_7">
+            <span class="tab-dot tab-dot-slate"></span> Services
+        </button>
+    </div>
+
+    <!-- SECTION 1 : BLOC OP -->
+    <div class="section-group" data-section="bloc">
+        <div class="section-label">
+            <div class="si-icon t-blue">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
+                    stroke-linejoin="round">
+                    <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z" />
+                    <polyline points="14 2 14 8 20 8" />
+                </svg>
+            </div>
+            <span class="section-label-text">Location de Bloc</span>
+        </div>
+        <div class="cards-grid">
+
+            <a href="/operations_medecin_bloc/ENCAISSEMENT" id="shortcut-encaissement-bloc"
+                class="shortcut-card t-blue search-item" data-keywords="encaissement bloc medecin">
+                <div class="card-ico">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <rect x="2" y="4" width="20" height="16" rx="2" />
+                        <line x1="12" y1="8" x2="12" y2="16" />
+                        <line x1="8" y1="12" x2="16" y2="12" />
+                    </svg>
+                </div>
+                <div class="card-body">
+                    <div class="card-name">Encaissement</div>
+                    <div class="card-sub">Bloc opératoire</div>
+                </div>
+                <span class="card-chevron"><svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="5" y1="12" x2="19" y2="12" />
+                        <polyline points="12 5 19 12 12 19" />
+                    </svg></span>
+            </a>
+
+            <a href="/operations_medecin_bloc/DECHARGE" id="shortcut-decharge-bloc"
+                class="shortcut-card t-blue search-item" data-keywords="decharge medecin bloc">
+                <div class="card-ico">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                        <polyline points="14 2 14 8 20 8" />
+                        <line x1="16" y1="13" x2="8" y2="13" />
+                        <line x1="16" y1="17" x2="8" y2="17" />
+                    </svg>
+                </div>
+                <div class="card-body">
+                    <div class="card-name">Décharge</div>
+                    <div class="card-sub">Bloc opératoire</div>
+                </div>
+                <span class="card-chevron"><svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="5" y1="12" x2="19" y2="12" />
+                        <polyline points="12 5 19 12 12 19" />
+                    </svg></span>
+            </a>
+
+            <a href="/operations_medecin_bloc/COMPENSATION" id="shortcut-compensation-bloc"
+                class="shortcut-card t-blue search-item" data-keywords="compensation bloc">
+                <div class="card-ico">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <polyline points="23 4 23 10 17 10" />
+                        <polyline points="1 20 1 14 7 14" />
+                        <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" />
+                    </svg>
+                </div>
+                <div class="card-body">
+                    <div class="card-name">Compensation</div>
+                    <div class="card-sub">Ajustements financiers</div>
+                </div>
+                <span class="card-chevron"><svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="5" y1="12" x2="19" y2="12" />
+                        <polyline points="12 5 19 12 12 19" />
+                    </svg></span>
+            </a>
+
+        </div>
+    </div>
+
+    <!-- SECTION 2 : ACCOUCHEMENT EXTERNE -->
+    <div class="section-group" data-section="externe">
+        <div class="section-label">
+            <div class="si-icon t-green">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
+                    stroke-linejoin="round">
+                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                </svg>
+            </div>
+            <span class="section-label-text">Accouchement Externe</span>
+        </div>
+        <div class="cards-grid">
+
+            <a href="/operations_accouchement_externe/ENCAISSEMENT" id="shortcut-encaissement-externe"
+                class="shortcut-card t-green search-item" data-keywords="encaissement externe accouchement">
+                <div class="card-ico">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <path
+                            d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+                    </svg>
+                </div>
+                <div class="card-body">
+                    <div class="card-name">Encaissement</div>
+                    <div class="card-sub">Paiements naissances</div>
+                </div>
+                <span class="card-chevron"><svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="5" y1="12" x2="19" y2="12" />
+                        <polyline points="12 5 19 12 12 19" />
+                    </svg></span>
+            </a>
+
+            <a href="/operations_accouchement_externe/DECHARGE" id="shortcut-decharge-externe"
+                class="shortcut-card t-green search-item" data-keywords="decharge externe accouchement">
+                <div class="card-ico">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                        <polyline points="14 2 14 8 20 8" />
+                        <line x1="12" y1="18" x2="12" y2="12" />
+                        <line x1="9" y1="15" x2="15" y2="15" />
+                    </svg>
+                </div>
+                <div class="card-body">
+                    <div class="card-name">Décharge</div>
+                    <div class="card-sub">Responsabilités externes</div>
+                </div>
+                <span class="card-chevron"><svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="5" y1="12" x2="19" y2="12" />
+                        <polyline points="12 5 19 12 12 19" />
+                    </svg></span>
+            </a>
+
+            <a href="/operations_accouchement_externe/COMPENSATION" id="shortcut-compensation-externe"
+                class="shortcut-card t-green search-item" data-keywords="compensation externe">
+                <div class="card-ico">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <path d="M12 2v20M2 12h20" />
+                    </svg>
+                </div>
+                <div class="card-body">
+                    <div class="card-name">Compensation</div>
+                    <div class="card-sub">Régularisations externes</div>
+                </div>
+                <span class="card-chevron"><svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="5" y1="12" x2="19" y2="12" />
+                        <polyline points="12 5 19 12 12 19" />
+                    </svg></span>
+            </a>
+
+        </div>
+    </div>
+
+    <!-- SECTION 3 : INTERNES & GYNECO -->
+    <div class="section-group" data-section="internes">
+        <div class="section-label">
+            <div class="si-icon t-purple">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
+                    stroke-linejoin="round">
+                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+                    <circle cx="9" cy="7" r="4" />
+                    <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+                    <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+                </svg>
+            </div>
+            <span class="section-label-text">Internes &amp; Gynéco</span>
+        </div>
+        <div class="cards-grid">
+
+            <a href="/medecin-interne/decharges" id="shortcut-medecin-interne"
+                class="shortcut-card t-purple search-item" data-keywords="medecin interne decharges">
+                <div class="card-ico">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <path d="M22 12h-4l-3 9L9 3l-3 9H2" />
+                    </svg>
+                </div>
+                <div class="card-body">
+                    <div class="card-name">Médecin Interne</div>
+                    <div class="card-sub">Décharges internes</div>
+                </div>
+                <span class="card-chevron"><svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="5" y1="12" x2="19" y2="12" />
+                        <polyline points="12 5 19 12 12 19" />
+                    </svg></span>
+            </a>
+
+            <a href="/gyneco-interne/decharges" id="shortcut-gyneco-interne" class="shortcut-card t-purple search-item"
+                data-keywords="gyneco interne decharges">
+                <div class="card-ico">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="10" />
+                        <path d="M12 8v4l3 3" />
+                    </svg>
+                </div>
+                <div class="card-body">
+                    <div class="card-name">Gynéco Interne</div>
+                    <div class="card-sub">Suivi gynécologique</div>
+                </div>
+                <span class="card-chevron"><svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="5" y1="12" x2="19" y2="12" />
+                        <polyline points="12 5 19 12 12 19" />
+                    </svg></span>
+            </a>
+
+        </div>
+    </div>
+
+    <!-- SECTION 4 : Cathétérisme -->
+    <div class="section-group" data-section="kt">
+        <div class="section-label">
+            <div class="si-icon t-orange">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
+                    stroke-linejoin="round">
+                    <path
+                        d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z" />
+                </svg>
+            </div>
+            <span class="section-label-text">Cathétérisme</span>
+        </div>
+        <div class="cards-grid">
+
+            <a href="/kt_decharges" id="shortcut-kt" class="shortcut-card t-orange search-item"
+                data-keywords="kt kinesitherapie decharges">
+                <div class="card-ico">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                        <polyline points="14 2 14 8 20 8" />
+                        <line x1="16" y1="13" x2="8" y2="13" />
+                        <line x1="16" y1="17" x2="8" y2="17" />
+                    </svg>
+                </div>
+                <div class="card-body">
+                    <div class="card-name">Cathétérisme</div>
+                    <div class="card-sub">Service Cathétérisme</div>
+                </div>
+                <span class="card-chevron"><svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="5" y1="12" x2="19" y2="12" />
+                        <polyline points="12 5 19 12 12 19" />
+                    </svg></span>
+            </a>
+        </div>
+    </div>
+
+    <!-- SECTION 5 : ANESTHÉSIE -->
+    <div class="section-group" data-section="anes">
+        <div class="section-label">
+            <div class="si-icon t-blue">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
+                    stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10" />
+                    <path d="M12 8v4l3 3" />
+                </svg>
+            </div>
+            <span class="section-label-text">Anesthésie &amp; Réanimation</span>
+        </div>
+        <div class="cards-grid">
+            <a href="/anesthesie/honoraires/decharges" id="shortcut-anes-decharges"
+                class="shortcut-card t-blue search-item" data-keywords="anesthesie reanimation honoraires decharges">
+                <div class="card-ico">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                        <polyline points="14 2 14 8 20 8" />
+                        <line x1="16" y1="13" x2="8" y2="13" />
+                        <line x1="16" y1="17" x2="8" y2="17" />
+                    </svg>
+                </div>
+                <div class="card-body">
+                    <div class="card-name">Décharges Anesthésie</div>
+                    <div class="card-sub">Honoraires des médecins</div>
+                </div>
+                <span class="card-chevron"><svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="5" y1="12" x2="19" y2="12" />
+                        <polyline points="12 5 19 12 12 19" />
+                    </svg></span>
+            </a>
+        </div>
+    </div>
+
+    <!-- SECTION 6 : SERVICES & CAISSE -->
+    <div class="section-group" data-section="services">
+        <div class="section-label">
+            <div class="si-icon t-slate">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
+                    stroke-linejoin="round">
+                    <rect x="3" y="3" width="7" height="7" />
+                    <rect x="14" y="3" width="7" height="7" />
+                    <rect x="14" y="14" width="7" height="7" />
+                    <rect x="3" y="14" width="7" height="7" />
+                </svg>
+            </div>
+            <span class="section-label-text">Services &amp; Caisse</span>
+        </div>
+        <div class="cards-grid">
+
+            <a href="/decharges_r/decharges" id="shortcut-decharges-globales" class="shortcut-card t-slate search-item"
+                data-keywords="globales decharges vue ensemble">
+                <div class="card-ico">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <line x1="8" y1="6" x2="21" y2="6" />
+                        <line x1="8" y1="12" x2="21" y2="12" />
+                        <line x1="8" y1="18" x2="21" y2="18" />
+                        <line x1="3" y1="6" x2="3.01" y2="6" />
+                        <line x1="3" y1="12" x2="3.01" y2="12" />
+                        <line x1="3" y1="18" x2="3.01" y2="18" />
+                    </svg>
+                </div>
+                <div class="card-body">
+                    <div class="card-name">Décharges Globales</div>
+                    <div class="card-sub">Vue d'ensemble</div>
+                </div>
+                <span class="card-chevron"><svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="5" y1="12" x2="19" y2="12" />
+                        <polyline points="12 5 19 12 12 19" />
+                    </svg></span>
+            </a>
+        </div>
+    </div>
+
+    <!-- NO RESULTS -->
+    <div id="noResults" class="no-results">
+        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"
+            stroke-linecap="round" stroke-linejoin="round" display="block">
+            <circle cx="11" cy="11" r="8" />
+            <line x1="21" y1="21" x2="16.65" y2="16.65" />
+        </svg>
+        <p>Aucun raccourci ne correspond à <strong id="noResultsQuery" style="color:var(--text)"></strong></p>
+    </div>
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    const searchInput = document.getElementById('searchInput');
+    const allItems = document.querySelectorAll('.search-item');
+    const allSections = document.querySelectorAll('.section-group');
+    const noResults = document.getElementById('noResults');
+    const tabs = document.querySelectorAll('.tab-btn');
+    let activeTab = 'all';
+
+    // ── SEARCH ──
+    if (searchInput) {
+        searchInput.addEventListener('input', e => filter(e.target.value));
+    }
+
+    // ── KEYBOARD ──
+    document.addEventListener('keydown', e => {
+        if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+            e.preventDefault();
+            if (searchInput) searchInput.focus();
+        }
+        if (e.key === 'Escape') {
+            if (searchInput) searchInput.blur();
+        }
+    });
+
+    // ── TABS ──
+    if (tabs) {
+        tabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                tabs.forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+                activeTab = tab.dataset.tab;
+                if (searchInput) filter(searchInput.value);
+            });
+        });
+    }
+
+    function filter(query) {
+        const q = query.toLowerCase().trim();
+        let visible = 0;
+
+        allItems.forEach(item => {
+            const title = item.querySelector('.card-name').textContent.toLowerCase();
+            const sub = item.querySelector('.card-sub').textContent.toLowerCase();
+            const keywords = (item.getAttribute('data-keywords') || '').toLowerCase();
+            const section = item.closest('.section-group').dataset.section;
+
+            const matchSearch = !q || title.includes(q) || sub.includes(q) || keywords.includes(q);
+            const matchTab = activeTab === 'all' || section === activeTab;
+
+            if (matchSearch && matchTab) {
+                item.style.display = 'flex'; visible++;
+            } else {
+                item.style.display = 'none';
+            }
+        });
+
+        // Hide empty sections
+        allSections.forEach(sec => {
+            const visInSec = [...sec.querySelectorAll('.search-item')]
+                .filter(i => i.style.display !== 'none').length;
+            sec.classList.toggle('hidden', visInSec === 0);
+        });
+
+        // No results
+        if (visible === 0) {
+            if (noResults) {
+                noResults.style.display = 'block';
+                document.getElementById('noResultsQuery').textContent = `"${query}"`;
+            }
+        } else {
+            if (noResults) noResults.style.display = 'none';
+        }
+
+    }
+
+</script>
+{% endblock %}

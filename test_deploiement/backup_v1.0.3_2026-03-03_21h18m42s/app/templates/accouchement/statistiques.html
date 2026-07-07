@@ -1,0 +1,467 @@
+{% extends "layout.html" %}
+
+{% block style %}
+<style>
+    :root {
+        --pink: #ec4899;
+        --pink-dark: #db2777;
+        --pink-light: #fce7f3;
+        --success: #10b981;
+        --warning: #f59e0b;
+        --info: #3b82f6;
+        --dark: #1f2937;
+        --border: #e5e7eb;
+        --radius: 12px;
+        --shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+    }
+
+    body {
+        background: linear-gradient(135deg, #fdf2f8 0%, #fce7f3 100%);
+        min-height: 100vh;
+    }
+
+    .page-header {
+        background: linear-gradient(135deg, var(--pink), var(--pink-dark));
+        color: white;
+        padding: 1.5rem 2rem;
+        border-radius: var(--radius);
+        margin-bottom: 1.5rem;
+        box-shadow: var(--shadow);
+    }
+
+    .stat-card {
+        background: white;
+        border-radius: var(--radius);
+        padding: 1.5rem;
+        box-shadow: var(--shadow);
+        height: 100%;
+        transition: transform 0.2s;
+    }
+
+    .stat-card:hover {
+        transform: translateY(-4px);
+    }
+
+    .stat-card.pink {
+        border-left: 4px solid var(--pink);
+    }
+
+    .stat-card.success {
+        border-left: 4px solid var(--success);
+    }
+
+    .stat-card.info {
+        border-left: 4px solid var(--info);
+    }
+
+    .stat-card.warning {
+        border-left: 4px solid var(--warning);
+    }
+
+    .stat-icon {
+        width: 50px;
+        height: 50px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        color: white;
+    }
+
+    .stat-icon.pink {
+        background: linear-gradient(135deg, var(--pink), var(--pink-dark));
+    }
+
+    .stat-icon.success {
+        background: linear-gradient(135deg, var(--success), #059669);
+    }
+
+    .stat-icon.info {
+        background: linear-gradient(135deg, var(--info), #2563eb);
+    }
+
+    .stat-icon.warning {
+        background: linear-gradient(135deg, var(--warning), #d97706);
+    }
+
+    .stat-value {
+        font-size: 2rem;
+        font-weight: 700;
+        color: var(--dark);
+    }
+
+    .stat-label {
+        color: #6b7280;
+        font-size: 0.9rem;
+    }
+
+    .chart-card {
+        background: white;
+        border-radius: var(--radius);
+        padding: 1.5rem;
+        box-shadow: var(--shadow);
+        margin-bottom: 1.5rem;
+    }
+
+    .chart-card h5 {
+        color: var(--dark);
+        margin-bottom: 1rem;
+        font-weight: 600;
+    }
+
+    .table-card {
+        background: white;
+        border-radius: var(--radius);
+        box-shadow: var(--shadow);
+        overflow: hidden;
+    }
+
+    .table-modern {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    .table-modern thead {
+        background: linear-gradient(135deg, var(--pink), var(--pink-dark));
+    }
+
+    .table-modern thead th {
+        color: white;
+        font-weight: 600;
+        padding: 1rem;
+        font-size: 0.85rem;
+        text-transform: uppercase;
+    }
+
+    .table-modern tbody td {
+        padding: 1rem;
+        border-bottom: 1px solid var(--border);
+    }
+
+    .table-modern tbody tr:hover {
+        background: #fdf2f8;
+    }
+
+    .filter-card {
+        background: white;
+        border-radius: var(--radius);
+        padding: 1rem 1.5rem;
+        box-shadow: var(--shadow);
+        margin-bottom: 1.5rem;
+    }
+
+    .filter-card .form-control {
+        border: 2px solid var(--border);
+        border-radius: 8px;
+    }
+
+    .filter-card .form-control:focus {
+        border-color: var(--pink);
+        box-shadow: 0 0 0 3px rgba(236, 72, 153, 0.1);
+    }
+
+    .btn {
+        border-radius: 8px;
+        padding: 0.5rem 1rem;
+        font-weight: 600;
+    }
+
+    .btn-pink {
+        background: linear-gradient(135deg, var(--pink), var(--pink-dark));
+        color: white;
+        border: none;
+    }
+
+    .progress {
+        height: 8px;
+        border-radius: 4px;
+        background: #e5e7eb;
+    }
+
+    .progress-bar {
+        border-radius: 4px;
+    }
+
+    .progress-bar.pink {
+        background: var(--pink);
+    }
+
+    .progress-bar.success {
+        background: var(--success);
+    }
+
+    .badge-interne {
+        background: #d1fae5;
+        color: #065f46;
+        padding: 0.25rem 0.5rem;
+        border-radius: 50px;
+        font-size: 0.75rem;
+    }
+
+    .badge-externe {
+        background: #dbeafe;
+        color: #1e40af;
+        padding: 0.25rem 0.5rem;
+        border-radius: 50px;
+        font-size: 0.75rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="page-header">
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+            <div>
+                <h1><i class="fas fa-chart-bar me-2"></i>{{ title }}</h1>
+                <small class="opacity-75">Analyse des accouchements</small>
+            </div>
+            <a href="{{ url_for('accouchement_list') }}" class="btn btn-light btn-sm">
+                <i class="fas fa-arrow-left me-1"></i>Retour
+            </a>
+        </div>
+    </div>
+
+    <!-- Filtres de période -->
+    <div class="filter-card">
+        <form method="GET" class="row g-3 align-items-end">
+            <div class="col-md-3">
+                <label class="form-label small text-muted">Date début</label>
+                <input type="date" name="date_debut" class="form-control" value="{{ date_debut }}">
+            </div>
+            <div class="col-md-3">
+                <label class="form-label small text-muted">Date fin</label>
+                <input type="date" name="date_fin" class="form-control" value="{{ date_fin }}">
+            </div>
+            <div class="col-md-3">
+                <button type="submit" class="btn btn-pink"><i class="fas fa-filter me-1"></i>Appliquer</button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Statistiques globales -->
+    <div class="row g-4 mb-4">
+        <div class="col-md-3">
+            <div class="stat-card pink">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <div class="stat-value">{{ stats.total_accouchements or 0 }}</div>
+                        <div class="stat-label">Total accouchements</div>
+                    </div>
+                    <div class="stat-icon pink"><i class="fas fa-baby"></i></div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card success">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <div class="stat-value">{{ "{:,.0f}".format(stats.total_ca or 0).replace(",", " ") }}</div>
+                        <div class="stat-label">Chiffre d'affaires (DA)</div>
+                    </div>
+                    <div class="stat-icon success"><i class="fas fa-coins"></i></div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card info">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <div class="stat-value">{{ "{:,.0f}".format(stats.total_encaisse or 0).replace(",", " ") }}
+                        </div>
+                        <div class="stat-label">Total encaissé (DA)</div>
+                    </div>
+                    <div class="stat-icon info"><i class="fas fa-money-bill-wave"></i></div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card warning">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <div class="stat-value">{{ "{:,.0f}".format(stats.total_part_clinique or 0).replace(",", " ") }}
+                        </div>
+                        <div class="stat-label">Part clinique (DA)</div>
+                    </div>
+                    <div class="stat-icon warning"><i class="fas fa-hospital"></i></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <!-- Répartition par type -->
+        <div class="col-md-6">
+            <div class="chart-card">
+                <h5><i class="fas fa-chart-pie text-pink-500 me-2"></i>Répartition par type</h5>
+                <div class="row">
+                    <div class="col-6">
+                        <div class="text-center p-3">
+                            <div class="display-4 text-pink-500 fw-bold">{{ stats.voie_basse or 0 }}</div>
+                            <div class="text-muted">Voie basse</div>
+                            {% set pct_vb = ((stats.voie_basse or 0) / (stats.total_accouchements or 1) * 100)|round(1)
+                            %}
+                            <div class="progress mt-2">
+                                <div class="progress-bar pink" style="width: {{ pct_vb }}%"></div>
+                            </div>
+                            <small class="text-muted">{{ pct_vb }}%</small>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="text-center p-3">
+                            <div class="display-4 text-info fw-bold">{{ stats.cesariennes or 0 }}</div>
+                            <div class="text-muted">Césariennes</div>
+                            {% set pct_cs = ((stats.cesariennes or 0) / (stats.total_accouchements or 1) * 100)|round(1)
+                            %}
+                            <div class="progress mt-2">
+                                <div class="progress-bar bg-info" style="width: {{ pct_cs }}%"></div>
+                            </div>
+                            <small class="text-muted">{{ pct_cs }}%</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Répartition par tarification -->
+        <div class="col-md-6">
+            <div class="chart-card">
+                <h5><i class="fas fa-file-invoice-dollar text-success me-2"></i>Répartition par tarification</h5>
+                <div class="row">
+                    <div class="col-6">
+                        <div class="text-center p-3">
+                            <div class="display-4 text-success fw-bold">{{ stats.conventions or 0 }}</div>
+                            <div class="text-muted">Convention</div>
+                            {% set pct_conv = ((stats.conventions or 0) / (stats.total_accouchements or 1) *
+                            100)|round(1) %}
+                            <div class="progress mt-2">
+                                <div class="progress-bar success" style="width: {{ pct_conv }}%"></div>
+                            </div>
+                            <small class="text-muted">{{ pct_conv }}%</small>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="text-center p-3">
+                            <div class="display-4 text-warning fw-bold">{{ stats.payants or 0 }}</div>
+                            <div class="text-muted">Payant</div>
+                            {% set pct_pay = ((stats.payants or 0) / (stats.total_accouchements or 1) * 100)|round(1) %}
+                            <div class="progress mt-2">
+                                <div class="progress-bar bg-warning" style="width: {{ pct_pay }}%"></div>
+                            </div>
+                            <small class="text-muted">{{ pct_pay }}%</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistiques par gynécologue -->
+    <div class="table-card mt-4">
+        <div class="p-3 border-bottom">
+            <h5 class="mb-0"><i class="fas fa-user-md text-pink-500 me-2"></i>Statistiques par gynécologue</h5>
+        </div>
+        <div class="table-responsive">
+            <table class="table-modern">
+                <thead>
+                    <tr>
+                        <th>Gynécologue</th>
+                        <th>Type</th>
+                        <th class="text-center">Accouchements</th>
+                        <th class="text-end">Honoraires totaux</th>
+                        <th>Part</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for g in stats_gyneco %}
+                    <tr>
+                        <td><strong>{{ g.gyneco }}</strong></td>
+                        <td>
+                            {% if g.est_interne %}
+                            <span class="badge-interne">Interne</span>
+                            {% else %}
+                            <span class="badge-externe">Externe</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-center"><span class="badge bg-primary">{{ g.nb_accouchements }}</span></td>
+                        <td class="text-end">
+                            <strong>{{ "{:,.2f}".format(g.total_honoraires or 0).replace(",", " ") }} DA</strong>
+                        </td>
+                        <td style="width: 150px;">
+                            {% set max_honoraires = stats_gyneco|map(attribute='total_honoraires')|max %}
+                            {% set pct = ((g.total_honoraires or 0) / (max_honoraires or 1) * 100)|round(0) %}
+                            <div class="progress">
+                                <div class="progress-bar pink" style="width: {{ pct }}%"></div>
+                            </div>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="5" class="text-center text-muted py-4">Aucune donnée</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Évolution mensuelle -->
+    {% if evolution %}
+    <div class="chart-card mt-4">
+        <h5><i class="fas fa-chart-line text-info me-2"></i>Évolution mensuelle</h5>
+        <div class="table-responsive">
+            <table class="table table-sm">
+                <thead>
+                    <tr>
+                        <th>Mois</th>
+                        <th class="text-center">Nombre</th>
+                        <th class="text-end">CA</th>
+                        <th>Évolution</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% set max_ca = evolution|map(attribute='ca')|max %}
+                    {% for e in evolution %}
+                    <tr>
+                        <td>{{ e.mois }}</td>
+                        <td class="text-center"><span class="badge bg-secondary">{{ e.nb }}</span></td>
+                        <td class="text-end"><strong>{{ "{:,.0f}".format(e.ca or 0).replace(",", " ") }}
+                                DA</strong></td>
+                        <td style="width: 200px;">
+                            {% set pct = ((e.ca or 0) / (max_ca or 1) * 100)|round(0) %}
+                            <div class="progress">
+                                <div class="progress-bar bg-info" style="width: {{ pct }}%"></div>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Résumé financier -->
+    <div class="row g-4 mt-2">
+        <div class="col-md-6">
+            <div class="stat-card" style="border-left: 4px solid var(--success);">
+                <h6 class="text-success mb-3"><i class="fas fa-hospital me-2"></i>Part Clinique</h6>
+                <div class="display-5 fw-bold">{{ "{:,.2f}".format(stats.total_part_clinique or 0).replace(",", " ") }}
+                    DA
+                </div>
+                <p class="text-muted mb-0 mt-2">Total des revenus clinique sur la période</p>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="stat-card" style="border-left: 4px solid var(--info);">
+                <h6 class="text-info mb-3"><i class="fas fa-user-md me-2"></i>Part Gynécologues</h6>
+                <div class="display-5 fw-bold">{{ "{:,.2f}".format(stats.total_part_gyneco or 0).replace(",", " ") }}
+                    DA
+                </div>
+                <p class="text-muted mb-0 mt-2">Total des honoraires gynécologues sur la période</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

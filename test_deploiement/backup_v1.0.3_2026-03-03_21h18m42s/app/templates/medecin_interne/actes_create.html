@@ -1,0 +1,3318 @@
+{% extends "layout.html" %} {% import 'his/macros/his_direct_selector.html' as
+his_selector %} {% block style %}
+<style>
+  /* ==================== Variables Modernes ==================== */
+  :root {
+    --primary: #6366f1;
+    --primary-dark: #4f46e5;
+    --primary-light: #818cf8;
+    --success: #10b981;
+    --success-dark: #059669;
+    --warning: #f59e0b;
+    --danger: #ef4444;
+    --info: #3b82f6;
+    --dark: #1f2937;
+    --light: #f9fafb;
+    --border: #e5e7eb;
+    --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+    --shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+    --shadow-lg: 0 20px 25px -5px rgb(0 0 0 / 0.1);
+    --radius: 12px;
+    --radius-lg: 16px;
+    --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  /* ==================== Bouton Historique Flottant ==================== */
+  .btn-floating-history {
+    position: fixed;
+    right: 30px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--info), #2563eb);
+    color: white;
+    border: none;
+    box-shadow: 0 8px 16px rgba(59, 130, 246, 0.3),
+      0 0 0 0 rgba(59, 130, 246, 0.5);
+    cursor: pointer;
+    z-index: 999;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    transition: var(--transition);
+    overflow: hidden;
+    opacity: 0;
+  }
+
+  .btn-floating-history:not(:disabled) {
+    opacity: 1;
+    pointer-events: auto;
+    animation: floatPulse 2s ease-in-out infinite;
+  }
+
+  .btn-floating-history i {
+    font-size: 1.5rem;
+    transition: var(--transition);
+  }
+
+  .btn-floating-history .btn-floating-text {
+    font-size: 0.7rem;
+    font-weight: 600;
+    margin-top: 2px;
+    opacity: 0;
+    max-height: 0;
+    transition: var(--transition);
+  }
+
+  .btn-floating-history:hover {
+    width: 70px;
+    height: 70px;
+    box-shadow: 0 12px 24px rgba(59, 130, 246, 0.4),
+      0 0 0 8px rgba(59, 130, 246, 0.2);
+    transform: translateY(-50%) scale(1.05);
+  }
+
+  .btn-floating-history:hover i {
+    transform: scale(1.1) rotate(15deg);
+  }
+
+  .btn-floating-history:hover .btn-floating-text {
+    opacity: 1;
+    max-height: 20px;
+  }
+
+  .btn-floating-history:active {
+    transform: translateY(-50%) scale(0.95);
+  }
+
+  .btn-floating-history:disabled {
+    background: linear-gradient(135deg, #9ca3af, #6b7280);
+    cursor: not-allowed;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  }
+
+  @keyframes floatPulse {
+
+    0%,
+    100% {
+      box-shadow: 0 8px 16px rgba(59, 130, 246, 0.3),
+        0 0 0 0 rgba(59, 130, 246, 0.5);
+    }
+
+    50% {
+      box-shadow: 0 8px 16px rgba(59, 130, 246, 0.3),
+        0 0 0 12px rgba(59, 130, 246, 0);
+    }
+  }
+
+  /* Badge de notification */
+  .btn-floating-history::after {
+    content: attr(data-count);
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    width: 24px;
+    height: 24px;
+    background: var(--danger);
+    color: white;
+    border-radius: 50%;
+    font-size: 0.7rem;
+    font-weight: 700;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid white;
+    animation: badgePop 0.3s ease;
+  }
+
+  .btn-floating-history[data-count]:not([data-count=""]):not([data-count="0"])::after {
+    display: flex;
+  }
+
+  @keyframes badgePop {
+    0% {
+      transform: scale(0);
+    }
+
+    50% {
+      transform: scale(1.2);
+    }
+
+    100% {
+      transform: scale(1);
+    }
+  }
+
+  /* Responsive */
+  @media (max-width: 768px) {
+    .btn-floating-history {
+      right: 15px;
+      width: 50px;
+      height: 50px;
+    }
+
+    .btn-floating-history:hover {
+      width: 50px;
+      height: 50px;
+    }
+
+    .btn-floating-history i {
+      font-size: 1.2rem;
+    }
+
+    .btn-floating-history .btn-floating-text {
+      display: none;
+    }
+  }
+
+  /* ==================== Reset & Base ==================== */
+  body {
+    font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI",
+      sans-serif;
+    background: linear-gradient(135deg, #f5f7fa 0%, #e4e9f2 100%);
+    color: var(--dark);
+  }
+
+  /* ==================== Modal Personnalisé ==================== */
+  .custom-modal .modal-content {
+    border: none;
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-lg);
+    overflow: hidden;
+  }
+
+  .custom-modal .modal-header {
+    border-bottom: 2px solid var(--border);
+    padding: 1.5rem;
+    background: linear-gradient(135deg,
+        rgba(99, 102, 241, 0.05),
+        rgba(129, 140, 248, 0.05));
+  }
+
+  .custom-modal .modal-header.modal-danger {
+    background: linear-gradient(135deg,
+        rgba(239, 68, 68, 0.1),
+        rgba(220, 38, 38, 0.05));
+    border-bottom-color: var(--danger);
+  }
+
+  .custom-modal .modal-header.modal-warning {
+    background: linear-gradient(135deg,
+        rgba(245, 158, 11, 0.1),
+        rgba(217, 119, 6, 0.05));
+    border-bottom-color: var(--warning);
+  }
+
+  .custom-modal .modal-header.modal-success {
+    background: linear-gradient(135deg,
+        rgba(16, 185, 129, 0.1),
+        rgba(5, 150, 105, 0.05));
+    border-bottom-color: var(--success);
+  }
+
+  .custom-modal .modal-title {
+    font-weight: 700;
+    font-size: 1.25rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+
+  .custom-modal .modal-title i {
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 10px;
+    font-size: 1.25rem;
+  }
+
+  .custom-modal .modal-title.text-danger i {
+    background: linear-gradient(135deg, var(--danger), #dc2626);
+    color: white;
+  }
+
+  .custom-modal .modal-title.text-warning i {
+    background: linear-gradient(135deg, var(--warning), #d97706);
+    color: white;
+  }
+
+  .custom-modal .modal-title.text-success i {
+    background: linear-gradient(135deg, var(--success), var(--success-dark));
+    color: white;
+  }
+
+  .custom-modal .modal-title.text-info i {
+    background: linear-gradient(135deg, var(--info), #2563eb);
+    color: white;
+  }
+
+  .custom-modal .modal-body {
+    padding: 2rem;
+    font-size: 1rem;
+    line-height: 1.6;
+  }
+
+  .custom-modal .modal-body ul {
+    margin-top: 1rem;
+    padding-left: 1.5rem;
+  }
+
+  .custom-modal .modal-body ul li {
+    margin-bottom: 0.5rem;
+    color: var(--dark);
+  }
+
+  .custom-modal .modal-footer {
+    border-top: 2px solid var(--border);
+    padding: 1rem 1.5rem;
+    background: var(--light);
+  }
+
+  .custom-modal .btn-close {
+    background-size: 1.2rem;
+  }
+
+  .custom-modal .modal-footer .btn {
+    min-width: 100px;
+  }
+
+  /* Animation pour le modal */
+  .custom-modal.fade .modal-dialog {
+    transform: scale(0.9);
+    transition: transform 0.3s ease-out;
+  }
+
+  .custom-modal.show .modal-dialog {
+    transform: scale(1);
+  }
+
+  /* ==================== Stepper Header ==================== */
+  .wizard-container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 2rem 1rem;
+  }
+
+  .stepper-wrapper {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 3rem;
+    position: relative;
+    background: white;
+    padding: 2rem;
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow);
+  }
+
+  .stepper-wrapper::before {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 10%;
+    right: 10%;
+    height: 3px;
+    background: var(--border);
+    transform: translateY(-50%);
+    z-index: 0;
+  }
+
+  .stepper-item {
+    position: relative;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    z-index: 1;
+  }
+
+  .stepper-circle {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background: white;
+    border: 3px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #9ca3af;
+    transition: var(--transition);
+    margin-bottom: 0.75rem;
+  }
+
+  .stepper-item.active .stepper-circle {
+    background: var(--primary);
+    border-color: var(--primary);
+    color: white;
+    box-shadow: 0 0 0 8px rgba(99, 102, 241, 0.1);
+    transform: scale(1.1);
+  }
+
+  .stepper-item.completed .stepper-circle {
+    background: var(--success);
+    border-color: var(--success);
+    color: white;
+  }
+
+  .stepper-label {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #9ca3af;
+    text-align: center;
+    transition: var(--transition);
+  }
+
+  .stepper-item.active .stepper-label {
+    color: var(--primary);
+    font-size: 0.95rem;
+  }
+
+  .stepper-item.completed .stepper-label {
+    color: var(--success);
+  }
+
+  /* ==================== Step Content ==================== */
+  .step-content {
+    display: none;
+    animation: fadeInUp 0.4s ease;
+  }
+
+  .step-content.active {
+    display: block;
+  }
+
+  @keyframes fadeInUp {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  /* ==================== MODE DE CALCUL - STYLE AMÉLIORÉ ==================== */
+  .mode-calcul-container {
+    background: white;
+    border-radius: var(--radius-lg);
+    padding: 2rem;
+    box-shadow: var(--shadow);
+    margin-bottom: 2rem;
+  }
+
+  .mode-calcul-header {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .mode-calcul-header i {
+    width: 50px;
+    height: 50px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, var(--primary), var(--primary-light));
+    color: white;
+    border-radius: 12px;
+    font-size: 1.5rem;
+  }
+
+  .mode-calcul-header h3 {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--dark);
+    margin: 0;
+  }
+
+  .mode-calcul-info {
+    background: linear-gradient(135deg,
+        rgba(59, 130, 246, 0.08),
+        rgba(99, 102, 241, 0.05));
+    border-left: 4px solid var(--info);
+    border-radius: var(--radius);
+    padding: 1rem 1.25rem;
+    margin-bottom: 2rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+
+  .mode-calcul-info i {
+    color: var(--info);
+    font-size: 1.25rem;
+  }
+
+  .mode-calcul-info p {
+    margin: 0;
+    font-size: 0.9rem;
+    color: #1e40af;
+    font-weight: 500;
+  }
+
+  .mode-selection-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 2rem;
+    margin-bottom: 2rem;
+  }
+
+  .mode-card {
+    position: relative;
+    background: white;
+    border: 3px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 2rem;
+    cursor: pointer;
+    transition: var(--transition);
+    overflow: hidden;
+    min-height: 240px;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .mode-card::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 6px;
+    background: linear-gradient(90deg, var(--primary), var(--primary-light));
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform 0.3s ease;
+  }
+
+  .mode-card:hover {
+    border-color: var(--primary-light);
+    box-shadow: 0 8px 24px rgba(99, 102, 241, 0.15);
+    transform: translateY(-4px);
+  }
+
+  .mode-card:hover::before {
+    transform: scaleX(1);
+  }
+
+  .mode-card.selected {
+    border-color: var(--primary);
+    background: linear-gradient(135deg,
+        rgba(99, 102, 241, 0.05),
+        rgba(129, 140, 248, 0.03));
+    box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1),
+      0 8px 24px rgba(99, 102, 241, 0.2);
+  }
+
+  .mode-card.selected::before {
+    transform: scaleX(1);
+    height: 8px;
+  }
+
+  /* Icône du mode */
+  .mode-icon-wrapper {
+    width: 70px;
+    height: 70px;
+    background: linear-gradient(135deg, #f3f4f6, #e5e7eb);
+    border-radius: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 1.25rem;
+    transition: var(--transition);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .mode-icon-wrapper::after {
+    content: "";
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, var(--primary), var(--primary-light));
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+
+  .mode-card.selected .mode-icon-wrapper::after,
+  .mode-card:hover .mode-icon-wrapper::after {
+    opacity: 1;
+  }
+
+  .mode-icon-wrapper i {
+    font-size: 2rem;
+    color: #6b7280;
+    transition: var(--transition);
+    position: relative;
+    z-index: 1;
+  }
+
+  .mode-card.selected .mode-icon-wrapper i,
+  .mode-card:hover .mode-icon-wrapper i {
+    color: white;
+    transform: scale(1.1);
+  }
+
+  /* Titre et description */
+  .mode-title {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--dark);
+    margin-bottom: 0.75rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .mode-card.selected .mode-title {
+    color: var(--primary);
+  }
+
+  .mode-description {
+    font-size: 0.9rem;
+    color: #6b7280;
+    line-height: 1.6;
+    flex-grow: 1;
+    margin-bottom: 1rem;
+  }
+
+  .mode-description strong {
+    color: var(--dark);
+    font-weight: 600;
+  }
+
+  /* Badge de sélection */
+  .mode-check {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    border: 2px solid var(--border);
+    background: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: var(--transition);
+  }
+
+  .mode-check i {
+    font-size: 1rem;
+    color: transparent;
+    transition: var(--transition);
+  }
+
+  .mode-card.selected .mode-check {
+    background: linear-gradient(135deg, var(--success), var(--success-dark));
+    border-color: var(--success);
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+    animation: checkPop 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+  }
+
+  .mode-card.selected .mode-check i {
+    color: white;
+  }
+
+  @keyframes checkPop {
+    0% {
+      transform: scale(0) rotate(0deg);
+    }
+
+    50% {
+      transform: scale(1.2) rotate(180deg);
+    }
+
+    100% {
+      transform: scale(1) rotate(360deg);
+    }
+  }
+
+  /* Tags informatifs */
+  .mode-tags {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    margin-top: auto;
+  }
+
+  .mode-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.35rem 0.75rem;
+    background: #f3f4f6;
+    color: #4b5563;
+    border-radius: 50px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    transition: var(--transition);
+  }
+
+  .mode-tag i {
+    font-size: 0.7rem;
+  }
+
+  .mode-card.selected .mode-tag {
+    background: rgba(99, 102, 241, 0.1);
+    color: var(--primary);
+  }
+
+  /* Animation d'entrée */
+  @keyframes modeCardSlideIn {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .mode-card {
+    animation: modeCardSlideIn 0.5s ease forwards;
+  }
+
+  .mode-card:nth-child(1) {
+    animation-delay: 0.1s;
+  }
+
+  .mode-card:nth-child(2) {
+    animation-delay: 0.2s;
+  }
+
+  /* Input radio caché */
+  .mode-card input[type="radio"] {
+    position: absolute;
+    opacity: 0;
+  }
+
+  /* Responsive */
+  @media (max-width: 768px) {
+    .mode-selection-grid {
+      grid-template-columns: 1fr;
+      gap: 1.5rem;
+    }
+
+    .mode-card {
+      min-height: auto;
+    }
+
+    .mode-icon-wrapper {
+      width: 60px;
+      height: 60px;
+    }
+
+    .mode-icon-wrapper i {
+      font-size: 1.75rem;
+    }
+  }
+
+  /* ==================== Cards Modernes ==================== */
+  .modern-card {
+    background: white;
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow);
+    padding: 2rem;
+    margin-bottom: 1.5rem;
+    transition: var(--transition);
+    border: 1px solid var(--border);
+  }
+
+  .modern-card:hover {
+    box-shadow: var(--shadow-lg);
+    transform: translateY(-2px);
+  }
+
+  .card-title {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--dark);
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+
+  .card-title i {
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, var(--primary), var(--primary-light));
+    color: white;
+    border-radius: 10px;
+    font-size: 1.25rem;
+  }
+
+  /* ==================== Form Styling ==================== */
+  .form-label {
+    font-weight: 600;
+    color: var(--dark);
+    margin-bottom: 0.5rem;
+    font-size: 0.875rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .form-control,
+  .form-select {
+    border: 2px solid var(--border);
+    border-radius: var(--radius);
+    padding: 0.75rem 1rem;
+    transition: var(--transition);
+    font-size: 0.95rem;
+    background: white;
+  }
+
+  .form-control:focus,
+  .form-select:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
+    outline: none;
+  }
+
+  .form-control:hover,
+  .form-select:hover {
+    border-color: var(--primary-light);
+  }
+
+  /* ==================== Selection Cards ==================== */
+  .selection-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 1.5rem;
+    margin-top: 1.5rem;
+  }
+
+  .selection-card {
+    position: relative;
+    background: white;
+    border: 2px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 1.5rem;
+    cursor: pointer;
+    transition: var(--transition);
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+  }
+
+  .selection-card:hover {
+    border-color: var(--primary);
+    box-shadow: var(--shadow-lg);
+    transform: translateY(-4px);
+  }
+
+  .selection-card.selected {
+    border-color: var(--primary);
+    background: linear-gradient(135deg,
+        rgba(99, 102, 241, 0.05),
+        rgba(129, 140, 248, 0.05));
+    box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
+  }
+
+  .selection-card input[type="radio"] {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    width: 24px;
+    height: 24px;
+    accent-color: var(--primary);
+  }
+
+  .selection-card-icon {
+    width: 60px;
+    height: 60px;
+    background: linear-gradient(135deg, var(--primary), var(--primary-light));
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 1rem;
+  }
+
+  .selection-card-icon i {
+    font-size: 2rem;
+    color: white;
+  }
+
+  .selection-card-title {
+    font-size: 1.125rem;
+    font-weight: 700;
+    color: var(--dark);
+    margin-bottom: 0.5rem;
+  }
+
+  .selection-card-subtitle {
+    font-size: 0.875rem;
+    color: #6b7280;
+    margin-bottom: 1rem;
+    flex-grow: 1;
+  }
+
+  .selection-card-price {
+    display: inline-block;
+    background: linear-gradient(135deg, var(--success), var(--success-dark));
+    color: white;
+    padding: 0.5rem 1.25rem;
+    border-radius: 50px;
+    font-weight: 700;
+    font-size: 1.125rem;
+  }
+
+  /* ==================== Tables Modernes ==================== */
+  .modern-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    margin-top: 1rem;
+  }
+
+  .modern-table thead {
+    background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+  }
+
+  .modern-table thead th {
+    color: white;
+    font-weight: 600;
+    padding: 1rem;
+    text-align: left;
+    font-size: 0.875rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .modern-table thead th:first-child {
+    border-radius: var(--radius) 0 0 0;
+  }
+
+  .modern-table thead th:last-child {
+    border-radius: 0 var(--radius) 0 0;
+  }
+
+  .modern-table tbody tr {
+    background: white;
+    transition: var(--transition);
+  }
+
+  .modern-table tbody tr:hover {
+    background: #f9fafb;
+    transform: scale(1.01);
+  }
+
+  .modern-table tbody td {
+    padding: 1rem;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .modern-table tbody tr:last-child td:first-child {
+    border-radius: 0 0 0 var(--radius);
+  }
+
+  .modern-table tbody tr:last-child td:last-child {
+    border-radius: 0 0 var(--radius) 0;
+  }
+
+  /* ==================== Product/Act Row ==================== */
+  .product-row,
+  .act-row {
+    background: white;
+    border: 2px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1rem;
+    margin-bottom: 1rem;
+    transition: var(--transition);
+  }
+
+  .product-row:hover,
+  .act-row:hover {
+    border-color: var(--primary);
+    box-shadow: var(--shadow);
+  }
+
+  /* ==================== Buttons Modernes ==================== */
+  .btn {
+    border: none;
+    border-radius: var(--radius);
+    padding: 0.875rem 2rem;
+    font-weight: 600;
+    font-size: 0.95rem;
+    transition: var(--transition);
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    cursor: pointer;
+    text-decoration: none;
+  }
+
+  .btn:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-lg);
+  }
+
+  .btn:active {
+    transform: translateY(0);
+  }
+
+  .btn-primary {
+    background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+    color: white;
+  }
+
+  .btn-primary:hover {
+    background: linear-gradient(135deg, var(--primary-dark), var(--primary));
+  }
+
+  .btn-success {
+    background: linear-gradient(135deg, var(--success), var(--success-dark));
+    color: white;
+  }
+
+  .btn-outline-primary {
+    background: transparent;
+    border: 2px solid var(--primary);
+    color: var(--primary);
+  }
+
+  .btn-outline-primary:hover {
+    background: var(--primary);
+    color: white;
+  }
+
+  .btn-secondary {
+    background: #6b7280;
+    color: white;
+  }
+
+  .btn-danger {
+    background: var(--danger);
+    color: white;
+  }
+
+  .btn-lg {
+    padding: 1.125rem 2.5rem;
+    font-size: 1.05rem;
+  }
+
+  /* ==================== Navigation Buttons ==================== */
+  .wizard-nav {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 2rem;
+    padding-top: 2rem;
+    border-top: 2px solid var(--border);
+  }
+
+  /* Boutons de navigation flottants */
+  .floating-nav-container {
+    position: fixed;
+    bottom: 30px;
+    right: 30px;
+    display: flex;
+    justify-content: center;
+    z-index: 1000;
+  }
+
+  .floating-nav {
+    background: white;
+    padding: 1rem 2rem;
+    border-radius: var(--radius-lg);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15), 0 0 0 1px rgba(0, 0, 0, 0.05);
+    display: flex;
+    gap: 1rem;
+    pointer-events: auto;
+    border: 2px solid var(--pink-light);
+    backdrop-filter: blur(10px);
+    animation: floatIn 0.5s ease;
+  }
+
+  @keyframes floatIn {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .floating-nav .btn {
+    min-width: 140px;
+    padding: 0.875rem 1.5rem;
+    font-weight: 600;
+  }
+
+  /* Cacher la navigation originale sur les grands écrans */
+  @media (min-width: 769px) {
+    .wizard-nav:not(.floating-nav) {
+      display: none;
+    }
+  }
+
+  /* Sur mobile, afficher la navigation originale et cacher la flottante */
+  @media (max-width: 768px) {
+    .floating-nav-container {
+      display: none;
+    }
+
+    .wizard-nav:not(.floating-nav) {
+      display: flex;
+    }
+  }
+
+  /* ==================== Summary Panel ==================== */
+  .summary-panel {
+    position: sticky;
+    top: 2rem;
+    background: white;
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-lg);
+    padding: 2rem;
+    border: 2px solid var(--success);
+  }
+
+  .summary-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--dark);
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+
+  .summary-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.75rem 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 0.95rem;
+  }
+
+  .summary-row:last-child {
+    border-bottom: none;
+  }
+
+  .summary-total {
+    background: linear-gradient(135deg,
+        rgba(16, 185, 129, 0.1),
+        rgba(5, 150, 105, 0.1));
+    padding: 1.5rem;
+    border-radius: var(--radius);
+    margin-top: 1rem;
+  }
+
+  .summary-total .summary-row {
+    border: none;
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--success);
+  }
+
+  .nuit-preop-check:disabled+label {
+    color: #9ca3af;
+    cursor: not-allowed;
+  }
+
+  .nuit-preop-check:checked+label {
+    color: var(--success);
+    font-weight: 600;
+  }
+
+  .nuit-preop-check:checked+label .badge {
+    background: var(--success) !important;
+    color: white !important;
+  }
+
+  /* ==================== Consommables Médecin - Style amélioré ==================== */
+  .consommable-medecin-row {
+    background: linear-gradient(135deg,
+        rgba(16, 185, 129, 0.08),
+        rgba(5, 150, 105, 0.05));
+    border: 2px solid var(--success);
+    border-left: 5px solid var(--success);
+    border-radius: var(--radius);
+    padding: 1.25rem;
+    margin-bottom: 1rem;
+    transition: var(--transition);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .consommable-medecin-row::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg,
+        rgba(16, 185, 129, 0.1) 0%,
+        rgba(5, 150, 105, 0.05) 50%,
+        transparent 100%);
+
+    z-index: 0;
+  }
+
+  .consommable-medecin-row>* {
+    position: relative;
+    z-index: 1;
+  }
+
+  .consommable-medecin-row:hover {
+    border-color: var(--success-dark);
+    box-shadow: 0 8px 20px rgba(16, 185, 129, 0.25);
+    transform: translateY(-2px);
+  }
+
+  .consommable-medecin-row .form-control {
+    border: 2px solid rgba(16, 185, 129, 0.3);
+    background: white;
+  }
+
+  .consommable-medecin-row .form-control:focus {
+    border-color: var(--success);
+    box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.15);
+  }
+
+  .consommable-medecin-badge {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: linear-gradient(135deg, var(--success), var(--success-dark));
+    color: white;
+    padding: 0.35rem 0.85rem;
+    border-radius: 50px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    z-index: 2;
+    box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
+  }
+
+  /* Style pour le titre de la section consommables médecin */
+  .modern-card.consommable-medecin-card {
+    border: 3px solid var(--success);
+    background: linear-gradient(135deg,
+        rgba(16, 185, 129, 0.03),
+        rgba(5, 150, 105, 0.02));
+  }
+
+  .modern-card.consommable-medecin-card .card-title i {
+    background: linear-gradient(135deg, var(--success), var(--success-dark));
+  }
+
+  /* Animation pour les consommables médecin */
+  @keyframes slideInSuccess {
+    from {
+      opacity: 0;
+      transform: translateX(-20px);
+    }
+
+    to {
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
+
+  .consommable-medecin-row {
+    animation: slideInSuccess 0.4s ease;
+  }
+
+  /* Badge "Part Médecin" dans le résumé */
+  .summary-consommable-medecin {
+    background: linear-gradient(135deg,
+        rgba(16, 185, 129, 0.15),
+        rgba(5, 150, 105, 0.1));
+    border-left: 4px solid var(--success);
+    border-radius: var(--radius);
+    padding: 0.75rem 0;
+    margin-top: 0.5rem;
+  }
+
+  .summary-consommable-medecin .summary-row {
+    border-bottom: none;
+  }
+
+  /* Style pour le bouton d'ajout */
+  .btn-outline-success {
+    background: transparent;
+    border: 2px solid var(--success);
+    color: var(--success);
+    font-weight: 600;
+  }
+
+  .btn-outline-success:hover {
+    background: var(--success);
+    color: white;
+    border-color: var(--success);
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+  }
+
+  .btn-outline-success i {
+    transition: transform 0.3s ease;
+  }
+
+  .btn-outline-success:hover i {
+    transform: rotate(90deg);
+  }
+
+  /* ==================== Badges ==================== */
+  .badge {
+    display: inline-block;
+    padding: 0.375rem 0.75rem;
+    border-radius: 50px;
+    font-size: 0.875rem;
+    font-weight: 600;
+  }
+
+  .badge-info {
+    background: #dbeafe;
+    color: #1e40af;
+  }
+
+  .badge-success {
+    background: #d1fae5;
+    color: #065f46;
+  }
+
+  /* ==================== Choices.js Styling ==================== */
+  .choices {
+    margin-bottom: 0;
+  }
+
+  .choices__inner {
+    border: 2px solid var(--border) !important;
+    border-radius: var(--radius) !important;
+    padding: 0.65rem 1rem !important;
+    min-height: 52px !important;
+    background: white !important;
+    transition: var(--transition) !important;
+  }
+
+  .choices__inner:hover {
+    border-color: var(--primary-light) !important;
+  }
+
+  .choices.is-focused .choices__inner {
+    border-color: var(--primary) !important;
+    box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1) !important;
+  }
+
+  .choices__list--dropdown {
+    border: 2px solid var(--primary) !important;
+    border-radius: var(--radius) !important;
+    box-shadow: var(--shadow-lg) !important;
+    margin-top: 8px !important;
+  }
+
+  .choices__list--dropdown .choices__item--selectable {
+    padding: 1rem !important;
+    transition: var(--transition) !important;
+  }
+
+  .choices__list--dropdown .choices__item--selectable:hover {
+    background: rgba(99, 102, 241, 0.1) !important;
+  }
+
+  .choices__list--dropdown .choices__item--selectable.is-highlighted {
+    background: var(--primary) !important;
+    color: white !important;
+  }
+
+  /* ==================== Responsive ==================== */
+  @media (max-width: 768px) {
+    .stepper-wrapper {
+      flex-wrap: wrap;
+    }
+
+    .stepper-circle {
+      width: 50px;
+      height: 50px;
+      font-size: 1.25rem;
+    }
+
+    .selection-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .wizard-nav {
+      flex-direction: column;
+      gap: 1rem;
+    }
+  }
+
+  /* ==================== Animations ==================== */
+  @keyframes pulse {
+
+    0%,
+    100% {
+      opacity: 1;
+    }
+
+    50% {
+      opacity: 0.5;
+    }
+  }
+
+  .loading {
+    animation: pulse 1.5s infinite;
+  }
+
+  /* ==================== Input Groups ==================== */
+  .input-group {
+    display: flex;
+    border-radius: var(--radius);
+    overflow: hidden;
+    box-shadow: var(--shadow-sm);
+  }
+
+  .input-group-text {
+    background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+    color: white;
+    border: none;
+    padding: 0.75rem 1rem;
+    font-weight: 600;
+  }
+
+  .input-group .form-control {
+    border-radius: 0;
+  }
+
+  /* ==================== Empty State ==================== */
+  .empty-state {
+    text-align: center;
+    padding: 3rem 2rem;
+  }
+
+  .empty-state i {
+    font-size: 4rem;
+    color: var(--primary);
+    margin-bottom: 1rem;
+  }
+
+  .empty-state p {
+    color: #6b7280;
+    font-size: 1rem;
+  }
+
+  .exploration-row .form-control::placeholder {
+    color: #9ca3af;
+    font-style: italic;
+  }
+
+  .exploration-row .form-label {
+    color: #6b7280;
+  }
+
+  .acte-anesth-row {
+    background: linear-gradient(135deg,
+        rgba(99, 102, 241, 0.05),
+        rgba(129, 140, 248, 0.05));
+    border-left: 4px solid var(--primary);
+  }
+
+  .acte-anesth-row:hover {
+    border-color: var(--primary-dark);
+    box-shadow: var(--shadow-lg);
+  }
+
+  .honoraires-anesth {
+    color: var(--success);
+    font-size: 0.95rem;
+  }
+</style>
+{% endblock %} {% block content %}
+<!-- Modal Personnalisé Réutilisable -->
+<div class="modal fade custom-modal" id="customModal" tabindex="-1" aria-labelledby="customModalLabel"
+  aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header" id="modalHeader">
+        <h5 class="modal-title" id="customModalLabel">
+          <i id="modalIcon" class="fas fa-info-circle"></i>
+          <span id="modalTitle">Information</span>
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body" id="modalBody">
+        <!-- Le contenu sera injecté dynamiquement -->
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-primary" data-bs-dismiss="modal">
+          <i class="fas fa-check"></i> Compris
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="wizard-container">
+  <!-- Stepper Header - 6 ÉTAPES -->
+  <div class="stepper-wrapper">
+    <div class="stepper-item active" data-step="1">
+      <div class="stepper-circle">
+        <i class="fas fa-info-circle"></i>
+      </div>
+      <div class="stepper-label">Informations</div>
+    </div>
+    <div class="stepper-item" data-step="2">
+      <div class="stepper-circle">
+        <i class="fas fa-money-bill-alt"></i>
+      </div>
+      <div class="stepper-label">Tarification</div>
+    </div>
+    <div class="stepper-item" data-step="3">
+      <div class="stepper-circle">
+        <i class="fas fa-box"></i>
+      </div>
+      <div class="stepper-label">Produits & Actes</div>
+    </div>
+    <div class="stepper-item" data-step="4">
+      <div class="stepper-circle"><i class="fas fa-hospital"></i></div>
+      <div class="stepper-label">Hospitalisation</div>
+    </div>
+    <div class="stepper-item" data-step="5">
+      <div class="stepper-circle">5</div>
+      <div class="stepper-label">Anest.</div>
+    </div>
+    <div class="stepper-item" data-step="6">
+      <div class="stepper-circle"><i class="fas fa-check-circle"></i></div>
+      <div class="stepper-label">Validation</div>
+    </div>
+  </div>
+
+  <form method="POST" id="acteForm">
+    <!-- ÉTAPE 1: Informations Générales -->
+    <div class="step-content active" data-step="1">
+      <div class="row">
+        <div class="col-lg-8">
+          <div class="modern-card">
+            <h3 class="card-title">
+              <i class="fas fa-user-md"></i>
+              Informations générales
+            </h3>
+
+            <div class="row mb-3">
+              <div class="col-md-6">
+                <label class="form-label text-danger">
+                  <i class="fas fa-user-md"></i>
+                  Médecin Interne *
+                </label>
+                <select name="id_doctor" id="doctorSelect" class="form-select" required onchange="loadPourcentage()">
+                  <option value="">-- Sélectionner un médecin --</option>
+                  {% for doctor in doctors %}
+                  <option value="{{ doctor.id }}" data-specialite="{{ doctor.name_specialty }}">
+                    {{ doctor.name }} - {{ doctor.name_specialty or 'Sans
+                    spécialité' }}
+                  </option>
+                  {% endfor %}
+                </select>
+                <small class="text-muted mt-1 d-block">
+                  Pourcentage: <strong id="pourcentageDisplay">--</strong>
+                </small>
+              </div>
+              <div class="col-md-6">
+                {{ his_selector.render(field_name='patient_oid',
+                field_id='patientSelectDirect') }}
+                <input type="hidden" name="patient" id="patientNameHidden" />
+              </div>
+            </div>
+
+            <div class="row mb-3">
+              <div class="col-md-6">
+                <label class="form-label text-danger">
+                  <i class="far fa-calendar-alt"></i>
+                  Date de l'acte *
+                </label>
+                <input type="date" name="date_acte" class="form-control" required />
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">
+                  <i class="fas fa-clock"></i>
+                  Heure de l'acte
+                </label>
+                <input type="time" name="heure_acte" class="form-control" />
+              </div>
+            </div>
+
+            <div class="row">
+              <div class="col-md-6">
+                <label class="form-label">
+                  <i class="fas fa-clipboard-list"></i>
+                  Nom de l'intervention
+                </label>
+                <input type="text" name="nom_acte" class="form-control"
+                  placeholder="Ex: Arthroplastie totale de la hanche" />
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">
+                  <i class="fas fa-hourglass-half"></i>
+                  Durée du bloc (minutes)
+                </label>
+                <input type="number" name="duree_bloc" class="form-control" placeholder="Ex: 90" min="0" />
+                <small class="text-muted">Utilisé pour le calcul de l'anesthésie</small>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-lg-4">
+          <div class="summary-panel">
+            <h4 class="summary-title">
+              <i class="fas fa-info-circle text-primary"></i>
+              Guide
+            </h4>
+            <div class="alert alert-light">
+              <small>
+                <strong><i class="far fa-lightbulb text-warning"></i> Pourcentages
+                  :</strong>
+                <ul class="mt-2 mb-0" style="padding-left: 1.2rem">
+                  <li><strong>ORTHOPÉDIE :</strong> 45%</li>
+                  <li><strong>CHIRURGIE GÉNÉRALE :</strong> 50%</li>
+                  <li><strong>Gynécologie :</strong> 35%</li>
+                </ul>
+              </small>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- ÉTAPE 2: Prix de Base -->
+    <div class="step-content" data-step="2">
+      <div class="row">
+        <div class="col-lg-8">
+          <!-- Choix du mode de calcul -->
+          <div class="mode-calcul-container">
+            <div class="mode-calcul-header">
+              <i class="fas fa-calculator"></i>
+              <h3>Mode de calcul</h3>
+            </div>
+
+            <div class="mode-calcul-info">
+              <i class="fas fa-info-circle"></i>
+              <p>Choisissez comment calculer les parts médecin/clinique</p>
+            </div>
+
+            <div class="mode-selection-grid">
+              <!-- Mode Prix Total -->
+              <label for="modePrixTotal" class="mode-card selected" onclick="selectMode('PRIX_TOTAL')">
+                <input type="radio" name="mode_calcul" id="modePrixTotal" value="PRIX_TOTAL" checked />
+
+                <div class="mode-icon-wrapper">
+                  <i class="fas fa-calculator"></i>
+                </div>
+
+                <h5 class="mode-title">Prix Total de l'Acte</h5>
+
+                <p class="mode-description">
+                  Le prix <strong>inclut tous les suppléments</strong>.<br />
+                  On déduit tout, puis on applique le pourcentage.
+                </p>
+
+                <div class="mode-tags">
+                  <span class="mode-tag">
+                    <i class="fas fa-check"></i>
+                    Suppléments inclus
+                  </span>
+                  <span class="mode-tag">
+                    <i class="fas fa-minus-circle"></i>
+                    Déductions
+                  </span>
+                </div>
+
+                <div class="mode-check">
+                  <i class="fas fa-check"></i>
+                </div>
+              </label>
+
+              <!-- Mode Prix de Base -->
+              <label for="modePrixBase" class="mode-card" onclick="selectMode('PRIX_BASE')">
+                <input type="radio" name="mode_calcul" id="modePrixBase" value="PRIX_BASE" />
+
+                <div class="mode-icon-wrapper">
+                  <i class="fas fa-hand-holding-usd"></i>
+                </div>
+
+                <h5 class="mode-title">Prix de Base</h5>
+
+                <p class="mode-description">
+                  Le prix <strong>n'inclut pas</strong> les suppléments.<br />
+                  On calcule le %, puis on ajoute les suppléments à la clinique.
+                </p>
+
+                <div class="mode-tags">
+                  <span class="mode-tag">
+                    <i class="fas fa-times"></i>
+                    Sans suppléments
+                  </span>
+                  <span class="mode-tag">
+                    <i class="fas fa-plus-circle"></i>
+                    Ajouts clinique
+                  </span>
+                </div>
+
+                <div class="mode-check">
+                  <i class="fas fa-check"></i>
+                </div>
+              </label>
+            </div>
+          </div>
+
+          <!-- Saisie du prix -->
+          <div class="modern-card">
+            <h3 class="card-title">
+              <i class="fas fa-dollar-sign"></i>
+              <span id="prixLabel">Prix total de l'acte</span>
+            </h3>
+
+            <div class="row">
+              <div class="col-md-12 mb-3">
+                <label class="form-label text-danger">
+                  <i class="fas fa-money-bill-wave"></i>
+                  <span id="prixInputLabel">Prix total de l'acte médical (DA) *</span>
+                </label>
+                <input type="number" name="prix_acte_base" id="prixActeBase" class="form-control form-control-lg"
+                  step="0.01" min="0" required placeholder="Ex: 50000.00" onchange="calculateTotal()" />
+                <small class="text-muted mt-1 d-block" id="prixHelp">
+                  Montant total incluant tous les frais
+                </small>
+              </div>
+            </div>
+
+            <!-- NOUVEAU: Nuitées incluses dans le tarif -->
+            <div class="alert alert-warning mb-3">
+              <i class="fas fa-bed"></i>
+              <strong>Hospitalisation incluse dans le tarif</strong>
+            </div>
+
+            <div class="row">
+              <div class="col-md-6">
+                <label class="form-label">
+                  <i class="fas fa-hotel"></i>
+                  Nombre de nuitées incluses dans le tarif
+                </label>
+                <input type="number" name="nuitees_incluses_tarif" id="nuiteesIncluses" class="form-control" step="1"
+                  min="0" value="0" placeholder="Ex: 2" onchange="calculateTotal()" />
+                <small class="text-muted mt-1 d-block">
+                  <i class="fas fa-info-circle"></i>
+                  Ces nuitées sont déjà incluses dans le prix de base et ne
+                  seront pas facturées en supplément
+                </small>
+              </div>
+              <div class="col-md-6">
+                <div class="alert alert-info" style="margin-top: 2rem">
+                  <small>
+                    <strong>Exemple :</strong><br />
+                    Patient hospitalisé <strong>5 nuits</strong><br />
+                    Tarif inclut <strong>2 nuits</strong><br />
+                    → Seulement <strong>3 nuits</strong> seront facturées
+                  </small>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-lg-4">
+          <div class="summary-panel">
+            <h4 class="summary-title">
+              <i class="fas fa-info-circle text-primary"></i>
+              Mode sélectionné
+            </h4>
+            <div id="modeInfo" class="alert alert-light">
+              <strong>Prix Total</strong>
+              <p class="mb-0 mt-2">
+                <small>Les suppléments sont déjà inclus dans le prix saisi.</small>
+              </p>
+            </div>
+            <hr />
+            <div class="summary-row">
+              <span>Prix saisi:</span>
+              <strong id="displayPrixBase">0.00 DA</strong>
+            </div>
+            <div class="summary-row">
+              <span>Nuitées incluses:</span>
+              <strong id="displayNuiteesIncluses">0</strong>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ÉTAPE 3: SUPPLÉMENTS (Consommables + Actes + Autres) -->
+    <div class="step-content" data-step="3">
+      <div class="row">
+        <div class="col-lg-8">
+          <!-- Consommables -->
+          <div class="modern-card">
+            <h3 class="card-title">
+              <i class="fas fa-syringe"></i>
+              Consommables spécifiques
+            </h3>
+
+            <div class="alert alert-info mb-3">
+              <i class="fas fa-info-circle"></i>
+              <small>Les consommables seront <strong>déduits</strong> du prix de
+                base</small>
+            </div>
+
+            <div id="consommablesContainer"></div>
+
+            <button type="button" class="btn btn-outline-primary" onclick="addConsommable()">
+              <i class="fas fa-plus"></i>
+              Ajouter un consommable
+            </button>
+          </div>
+
+          <!-- Actes Supplémentaires -->
+          <div class="modern-card">
+            <h3 class="card-title">
+              <i class="fas fa-heartbeat"></i>
+              Actes médicaux supplémentaires
+            </h3>
+
+            <div class="alert alert-info mb-3">
+              <i class="fas fa-info-circle"></i>
+              <small>Actes médicaux réalisés en complément (consultations, examens
+                spécialisés...)</small>
+            </div>
+
+            <div id="actesSuppContainer"></div>
+
+            <button type="button" class="btn btn-outline-primary" onclick="addActeSupp()">
+              <i class="fas fa-plus"></i>
+              Ajouter un acte
+            </button>
+          </div>
+
+          <!-- Suppléments (Imagerie, Labo, Autres) -->
+          <div class="modern-card">
+            <h3 class="card-title">
+              <i class="fas fa-plus-circle"></i>
+              Autres suppléments (Imagerie, Laboratoire, Divers)
+            </h3>
+
+            <div class="alert alert-info mb-3">
+              <i class="fas fa-info-circle"></i>
+              <small>Examens et services additionnels</small>
+            </div>
+
+            <div id="supplementsContainer"></div>
+
+            <button type="button" class="btn btn-outline-primary" onclick="addSupplement()">
+              <i class="fas fa-plus"></i>
+              Ajouter un supplément
+            </button>
+          </div>
+
+          <!-- Consommables Médecin - NOUVEAU STYLE -->
+          <div class="modern-card consommable-medecin-card">
+            <h3 class="card-title">
+              <i class="fas fa-user-md"></i>
+              Consommables du médecin
+            </h3>
+
+            <div class="alert alert-success mb-3" style="border-left: 5px solid var(--success)">
+              <div class="d-flex align-items-center">
+                <i class="fas fa-info-circle me-2" style="font-size: 1.5rem"></i>
+                <div>
+                  <strong>Avantage médecin</strong><br />
+                  <small>Ces consommables sont
+                    <strong>ajoutés directement à la part du médecin</strong> et
+                    payés par le patient</small>
+                </div>
+              </div>
+            </div>
+
+            <div id="consommablesMedecinContainer"></div>
+
+            <button type="button" class="btn btn-outline-success btn-lg w-100" onclick="addConsommableMedecin()">
+              <i class="fas fa-plus-circle"></i>
+              Ajouter un consommable médecin
+            </button>
+          </div>
+        </div>
+
+        <div class="col-lg-4">
+          <div class="summary-panel">
+            <h4 class="summary-title">
+              <i class="fas fa-calculator text-success"></i>
+              Résumé
+            </h4>
+            <div class="summary-row">
+              <span><i class="fas fa-dollar-sign text-primary"></i> Prix de
+                base:</span>
+              <strong class="displayPrixBase">0.00 DA</strong>
+            </div>
+
+            <hr style="margin: 1rem 0; border-color: var(--border)" />
+
+            <div style="
+                background: rgba(239, 68, 68, 0.05);
+                padding: 0.75rem;
+                border-radius: 8px;
+                margin-bottom: 1rem;
+              ">
+              <small class="text-muted d-block mb-2">
+                <i class="fas fa-minus-circle text-danger"></i>
+                <strong>Déductions (Clinique)</strong>
+              </small>
+
+              <div class="summary-row" style="padding: 0.5rem 0">
+                <span style="font-size: 0.85rem">Consommables:</span>
+                <strong id="displayConsommables" style="color: var(--danger)">0.00 DA</strong>
+              </div>
+              <div class="summary-row" style="padding: 0.5rem 0">
+                <span style="font-size: 0.85rem">Actes suppl.:</span>
+                <strong id="displayActesSupp" style="color: var(--danger)">0.00 DA</strong>
+              </div>
+              <div class="summary-row" style="padding: 0.5rem 0; border-bottom: none">
+                <span style="font-size: 0.85rem">Autres suppl.:</span>
+                <strong id="displaySupplements" style="color: var(--danger)">0.00 DA</strong>
+              </div>
+            </div>
+
+            <div class="summary-consommable-medecin">
+              <div class="summary-row">
+                <span>
+                  <i class="fas fa-user-md text-success"></i>
+                  <strong>Consommables médecin:</strong>
+                </span>
+                <strong id="displayConsommablesMedecin" style="color: var(--success); font-size: 1.1rem">
+                  0.00 DA
+                </strong>
+              </div>
+              <small class="text-muted d-block text-center mt-2" style="font-size: 0.75rem">
+                <i class="fas fa-arrow-up"></i> Ajouté à la part médecin
+              </small>
+            </div>
+
+            <div class="alert alert-success mt-3" style="font-size: 0.85rem">
+              <i class="fas fa-lightbulb"></i>
+              <strong>Note:</strong> Les consommables du médecin augmentent sa
+              part ET le montant total à payer par le patient.
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ÉTAPE 4: Hospitalisation (incluant réanimation) -->
+    <div class="step-content" data-step="4">
+      <div class="row">
+        <div class="col-lg-8">
+          <div class="modern-card">
+            <h3 class="card-title">
+              <i class="fas fa-hospital"></i>
+              Hospitalisation (incluant réanimation)
+            </h3>
+
+            <div class="alert alert-warning mb-3">
+              <i class="fas fa-exclamation-triangle"></i>
+              <small>L'hospitalisation sera <strong>déduite</strong> du prix de
+                base. Les chambres de réanimation sont disponibles dans la liste
+                des types de chambres.</small>
+            </div>
+
+            <div id="hospitalisationsContainer"></div>
+
+            <button type="button" class="btn btn-outline-primary" onclick="addHospitalisation()">
+              <i class="fas fa-plus"></i>
+              Ajouter une hospitalisation
+            </button>
+          </div>
+        </div>
+
+        <div class="col-lg-4">
+          <div class="summary-panel">
+            <h4 class="summary-title">
+              <i class="fas fa-calculator text-success"></i>
+              Résumé
+            </h4>
+            <div class="summary-row">
+              <span>Prix de base:</span>
+              <strong class="displayPrixBase">0.00 DA</strong>
+            </div>
+            <div class="summary-row">
+              <span>précéd.:</span>
+              <strong id="displayDeductions1" style="color: var(--danger)">0.00 DA</strong>
+            </div>
+            <div class="summary-row">
+              <span>Hospitalisation:</span>
+              <strong id="displayHospitalisation" style="color: var(--danger)">0.00 DA</strong>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ÉTAPE 5: Anesthésie -->
+    <div class="step-content" data-step="5">
+      <div class="row">
+        <div class="col-lg-8">
+          <div class="modern-card">
+            <h3 class="card-title">
+              <i class="fas fa-syringe"></i>
+              Acte d'anesthésie et réanimation
+            </h3>
+
+            <div class="alert alert-info mb-3">
+              <i class="fas fa-info-circle"></i>
+              <small>
+                Sélectionnez l'acte d'anesthésie et les
+                <strong>2 intervenants</strong> (anesthésiste/réanimateur). Le
+                tarif sera calculé et <strong>déduit</strong> du prix de base.
+              </small>
+            </div>
+
+            <div class="row mb-3">
+              <div class="col-md-12">
+                <label class="form-label">Type d'acte d'anesthésie</label>
+                <select name="acte_anesth_id" id="acteAnesthId" class="form-select" onchange="updateTarifAnesthesie()">
+                  <option value="">-- Sélectionner un acte --</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="row mb-3">
+              <div class="col-md-6">
+                <label class="form-label">Intervenant 1 (Anesthésiste/Réanimateur)</label>
+                <select name="intervenant1_id" id="intervenant1Id" class="form-select"
+                  onchange="updateTarifAnesthesie()">
+                  <option value="">-- Sélectionner --</option>
+                </select>
+                <small class="text-muted mt-1 d-block">Honoraires: <span id="tarif1Display">0.00 DA</span></small>
+              </div>
+
+              <div class="col-md-6">
+                <label class="form-label">Intervenant 2 (Technicien/Réanimateur)</label>
+                <select name="intervenant2_id" id="intervenant2Id" class="form-select"
+                  onchange="updateTarifAnesthesie()">
+                  <option value="">-- Sélectionner --</option>
+                </select>
+                <small class="text-muted mt-1 d-block">Honoraires: <span id="tarif2Display">0.00 DA</span></small>
+              </div>
+            </div>
+
+            <div class="alert alert-success" id="tarifAnesthesieTotal" style="display: none">
+              <strong>Prix anesthésie (déduit):
+                <span id="totalAnesthesieDisplay">0.00 DA</span></strong>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-lg-4">
+          <div class="summary-panel">
+            <h4 class="summary-title">
+              <i class="fas fa-calculator text-success"></i>
+              Résumé
+            </h4>
+            <div class="summary-row">
+              <span>Prix de base:</span>
+              <strong class="displayPrixBase">0.00 DA</strong>
+            </div>
+            <div class="summary-row">
+              <span>Total Supp:</span>
+              <strong id="displayDeductions2" style="color: var(--danger)">0.00 DA</strong>
+            </div>
+            <div class="summary-row">
+              <span>Anesthésie:</span>
+              <strong id="displayAnesthesie" style="color: var(--danger)">0.00 DA</strong>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ÉTAPE 6: Validation -->
+    <div class="step-content" data-step="6">
+      <div class="row">
+        <div class="col-lg-8">
+          <div class="modern-card">
+            <h3 class="card-title">
+              <i class="fas fa-wallet"></i>
+              Paiement et observations
+            </h3>
+
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <label class="form-label">
+                  <i class="fas fa-money-bill-wave"></i>
+                  Montant payé à la caisse
+                </label>
+                <div class="input-group">
+                  <input type="number" name="montant_paye_caisse" class="form-control" step="0.01" min="0" value="0"
+                    placeholder="0.00" />
+                  <span class="input-group-text">DA</span>
+                </div>
+              </div>
+              <div class="col-md-6 mb-3">
+                <label class="form-label">
+                  <i class="far fa-comment-dots"></i>
+                  Observations générales
+                </label>
+                <textarea name="observations" class="form-control" rows="3"
+                  placeholder="Notes complémentaires, spécificités, informations importantes..."></textarea>
+              </div>
+            </div>
+
+            <div class="alert alert-warning mt-3">
+              <i class="fas fa-exclamation-triangle"></i>
+              <small>Vérifiez toutes les informations avant de finaliser la
+                création</small>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-lg-4">
+          <div class="summary-panel">
+            <h4 class="summary-title">
+              <i class="fas fa-check-circle text-success"></i>
+              Récapitulatif final
+            </h4>
+
+            <div class="summary-row">
+              <span>Prix de base:</span>
+              <strong id="finalPrixBase">0.00 DA</strong>
+            </div>
+            <div class="summary-row">
+              <span>Total Supp:</span>
+              <strong id="finalDeductions" style="color: var(--danger)">0.00 DA</strong>
+            </div>
+            <hr />
+            <div class="summary-row">
+              <span>Base de calcul:</span>
+              <strong id="finalBaseCalcul" style="color: var(--info)">0.00 DA</strong>
+            </div>
+            <div class="summary-row">
+              <span>Pourcentage médecin:</span>
+              <strong id="finalPourcentage">--</strong>
+            </div>
+
+            <hr style="margin: 1.5rem 0; border: 2px solid var(--success)" />
+
+            <!-- MONTANT TOTAL À PAYER (PRINCIPAL) -->
+            <div class="summary-total">
+              <div class="summary-row" style="font-size: 1.8rem; color: var(--primary)">
+                <span><strong>MONTANT TOTAL:</strong></span>
+                <strong id="finalMontantTotal">0.00 DA</strong>
+              </div>
+              <small id="finalMontantInfo" class="text-muted d-block mt-2" style="font-size: 0.75rem">
+                Montant à payer par le patient
+              </small>
+            </div>
+
+            <hr style="margin: 1.5rem 0" />
+
+            <!-- Détails parts (plus petits) -->
+            <div style="font-size: 0.85rem; color: #6b7280">
+              <div class="summary-row" style="padding: 0.5rem 0">
+                <span><i class="fas fa-user-md"></i> Part médecin:</span>
+                <strong id="finalPartMedecin" style="color: var(--success)">0.00 DA</strong>
+              </div>
+
+            </div>
+
+            <div class="alert alert-light mt-3">
+              <small>
+                <strong><i class="far fa-lightbulb text-warning"></i> Dernière
+                  vérification :</strong>
+                <ul class="mt-2 mb-0" style="padding-left: 1.2rem">
+                  <li>Tous les champs obligatoires sont remplis</li>
+                  <li>Les dates d'hospitalisation sont cohérentes</li>
+                  <li>Le montant payé correspond à l'acompte</li>
+                  <li>Les observations sont claires pour la facturation</li>
+                </ul>
+              </small>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="floating-nav-container">
+      <div class="floating-nav">
+        <button type="button" class="btn btn-secondary btn-prev">
+          <i class="fas fa-arrow-left"></i> Précédent
+        </button>
+        <button type="button" class="btn btn-primary btn-next">
+          Suivant <i class="fas fa-arrow-right"></i>
+        </button>
+      </div>
+    </div>
+  </form>
+  <!-- Bouton Historique Flottant -->
+  <button type="button" class="btn-floating-history" id="btnPatientHistoryDirect" disabled
+    title="Voir l'historique complet du patient">
+    <i class="fas fa-history"></i>
+    <span class="btn-floating-text">Historique</span>
+  </button>
+
+  <!-- Modal Historique -->
+  {{ his_selector.render_modal('modalPatientHistoryDirect') }}
+</div>
+{% endblock %} {% block scripts %}
+<script>
+  // ========== VARIABLES GLOBALES ==========
+  const produitsDisponibles = {{ produits| tojson | safe }};
+  const typesChambre = {{ types_chambres| tojson | safe }};
+  const actesDisponibles = {{ actes| tojson | safe }};
+  let modeCalcul = 'PRIX_TOTAL';
+  let currentStep = 1;
+  let completedSteps = [];
+  let currentPourcentage = 50;
+  let currentDoctorPlafonds = null;
+  let consommableCounter = 0;
+  let hospitalisationCounter = 0;
+  let supplementCounter = 0;
+  let acteCounter = 0;
+  let consommableMedecinCounter = 0;
+
+  let actesAnesthesieDisponibles = [];
+  let personnelAnesthesieDisponible = [];
+  // Stockage des instances Choices.js
+  let choicesInstances = {
+    doctors: null,
+    patient: null,
+    produitSupp: [],
+    acteSupp: [],
+    chambreType: []
+  };
+
+  const prixData = {
+    base: 0,
+    consommables: 0,
+    consommablesSupplement: null,
+    hospitalisation: 0,
+    supplements: 0,
+    actesSupp: 0,
+    anesthesie: 0,
+    consommablesMedecin: 0
+  };
+
+  /* =========================================================================
+     FONCTION MODAL RÉUTILISABLE
+     ========================================================================= */
+
+  function showModal(title, message, type = 'info') {
+    const modal = new bootstrap.Modal(document.getElementById('customModal'));
+    const modalTitle = document.getElementById('modalTitle');
+    const modalBody = document.getElementById('modalBody');
+    const modalHeader = document.getElementById('modalHeader');
+    const modalIcon = document.getElementById('modalIcon');
+    const modalTitleContainer = document.getElementById('customModalLabel');
+
+    // Configuration selon le type
+    const configs = {
+      danger: {
+        icon: 'fas fa-exclamation-triangle',
+        headerClass: 'modal-danger',
+        titleClass: 'text-danger'
+      },
+      warning: {
+        icon: 'fas fa-exclamation-circle',
+        headerClass: 'modal-warning',
+        titleClass: 'text-warning'
+      },
+      success: {
+        icon: 'fas fa-check-circle',
+        headerClass: 'modal-success',
+        titleClass: 'text-success'
+      },
+      info: {
+        icon: 'fas fa-info-circle',
+        headerClass: '',
+        titleClass: 'text-info'
+      }
+    };
+
+    const config = configs[type] || configs.info;
+
+    // Réinitialiser les classes
+    modalHeader.className = 'modal-header ' + config.headerClass;
+    modalTitleContainer.className = 'modal-title ' + config.titleClass;
+    modalIcon.className = config.icon;
+    modalTitle.textContent = title;
+
+    // Si le message contient une liste (détection de \n)
+    if (message.includes('\n')) {
+      const lines = message.split('\n');
+      let html = '<p>' + lines[0] + '</p>';
+      if (lines.length > 1) {
+        html += '<ul class="mb-0">';
+        for (let i = 1; i < lines.length; i++) {
+          if (lines[i].trim()) {
+            html += '<li>' + lines[i] + '</li>';
+          }
+        }
+        html += '</ul>';
+      }
+      modalBody.innerHTML = html;
+    } else {
+      modalBody.innerHTML = '<p class="mb-0">' + message + '</p>';
+    }
+
+    modal.show();
+  }
+
+  function showToast(message, type='info') {
+    let bgColor = "linear-gradient(to right, #00b09b, #96c93d)";
+    if (type === 'danger' || type === 'error') bgColor = "var(--danger)";
+    else if (type === 'warning') bgColor = "var(--warning)";
+    else if (type === 'success') bgColor = "var(--success)";
+    else bgColor = "var(--primary)";
+
+    Toastify({
+        text: message,
+        duration: 3000,
+        gravity: "top",
+        position: "right",
+        style: {
+            background: bgColor,
+            borderRadius: "var(--radius-sm)",
+            boxShadow: "var(--shadow-lg)"
+        }
+    }).showToast();
+  }
+
+  // ========== NAVIGATION ==========
+  function nextStep(step) {
+    if (validateStep(currentStep)) {
+      if (!completedSteps.includes(currentStep)) {
+        completedSteps.push(currentStep);
+      }
+      showStep(step);
+    }
+  }
+
+  function prevStep(step) {
+    showStep(step);
+  }
+
+  function showStep(step) {
+    document.querySelectorAll('.step-content').forEach(el => el.classList.remove('active'));
+    document.querySelector(`.step-content[data-step="${step}"]`).classList.add('active');
+
+    document.querySelectorAll('.stepper-item').forEach((item, i) => {
+      item.classList.remove('active', 'completed');
+      const itemStep = i + 1;
+      if (completedSteps.includes(itemStep) && itemStep < step) {
+        item.classList.add('completed');
+      } else if (itemStep === step) {
+        item.classList.add('active');
+      }
+    });
+
+    currentStep = step;
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+
+    if (step === 6) updateFinalSummary();
+  }
+
+  function validateStep(step) {
+    switch (step) {
+      case 1:
+        const doc = document.querySelector('[name="id_doctor"]').value;
+        const pat = document.querySelector('[name="patient"]').value;
+        const dt = document.querySelector('[name="date_acte"]').value;
+        if (!doc || !pat || !dt) {
+          showToast('Veuillez remplir tous les champs obligatoires', "warning");
+          return false;
+        }
+        return true;
+      case 2:
+        const prix = document.getElementById('prixActeBase').value;
+        if (!prix || parseFloat(prix) <= 0) {
+          showToast('Veuillez saisir un prix de base valide', "warning");
+          return false;
+        }
+        return true;
+      default:
+        return true;
+    }
+  }
+
+  // ========== CHARGEMENT POURCENTAGE ==========
+  async function loadPourcentage() {
+    const doctorId = document.getElementById('doctorSelect').value;
+    if (!doctorId) {
+      document.getElementById('pourcentageDisplay').textContent = '--';
+      currentPourcentage = 50;
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/medecin_interne/pourcentage/${doctorId}`);
+      const data = await response.json();
+
+      currentPourcentage = data.pourcentage_medecin;
+      document.getElementById('pourcentageDisplay').textContent = `${currentPourcentage}% (${data.name_specialty || 'Non spécifiée'})`;
+
+      // NOUVEAU: Fetch plafonds
+      try {
+        const plafondsRes = await fetch(`/api/gestion_medecins/plafond_consommables_mi/${doctorId}`);
+        const plafondsData = await plafondsRes.json();
+        if (plafondsData.success) {
+          currentDoctorPlafonds = plafondsData.plafonds;
+        } else {
+          currentDoctorPlafonds = null;
+        }
+      } catch (err) {
+        console.error('Erreur chargement plafonds:', err);
+        currentDoctorPlafonds = null;
+      }
+
+      calculateTotal();
+    } catch (e) {
+      console.error('Erreur chargement pourcentage:', e);
+    }
+  }
+
+  // ========== CONSOMMABLES ==========
+  function addConsommable() {
+    consommableCounter++;
+    const container = document.getElementById('consommablesContainer');
+    const html = `
+          <div class="product-row mb-3" id="consommable-${consommableCounter}">
+              <div class="row align-items-center">
+                  <div class="col-md-6">
+                      <label class="form-label">Produit</label>
+                      <select name="consommable_id[]" class="form-select consommable-select" onchange="calculateTotal()">
+                          <option value="">-- Sélectionner --</option>
+                          ${produitsDisponibles.map(p => `<option value="${p.id_produit}" data-prix="${p.prix}">${p.description} (${p.prix} DA)</option>`).join('')}
+                      </select>
+                  </div>
+                  <div class="col-md-3">
+                      <label class="form-label">Quantité</label>
+                      <input type="number" name="consommable_qte[]" class="form-control consommable-qte"
+                             value="1" min="1" step="1" onchange="calculateTotal()">
+                  </div>
+                  <div class="col-md-3">
+                      <label class="form-label">&nbsp;</label>
+                      <button type="button" class="btn btn-danger w-100" onclick="removeConsommable(${consommableCounter})">
+                          <i class="fas fa-trash"></i> Retirer
+                      </button>
+                  </div>
+              </div>
+          </div>
+          `;
+    container.insertAdjacentHTML('beforeend', html);
+  }
+
+  function removeConsommable(id) {
+    const element = document.getElementById(`consommable-${id}`);
+    if (element) element.remove();
+    calculateTotal();
+  }
+
+  // ========== CONSOMMABLES MÉDECIN ==========
+  function addConsommableMedecin() {
+    consommableMedecinCounter++;
+    const container = document.getElementById('consommablesMedecinContainer');
+    const html = `
+      <div class="consommable-medecin-row" id="consommable-medecin-${consommableMedecinCounter}">
+          <span class="consommable-medecin-badge">
+              <i class="fas fa-user-md"></i> Part Médecin
+          </span>
+
+          <div class="row align-items-end">
+                      <div class="col-md-7">
+                  <label class="form-label">
+                      <i class="fas fa-file-medical-alt text-success"></i>
+                      Description du consommable
+                  </label>
+                  <input type="text"
+                         name="consommable_medecin_description[]"
+                         class="form-control"
+                         placeholder="Ex: Kit de suture personnel, matériel spécialisé, équipement propriétaire..."
+                         required>
+                  <small class="text-muted mt-1 d-block">
+                      <i class="fas fa-lightbulb"></i>
+                      Précisez le type de matériel utilisé
+                  </small>
+                      </div>
+                      <div class="col-md-3">
+                  <label class="form-label">
+                      <i class="fas fa-money-bill-wave text-success"></i>
+                      Prix (DA)
+                  </label>
+                  <div class="input-group">
+                          <input type="number" name="consommable_medecin_prix[]"
+                                 class="form-control consommable-medecin-prix"
+                             step="0.01"
+                             min="0"
+                             placeholder="0.00"
+                             onchange="calculateTotal()"
+                             required>
+                      <span class="input-group-text bg-success text-white">
+                          <i class="fas fa-coins"></i>
+                      </span>
+                  </div>
+                      </div>
+                      <div class="col-md-2">
+                  <button type="button"
+                          class="btn btn-danger w-100"
+                          onclick="removeConsommableMedecin(${consommableMedecinCounter})"
+                          title="Supprimer ce consommable">
+                      <i class="fas fa-trash-alt"></i>
+                      <span class="d-none d-md-inline">Retirer</span>
+                          </button>
+                      </div>
+                  </div>
+              </div>
+          `;
+    container.insertAdjacentHTML('beforeend', html);
+
+    // Animation d'ajout
+    const newElement = document.getElementById(`consommable-medecin-${consommableMedecinCounter}`);
+    if (newElement) {
+      newElement.style.opacity = '0';
+      newElement.style.transform = 'translateY(20px)';
+      setTimeout(() => {
+        newElement.style.transition = 'all 0.4s ease';
+        newElement.style.opacity = '1';
+        newElement.style.transform = 'translateY(0)';
+      }, 10);
+    }
+  }
+
+  function removeConsommableMedecin(id) {
+    const element = document.getElementById(`consommable-medecin-${id}`);
+    if (element) {
+      // Animation de suppression
+      element.style.transition = 'all 0.3s ease';
+      element.style.opacity = '0';
+      element.style.transform = 'translateX(-20px)';
+      setTimeout(() => {
+        element.remove();
+        calculateTotal();
+      }, 300);
+    }
+  }
+
+  // ========== HOSPITALISATIONS ==========
+  function addHospitalisation() {
+    hospitalisationCounter++;
+    const container = document.getElementById('hospitalisationsContainer');
+
+    // Générer les options AVANT le template literal
+    const optionsHTML = typesChambre.map(t => {
+      const badge = t.nom_type.toUpperCase().includes('RÉANIMATION') || t.nom_type.toUpperCase().includes('REANIMATION')
+        ? '<span class="reanimation-badge">RÉANIMATION</span>'
+        : '';
+      return `<option value="${t.id_type_chambre}" data-prix="${t.prix_unitaire}">${t.nom_type} (${t.prix_unitaire} DA/nuit) ${badge}</option>`;
+    }).join('');
+
+    const html = `
+              <div class="product-row mb-3" id="hospitalisation-${hospitalisationCounter}">
+                  <h6><i class="fas fa-hospital"></i> Hospitalisation #${hospitalisationCounter}</h6>
+                  <div class="row">
+                      <div class="col-md-6">
+                          <label class="form-label">Type de chambre</label>
+                          <select name="hosp_type_chambre[]" class="form-select hosp-type" onchange="calculateHospitalisation(${hospitalisationCounter})">
+                              <option value="">-- Sélectionner --</option>
+                        ${optionsHTML}
+                          </select>
+                      </div>
+                      <div class="col-md-3">
+                          <label class="form-label">Date entrée</label>
+                          <input type="date" name="hosp_date_entree[]" class="form-control hosp-entree" onchange="calculateHospitalisation(${hospitalisationCounter})">
+                      </div>
+                      <div class="col-md-3">
+                          <label class="form-label">Date sortie</label>
+                          <input type="date" name="hosp_date_sortie[]" class="form-control hosp-sortie" onchange="calculateHospitalisation(${hospitalisationCounter})">
+                      </div>
+                  </div>
+                  <div class="row mt-2">
+                      <div class="col-md-6">
+                  <small class="text-muted">Nuitées: <strong id="hosp-nuitees-${hospitalisationCounter}">0</strong></small>
+                      </div>
+                      <div class="col-md-3">
+                          <small class="text-muted">Prix: <strong id="hosp-prix-${hospitalisationCounter}">0.00 DA</strong></small>
+                      </div>
+                      <div class="col-md-3">
+                          <button type="button" class="btn btn-sm btn-danger w-100" onclick="removeHospitalisation(${hospitalisationCounter})">
+                              <i class="fas fa-trash"></i>
+                          </button>
+                      </div>
+                  </div>
+              </div>
+          `;
+    container.insertAdjacentHTML('beforeend', html);
+  }
+
+  function calculateHospitalisation(id) {
+    const row = document.getElementById(`hospitalisation-${id}`);
+    if (!row) return;
+
+    const typeSelect = row.querySelector('.hosp-type');
+    const entree = row.querySelector('.hosp-entree').value;
+    const sortie = row.querySelector('.hosp-sortie').value;
+
+    if (!typeSelect.value || !entree || !sortie) {
+      document.getElementById(`hosp-nuitees-${id}`).textContent = '0';
+      document.getElementById(`hosp-prix-${id}`).textContent = '0.00 DA';
+      calculateTotal();
+      return;
+    }
+
+    const prixUnit = parseFloat(typeSelect.options[typeSelect.selectedIndex].dataset.prix);
+    const dEntree = new Date(entree);
+    const dSortie = new Date(sortie);
+    const nuiteesTotal = Math.round((dSortie - dEntree) / (1000 * 60 * 60 * 24));
+
+    // Récupérer les nuitées incluses dans le tarif
+    const nuiteesIncluses = parseInt(document.getElementById('nuiteesIncluses')?.value || 0);
+
+    // Calculer les nuitées à facturer (nuitées totales - nuitées incluses)
+    const nuiteesAFacturer = Math.max(0, nuiteesTotal - nuiteesIncluses);
+
+    const prix = nuiteesAFacturer * prixUnit;
+
+    // Afficher le nombre total de nuitées
+    const nuiteesElement = document.getElementById(`hosp-nuitees-${id}`);
+    if (nuiteesElement) {
+      nuiteesElement.innerHTML = `
+                  ${nuiteesTotal}
+                  ${nuiteesIncluses > 0 ? `<small class="text-muted">(${nuiteesIncluses} incluses, ${nuiteesAFacturer} facturées)</small>` : ''}
+              `;
+    }
+
+    const prixElement = document.getElementById(`hosp-prix-${id}`);
+    if (prixElement) {
+      prixElement.textContent = prix.toFixed(2) + ' DA';
+    }
+
+    calculateTotal();
+  }
+
+  function removeHospitalisation(id) {
+    const element = document.getElementById(`hospitalisation-${id}`);
+    if (element) element.remove();
+    calculateTotal();
+  }
+
+  // ========== SUPPLÉMENTS ==========
+  function addSupplement() {
+    supplementCounter++;
+    const container = document.getElementById('supplementsContainer');
+    const html = `
+              <div class="product-row mb-3" id="supplement-${supplementCounter}">
+                  <div class="row align-items-center">
+                      <div class="col-md-3">
+                          <label class="form-label">Type</label>
+                          <select name="supplement_type[]" class="form-select">
+                              <option value="IMAGERIE">Imagerie</option>
+                              <option value="LABORATOIRE">Laboratoire</option>
+                              <option value="AUTRE">Autre</option>
+                          </select>
+                      </div>
+                      <div class="col-md-5">
+                          <label class="form-label">Description</label>
+                          <input type="text" name="supplement_description[]" class="form-control" placeholder="Ex: Scanner thoracique">
+                      </div>
+                      <div class="col-md-2">
+                          <label class="form-label">Prix (DA)</label>
+                          <input type="number" name="supplement_prix[]" class="form-control supplement-prix" step="0.01" min="0" onchange="calculateTotal()">
+                      </div>
+                      <div class="col-md-2">
+                          <label class="form-label">&nbsp;</label>
+                          <button type="button" class="btn btn-danger w-100" onclick="removeSupplement(${supplementCounter})">
+                              <i class="fas fa-trash"></i>
+                          </button>
+                      </div>
+                  </div>
+              </div>
+          `;
+    container.insertAdjacentHTML('beforeend', html);
+  }
+
+  function removeSupplement(id) {
+    const element = document.getElementById(`supplement-${id}`);
+    if (element) element.remove();
+    calculateTotal();
+  }
+
+  // ========== ACTES SUPPLÉMENTAIRES ==========
+  function addActeSupp() {
+    acteCounter++;
+    const container = document.getElementById('actesSuppContainer');
+    const html = `
+          <div class="product-row mb-3" id="acte-${acteCounter}">
+              <div class="row align-items-center">
+                  <div class="col-md-6">
+                      <label class="form-label">Acte médical</label>
+                      <select name="acte_supp_id[]" class="form-select acte-supp-select" onchange="calculateTotal()">
+                          <option value="">-- Sélectionner --</option>
+                          ${actesDisponibles.map(a => `<option value="${a.id_acte}" data-prix="${a.prix}">${a.nom_acte} (${a.prix} DA)</option>`).join('')}
+                      </select>
+                  </div>
+                  <div class="col-md-3">
+                      <label class="form-label">Quantité</label>
+                      <input type="number" name="acte_supp_qte[]" class="form-control acte-supp-qte"
+                             value="1" min="1" step="1" onchange="calculateTotal()">
+                  </div>
+                  <div class="col-md-3">
+                      <label class="form-label">&nbsp;</label>
+                      <button type="button" class="btn btn-danger w-100" onclick="removeActeSupp(${acteCounter})">
+                          <i class="fas fa-trash"></i> Retirer
+                      </button>
+                  </div>
+              </div>
+          </div>
+      `;
+    container.insertAdjacentHTML('beforeend', html);
+  }
+
+  function removeActeSupp(id) {
+    const element = document.getElementById(`acte-${id}`);
+    if (element) element.remove();
+    calculateTotal();
+  }
+
+  // ========== ANESTHÉSIE ==========
+  async function loadAnesthesieData() {
+    try {
+      const response = await fetch('/api/anesthesie/types_actes');
+      actesAnesthesieDisponibles = await response.json();
+      populateActesSelect();
+    } catch (e) {
+      console.error('Erreur chargement actes anesthésie:', e);
+    }
+
+    try {
+      const response = await fetch('/api/anesthesie/personnel');
+      personnelAnesthesieDisponible = await response.json();
+      populateIntervenantsSelects();
+    } catch (e) {
+      console.error('Erreur chargement personnel anesthésie:', e);
+    }
+  }
+
+  function populateActesSelect() {
+    const select = document.getElementById('acteAnesthId');
+    if (!select) return;
+
+    actesAnesthesieDisponibles.forEach(acte => {
+      const option = document.createElement('option');
+      option.value = acte.id_acte_anesthesie;
+      option.textContent = `${acte.nom_acte} (${acte.tarif_forfaitaire} DA)`;
+      select.appendChild(option);
+    });
+  }
+
+  function populateIntervenantsSelects() {
+    const select1 = document.getElementById('intervenant1Id');
+    const select2 = document.getElementById('intervenant2Id');
+    if (!select1 || !select2) return;
+
+    // Filtrer les réanimateurs (REANIMATEUR + REANIMATEUR_GARDE) pour le select 1
+    const reanimateurs = personnelAnesthesieDisponible.filter(p => {
+      const typeUpper = (p.nom_type || '').toUpperCase();
+      return typeUpper.includes('REANIMATEUR') || typeUpper.includes('RÉANIMATEUR');
+    });
+    // Filtrer les techniciens anesthésistes pour le select 2
+    const techniciens = personnelAnesthesieDisponible.filter(p => {
+      const typeUpper = (p.nom_type || '').toUpperCase();
+      return typeUpper.includes('TECH') && typeUpper.includes('ANESTH');
+    });
+
+    // Remplir le select 1 avec les réanimateurs
+    reanimateurs.forEach(p => {
+      const option = document.createElement('option');
+      option.value = p.id_personnel_anesthesie;
+      option.textContent = `${p.nom_complet} (${p.nom_type})`;
+      select1.appendChild(option);
+    });
+
+    // Remplir le select 2 avec les techniciens
+    techniciens.forEach(p => {
+      const option = document.createElement('option');
+      option.value = p.id_personnel_anesthesie;
+      option.textContent = `${p.nom_complet} (${p.nom_type})`;
+      select2.appendChild(option);
+    });
+  }
+
+  async function updateTarifAnesthesie() {
+    const acteId = document.getElementById('acteAnesthId').value;
+    const intervenant1Id = document.getElementById('intervenant1Id').value;
+    const intervenant2Id = document.getElementById('intervenant2Id').value;
+
+    document.getElementById('tarif1Display').textContent = '0.00 DA';
+    document.getElementById('tarif2Display').textContent = '0.00 DA';
+    document.getElementById('totalAnesthesieDisplay').textContent = '0.00 DA';
+    document.getElementById('tarifAnesthesieTotal').style.display = 'none';
+
+    const dureeReelle = document.getElementById('dureeBloc') ?
+      (parseInt(document.getElementById('dureeBloc').value) || 90) : 90;
+
+    if (!acteId || !intervenant1Id || !intervenant2Id) {
+      prixData.anesthesie = 0;
+      calculateTotal();
+      return;
+    }
+
+    try {
+      const response = await fetch('/api/anesthesie/calculer_prix_et_honoraires', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id_acte_anesthesie: acteId,
+          id_anesthesiste: intervenant1Id,
+          id_reanimateur: intervenant2Id,
+          duree_reelle: dureeReelle
+        })
+      });
+
+      const data = await response.json();
+
+      if (data.error) {
+        console.error('Erreur API:', data.error);
+        prixData.anesthesie = 0;
+        calculateTotal();
+        return;
+      }
+
+      const prixDossier = data.prix_anesthesie_dossier || 0;
+
+      if (data.details && data.details.length >= 2) {
+        document.getElementById('tarif1Display').textContent =
+          data.details[0].honoraires.toFixed(2) + ' DA';
+        document.getElementById('tarif2Display').textContent =
+          data.details[1].honoraires.toFixed(2) + ' DA';
+      }
+
+      document.getElementById('totalAnesthesieDisplay').textContent =
+        prixDossier.toFixed(2) + ' DA';
+      document.getElementById('tarifAnesthesieTotal').style.display = 'block';
+
+      prixData.anesthesie = prixDossier;
+      calculateTotal();
+
+    } catch (e) {
+      console.error('Erreur calcul tarifs anesthésie:', e);
+      prixData.anesthesie = 0;
+      calculateTotal();
+    }
+  }
+
+  // Fonction pour changer de mode
+  function selectMode(mode) {
+    modeCalcul = mode;
+
+    // Mettre à jour les classes des cartes
+    document.querySelectorAll('.mode-card').forEach(card => {
+      card.classList.remove('selected');
+    });
+
+    const selectedCard = mode === 'PRIX_TOTAL'
+      ? document.querySelector('label[for="modePrixTotal"]')
+      : document.querySelector('label[for="modePrixBase"]');
+
+    if (selectedCard) {
+      selectedCard.classList.add('selected');
+    }
+
+    // Cocher le bon radio button
+    document.getElementById(mode === 'PRIX_TOTAL' ? 'modePrixTotal' : 'modePrixBase').checked = true;
+
+    // Mettre à jour l'interface
+    if (mode === 'PRIX_TOTAL') {
+      document.getElementById('prixLabel').textContent = 'Prix total de l\'acte';
+      document.getElementById('prixInputLabel').textContent = 'Prix total de l\'acte médical (DA) *';
+      document.getElementById('prixHelp').textContent = 'Montant total incluant tous les frais';
+      document.getElementById('modeInfo').innerHTML = `
+          <strong>Prix Total</strong>
+          <p class="mb-0 mt-2">
+              <small>Les suppléments sont déjà inclus. Le patient paie ce montant.</small>
+          </p>
+      `;
+    } else {
+      document.getElementById('prixLabel').textContent = 'Prix de base de l\'acte';
+      document.getElementById('prixInputLabel').textContent = 'Prix de base de l\'acte médical (DA) *';
+      document.getElementById('prixHelp').textContent = 'Montant de base SANS les suppléments';
+      document.getElementById('modeInfo').innerHTML = `
+          <strong>Prix de Base</strong>
+          <p class="mb-0 mt-2">
+              <small><strong>Patient paie :</strong> Prix base + TOUS les suppléments<br>
+              <strong>Pas de déductions</strong> - Suppléments ajoutés au total</small>
+          </p>
+      `;
+    }
+
+    // Recalculer
+    calculateTotal();
+  }
+
+  // ========== CALCUL TOTAL ==========
+  function calculateTotal() {
+    // Prix de base
+    prixData.base = parseFloat(document.getElementById('prixActeBase').value) || 0;
+
+    // Consommables clinique
+    prixData.consommables = 0;
+    prixData.consommablesSupplement = null; // null = plafonds inactifs
+
+    document.querySelectorAll('.plafond-warning-msg').forEach(el => el.remove());
+
+    if (currentDoctorPlafonds && currentDoctorPlafonds.length > 0) {
+      prixData.consommablesSupplement = 0;
+    }
+
+    document.querySelectorAll('.consommable-select').forEach((sel, i) => {
+      if (sel.value) {
+        const productId = parseInt(sel.value);
+        const prix = parseFloat(sel.options[sel.selectedIndex].dataset.prix);
+        const qteElements = document.querySelectorAll('.consommable-qte');
+        const qte = parseFloat(qteElements[i]?.value) || 0;
+
+        prixData.consommables += prix * qte;
+
+        if (currentDoctorPlafonds && currentDoctorPlafonds.length > 0) {
+          const plafond = currentDoctorPlafonds.find(p => p.id_produit === productId);
+          const limit = plafond ? plafond.quantite_max : 0;
+          const excess = Math.max(0, qte - limit);
+
+          if (excess > 0) {
+            prixData.consommablesSupplement += (excess * prix);
+
+            // Add UI warning
+            const row = sel.closest('.row');
+            if (row && !row.nextElementSibling?.classList.contains('plafond-warning-msg')) {
+              const warningHtml = `<div class="col-12 mt-1 plafond-warning-msg"><small class="text-danger"><i class="fas fa-exclamation-triangle"></i> Dépassement de plafond (${qte} > ${limit}). Excédent pris en charge par la clinique.</small></div>`;
+              row.insertAdjacentHTML('afterend', warningHtml);
+            }
+          }
+        }
+      }
+    });
+
+    // Consommables médecin (NOUVEAU)
+    prixData.consommablesMedecin = 0;
+    document.querySelectorAll('.consommable-medecin-prix').forEach(input => {
+      prixData.consommablesMedecin += parseFloat(input.value) || 0;
+    });
+
+    // Hospitalisations
+    prixData.hospitalisation = 0;
+    for (let i = 1; i <= hospitalisationCounter; i++) {
+      const prixElement = document.getElementById(`hosp-prix-${i}`);
+      if (prixElement) {
+        const match = prixElement.textContent.match(/[\d.]+/);
+        if (match) {
+          prixData.hospitalisation += parseFloat(match[0]);
+        }
+      }
+    }
+
+    // Suppléments
+    prixData.supplements = 0;
+    document.querySelectorAll('.supplement-prix').forEach(input => {
+      prixData.supplements += parseFloat(input.value) || 0;
+    });
+
+    // Actes supplémentaires
+    prixData.actesSupp = 0;
+    document.querySelectorAll('.acte-supp-select').forEach((sel, i) => {
+      if (sel.value) {
+        const prix = parseFloat(sel.options[sel.selectedIndex].dataset.prix);
+        const qteElements = document.querySelectorAll('.acte-supp-qte');
+        const qte = parseFloat(qteElements[i]?.value) || 0;
+        prixData.actesSupp += prix * qte;
+      }
+    });
+
+    updateAllDisplays();
+  }
+
+  function updateAllDisplays() {
+    // Calcul selon le mode
+    let baseCalcul, partMedecin, partClinique, totalDeductions;
+
+    if (modeCalcul === 'PRIX_TOTAL') {
+      let consoDeduction = prixData.consommables;
+      if (prixData.consommablesSupplement !== null) {
+        consoDeduction = prixData.consommablesSupplement;
+      }
+
+      totalDeductions = consoDeduction + prixData.hospitalisation +
+        prixData.supplements + prixData.actesSupp + prixData.anesthesie;
+
+      baseCalcul = Math.max(0, prixData.base - totalDeductions);
+      partMedecin = (baseCalcul * currentPourcentage) / 100;
+
+      // AJOUTER les consommables médecin
+      partMedecin += prixData.consommablesMedecin;
+
+      partClinique = baseCalcul - (partMedecin - prixData.consommablesMedecin);
+
+    } else {
+      totalDeductions = 0;
+      baseCalcul = prixData.base;
+      partMedecin = (baseCalcul * currentPourcentage) / 100;
+
+      // AJOUTER les consommables médecin
+      partMedecin += prixData.consommablesMedecin;
+
+      const tousLesSupplements = prixData.consommables + prixData.hospitalisation +
+        prixData.supplements + prixData.actesSupp + prixData.anesthesie;
+      partClinique = (baseCalcul - (partMedecin - prixData.consommablesMedecin)) + tousLesSupplements;
+    }
+
+    // Mettre à jour tous les affichages
+    document.querySelectorAll('.displayPrixBase, #displayPrixBase').forEach(el => {
+      el.textContent = prixData.base.toFixed(2) + ' DA';
+    });
+    // Mettre à jour les consommables
+    const consDisplay = document.getElementById('displayConsommables');
+    if (consDisplay) {
+      if (modeCalcul === 'PRIX_TOTAL' && prixData.consommablesSupplement !== null) {
+        consDisplay.innerHTML = `${prixData.consommablesSupplement.toFixed(2)} DA <br><small class="text-muted" style="font-size:0.7em">(Plafonné, au lieu de ${prixData.consommables.toFixed(2)})</small>`;
+      } else {
+        consDisplay.textContent = prixData.consommables.toFixed(2) + ' DA';
+      }
+      consDisplay.style.color = modeCalcul === 'PRIX_TOTAL' ? 'var(--danger)' : 'var(--info)';
+    }
+
+    // Mettre à jour les hospitalisations
+    const hospDisplay = document.getElementById('displayHospitalisation');
+    if (hospDisplay) {
+      hospDisplay.textContent = prixData.hospitalisation.toFixed(2) + ' DA';
+      hospDisplay.style.color = modeCalcul === 'PRIX_TOTAL' ? 'var(--danger)' : 'var(--info)';
+    }
+
+    // Mettre à jour les suppléments
+    const suppDisplay = document.getElementById('displaySupplements');
+    if (suppDisplay) {
+      suppDisplay.textContent = prixData.supplements.toFixed(2) + ' DA';
+      suppDisplay.style.color = modeCalcul === 'PRIX_TOTAL' ? 'var(--danger)' : 'var(--info)';
+    }
+
+    // Mettre à jour les actes supplémentaires
+    const actesDisplay = document.getElementById('displayActesSupp');
+    if (actesDisplay) {
+      actesDisplay.textContent = prixData.actesSupp.toFixed(2) + ' DA';
+      actesDisplay.style.color = modeCalcul === 'PRIX_TOTAL' ? 'var(--danger)' : 'var(--info)';
+    }
+    // NOUVEAU : Afficher consommables médecin
+    const consMedDisplay = document.getElementById('displayConsommablesMedecin');
+    if (consMedDisplay) {
+      consMedDisplay.textContent = prixData.consommablesMedecin.toFixed(2) + ' DA';
+    }
+    // Mettre à jour l'anesthésie
+    const anesthDisplay = document.getElementById('displayAnesthesie');
+    if (anesthDisplay) {
+      anesthDisplay.textContent = prixData.anesthesie.toFixed(2) + ' DA';
+      anesthDisplay.style.color = modeCalcul === 'PRIX_TOTAL' ? 'var(--danger)' : 'var(--info)';
+    }
+
+    // Mettre à jour les totaux de déductions
+    document.querySelectorAll('[id^="displayDeductions"]').forEach(el => {
+      if (modeCalcul === 'PRIX_TOTAL') {
+        el.innerHTML = totalDeductions.toFixed(2) + ' DA';
+      } else {
+        el.innerHTML = '<span style="color: var(--success);">0.00 DA</span><br>' +
+          '<small class="text-muted">(Pas de déductions - Suppléments ajoutés au total patient)</small>';
+      }
+    });
+
+    // Stocker pour le résumé final
+    window.calculResultat = {
+      baseCalcul: baseCalcul,
+      partMedecin: partMedecin,
+      partClinique: partClinique,
+      totalDeductions: totalDeductions,
+      consommablesMedecin: prixData.consommablesMedecin  // NOUVEAU
+    };
+  }
+
+  function updateFinalSummary() {
+    const result = window.calculResultat || {
+      baseCalcul: 0,
+      partMedecin: 0,
+      partClinique: 0,
+      totalDeductions: 0,
+      consommablesMedecin: 0
+    };
+
+    // Calculer le montant total à payer selon le mode
+    let montantTotal;
+    let infoMontant;
+
+    if (modeCalcul === 'PRIX_BASE') {
+      // Mode PRIX_BASE : Patient paie prix_base + TOUS les suppléments
+      const tousSupplements = prixData.consommables + prixData.hospitalisation +
+        prixData.supplements + prixData.actesSupp + prixData.anesthesie +
+        prixData.consommablesMedecin;  // AJOUTER consommables médecin au total patient
+      montantTotal = prixData.base + tousSupplements;
+      infoMontant = 'Prix base (' + prixData.base.toFixed(2) + ' DA) + suppléments (' +
+        tousSupplements.toFixed(2) + ' DA)';
+    } else {
+      // En mode PRIX_TOTAL, les consommables médecin s'ajoutent au prix total
+      montantTotal = prixData.base + prixData.consommablesMedecin;
+      infoMontant = 'Prix total incluant tous les frais + consommables médecin';
+    }
+
+    // Mise à jour des affichages
+    document.getElementById('finalPrixBase').textContent = prixData.base.toFixed(2) + ' DA';
+    document.getElementById('finalDeductions').textContent = result.totalDeductions.toFixed(2) + ' DA';
+    document.getElementById('finalBaseCalcul').textContent = result.baseCalcul.toFixed(2) + ' DA';
+    document.getElementById('finalPourcentage').textContent = currentPourcentage + '%';
+
+    // MONTANT TOTAL (PRINCIPAL)
+    document.getElementById('finalMontantTotal').textContent = montantTotal.toFixed(2) + ' DA';
+    document.getElementById('finalMontantInfo').textContent = infoMontant;
+
+    // Parts (plus discrètes)
+    document.getElementById('finalPartMedecin').textContent = result.partMedecin.toFixed(2) + ' DA';
+    // Ajouter info sur consommables médecin
+    document.getElementById('finalPartMedecin').innerHTML =
+      result.partMedecin.toFixed(2) + ' DA' +
+      (result.consommablesMedecin > 0 ?
+        '<br><small style="font-size: 0.7rem; color: var(--success);">(dont ' +
+        result.consommablesMedecin.toFixed(2) + ' DA consommables médecin)</small>' : '');
+
+  }
+
+  function initDoctorChoice() {
+    const sel = document.getElementById('doctorSelect');
+    if (!sel) return;
+    try {
+      choicesInstances.doctors = new Choices(sel, {
+        searchEnabled: true,
+        searchPlaceholderValue: 'Rechercher un médecin…',
+        noResultsText: 'Aucun médecin trouvé',
+        itemSelectText: 'Sélectionner',
+        placeholder: true,
+        placeholderValue: '-- Sélectionner un médecin --',
+        shouldSort: true
+      });
+    } catch (e) {
+      console.error('Choices.js : ', e);
+    }
+  }
+
+  function initChoices(selectElement, options = {}) {
+    if (!selectElement) return null;
+
+    const defaultOptions = {
+      searchEnabled: true,
+      searchPlaceholderValue: 'Rechercher…',
+      noResultsText: 'Aucun résultat trouvé',
+      itemSelectText: 'Sélectionner',
+      placeholder: true,
+      placeholderValue: '-- Sélectionner --',
+      shouldSort: true,
+      removeItemButton: true,
+      classNames: {
+        containerInner: 'choices__inner',
+        input: 'choices__input',
+        item: 'choices__item',
+        button: 'choices__button'
+      }
+    };
+
+    const mergedOptions = { ...defaultOptions, ...options };
+
+    try {
+      return new Choices(selectElement, mergedOptions);
+    } catch (e) {
+      console.error('Choices.js initialization error: ', e);
+      return null;
+    }
+  }
+
+  function initClickableSteps() {
+    document.querySelectorAll('.stepper-item').forEach(item => {
+      item.style.cursor = 'pointer';
+      item.addEventListener('click', function () {
+        const targetStep = parseInt(this.dataset.step);
+
+        if (targetStep < currentStep) {
+          showStep(targetStep);
+          return;
+        }
+
+        if (targetStep > currentStep) {
+          for (let step = currentStep; step < targetStep; step++) {
+            if (!validateStep(step)) {
+              showToast('warning', `Veuillez compléter l'étape ${step} avant de continuer`);
+              return;
+            }
+          }
+        }
+
+        showStep(targetStep);
+      });
+    });
+  }
+
+  // ============================================================================
+  // NAVIGATION FLOTTANTE
+  // ============================================================================
+
+  // Mettre à jour les boutons flottants
+  function updateFloatingNav() {
+    const floatingPrev = document.querySelector('.btn-prev');
+    const floatingNext = document.querySelector('.btn-next');
+
+    if (!floatingPrev || !floatingNext) return;
+
+    if (currentStep === 1) {
+      floatingPrev.disabled = true;
+      floatingPrev.innerHTML = '<i class="fas fa-arrow-left"></i> Précédent';
+      floatingNext.innerHTML = 'Suivant <i class="fas fa-arrow-right"></i>';
+      floatingNext.onclick = () => nextStep(2);
+      floatingNext.className = 'btn btn-primary btn-next';
+    } else if (currentStep === 6) {
+      floatingPrev.disabled = false;
+      floatingPrev.innerHTML = '<i class="fas fa-arrow-left"></i> Précédent';
+      floatingPrev.onclick = () => prevStep(5);
+      floatingNext.innerHTML = '<i class="fas fa-check-circle"></i> Valider';
+      floatingNext.onclick = () => document.getElementById('acteForm').submit();
+      floatingNext.className = 'btn btn-success btn-next';
+    } else {
+      floatingPrev.disabled = false;
+      floatingPrev.innerHTML = '<i class="fas fa-arrow-left"></i> Précédent';
+      floatingPrev.onclick = () => prevStep(currentStep - 1);
+      floatingNext.innerHTML = 'Suivant <i class="fas fa-arrow-right"></i>';
+      floatingNext.onclick = () => nextStep(currentStep + 1);
+      floatingNext.className = 'btn btn-primary btn-next';
+    }
+  }
+
+  // Mettre à jour la navigation flottante lorsque l'étape change
+  const originalShowStep = showStep;
+  showStep = function (step) {
+    originalShowStep.call(this, step);
+    updateFloatingNav();
+  };
+
+  // ========== INITIALISATION ==========
+  document.addEventListener('DOMContentLoaded', function () {
+    const today = new Date().toISOString().split('T')[0];
+    document.querySelector('[name="date_acte"]').value = today;
+
+    // Initialiser le sélecteur de médecin
+    initDoctorChoice();
+
+    // Charger les données d'anesthésie
+    loadAnesthesieData();
+
+    // Rendre les étapes cliquables
+    initClickableSteps();
+
+    // Mettre à jour la navigation flottante
+    updateFloatingNav();
+
+    // Événement pour le bouton d'historique patient
+    const btnHistory = document.getElementById('btnPatientHistoryDirect');
+    if (btnHistory) {
+      btnHistory.addEventListener('click', function () {
+        const patientOid = this.getAttribute('data-patient-oid');
+        if (patientOid && typeof showPatientHistoryDirect === 'function') {
+          showPatientHistoryDirect(patientOid);
+        }
+      });
+    }
+
+    // Ajouter un listener pour recalculer quand les nuitées incluses changent
+    const nuiteesIncluses = document.getElementById('nuiteesIncluses');
+    if (nuiteesIncluses) {
+      nuiteesIncluses.addEventListener('change', function () {
+        // Mettre à jour l'affichage dans le résumé
+        const displayElement = document.getElementById('displayNuiteesIncluses');
+        if (displayElement) {
+          displayElement.textContent = this.value || '0';
+        }
+
+        // Recalculer toutes les hospitalisations
+        for (let i = 1; i <= hospitalisationCounter; i++) {
+          if (document.getElementById(`hospitalisation-${i}`)) {
+            calculateHospitalisation(i);
+          }
+        }
+      });
+    }
+
+    // Synchroniser le nom du patient sélectionné
+    const patientSelect = document.getElementById('patientSelectDirect');
+    if (patientSelect) {
+      patientSelect.addEventListener('change', function (e) {
+        const select = e.target;
+        const selectedOption = select.options[select.selectedIndex];
+
+        if (selectedOption && selectedOption.value) {
+          // Extraire le nom du label
+          const label = selectedOption.text;
+          const patientName = label.split(' - ')[0]; // "Nom Prénom - CODE"
+
+          const hiddenField = document.getElementById('patientNameHidden');
+          if (hiddenField) {
+            hiddenField.value = patientName;
+          }
+        }
+      });
+    }
+  });
+</script>
+
+
+<script>
+  // CHECK DUPLICATE DOSSIER
+  document.addEventListener('DOMContentLoaded', function () {
+    const patientSelectCheck = document.getElementById('patientSelectDirect');
+    if (patientSelectCheck) {
+      patientSelectCheck.addEventListener('change', function () {
+        const patientOid = this.value;
+        if (patientOid) {
+          fetch(`/api/medecin_interne/check_dossier?patient_oid=${patientOid}`)
+            .then(response => response.json())
+            .then(data => {
+              if (data.exists) {
+                if (typeof Toastify === 'function') {
+                  Toastify({
+                    text: data.message,
+                    duration: 8000,
+                    close: true,
+                    gravity: "top",
+                    position: "center",
+                    style: {
+                      background: "linear-gradient(to right, #ff5f6d, #ffc371)",
+                      color: "white",
+                      fontWeight: "bold",
+                      fontSize: "16px",
+                      boxShadow: "0 4px 15px rgba(0,0,0,0.2)",
+                      borderRadius: "8px",
+                      padding: "12px 20px"
+                    }
+                  }).showToast();
+                } else {
+                  showToast(data.message, "success");
+                }
+              }
+            })
+            .catch(err => console.error('Error checking dossier:', err));
+        }
+      });
+    }
+  });
+</script>
+{% endblock %}

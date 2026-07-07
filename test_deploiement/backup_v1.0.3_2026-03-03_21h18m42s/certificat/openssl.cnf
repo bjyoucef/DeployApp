@@ -1,0 +1,23 @@
+[req]
+default_bits       = 2048
+distinguished_name = req_distinguished_name
+req_extensions     = req_ext
+x509_extensions    = v3_ca
+
+[req_distinguished_name]
+countryName                 = FR
+stateOrProvinceName         = Alger
+localityName                = Alger
+organizationName            = Inaya Clinique
+commonName                  = inaya.clinique
+
+[req_ext]
+subjectAltName = @alt_names
+
+[v3_ca]
+subjectAltName = @alt_names
+
+[alt_names]
+DNS.1 = inaya.clinique
+DNS.2 = localhost
+IP.1  = 192.168.10.9

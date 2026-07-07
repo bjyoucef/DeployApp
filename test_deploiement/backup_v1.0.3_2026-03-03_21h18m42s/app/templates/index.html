@@ -1,0 +1,837 @@
+{% extends "layout.html" %}
+
+{% block style %}
+<style>
+    :root {
+        --animate-duration: 0.8s;
+        --animate-delay: 0.1s;
+    }
+
+    .animate__animated {
+        -webkit-animation-duration: 0.8s;
+        animation-duration: 0.8s;
+        -webkit-animation-duration: var(--animate-duration);
+        animation-duration: var(--animate-duration);
+        -webkit-animation-fill-mode: both;
+        animation-fill-mode: both;
+    }
+
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+        }
+
+        to {
+            opacity: 1;
+        }
+    }
+
+    .animate__fadeIn {
+        -webkit-animation-name: fadeIn;
+        animation-name: fadeIn;
+    }
+
+    @keyframes fadeInDown {
+        from {
+            opacity: 0;
+            -webkit-transform: translate3d(0, -50px, 0);
+            transform: translate3d(0, -50px, 0);
+        }
+
+        to {
+            opacity: 1;
+            -webkit-transform: translate3d(0, 0, 0);
+            transform: translate3d(0, 0, 0);
+        }
+    }
+
+    .animate__fadeInDown {
+        -webkit-animation-name: fadeInDown;
+        animation-name: fadeInDown;
+    }
+
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            -webkit-transform: translate3d(0, 50px, 0);
+            transform: translate3d(0, 50px, 0);
+        }
+
+        to {
+            opacity: 1;
+            -webkit-transform: translate3d(0, 0, 0);
+            transform: translate3d(0, 0, 0);
+        }
+    }
+
+    .animate__fadeInUp {
+        -webkit-animation-name: fadeInUp;
+        animation-name: fadeInUp;
+    }
+</style>
+
+{% if not (user and user.get('username')) and not g.user %}
+<script src="{{ url_for('static', filename='js/tailwindcss.js') }}"></script>
+<script>
+    tailwind.config = {
+        darkMode: ['class', '[data-theme="dark"]'],
+        corePlugins: {
+            preflight: false,
+        },
+        theme: {
+            extend: {
+                colors: {
+                    cis: {
+                        primary: '#450A54',
+                        secondary: '#4a148c',
+                    }
+                },
+                fontFamily: {
+                    sans: ['Segoe UI', 'system-ui', '-apple-system', 'sans-serif'],
+                }
+            }
+        }
+    }
+</script>
+<style>
+    /* 3D Perspective Container */
+    .perspective-container {
+        perspective: 1200px;
+    }
+
+    /* The Floating Object */
+    .logo-3d-container {
+        transform-style: preserve-3d;
+        transition: transform 0.1s ease-out;
+        position: relative;
+    }
+
+    /* Glow Effect */
+    .glow-effect {
+        animation: pulse-glow 4s infinite alternate;
+        filter: drop-shadow(0 60px 90px rgba(0, 0, 0, 0.5));
+    }
+
+    @keyframes pulse-glow {
+        0% {
+            filter: drop-shadow(0 0 15px rgba(168, 0, 183, 0.2));
+        }
+
+        100% {
+            filter: drop-shadow(0 0 30px rgba(41, 41, 41, 0.6));
+        }
+    }
+
+    .text-3d {
+        transform: translateZ(50px);
+        text-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+    }
+
+    /* Dark mode logo color switching */
+    .logo-svg .fill-light {
+        fill: url(#grad1);
+    }
+
+    .logo-svg .fill-dark {
+        fill: url(#grad-dark);
+        display: none;
+    }
+
+    [data-theme="dark"] .logo-svg .fill-light {
+        display: none;
+    }
+
+    [data-theme="dark"] .logo-svg .fill-dark {
+        display: block;
+    }
+
+    /* Dark mode left panel adjustment */
+    [data-theme="dark"] #scene-container {
+        background: radial-gradient(circle at center, #1a0a20 0%, #0d0d0d 100%);
+    }
+
+    /* CIS Text dark mode */
+    [data-theme="dark"] .cis-title {
+        color: #000000 !important;
+    }
+
+    [data-theme="dark"] .cis-subtitle {
+        color: #000000 !important;
+    }
+</style>
+{% else %}
+<!-- Styles specific for the Dashboard (Logged In) -->
+<style>
+    :root {
+        --cis-primary: #450A54;
+        --cis-secondary: #702a82;
+        --cis-card-bg: rgba(255, 255, 255, 0.9);
+        --glass-border: 1px solid rgba(255, 255, 255, 0.5);
+    }
+
+    [data-theme="dark"] {
+        --cis-card-bg: rgba(30, 30, 30, 0.8);
+        --glass-border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    /* Hero Section */
+    .dashboard-hero {
+        background: linear-gradient(135deg, var(--cis-primary) 0%, var(--cis-secondary) 100%);
+        border-radius: 0 0 30px 30px;
+        padding: 3rem 2rem 5rem 2rem;
+        color: white;
+        margin-bottom: -3rem;
+        box-shadow: 0 10px 30px rgba(69, 10, 84, 0.2);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .dashboard-hero::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -10%;
+        width: 400px;
+        height: 400px;
+        background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0) 70%);
+        border-radius: 50%;
+        animation: pulse-bg 10s infinite alternate;
+    }
+
+    @keyframes pulse-bg {
+        0% {
+            transform: scale(1);
+            opacity: 0.1;
+        }
+
+        100% {
+            transform: scale(1.1);
+            opacity: 0.2;
+        }
+    }
+
+    /* Stats Badges */
+    .stat-badge {
+        background: rgba(255, 255, 255, 0.15);
+        backdrop-filter: blur(10px);
+        padding: 0.5rem 1rem;
+        border-radius: 12px;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        display: flex;
+        align-items: center;
+        gap: 0.8rem;
+        font-size: 0.9rem;
+        transition: transform 0.2s;
+    }
+
+    .stat-badge:hover {
+        transform: translateY(-2px);
+        background: rgba(255, 255, 255, 0.25);
+    }
+
+    /* Module Card */
+    .module-card {
+        background: var(--cis-card-bg);
+        border: var(--glass-border);
+        border-radius: 20px;
+        padding: 1.5rem;
+        height: 100%;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        position: relative;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+        text-decoration: none !important;
+        color: inherit;
+    }
+
+    .module-card:hover {
+        transform: translateY(-8px);
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+        border-color: var(--cis-primary);
+    }
+
+    .card-icon-wrapper {
+        width: 60px;
+        height: 60px;
+        border-radius: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.8rem;
+        margin-bottom: 1.2rem;
+        transition: all 0.3s ease;
+        background: linear-gradient(135deg, #f3f4f6 0%, #ffffff 100%);
+        color: var(--cis-primary);
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+    }
+
+    [data-theme="dark"] .card-icon-wrapper {
+        background: linear-gradient(135deg, #2d2d2d 0%, #1a1a1a 100%);
+        color: #d8b4fe;
+    }
+
+    .module-card:hover .card-icon-wrapper {
+        background: var(--cis-primary);
+        color: white;
+        transform: scale(1.1) rotate(5deg);
+    }
+
+    .card-action {
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        color: var(--cis-primary);
+        font-weight: 600;
+        font-size: 0.9rem;
+        opacity: 0;
+        transform: translateX(-10px);
+        transition: all 0.3s ease;
+    }
+
+    [data-theme="dark"] .card-action {
+        color: #d8b4fe;
+    }
+
+    .module-card:hover .card-action {
+        opacity: 1;
+        transform: translateX(0);
+    }
+
+    /* Search Input */
+    .search-input {
+        width: 100%;
+        padding: 1.2rem 1.5rem 1.2rem 3.5rem;
+        border-radius: 50px;
+        border: none;
+        background: var(--cis-card-bg);
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+        color: inherit;
+        font-size: 1rem;
+        transition: all 0.3s ease;
+        backdrop-filter: blur(10px);
+    }
+
+    .search-input:focus {
+        outline: none;
+        box-shadow: 0 15px 35px rgba(69, 10, 84, 0.2);
+        transform: scale(1.02);
+    }
+
+    .search-icon {
+        position: absolute;
+        left: 1.2rem;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #6b7280;
+        font-size: 1.2rem;
+    }
+
+    /* Animation Delays */
+    .animate-delay-1 {
+        animation-delay: 0.1s;
+    }
+
+    .animate-delay-2 {
+        animation-delay: 0.2s;
+    }
+
+    .animate-delay-3 {
+        animation-delay: 0.3s;
+    }
+</style>
+{% endif %}
+{% endblock %}
+
+
+{% block layout_body %}
+{% if not (user and user.get('username')) and not g.user %}
+<!-- === LOGIN PAGE START (Tailwind Based) === -->
+<div class="fixed inset-0 w-full h-full flex overflow-hidden font-sans bg-white dark:bg-[#121212]">
+    <!-- Left Panel: 3D Visualization -->
+    <div id="scene-container"
+        class="hidden md:flex flex-[1.2] relative flex-col justify-center items-center bg-[radial-gradient(circle_at_center,_#450A54_0%,_#4a148c_100%)] overflow-hidden animate__animated animate__fadeIn">
+
+        <!-- Ambient Background Lights & Particles -->
+        <div class="absolute inset-0 z-0 pointer-events-none">
+            <div
+                class="absolute top-[-20%] right-[-10%] w-[900px] h-[900px] bg-purple-500 rounded-full mix-blend-screen filter blur-[100px] opacity-40 animate-pulse">
+            </div>
+            <!-- Spotlight that follows mouse -->
+            <div id="mouse-light"
+                class="absolute w-[600px] h-[600px] bg-white rounded-full mix-blend-overlay filter blur-[80px] opacity-0 transition-opacity duration-500 translate-x-[-50%] translate-y-[-50%]">
+            </div>
+        </div>
+
+        <!-- 3D Logo Scene -->
+        <div class="perspective-container z-10 w-full h-full flex justify-center items-center p-10">
+            <div id="logo-card"
+                class="logo-3d-container relative w-auto h-auto flex flex-col justify-center items-center animate__animated animate__fadeInDown">
+
+                <!-- Unified Logo with Glow -->
+                <div class="relative w-full flex flex-col justify-center items-center glow-effect logo-unified group">
+                    <!-- Single SVG Layer -->
+                    <svg class="logo-svg h-[500px] md:h-[600px] w-auto max-w-none"
+                        style="filter: drop-shadow(0 0 2px rgba(255,255,255,0.1));" xmlns="http://www.w3.org/2000/svg"
+                        viewBox="0 0 841.9 500">
+                        <defs>
+                            <!-- Light mode gradient (white) -->
+                            <linearGradient id="grad1" x1="0%" y1="0%" x2="100%" y2="0%">
+                                <stop offset="0%" style="stop-color:rgb(255,255,255);stop-opacity:1" />
+                                <stop offset="100%" style="stop-color:rgb(240,240,255);stop-opacity:1" />
+                            </linearGradient>
+                            <!-- Dark mode gradient (black) -->
+                            <linearGradient id="grad-dark" x1="0%" y1="0%" x2="100%" y2="100%">
+                                <stop offset="0%" style="stop-color:#000000;stop-opacity:1" />
+                                <stop offset="100%" style="stop-color:#1a1a1a;stop-opacity:1" />
+                            </linearGradient>
+                        </defs>
+                        <!-- Light mode paths -->
+                        <g class="fill-light" fill="url(#grad1)">
+                        </g>
+                        <!-- Dark mode paths -->
+                        <g class="fill-dark" fill="url(#grad-dark)">
+                        </g>
+                        <!-- Combined Paths (visible in both modes) -->
+                        <g>
+                            <path class="logo-path" d="M401.2,37.2c7.4-10.2,14.5-20.3,21.8-30.1c0.7-1,2.7-1,4.2-1.4c14.8,26.9,29.2,53.4,43.9,79.8
+                c8.7,15.7,18.6,30.9,24.1,48.2c4.1,13,5.4,26.2,4,40c-1.4,14.8-5,28.6-12.4,41.4c-3.3,5.7-7.3,11.1-11.6,16.1
+                c-6.6,7.6-13.6,15-20.9,21.9c-9.9,9.4-20.3,18.2-30.3,27.5c-16.6,15.4-27.2,34.6-33.8,55.9c-3.2,10.1-5.5,20.8-5.9,31.3
+                c-0.5,15.5,4,30.1,13.7,42.9c-0.7-5-1.8-10-2.2-15.1c-0.5-7.9-1-15.9-0.8-23.8c0.2-7.3,1.1-14.7,1.9-22c1.7-15.6,8.2-29.3,16.9-42.1
+                c9.1-13.2,21-23.7,32.9-34.3c12.3-10.9,23.4-23.2,34.5-35.3c8.9-9.8,17.2-20.1,25.5-30.4c5.7-7,11.2-14.3,16.6-21.6
+                c9.1-12.2,21.3-20.4,35.2-25.9c21.5-8.5,43.1-16.8,62.3-30c13.7-9.4,25.2-20.7,34.7-34.2c2-2.8,4.3-5.4,6.8-7.7
+                c1.2-1.1,3.1-1.4,4.6-2c0.6,1.6,1.8,3.2,1.7,4.8c-0.5,6-1,12-2.3,17.9c-5,22.8-11.7,45.1-20.8,66.5c-8.7,20.5-19.4,39.9-34.3,57
+                c-16,18.4-35.6,31.8-55.9,44.4c-17.2,10.6-35.3,19.9-52.8,30.1c-13.4,7.8-21.3,20.5-26.6,34.4c-7.4,19.4-12.4,39.6-15.3,60.2
+                c-2.5,18.4-4.8,37-13.1,53.8c-6.5,13.2-14.1,25.9-21.4,38.8c-1.5,2.6-3.1,2.7-5.4-0.2c-13.7-17.1-26.4-34.7-35.5-54.7
+                c-7.5-16.6-13.4-33.8-15.5-52c-1-8.8-1.9-17.7-1.9-26.5c0-14.1,3.7-27.5,8.9-40.5c6.5-16.5,15.9-31.3,28.4-43.6
+                c10.4-10.2,22.5-18.8,34.3-27.4c20.2-14.8,33.5-34.4,40.1-58.1c3.5-12.6,1.1-25.6-2.3-38.2c-7.2-27-18.8-52.2-32-76.7
+                c-7.2-13.4-15.4-26.4-23.2-39.5c-1.8-3-2.9-1.5-4.3,0.7c-8.3,12.9-17.1,25.4-25.1,38.5c-9.2,14.9-18.3,30-26.3,45.5
+                c-6.8,13.2-10.4,27.5-11.9,42.6c-2.1,21.2,6.9,37.8,18.5,53.9c7.5,10.3,15.2,20.6,22.9,30.8c2.5,3.3,5.6,6.1,7.7,9.5
+                c1,1.6,0.1,4.4,0,6.6c-2.1-0.5-4.5-0.5-6.1-1.6c-11.2-7.6-18.1-19.2-26.5-29.3c-9.7-11.8-17.5-24.7-21.6-39.6
+                c-4.1-15-5.4-30-3.8-45.5c1.8-17.7,6.7-34.3,15.4-49.4c10.7-18.7,23.1-36.5,34.7-54.6C397.5,42.1,399.3,39.8,401.2,37.2 M609.5,205
+                c9.5-17.9,19-35.7,28.3-53.2c-12.4,9.4-24.2,20.1-37.6,28.2c-23.3,14.1-36.3,18.5-43.9,17.4c18.4-15,36.3-29.5,54.1-44.1
+                c-0.4-0.6-0.8-1.1-1.2-1.7c-17.9,8.8-36.2,17.2-53.7,26.7c-8.2,4.5-15.8,10.5-22.3,17.3c-10.2,10.6-18,23.1-24.3,36.5
+                c-8,17-19.4,31.4-36,43.4c2.7-0.6,4.1-0.6,5.1-1.2c11.8-6,21.4-14.9,30.5-24.4c9.5-10,18.7-20.4,28.9-29.7
+                c16.4-15,36.4-24,57.3-31.2c5.6-2,8.9-0.4,9.9,5.3c0.6,3.6,0.5,7.7-0.7,11.1c-2.9,8-6.7,15.7-10.1,23.5
+                C601,222.6,604.2,213.6,609.5,205 M551,271.5c9.5-6.3,18.9-12.7,25.6-22.2c-3.2,1.6-5.7,3.9-8.5,6c-21,16.3-45,26-70.7,31.6
+                c-22.7,4.9-42.6,14.2-57,33.1c-7.3,9.6-14.1,19.8-15.5,32.2c-1.4,11.5-2.6,23.1-2.9,34.7c-0.3,12.2,0.4,24.5,0.9,36.7
+                c0.2,5,1.2,10.1,1.8,15.1c0.5,0.1,0.9,0.2,1.4,0.3c0.9-1.5,2.1-2.9,2.7-4.6c5.1-14.6,5.3-30,7-45.1c1.4-12,2.2-24,4.1-35.9
+                c2-12.4,8.2-23.2,17-31.9c11.8-11.6,26.9-18.1,41.9-24.5C516.6,289.6,534.3,282.5,551,271.5z" />
+<style>
+    .logo-path {
+        fill: url(#grad1);
+        stroke: #d8b4fe;
+        /* Couleur du tracé (violet clair) */
+        stroke-width: 2;
+        stroke-dasharray: 4000;
+        /* Longueur du tracé */
+        stroke-dashoffset: 4000;
+        /* Masque le tracé au départ */
+        fill-opacity: 0;
+        /* Masque le remplissage au départ */
+        /* 1. Dessine le trait (3s) | 2. Remplit la couleur (2s après un délai de 2.5s) */
+        animation: drawLine 3s ease-in-out forwards, fillLogo 2s ease-in-out 2.5s forwards;
+    }
+
+    [data-theme="dark"] .logo-path {
+        fill: url(#grad-dark);
+        stroke: #9d8ce0;
+    }
+
+    @keyframes drawLine {
+        to {
+            stroke-dashoffset: 0;
+        }
+    }
+
+    @keyframes fillLogo {
+        to {
+            fill-opacity: 1;
+            stroke-opacity: 0;
+            /* Fait disparaître le contour à la fin */
+        }
+    }
+</style>
+                            <path class="logo-path" d="M185.9,157c-3.9-11-8.2-21.5-7.9-33.1c0-1.6,0.8-4.4,1.6-4.6c1.7-0.3,4,0.3,5.4,1.4c3.9,3.1,7.2,6.8,11.1,9.8
+                c9.7,7.3,18.9,15.7,29.6,21.1c22.2,11.1,45.3,20.3,67.9,30.7c16.1,7.5,32.9,13.9,47.4,24.7c16.6,12.3,29,28,37,47
+                c3.6,8.5,5.9,17.2,5.1,26.5c-1.8,19.2-16.4,34.4-34.9,33.2c-9.1-0.6-18.2-4-26.9-7.1c-17.1-6.3-32.4-16.1-46-28.1
+                c-13.6-12.1-26.2-25.4-38.8-38.5c-13.1-13.6-23.4-29.4-32.6-45.8C197.2,182.3,191.9,169.7,185.9,157 M328,219.5
+                c-7.6-4.8-14.9-10.2-22.9-14.3c-8.8-4.5-18.6-7.2-27.2-11.9c-22.5-12.5-44.5-25.7-66.8-38.5c-3.8-2.2-7.7-4.1-11.5-6.2
+                c-0.3,0.4-0.6,0.7-0.9,1.1c4,7.2,7.9,14.6,12.1,21.7c7.4,12.8,14.5,25.7,22.4,38.2c13.7,21.7,28.6,42.6,48.8,58.8
+                c7.5,6,15.4,12.3,24.1,15.9c13.9,5.7,28.5,9.4,43,13.6c3.2,0.9,7.2,1.2,10.3,0.1c7.6-2.7,14.1-16.6,10.7-24
+                c-4.3-9.4-9.5-18.5-15.4-27C347.7,236.5,339.1,227.2,328,219.5z" />
+                            <path class="logo-path"
+                                d="M402.2,201.6c5.9,11.6,15,19.8,25.1,27.5c-5.5,1.3-13.2-0.8-19.7-5c-15.3-10-26-24-30.1-41.5
+                c-6.3-26.7-0.2-50.8,21-69.3c6.3-5.5,14.8-8.7,22.4-12.7c1.3-0.7,3-0.5,5.4-0.8C393.2,128.3,386,162.1,402.2,201.6z" />
+
+                            <path class="logo-path" d="M442.9,160.2c4.2,12.6,0.1,27.2-9.8,35c-4.1,3.2-9.4,2.3-13.2-2.2c-5.3-6.3-9.8-13.5-9.7-21.5
+    c0.1-7.3,2.2-15,5.1-21.9c2.8-6.7,7.6-12.6,12.3-20C433.1,140.4,438,150.1,442.9,160.2z" />
+                            <path class="logo-path" d="M290.7,249.3c-5.7-10.3-11.1-20.3-16.5-30.1c5.7,0.7,12.2,1.5,18.6,2.2c2.6,0.3,5.2,0.6,7.8,0.8
+    c9.1,1,13.3,8.5,18.2,14.4c8.2,10.1,15.4,21.1,22.9,31.8c0.6,0.9,0.8,2,1.3,3.3c-12.5,0.7-24.8,1-36-3.7c-5.2-2.2-8.8-8.2-12.9-12.7
+    C292.7,253.8,292,251.5,290.7,249.3z" />
+                        </g>
+                    </svg>
+
+                    <div class="mt-8 text-center text-3d z-20">
+                        <h1 class="cis-title text-4xl md:text-6xl font-black text-white tracking-tighter drop-shadow-[0_4px_4px_rgba(0,0,0,0.1)]"
+                            style="font-family: 'Segoe UI', sans-serif;">CIS</h1>
+                        <p
+                            class="cis-subtitle text-xs md:text-xl text-white/80 font-light tracking-[0.5em] mt-2 uppercase">
+                            Clinic
+                            Information
+                            System</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Right Panel: Login Form -->
+    <div
+        class="flex-1 flex flex-col justify-center items-center p-8 relative z-20 bg-[#f8f9fa] dark:bg-[#121212] overflow-hidden animate__animated animate__fadeIn">
+        <!-- Decorative subtle background blobs -->
+        <div class="absolute inset-0 overflow-hidden pointer-events-none">
+            <div
+                class="absolute top-[-10%] right-[-5%] w-[500px] h-[500px] bg-purple-200/20 dark:bg-purple-900/10 rounded-full blur-[80px]">
+            </div>
+            <div
+                class="absolute bottom-[-10%] left-[-5%] w-[400px] h-[400px] bg-blue-200/20 dark:bg-blue-900/10 rounded-full blur-[80px]">
+            </div>
+        </div>
+
+        <div class="w-full max-w-[440px] relative z-10 perspective-container">
+            <!-- Login Card -->
+            <div
+                class="bg-white/80 dark:bg-[#1e1e1e]/90 backdrop-blur-xl rounded-3xl shadow-[0_20px_60px_-15px_rgba(0,0,0,0.1)] dark:shadow-[0_20px_60px_-15px_rgba(0,0,0,0.5)] p-10 border border-white/40 dark:border-white/5 transition-all duration-500 hover:shadow-[0_25px_70px_-12px_rgba(69,10,84,0.15)] animate__animated animate__fadeInUp">
+
+                <div class="text-center mb-10">
+                    <h2
+                        class="text-4xl font-black text-[#450A54] dark:text-[#9d8ce0] mb-2 tracking-tight drop-shadow-sm">
+                        Connexion</h2>
+                    <p class="text-gray-500 dark:text-gray-400 font-medium">Accédez à votre espace sécurisé</p>
+                </div>
+
+                <form action="{{ url_for('login') }}" method="POST" class="needs-validation space-y-6" novalidate>
+                    <!-- Username Field -->
+                    <div class="group relative">
+                        <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none z-10">
+                            <i
+                                class="far fa-user text-gray-400 group-focus-within:text-[#450A54] dark:group-focus-within:text-[#9d8ce0] transition-colors duration-300 text-lg"></i>
+                        </div>
+                        <input type="text" name="username" id="username_input"
+                            class="peer w-full pl-12 pr-4 py-4 bg-gray-50/50 dark:bg-[#2d2d2d] border border-gray-200 dark:border-[#404040] rounded-xl text-gray-700 dark:text-gray-200 placeholder-transparent focus:outline-none focus:ring-2 focus:ring-[#450A54]/20 focus:border-[#450A54] dark:focus:border-[#9d8ce0] transition-all duration-300 shadow-sm"
+                            placeholder="Identifiant" required>
+                        <label for="username_input"
+                            class="absolute left-12 top-4 text-gray-400 text-base transition-all duration-300 pointer-events-none
+                            peer-focus:-top-2.5 peer-focus:left-4 peer-focus:text-xs peer-focus:text-[#450A54] dark:peer-focus:text-[#9d8ce0] peer-focus:bg-white dark:peer-focus:bg-[#1e1e1e] peer-focus:px-1 
+                            peer-valid:-top-2.5 peer-valid:left-4 peer-valid:text-xs peer-valid:px-1 peer-valid:bg-white dark:peer-valid:bg-[#1e1e1e]">
+                            Identifiant
+                        </label>
+                    </div>
+
+                    <!-- Password Field -->
+                    <div class="group relative">
+                        <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none z-10">
+                            <i
+                                class="fas fa-lock text-gray-400 group-focus-within:text-[#450A54] dark:group-focus-within:text-[#9d8ce0] transition-colors duration-300 text-lg"></i>
+                        </div>
+                        <input type="password" name="password" id="password"
+                            class="peer w-full pl-12 pr-12 py-4 bg-gray-50/50 dark:bg-[#2d2d2d] border border-gray-200 dark:border-[#404040] rounded-xl text-gray-700 dark:text-gray-200 placeholder-transparent focus:outline-none focus:ring-2 focus:ring-[#450A54]/20 focus:border-[#450A54] dark:focus:border-[#9d8ce0] transition-all duration-300 shadow-sm"
+                            placeholder="Mot de passe" required>
+                        <label for="password"
+                            class="absolute left-12 top-4 text-gray-400 text-base transition-all duration-300 pointer-events-none
+                            peer-focus:-top-2.5 peer-focus:left-4 peer-focus:text-xs peer-focus:text-[#450A54] dark:peer-focus:text-[#9d8ce0] peer-focus:bg-white dark:peer-focus:bg-[#1e1e1e] peer-focus:px-1 
+                            peer-valid:-top-2.5 peer-valid:left-4 peer-valid:text-xs peer-valid:px-1 peer-valid:bg-white dark:peer-valid:bg-[#1e1e1e]">
+                            Mot de passe
+                        </label>
+                        <!-- Toggle Password -->
+                        <div class="absolute inset-y-0 right-0 pr-4 flex items-center cursor-pointer opacity-70 hover:opacity-100 transition-opacity"
+                            id="togglePassword">
+                            <i
+                                class="far fa-eye text-gray-400 hover:text-[#450A54] dark:hover:text-[#9d8ce0] text-lg"></i>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center justify-between">
+                        <label class="flex items-center space-x-2 cursor-pointer group">
+                            <div class="relative flex items-center">
+                                <input type="checkbox" name="remember_me" id="remember_me"
+                                    class="peer h-4 w-4 opacity-0 absolute">
+                                <div
+                                    class="w-4 h-4 border border-gray-300 rounded peer-checked:bg-[#450A54] peer-checked:border-[#450A54] transition-colors flex items-center justify-center">
+                                    <i
+                                        class="fas fa-check text-white text-[10px] opacity-0 peer-checked:opacity-100"></i>
+                                </div>
+                            </div>
+                            <span
+                                class="text-xs font-medium text-gray-500 group-hover:text-[#450A54] transition-colors select-none">Se
+                                souvenir de moi</span>
+                        </label>
+                        <a href="{{ url_for('demande_assistance', openIT='true') }}"
+                            class="text-xs font-bold text-[#450A54] dark:text-[#9d8ce0] hover:underline">Mot de passe
+                            oublié ?</a>
+                    </div>
+
+                    <button type="submit"
+                        class="w-full relative overflow-hidden group bg-gradient-to-r from-[#450A54] via-[#5a106b] to-[#450A54] bg-[length:200%_auto] hover:bg-right hover:scale-[1.02] active:scale-[0.98] text-white font-bold py-4 px-6 rounded-xl shadow-lg hover:shadow-[#450A54]/30 transition-all duration-500 flex justify-center items-center gap-3">
+                        <span class="tracking-wide">SE CONNECTER</span>
+                        <i
+                            class="fas fa-arrow-right text-sm transform group-hover:translate-x-1 transition-transform"></i>
+                    </button>
+                </form>
+
+                <div class="mt-12 pt-6 border-t border-gray-100 dark:border-gray-700 text-center space-y-3">
+                    <p class="text-xs text-gray-400 font-medium">© 2026 Clinic Information System. Tous droits
+                        réservés.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Floating Theme Toggle Button -->
+    <button id="theme-toggle-btn"
+        class="fixed top-6 right-6 z-50 w-12 h-12 rounded-full shadow-lg flex items-center justify-center transition-all duration-300 hover:scale-110 bg-[#450A54] dark:bg-[#2d2d2d] text-white border-2 border-white/20 dark:border-white/10"
+        title="Changer le thème">
+        <i id="theme-icon" class="fas fa-moon text-lg"></i>
+    </button>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const container = document.getElementById('scene-container');
+            const card = document.getElementById('logo-card');
+            const mouseLight = document.getElementById('mouse-light');
+
+            if (!container || !card) return;
+
+            container.addEventListener('mousemove', (e) => {
+                const { left, top, width, height } = container.getBoundingClientRect();
+                // Calculate mouse position relative to center of container (-1 to 1)
+                const x = (e.clientX - left - width / 2) / (width / 2);
+                const y = (e.clientY - top - height / 2) / (height / 2);
+
+                // Rotate Container (Unified object)
+                const rotateY = x * 10;
+                const rotateX = -y * 10;
+
+                card.style.transform = `rotateY(${rotateY}deg) rotateX(${rotateX}deg)`;
+
+                // Move the spotlight
+                if (mouseLight) {
+                    mouseLight.style.opacity = '0.4';
+                    const moveX = (e.clientX - left);
+                    const moveY = (e.clientY - top);
+                    mouseLight.style.left = `${moveX}px`;
+                    mouseLight.style.top = `${moveY}px`;
+                }
+            });
+
+            container.addEventListener('mouseleave', () => {
+                card.style.transform = 'rotateY(0) rotateX(0)';
+                if (mouseLight) mouseLight.style.opacity = '0';
+            });
+
+            // Theme Toggle Logic
+            const themeBtn = document.getElementById('theme-toggle-btn');
+            const themeIcon = document.getElementById('theme-icon');
+
+            // Check saved theme or system preference
+            const savedTheme = localStorage.getItem('theme');
+            const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+
+            if (savedTheme === 'dark' || (!savedTheme && prefersDark)) {
+                document.documentElement.setAttribute('data-theme', 'dark');
+                if (themeIcon) {
+                    themeIcon.classList.remove('fa-moon');
+                    themeIcon.classList.add('fa-sun');
+                }
+            }
+
+            // Toggle theme on click
+            if (themeBtn) {
+                themeBtn.addEventListener('click', () => {
+                    const currentTheme = document.documentElement.getAttribute('data-theme');
+                    const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+
+                    document.documentElement.setAttribute('data-theme', newTheme);
+                    localStorage.setItem('theme', newTheme);
+
+                    // Switch icon
+                    if (themeIcon) {
+                        if (newTheme === 'dark') {
+                            themeIcon.classList.remove('fa-moon');
+                            themeIcon.classList.add('fa-sun');
+                        } else {
+                            themeIcon.classList.remove('fa-sun');
+                            themeIcon.classList.add('fa-moon');
+                        }
+                    }
+                });
+            }
+        });
+    </script>
+</div>
+<!-- === LOGIN PAGE END === -->
+
+{% else %}
+{{ super() }}
+{% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="main-content-wrapper">
+
+    <!-- Header Section (Hero) -->
+    <div class="dashboard-hero animate__animated animate__fadeInDown">
+        <div class="container-fluid px-4">
+            <div class="d-flex justify-content-between align-items-end flex-wrap">
+                <div>
+                    <h1 class="fw-bold mb-3 display-5">
+                        Bonjour, <span style="color: #ffb3ff;">{{ user.username if user else 'Utilisateur' }}</span>
+                    </h1>
+
+                    <!-- Quick Stats / Clock -->
+                    <div class="d-flex gap-3 flex-wrap">
+                        <div class="stat-badge">
+                            <i class="far fa-calendar-alt text-warning"></i>
+                            <span id="current-date">Chargement...</span>
+                        </div>
+                        <div class="stat-badge">
+                            <i class="far fa-clock text-info"></i>
+                            <span id="current-time">--:--</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content Area -->
+    <div class="container-fluid px-4" style="margin-top: -3rem;">
+
+        <!-- Search Bar -->
+        <div class="position-relative mx-auto mb-5 animate__animated animate__fadeInUp animate-delay-1"
+            style="max-width: 600px; z-index: 10;">
+            <i class="fas fa-search search-icon"></i>
+            <input type="text" id="moduleSearch" class="search-input"
+                placeholder="Rechercher un module (ex: Patients, RDV...)...">
+        </div>
+
+        <!-- Section Title -->
+        <div class="d-flex align-items-center mb-4 ps-2 animate__animated animate__fadeIn animate-delay-2">
+            <div class="bg-primary rounded-pill me-3" style="width: 5px; height: 25px;"></div>
+            <h4 class="fw-bold m-0 text-body">Modules disponibles</h4>
+        </div>
+
+        <!-- Modules Grid -->
+        <div class="row g-4" id="modulesGrid">
+            {% set filtered_items = [] %}
+            {% for item in index_menu_items %}
+            {% if item.privilege is none or has_permission(item.privilege) %}
+            {% set _ = filtered_items.append(item) %}
+            {% endif %}
+            {% endfor %}
+
+            {% if filtered_items %}
+            {% for item in filtered_items %}
+            <div
+                class="col-12 col-md-6 col-lg-4 col-xl-3 animate__animated animate__fadeInUp animate-delay-3 module-item">
+                <a href="{{ url_for(item.route) }}" class="module-card">
+                    <div>
+                        <div class="card-icon-wrapper">
+                            <i class="{{ item.icon }}"></i>
+                        </div>
+                        <h5 class="fw-bold mb-2">{{ item.label }}</h5>
+                        <p class="text-muted small mb-0" style="line-height: 1.6;">
+                            Accès rapide au module {{ item.label|lower }}. Cliquez pour gérer.
+                        </p>
+                    </div>
+                    <div class="card-action mt-4">
+                        Accéder <i class="fas fa-arrow-right ms-2"></i>
+                    </div>
+                </a>
+            </div>
+            {% endfor %}
+            {% else %}
+            <div class="col-12 text-center py-5">
+                <div class="alert alert-info border-0 shadow-sm rounded-4 d-inline-block px-5 py-4">
+                    <i class="fas fa-lock fs-2 mb-3 d-block"></i>
+                    <strong>Accès restreint</strong><br>
+                    Aucun module disponible pour votre profil utilisateur.
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- No Results Message -->
+            <div id="noResults" class="col-12 text-center py-5 d-none">
+                <i class="fas fa-search fs-1 text-muted mb-3 opacity-50"></i>
+                <h5 class="text-muted">Aucun module trouvé pour cette recherche.</h5>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+{% if user and user.get('username') or g.user %}
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+
+        // --- 1. Date & Time ---
+        function updateDateTime() {
+            const now = new Date();
+            const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+            const dateStr = now.toLocaleDateString('fr-FR', options);
+            const timeStr = now.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+
+            const dateEl = document.getElementById('current-date');
+            const timeEl = document.getElementById('current-time');
+
+            if (dateEl) dateEl.textContent = dateStr.charAt(0).toUpperCase() + dateStr.slice(1);
+            if (timeEl) timeEl.textContent = timeStr;
+        }
+
+        setInterval(updateDateTime, 1000);
+        updateDateTime();
+
+        // --- 2. Live Search ---
+        const searchInput = document.getElementById('moduleSearch');
+        const moduleItems = document.querySelectorAll('.module-item');
+        const noResults = document.getElementById('noResults');
+
+        if (searchInput) {
+            searchInput.addEventListener('keyup', function (e) {
+                const term = e.target.value.toLowerCase();
+                let hasVisible = false;
+
+                moduleItems.forEach(item => {
+                    const title = item.querySelector('h5').textContent.toLowerCase();
+                    const desc = item.querySelector('p').textContent.toLowerCase();
+
+                    if (title.includes(term) || desc.includes(term)) {
+                        item.classList.remove('d-none');
+                        item.classList.add('animate__fadeInUp');
+                        hasVisible = true;
+                    } else {
+                        item.classList.add('d-none');
+                        item.classList.remove('animate__fadeInUp');
+                    }
+                });
+
+                if (noResults) {
+                    if (!hasVisible) {
+                        noResults.classList.remove('d-none');
+                        noResults.classList.add('animate__fadeIn');
+                    } else {
+                        noResults.classList.add('d-none');
+                    }
+                }
+            });
+        }
+    });
+</script>
+{% endif %}
+{% endblock %}

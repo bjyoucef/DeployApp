@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Étiquettes QR Dossiers — Impression Masse</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: Helvetica, Arial, sans-serif;
+            background-color: #ccc;
+            color: #000;
+        }
+
+        .sheet {
+            background-color: white;
+            width: 210mm;
+            height: 297mm;
+            margin: 0 auto;
+            display: grid;
+            page-break-after: always;
+        }
+
+        .sheet:last-child {
+            page-break-after: avoid;
+        }
+
+        .label-cell {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+            padding: 2mm;
+            text-align: center;
+        }
+
+        .logo-img {
+            max-width: 18mm;
+            height: auto;
+            margin-bottom: 0;
+        }
+
+        .qr-img {
+            width: 20mm;
+            height: 20mm;
+        }
+
+        .patient-name {
+            font-size: 6pt;
+            font-weight: bold;
+            margin-top: 0;
+            max-width: 95%;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .module-name {
+            font-size: 5pt;
+            color: #555;
+        }
+
+        .doctor-name {
+            font-size: 6pt;
+            font-weight: bold;
+            color: #450A54;
+            margin-top: 0;
+        }
+
+        .empty-cell {
+            /* Empty placeholder */
+        }
+    </style>
+</head>
+
+<body>
+    {% set per_page = cols * rows %}
+
+    {% for page_start in range(0, dossiers|length, per_page) %}
+    <div class="sheet"
+        style="grid-template-columns: repeat({{ cols }}, 1fr); grid-template-rows: repeat({{ rows }}, 1fr); column-gap: {{ gap_x }}mm; row-gap: {{ gap_y }}mm; padding-top: {{ margin_top }}mm; padding-bottom: {{ margin_bottom }}mm; padding-left: {{ margin_left }}mm; padding-right: {{ margin_right }}mm;">
+
+        {% for idx in range(page_start, page_start + per_page) %}
+        {% if idx < dossiers|length %} {% set d=dossiers[idx] %} <div class="label-cell">
+            <img src="data:image/png;base64,{{ logo_b64 }}" class="logo-img" alt="Logo">
+            <div class="module-name">{{ module_label }}</div>
+            <div class="doctor-name">{{ (d.doctor_id or '') }}: {{ (d.medecin or '')[:30] }} </div>
+            {% if d.qr_b64 %}
+            <img src="data:image/png;base64,{{ d.qr_b64 }}" class="qr-img" alt="QR">
+            {% endif %}
+            <div class="patient-name">{{ (d.patient or '')[:30] }}</div>
+            <div class="doctor-name">{{ d.date_acte.strftime('%d/%m/%Y') if d.date_acte else '' }}</div>
+    </div>
+    {% else %}
+    <div class="empty-cell"></div>
+    {% endif %}
+    {% endfor %}
+
+    </div>
+    {% endfor %}
+
+</body>
+
+</html>

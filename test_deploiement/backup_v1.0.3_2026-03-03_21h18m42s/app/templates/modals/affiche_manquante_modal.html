@@ -1,0 +1,62 @@
+<div class="modal fade" id="afficheManquanteModal{{ emprunt.id }}" tabindex="-1" role="dialog"
+     aria-labelledby="afficheModalLabel{{ emprunt.id }}" aria-hidden="true">
+    <div class="modal-dialog modal-xl" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="titreafficheManquanteModal{{ emprunt.id }}">
+                    Détails du manque pour la clé {{ emprunt.numero_cle }}
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+
+            </div>
+            <div class="modal-body">
+                <table class="table table-hover">
+                    <thead>
+                    <tr>
+                        <th><i class="fas fa-user-slash"></i> Personne manquante</th>
+                        <th><i class="fas fa-user-slash"></i> Poste</th>
+                        <th><i class="fas fa-calendar-times"></i> Date de manque</th>
+
+                        <th><i class="fas fa-user-check"></i> Personne trouvée</th>
+                        <th><i class="fas fa-user-slash"></i> Poste</th>
+                        <th><i class="fas fa-calendar-check"></i> Date de retrouvée</th>
+
+                    </tr>
+
+                    </thead>
+                    <tbody>
+                    <tr>
+                        <td>{{ emprunt.nom_perte }} {{ emprunt.prenom_perte }}</td>
+                        <td>{{ emprunt.role_perte }}</td>
+                        <td>{{ emprunt.date_marquer_manquante }}</td>
+
+                        <td>{{ emprunt.nom_retrevie }} , {{ emprunt.prenom_retrevie }}</td>
+                        <td>{{ emprunt.role_retrevie }}</td>
+                        <td>{{ emprunt.date_retrouvie }}</td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="modal-footer">
+
+                <!-- Bouton pour ouvrir le second modal (retrouveeModal) -->
+                {% if not emprunt.date_retrouvie %}
+                <form action="{{ url_for('export_manquant_pdf' , id=emprunt.id) }}"
+                      method="GET">
+                    <button class="btn btn-info btn-sm mr-2" type="submit">Télécharger export_manquant_pdf</button>
+                </form>
+                <button class="btn btn-primary btn-sm" type="button"
+                        data-bs-toggle="modal" data-bs-target="#retrouveeModal{{ emprunt.id }}">
+                    <i class="fas fa-edit"></i> Marquer comme retrouvée
+                </button>
+                {% else %}
+                <form action="{{ url_for('export_retrouvee_pdf' , id=emprunt.id) }}" method="GET">
+                    <button class="btn btn-success btn-sm mr-2" type="submit">Télécharger export_retrouvee_pdf</button>
+                </form>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+

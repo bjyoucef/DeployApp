@@ -1,0 +1,473 @@
+{% extends "layout.html" %}
+{% block content %}
+<div class="mt-5 text-center container-fluid">
+
+    <div class="mb-3">
+        <form method="POST" action="/pointage">
+
+            <!-- Filtre Service -->
+            <div class="mb-3">
+                <label for="serviceFilter" class="form-label">Service :</label>
+                <select name="service" id="serviceFilter" class="form-select">
+                    <option value="">---</option>
+                    {% for service in services %}
+                    <option value="{{ service.service_name }}" style="color: {{ service.color }};" {% if
+                        service_filter==service.service_name %}selected{% endif %}>
+                        {{ service.service_name }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <!-- Filtre Employé -->
+            <div class="mb-3">
+                <label for="employeeFilter" class="form-label">Employé :</label>
+                <select name="employee" id="employeeFilter" class="form-select">
+                    <option value="all" {% if employee_filter=='all' %}selected{% endif %}>Tous les employés</option>
+                    {% for employee in employes %}
+                    <option value="{{ employee.full_name }}" {% if employee_filter==employee.full_name %}selected{%
+                        endif %}>
+                        {{ employee.full_name }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <!-- Filtre Shift -->
+            <div class="mb-3">
+                <label for="shiftFilter" class="form-label">Shift :</label>
+                <select name="shift" id="shiftFilter" class="form-select">
+                    <option value="all" {% if shift_filter=='all' %}selected{% endif %}>Tous les shifts</option>
+                    <option value="24H" {% if shift_filter=='24H' %}selected{% endif %}>24H</option>
+                    <option value="day" {% if shift_filter=='day' %}selected{% endif %}>Jour</option>
+                    <option value="night" {% if shift_filter=='night' %}selected{% endif %}>Nuit</option>
+                </select>
+            </div>
+
+            <!-- Filtre Date de Début -->
+            <div class="mb-3">
+                <label for="shift_date_start" class="form-label">Date de début :</label>
+                <input type="date" class="form-control" id="shift_date_start" name="shift_date_start"
+                    value="{{ selected_date_start }}" required>
+            </div>
+
+            <!-- Filtre Date de Fin -->
+            <div class="mb-3">
+                <label for="shift_date_end" class="form-label">Date de fin :</label>
+                <input type="date" class="form-control" id="shift_date_end" name="shift_date_end"
+                    value="{{ selected_date_end }}" required>
+            </div>
+
+            <!-- Bouton de validation -->
+            <div class="mb-3">
+                <button type="submit" class="btn btn-primary w-100">Sélectionner</button>
+            </div>
+        </form>
+    </div>
+
+    {% if 'AJOUTER_POINTAGES' in session.privileges %}
+    <div class="mb-3">
+        <button class="btn btn-primary w-100" data-bs-toggle="modal" data-bs-target="#addPointageModal">
+            Ajouter un Pointage
+        </button>
+    </div>
+    {% endif %}
+
+    {% if 'VALIDER_POINTAGES' in session.privileges %}
+    <div class="mb-3">
+        <button class="btn btn-primary w-100" data-bs-toggle="modal" data-bs-target="#planningModal">
+            Afficher le Planning
+        </button>
+    </div>
+    {% endif %}
+</div>
+
+<table id="myTable" class="table table-hover">
+    <thead>
+        <tr>
+            <th>Nom et Prénom</th>
+            <th>Date</th>
+            <th>Service</th>
+            <th>Shift</th>
+            {% if 'VISUALISER_CRIE_PAR_LE_POINTAGES' in session.privileges %}
+            <th>Créé par</th>
+            <th>Créé le</th>
+            {% endif %}
+            {% if 'AJOUTER_ACTES_POINTAGES' in session.privileges or 'MODIFIER_POINTAGES' in session.privileges or
+            'SUPPRIMER_POINTAGES' in session.privileges %}
+            <th>Actions</th>
+            {% endif %}
+        </tr>
+    </thead>
+    <tbody>
+        {% for pointage in pointages %}
+        <tr>
+            <td style="color: {{ pointage.color }};">{{ pointage.full_name }}</td>
+            <td style="color: {{ pointage.color }};">{{ pointage.date_pointage }}</td>
+            <td style="color: {{ pointage.color }};">{{ pointage.service_name }}</td>
+            <td style="color: {{ pointage.color }};">{{ pointage.shift_type|capitalize }}</td>
+            {% if 'VISUALISER_CRIE_PAR_LE_POINTAGES' in session.privileges %}
+            <td style="color: {{ pointage.color }};">{{ pointage.created_par|capitalize }}</td>
+            <td style="color: {{ pointage.color }};">{{ pointage.created_at }}</td>
+            {% endif %}
+
+            {% if 'AJOUTER_ACTES_POINTAGES' in session.privileges or 'MODIFIER_POINTAGES' in session.privileges
+            or 'SUPPRIMER_POINTAGES' in session.privileges %}
+
+            <td>
+                <div class="d-flex justify-content-start">
+                    <!-- Bouton Ajouter un acte -->
+                    {% if 'AJOUTER_ACTES_POINTAGES' in session.privileges %}
+                    <div class="me-2">
+                        <button type="button" class="btn btn-success btn-sm" data-bs-toggle="modal"
+                            data-bs-target="#addActesModal{{ pointage.id_pointage }}">
+                            Acte
+                        </button>
+                        <!-- Modal -->
+                        <div class="modal fade" id="addActesModal{{ pointage.id_pointage }}" tabindex="-1" role="dialog"
+                            aria-labelledby="addActesModalLabel{{ pointage.id_pointage }}" aria-hidden="true">
+                            <div class="modal-dialog" role="document">
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <h5 class="modal-title" id="addActesModalLabel{{ pointage.id_pointage }}">
+                                            Ajouter un acte
+                                        </h5>
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal"
+                                            aria-label="Close"></button>
+                                    </div>
+                                    <form action="{{ url_for('add_actes', pointage_id=pointage.id_pointage) }}"
+                                        method="POST">
+                                        <div class="modal-body" id="actes-container-{{ pointage.id_pointage }}">
+                                            <!-- Liste déroulante pour un acte (1ère ligne visible dès le départ) -->
+                                            <div class="row acte-row mb-1">
+                                                <div class="form-group col">
+                                                    <select class="form-control" name="id_acte[]" required
+                                                        onchange="toggleNextActe(this)">
+                                                        <option value="">-</option>
+                                                        {% for acte in actes %}
+                                                        {% if acte.id_service == pointage.id_service %}
+                                                        <option value="{{ acte.id_acte }}">
+                                                            {{ acte.name_acte }}
+                                                        </option>
+                                                        {% endif %}
+                                                        {% endfor %}
+                                                    </select>
+                                                </div>
+                                                <div class="form-group col">
+                                                    <input type="number" name="nbr_actes[]" class="form-control"
+                                                        step="1" min="1" required onchange="toggleNextActe(this)">
+                                                </div>
+                                            </div>
+
+                                            <!-- Autres champs, masqués au départ, sur la même ligne -->
+                                            <div class="row acte-row mb-1" style="display: none;">
+                                                <div class="form-group col">
+                                                    <select class="form-control" name="id_acte[]"
+                                                        onchange="toggleNextActe(this)">
+                                                        <option value="">-</option>
+                                                        {% for acte in actes %}
+                                                        {% if acte.id_service == pointage.id_service %}
+                                                        <option value="{{ acte.id_acte }}">
+                                                            {{ acte.name_acte }}
+                                                        </option>
+                                                        {% endif %}
+                                                        {% endfor %}
+                                                    </select>
+                                                </div>
+                                                <div class="form-group col">
+                                                    <input type="number" name="nbr_actes[]" class="form-control"
+                                                        step="1" min="1" onchange="toggleNextActe(this)">
+                                                </div>
+                                            </div>
+
+                                            <div class="row acte-row mb-1" style="display: none;">
+                                                <div class="form-group col">
+                                                    <select class="form-control" name="id_acte[]"
+                                                        onchange="toggleNextActe(this)">
+                                                        <option value="">-</option>
+                                                        {% for acte in actes %}
+                                                        {% if acte.id_service == pointage.id_service %}
+                                                        <option value="{{ acte.id_acte }}">
+                                                            {{ acte.name_acte }}
+                                                        </option>
+                                                        {% endif %}
+                                                        {% endfor %}
+                                                    </select>
+                                                </div>
+                                                <div class="form-group col">
+                                                    <input type="number" name="nbr_actes[]" class="form-control"
+                                                        step="1" min="1" onchange="toggleNextActe(this)">
+                                                </div>
+                                            </div>
+
+                                            <!-- Vous pouvez ajouter encore plus de lignes selon vos besoins -->
+                                        </div>
+                                        <div class="modal-footer">
+                                            <button type="button" class="btn btn-secondary btn-sm"
+                                                data-bs-dismiss="modal">Annuler
+                                            </button>
+                                            <button class="btn btn-primary btn-sm" type="submit">Enregistrer
+                                            </button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+
+
+                    {% if 'MODIFIER_POINTAGES' in session.privileges %}
+                    <div class="me-2">
+                        <!-- Bouton Modifier -->
+                        <button type="button" class="btn btn-warning btn-sm" data-bs-toggle="modal"
+                            data-bs-target="#editPointageModal{{ pointage.id_pointage }}">
+                            Modifier
+                        </button>
+
+                        <!-- Modal -->
+                        <div class="modal fade" id="editPointageModal{{ pointage.id_pointage }}" tabindex="-1"
+                            role="dialog" aria-labelledby="editPointageModalLabel{{ pointage.id_pointage }}"
+                            aria-hidden="true">
+                            <div class="modal-dialog" role="document">
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <h5 class="modal-title" id="editPointageModalLabel{{ pointage.id_pointage }}">
+                                            Modifier le pointage</h5>
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal"
+                                            aria-label="Close">
+                                        </button>
+                                    </div>
+                                    <form action="{{ url_for('edit_pointage', pointage_id=pointage.id_pointage) }}"
+                                        method="POST">
+                                        <div class="modal-body">
+                                            <!-- Liste déroulante des employés -->
+                                            <div class="form-group">
+                                                <label for="id_employe">Employé</label>
+                                                <select class="form-control" id="id_employe" name="id_employe">
+                                                    {% for employe in employes %}
+                                                    <option value="{{ employe.id_personnel }}" {% if
+                                                        employe.id_personnel==pointage.id_employe %}selected{% endif %}>
+                                                        {{ employe.full_name }}
+                                                    </option>
+                                                    {% endfor %}
+                                                </select>
+                                            </div>
+
+                                            <!-- Date -->
+                                            <div class="form-group">
+                                                <label for="date_pointage">Date</label>
+                                                <input class="form-control" id="date_pointage" name="date_pointage"
+                                                    type="date" value="{{ pointage.date_pointage }}">
+                                            </div>
+
+                                            <!-- Shift -->
+                                            <div class="form-group">
+                                                <label for="shift_type">Shift</label>
+                                                <select class="form-control" id="shift_type" name="shift_type">
+                                                    <option value="day" {% if pointage.shift_type=="day" %}selected{%
+                                                        endif %}>Jour</option>
+                                                    <option value="night" {% if pointage.shift_type=="night"
+                                                        %}selected{% endif %}>Nuit</option>
+                                                    <option value="24H" {% if pointage.shift_type=="24H" %}selected{%
+                                                        endif %}>24H</option>
+                                                </select>
+                                            </div>
+                                            <!-- Liste déroulante des services -->
+                                            <div class="form-group">
+                                                <label for="id_service">Service</label>
+                                                <select class="form-control" id="id_service" name="id_service">
+                                                    {% for service in services %}
+                                                    <option value="{{ service.id_service }}" {% if
+                                                        service.id_service==pointage.id_service %}selected{% endif %}>
+                                                        {{ service.service_name }}
+                                                    </option>
+                                                    {% endfor %}
+                                                </select>
+                                            </div>
+
+                                        </div>
+                                        <div class="modal-footer">
+                                            <button class="btn btn-secondary" data-bs-dismiss="modal" type="button">
+                                                Annuler
+                                            </button>
+                                            <button class="btn btn-primary" type="submit">Enregistrer</button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    {% if 'SUPPRIMER_POINTAGES' in session.privileges %}
+                    <!-- Correction HTML : Ajout d'un formulaire sécurisé avec protection CSRF -->
+                    <div class="me-2">
+                        <form method="POST" action="{{ url_for('delete_pointage', pointage_id=pointage.id_pointage) }}"
+                            class="d-inline">
+                            <input type="hidden">
+                            <button type="submit" class="btn btn-danger btn-sm"
+                                onclick="return confirm('Êtes-vous sûr de vouloir supprimer ce pointage ?')">
+                                Supprimer
+                            </button>
+                        </form>
+                    </div>
+
+                    {% endif %}
+
+                </div>
+            </td>
+            {% endif %}
+
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<!-- Modal -->
+<div class="modal fade" id="planningModal" tabindex="-1" aria-labelledby="planningModalLabel" aria-hidden="true"
+    data-bs-backdrop="static" data-bs-keyboard="false">
+    <div class="modal-dialog modal-xl modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="planningModalLabel">
+                    Sélectionner la Plage de Dates pour le Planning
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <!-- Tableau du planning -->
+                <div class="table-section mt-4">
+                    <h3>Planning du {{ selected_date_start }} au {{ selected_date_end }}</h3>
+                    <table id="myTable" class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Nom</th>
+                                <th>Prénom</th>
+                                <th>Service</th>
+                                <th>Type de Shift</th>
+                                <th>Date</th>
+                                <th>Valider la Présence</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for entry in planning %}
+                            <tr>
+                                <td>{{ entry.nom }}</td>
+                                <td>{{ entry.prenom }}</td>
+                                <td>{{ entry.service_name }}</td>
+                                <td>{{ entry.shift_type|capitalize }}</td>
+                                <td>{{ entry.shift_date }}</td>
+                                <td>
+                                    <!-- Formulaire pour valider la présence -->
+                                    <form class="validatePresenceForm" method="POST" action="/validate-presence"
+                                        style="display: inline;">
+                                        <input type="hidden" name="id" value="{{ entry.id }}">
+                                        <input type="hidden" name="employee_id" value="{{ entry.employee_id }}">
+                                        <input type="hidden" name="shift_date" value="{{ entry.shift_date }}">
+                                        <input type="hidden" name="service" value="{{ entry.id_service }}">
+                                        <input type="hidden" name="shift_type" value="{{ entry.shift_type }}">
+                                        <button type="submit" class="btn btn-success btn-sm" {% if
+                                            entry.presence_validee %}disabled{% endif %}>
+                                            Valider
+                                        </button>
+                                    </form>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<!-- Modal pour ajouter un pointage -->
+<div class="modal fade" id="addPointageModal" tabindex="-1" aria-labelledby="addPointageModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-m modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addPointageModalLabel">Ajouter un Pointage</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="add-pointage-form" method="POST" action="/add-pointage">
+                    <!-- Champs cachés pour les valeurs des filtres -->
+                    <input type="hidden" name="service" value="{{ service_filter }}">
+                    <input type="hidden" name="id_employe" value="{{ employee_filter }}">
+                    <input type="hidden" name="shift_type" value="{{ shift_filter }}">
+
+
+                    {% if 'MODIFIER_DATE_POINTAGES' in session.privileges %}
+
+                    <!-- Date de pointage -->
+                    <div class="form-group mt-2">
+                        <label for="date_pointage">Date :</label>
+                        <input type="date" class="form-control" id="date_pointage" name="date_pointage"
+                            value="{{ selected_date_start }}" required>
+                    </div>
+
+                    {% else %}
+                    <!-- Date de pointage -->
+                    <input type="hidden" name="date_pointage" value="{{ today_date }}">
+
+
+                    {% endif %}
+
+                    <button type="submit" class="btn btn-success mt-3">Valider</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Fonction pour afficher la ligne suivante lorsque l'utilisateur a rempli un champ
+    function toggleNextActe(element) {
+        var rows = document.querySelectorAll('.acte-row');
+        for (var i = 0; i < rows.length; i++) {
+            var select = rows[i].querySelector('select');
+            var input = rows[i].querySelector('input');
+            if (select.value !== "" && input.value !== "") {
+                // Si l'acte est sélectionné et la quantité est remplie, afficher la ligne suivante
+                if (i + 1 < rows.length) {
+                    rows[i + 1].style.display = 'flex'; // Affiche la ligne suivante
+                }
+            }
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        // Sélectionne tous les formulaires de validation de présence
+        const validateForms = document.querySelectorAll('.validatePresenceForm');
+
+        validateForms.forEach(form => {
+            form.addEventListener('submit', function (event) {
+                event.preventDefault(); // Empêche la soumission classique
+
+                const formData = new FormData(form);
+
+                fetch(form.action, {
+                    method: 'POST',
+                    body: formData
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            // Désactive le bouton pour éviter une nouvelle validation
+                            form.querySelector('button[type="submit"]').disabled = true;
+                        } else {
+                            showToast("Erreur : " + data.message, "error");
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Erreur:', error);
+                        showToast("Une erreur est survenue.", "error");
+                    });
+            });
+        });
+    });
+</script>
+{% endblock %}

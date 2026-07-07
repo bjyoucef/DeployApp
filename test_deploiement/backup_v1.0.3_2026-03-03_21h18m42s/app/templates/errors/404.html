@@ -1,0 +1,62 @@
+{% extends 'layout.html' %}
+{% block content %}
+<style>
+    :root {
+        --bg-card: #ffffff;
+        --text-main: #212529;
+        --text-muted: #6c757d;
+        --shadow: 0 1rem 3rem rgba(0, 0, 0, .175);
+    }
+
+    [data-theme="dark"] {
+        --bg-card: #1e1e1e;
+        --text-main: #e0e0e0;
+        --text-muted: #a0a0a0;
+        --shadow: 0 1rem 3rem rgba(0, 0, 0, .5);
+    }
+
+    .card-error {
+        background-color: var(--bg-card);
+        color: var(--text-main);
+        box-shadow: var(--shadow) !important;
+    }
+
+    .text-muted-dynamic {
+        color: var(--text-muted) !important;
+    }
+</style>
+<div class="container text-center mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card card-error border-0">
+                <div class="card-body p-5">
+                    <h1 class="display-1 fw-bold text-primary">404</h1>
+                    <h2 class="mb-4">Page non trouvée</h2>
+                    <p class="lead text-muted-dynamic mb-4">
+                        Désolé, la page que vous recherchez n'existe pas ou a été déplacée.
+                    </p>
+
+                    {% if error_message %}
+                    <div class="alert alert-warning">
+                        <small>{{ error_message }}</small>
+                    </div>
+                    {% endif %}
+
+                    {% if path %}
+                    <p class="text-muted-dynamic"><small>Chemin demandé : <code>{{ path }}</code></small></p>
+                    {% endif %}
+
+                    <div class="d-grid gap-2 d-sm-flex justify-content-sm-center mt-4">
+                        <a href="{{ request.referrer or '/' }}" class="btn btn-outline-secondary btn-lg px-4 gap-3">
+                            <i class="fas fa-arrow-left me-2"></i>Retour
+                        </a>
+                        <a href="/" class="btn btn-primary btn-lg px-4">
+                            <i class="fas fa-home me-2"></i>Accueil
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

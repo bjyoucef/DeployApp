@@ -1,0 +1,1053 @@
+{% extends "layout.html" %}
+{% import 'his/macros/his_direct_selector.html' as his_selector %}
+
+{% block style %}
+<!-- Include Daterangepicker CSS -->
+<link rel="stylesheet" href="{{ url_for('static', filename='css/daterangepicker.css') }}" />
+<style>
+    :root {
+        --pink: #ec4899;
+        --pink-dark: #db2777;
+        --pink-light: #fce7f3;
+        --success: #10b981;
+        --warning: #f59e0b;
+        --danger: #ef4444;
+        --info: #3b82f6;
+        --dark: #1f2937;
+        --border: #e5e7eb;
+        --radius: 12px;
+        --shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+        --bg-card: #ffffff;
+        --text-main: #1f2937;
+        --text-muted: #6b7280;
+        --input-bg: #ffffff;
+    }
+
+    [data-theme="dark"] {
+        --pink: #f472b6;
+        --pink-dark: #db2777;
+        --pink-light: rgba(236, 72, 153, 0.15);
+        --dark: #f3f4f6;
+        --border: #374151;
+        --shadow: 0 4px 6px -1px rgb(0 0 0 / 0.5);
+        --bg-card: #1f2937;
+        --text-main: #f3f4f6;
+        --text-muted: #9ca3af;
+        --input-bg: #374151;
+    }
+
+    body {
+        background: linear-gradient(135deg, #fdf2f8 0%, #fce7f3 100%);
+        min-height: 100vh;
+    }
+
+    [data-theme="dark"] body {
+        background: linear-gradient(135deg, #111827 0%, #1f2937 100%);
+    }
+
+    .page-header {
+        background: linear-gradient(135deg, var(--pink), var(--pink-dark));
+        color: white;
+        padding: 1.5rem 2rem;
+        border-radius: var(--radius);
+        margin-bottom: 1.5rem;
+        box-shadow: var(--shadow);
+    }
+
+    .page-header h1 {
+        margin: 0;
+        font-size: 1.5rem;
+        font-weight: 700;
+    }
+
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .stat-card {
+        background: var(--bg-card);
+        border-radius: var(--radius);
+        padding: 1.25rem;
+        box-shadow: var(--shadow);
+        border-left: 4px solid var(--pink);
+        transition: transform 0.2s, box-shadow 0.2s;
+        color: var(--text-main);
+    }
+
+    .stat-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px -5px rgb(0 0 0 / 0.1);
+    }
+
+    .stat-card.success {
+        border-left-color: var(--success);
+    }
+
+    .stat-card.warning {
+        border-left-color: var(--warning);
+    }
+
+    .stat-card.info {
+        border-left-color: var(--info);
+    }
+
+    .stat-value {
+        font-size: 1.75rem;
+        font-weight: 700;
+        color: var(--text-main);
+    }
+
+    .stat-label {
+        font-size: 0.85rem;
+        color: var(--text-muted);
+        margin-top: 0.25rem;
+    }
+
+    .filter-card {
+        background: var(--bg-card);
+        border-radius: var(--radius);
+        padding: 1.25rem;
+        box-shadow: var(--shadow);
+        margin-bottom: 1.5rem;
+        color: var(--text-main);
+    }
+
+    .filter-card .form-control,
+    .filter-card .form-select {
+        border: 2px solid var(--border);
+        border-radius: 8px;
+        padding: 0.5rem 0.75rem;
+        font-size: 0.9rem;
+        background-color: var(--input-bg);
+        color: var(--text-main);
+    }
+
+    .filter-card .form-control:focus,
+    .filter-card .form-select:focus {
+        border-color: var(--pink);
+        box-shadow: 0 0 0 3px rgba(236, 72, 153, 0.1);
+    }
+
+    .table-card {
+        background: var(--bg-card);
+        border-radius: var(--radius);
+        box-shadow: var(--shadow);
+        overflow: hidden;
+    }
+
+    .table-modern {
+        width: 100%;
+        border-collapse: collapse;
+        color: var(--text-main);
+    }
+
+    .table-modern thead {
+        background: linear-gradient(135deg, var(--pink), var(--pink-dark));
+    }
+
+    .table-modern thead th {
+        color: white;
+        font-weight: 600;
+        padding: 0.75rem 0.5rem;
+        font-size: 0.8rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        text-align: left;
+        white-space: nowrap;
+    }
+
+    .table-modern tbody td {
+        padding: 0.6rem 0.6rem;
+        border-bottom: 1px solid var(--border);
+        vertical-align: middle;
+        font-size: 0.95rem;
+    }
+
+    .table-modern tbody tr:hover {
+        background: var(--pink-light);
+    }
+
+    .table-modern tbody tr:last-child td {
+        border-bottom: none;
+    }
+
+    /* Badges */
+    .badge-type,
+    .badge-statut,
+    .gyneco-badge {
+        padding: 0.35rem 0.75rem;
+        border-radius: 50px;
+        font-size: 0.75rem;
+        font-weight: 600;
+    }
+
+    .badge-voie-basse {
+        background: var(--pink-light);
+        color: #be185d;
+    }
+
+    [data-theme="dark"] .badge-voie-basse {
+        background: rgba(244, 114, 182, 0.2);
+        color: #f9a8d4;
+    }
+
+    .badge-cesarienne {
+        background: #dbeafe;
+        color: #1e40af;
+    }
+
+    [data-theme="dark"] .badge-cesarienne {
+        background: rgba(96, 165, 250, 0.2);
+        color: #93c5fd;
+    }
+
+    .badge-convention {
+        background: #d1fae5;
+        color: #065f46;
+    }
+
+    [data-theme="dark"] .badge-convention {
+        background: rgba(52, 211, 153, 0.2);
+        color: #6ee7b7;
+    }
+
+    .badge-payant {
+        background: #fef3c7;
+        color: #92400e;
+    }
+
+    [data-theme="dark"] .badge-payant {
+        background: rgba(251, 191, 36, 0.2);
+        color: #fcd34d;
+    }
+
+    .badge-solde {
+        background: #d1fae5;
+        color: #065f46;
+    }
+
+    [data-theme="dark"] .badge-solde {
+        background: rgba(52, 211, 153, 0.2);
+        color: #6ee7b7;
+    }
+
+    .badge-complement {
+        background: #fee2e2;
+        color: #991b1b;
+    }
+
+    [data-theme="dark"] .badge-complement {
+        background: rgba(248, 113, 113, 0.2);
+        color: #fca5a5;
+    }
+
+    .badge-surplus {
+        background: #dbeafe;
+        color: #1e40af;
+    }
+
+    [data-theme="dark"] .badge-surplus {
+        background: rgba(96, 165, 250, 0.2);
+        color: #93c5fd;
+    }
+
+    .badge-attente {
+        background: #f3f4f6;
+        color: #6b7280;
+    }
+
+    [data-theme="dark"] .badge-attente {
+        background: rgba(156, 163, 175, 0.2);
+        color: #d1d5db;
+    }
+
+    .gyneco-interne {
+        background: #d1fae5;
+        color: #065f46;
+    }
+
+    [data-theme="dark"] .gyneco-interne {
+        background: rgba(52, 211, 153, 0.2);
+        color: #6ee7b7;
+    }
+
+    .gyneco-externe {
+        background: #dbeafe;
+        color: #1e40af;
+    }
+
+    [data-theme="dark"] .gyneco-externe {
+        background: rgba(96, 165, 250, 0.2);
+        color: #93c5fd;
+    }
+
+
+    .bg-pink,
+    .btn-pink {
+        background: linear-gradient(135deg, #ec4899, #db2777) !important;
+        color: white !important;
+        border: none;
+    }
+
+    .btn-pink:hover {
+        background: linear-gradient(135deg, #db2777, #be185d) !important;
+        color: white !important;
+    }
+
+    .text-pink {
+        color: var(--pink) !important;
+    }
+
+    .btn {
+        border-radius: 8px;
+        padding: 0.5rem 1rem;
+        font-weight: 600;
+        font-size: 0.875rem;
+        transition: all 0.2s;
+    }
+
+    .btn:hover {
+        transform: translateY(-1px);
+    }
+
+    .btn-outline-pink {
+        border: 2px solid var(--pink);
+        color: var(--pink);
+        background: transparent;
+    }
+
+    .btn-outline-pink:hover {
+        background: var(--pink);
+        color: white;
+    }
+
+    .action-btn {
+        width: 32px;
+        height: 32px;
+        padding: 0;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 6px;
+    }
+
+    .pagination {
+        margin: 0;
+    }
+
+    .page-link {
+        border: none;
+        color: var(--pink);
+        padding: 0.5rem 0.875rem;
+        margin: 0 0.125rem;
+        border-radius: 6px;
+        background: transparent;
+    }
+
+    .page-link:hover {
+        background: var(--pink-light);
+        color: var(--pink-dark);
+    }
+
+    [data-theme="dark"] .page-link:hover {
+        background: rgba(236, 72, 153, 0.2);
+    }
+
+    .page-item.active .page-link {
+        background: var(--pink);
+        color: white;
+    }
+
+    .page-item.disabled .page-link {
+        color: #9ca3af;
+        background: transparent;
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 4rem 2rem;
+        color: var(--text-muted);
+    }
+
+    .empty-state i {
+        font-size: 4rem;
+        margin-bottom: 1rem;
+        opacity: 0.5;
+    }
+
+    .amount {
+        font-family: 'JetBrains Mono', monospace;
+        font-weight: 600;
+        color: var(--text-main);
+    }
+
+    .amount.positive {
+        color: var(--success);
+    }
+
+    .amount.negative {
+        color: var(--danger);
+    }
+
+    .search-box {
+        position: relative;
+    }
+
+    .search-box input {
+        padding-left: 2.5rem;
+    }
+
+    .search-box i {
+        position: absolute;
+        left: 0.875rem;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #9ca3af;
+    }
+
+    /* Modern Filter Card */
+    .filter-card {
+        background: white;
+        border-radius: 1rem;
+        padding: 1.5rem;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        margin-top: -2rem;
+        /* Overlap effect */
+        margin-bottom: 2rem;
+        position: relative;
+        z-index: 10;
+        border: 1px solid rgba(0, 0, 0, 0.05);
+    }
+
+    [data-theme="dark"] .filter-card {
+        background: var(--bg-card);
+        border-color: var(--border);
+    }
+
+    /* Form Controls Polish */
+    .filter-card .form-control,
+    .filter-card .form-select {
+        border-radius: 0.5rem;
+        border: 1px solid var(--border);
+        padding: 0.6rem 1rem;
+        font-size: 0.875rem;
+        transition: all 0.2s;
+    }
+
+    .filter-card .form-control:focus,
+    .filter-card .form-select:focus {
+        border-color: var(--pink);
+        box-shadow: 0 0 0 3px rgba(236, 72, 153, 0.1);
+    }
+
+    .filter-card label {
+        font-weight: 600;
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 0.4rem;
+        color: var(--text-muted);
+    }
+
+    /* Table Card Polish */
+    .table-card {
+        background: white;
+        border-radius: 1rem;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        border: none;
+        overflow: hidden;
+    }
+
+    [data-theme="dark"] .table-card {
+        background: var(--bg-card);
+    }
+
+    /* Action Buttons */
+    .btn-action-icon {
+        width: 32px;
+        height: 32px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 8px;
+        transition: all 0.2s;
+        border: 1px solid transparent;
+        color: var(--text-muted);
+    }
+
+    .btn-action-icon:hover {
+        background: var(--pink-light);
+        color: var(--pink);
+        transform: translateY(-1px);
+    }
+
+    .btn-action-view:hover {
+        background: #e0f2fe;
+        color: #0284c7;
+    }
+
+    .btn-action-edit:hover {
+        background: #dcfce7;
+        color: #16a34a;
+    }
+
+    .btn-action-delete:hover {
+        background: #fee2e2;
+        color: #dc2626;
+    }
+
+    /* Dark mode adjustments */
+    [data-theme="dark"] .btn-action-icon:hover {
+        background: rgba(255, 255, 255, 0.1);
+    }
+
+    [data-theme="dark"] .modal-content {
+        background-color: var(--bg-card);
+        color: var(--text-main);
+        border-color: var(--border);
+    }
+
+    [data-theme="dark"] .btn-close {
+        filter: invert(1) grayscale(100%) brightness(200%);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Header Gradient Banner -->
+    <div class="rounded-4 p-4 mb-5 text-white shadow-sm position-relative overflow-hidden"
+        style="background: linear-gradient(135deg, #450A54 0%, #6d28d9 100%); min-height: 120px;">
+        <!-- Background Pattern (Optional) -->
+        <div class="position-absolute top-0 end-0 opacity-10" style="transform: translate(30%, -30%) rotate(45deg);">
+            <i class="fas fa-baby fa-10x"></i>
+        </div>
+
+        <div class="position-relative z-index-1">
+            <div class="d-flex justify-content-between align-items-start flex-wrap gap-3">
+                <div>
+                    <h1 class="fw-bold display-6 mb-1"><i class="fas fa-baby me-3"></i>{{ title }}</h1>
+                    <p class="text-white-50 mb-0 ps-1" style="font-size: 1.1rem;">Gestion centralisée des admissions
+                        maternité</p>
+                </div>
+
+                <div class="d-flex gap-2 flex-wrap bg-white bg-opacity-10 p-2 rounded-3 backdrop-blur">
+                    <a href="{{ url_for('accouchement_statistiques') }}"
+                        class="btn btn-sm text-white border-0 hover-lift">
+                        <i
+                            class="fas fa-chart-pie me-2 px-1 py-1 bg-white bg-opacity-25 rounded-circle"></i>Statistiques
+                    </a>
+                    <a href="{{ url_for('accouchement_tarifs_list') }}"
+                        class="btn btn-sm text-white border-0 hover-lift">
+                        <i class="fas fa-cog me-2 px-1 py-1 bg-white bg-opacity-25 rounded-circle"></i>Tarifs
+                    </a>
+                    <a href="{{ url_for('accouchement_paiements_attente') }}"
+                        class="btn btn-warning btn-sm fw-bold border-0 text-dark shadow-sm">
+                        <i class="fas fa-clock me-1"></i>Paiements en Attente
+                    </a>
+                    <a href="{{ url_for('liste_bons_paiement') }}"
+                        class="btn btn-warning btn-sm fw-bold border-0 text-dark shadow-sm">
+                        <i class="fas fa-file-invoice-dollar me-1"></i>Bons de paiement
+                    </a>
+                    <a href="{{ url_for('accouchement_create') }}"
+                        class="btn btn-light btn-sm fw-bold text-primary shadow-sm">
+                        <i class="fas fa-plus me-1"></i>Nouveau dossier
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filter Card (Floating) -->
+    <div class="container-fluid px-2">
+        <div class="filter-card">
+            <form method="GET" id="filterForm">
+                <!-- Hidden inputs for actual filter values -->
+                <input type="hidden" name="date_debut" value="{{ filters.date_debut }}">
+                <input type="hidden" name="date_fin" value="{{ filters.date_fin }}">
+
+                <div class="row g-2 align-items-end">
+                    <!-- Search -->
+                    <div class="col-md-2">
+                        <label class="form-label ps-1">Recherche</label>
+                        <div class="search-box position-relative">
+                            <i
+                                class="fas fa-search position-absolute top-50 start-0 translate-middle-y ms-3 text-muted"></i>
+                            <input type="text" name="q" class="form-control rounded-pill ps-5 bg-light border-0"
+                                placeholder="Patient..." value="{{ filters.q }}">
+                        </div>
+                    </div>
+
+                    <!-- Date Range Picker -->
+                    <div class="col-md-3">
+                        <label class="form-label ps-1">Période</label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-light border-end-0 rounded-start-pill ps-3 text-primary">
+                                <i class="far fa-calendar-alt"></i>
+                            </span>
+                            <input type="text" id="date_range"
+                                class="form-control bg-light border-start-0 rounded-end-pill"
+                                placeholder="Sélectionner une période" value="" readonly style="cursor: pointer;">
+                        </div>
+                    </div>
+
+                    <!-- Gyneco -->
+                    <div class="col-md-2">
+                        <label class="form-label ps-1">Gynécologue</label>
+                        <select name="gyneco" class="form-select bg-light border-0">
+                            <option value="all">Tous</option>
+                            {% for g in gynecos %}
+                            <option value="{{ g.id }}" {{ 'selected' if filters.gyneco|string==g.id|string }}>
+                                {{ g.name }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <!-- Type -->
+                    <div class="col-md-1">
+                        <label class="form-label ps-1">Type</label>
+                        <select name="type_accouchement" class="form-select bg-light border-0 px-2">
+                            <option value="all">Tous</option>
+                            <option value="VOIE_BASSE" {{ 'selected' if filters.type_accouchement=='VOIE_BASSE' }}>VB
+                            </option>
+                            <option value="CESARIENNE" {{ 'selected' if filters.type_accouchement=='CESARIENNE' }}>Césa
+                            </option>
+                        </select>
+                    </div>
+
+                    <!-- Tarif -->
+                    <div class="col-md-1">
+                        <label class="form-label ps-1">Tarif</label>
+                        <select name="type_tarification" class="form-select bg-light border-0 px-2">
+                            <option value="all">Tous</option>
+                            <option value="CONVENTION" {{ 'selected' if filters.type_tarification=='CONVENTION' }}>Conv.
+                            </option>
+                            <option value="PAYANT" {{ 'selected' if filters.type_tarification=='PAYANT' }}>Payant
+                            </option>
+                        </select>
+                    </div>
+
+                    <!-- Status -->
+                    <div class="col-md-1">
+                        <label class="form-label ps-1">Statut</label>
+                        <select name="statut" class="form-select bg-light border-0 px-2">
+                            <option value="all">Tous</option>
+                            <option value="SOLDE" {{ 'selected' if filters.statut=='SOLDE' }}>Soldé</option>
+                            <option value="COMPLEMENT_MEDECIN" {{ 'selected' if filters.statut=='COMPLEMENT_MEDECIN' }}>
+                                Dû</option>
+                            <option value="SURPLUS_CLINIQUE" {{ 'selected' if filters.statut=='SURPLUS_CLINIQUE' }}>
+                                Surplus</option>
+                            <option value="EN_ATTENTE" {{ 'selected' if filters.statut=='EN_ATTENTE' }}>Attente
+                            </option>
+                        </select>
+                    </div>
+
+                    <!-- Completion (NEW) -->
+                    <div class="col-md-1">
+                        <label class="form-label ps-1">Complétion</label>
+                        <select name="completion" class="form-select bg-light border-0 px-2">
+                            <option value="all">Tous</option>
+                            <option value="COMPLETE" {{ 'selected' if filters.completion=='COMPLETE' }}>Complet</option>
+                            <option value="PARTIAL" {{ 'selected' if filters.completion=='PARTIAL' }}>Partiel</option>
+                        </select>
+                    </div>
+
+                    <!-- Annulés -->
+                    <div class="col-md-1">
+                        <label class="form-label ps-1">Archives</label>
+                        <select name="voir_annules"
+                            class="form-select bg-light border-0 px-2 text-danger font-weight-bold">
+                            <option value="0" {{ 'selected' if filters.voir_annules !='1' }}>Actifs</option>
+                            <option value="1" {{ 'selected' if filters.voir_annules=='1' }}>Annulés</option>
+                        </select>
+                    </div>
+
+                    <!-- Actions -->
+                    <div class="col-md-1 text-end">
+                        <button type="submit" class="btn btn-primary btn-sm rounded-circle shadow-sm"
+                            style="width: 38px; height: 38px;">
+                            <i class="fas fa-filter"></i>
+                        </button>
+                        <a href="{{ url_for('accouchement_list') }}"
+                            class="btn btn-light btn-sm rounded-circle shadow-sm ms-1"
+                            style="width: 38px; height: 38px; padding-top: 8px;">
+                            <i class="fas fa-redo-alt text-muted"></i>
+                        </a>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Tableau -->
+    <div class="table-card">
+        {% if dossiers %}
+        <div class="table-responsive">
+            <table class="table-modern table-hover align-middle">
+                <thead>
+                    <tr>
+                        <th style="width: 120px;">Date / Dossier</th>
+                        <th>Patiente / Type</th>
+                        <th>Gynécologue</th>
+                        <th>Complétion</th>
+                        <th>Tarification / Statut</th>
+                        <th class="text-end" style="width: 140px;">Finances</th>
+                        <th class="text-center" style="width: 120px;">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for d in dossiers %}
+                    <tr class="{{ 'table-secondary text-muted' if d.est_annule else '' }}">
+                        <!-- Date & Dossier -->
+                        <td>
+                            <div class="d-flex flex-column">
+                                <span class="fw-bold">{{ d.date_accouchement.strftime('%d/%m/%Y') }}</span>
+                                <small class="text-muted" data-bs-toggle="tooltip" data-bs-html="true"
+                                    title="Créé par : <strong>{{ d.creator_name or '?' }}</strong>">
+                                    #{{ d.id_dossier }}
+                                </small>
+                                {% if d.est_annule %}
+                                <span class="badge bg-danger text-white mt-1">ANNULÉ</span>
+                                {% endif %}
+                            </div>
+                        </td>
+
+                        <!-- Patiente & Type -->
+                        <td>
+                            <div class="d-flex flex-column">
+                                <div class="d-flex align-items-center gap-2 mb-1">
+                                    {% if d.patient_oid %}
+                                    <button class="btn btn-sm btn-light text-info p-0 border-0"
+                                        onclick="showPatientHistoryDirect('{{ d.patient_oid }}')" title="Historique HIS"
+                                        style="width: 20px; height: 20px;">
+                                        <i class="fas fa-history"></i>
+                                    </button>
+                                    {% endif %}
+                                    <span class="fw-bold text-dark text-truncate"
+                                        style="max-width: 180px; display: inline-block;" title="{{ d.patiente }}">{{
+                                        d.patiente }}</span>
+                                </div>
+                                <div>
+                                    {% if d.type_accouchement == 'VOIE_BASSE' %}
+                                    <span class="badge bg-pink-light text-pink rounded-pill border border-pink-light"
+                                        style="font-size: 0.7em;">
+                                        <i class="fas fa-baby me-1"></i>Voie Basse
+                                    </span>
+                                    {% else %}
+                                    <span class="badge bg-blue-light text-primary rounded-pill border border-blue-light"
+                                        style="font-size: 0.7em;">
+                                        <i class="fas fa-procedures me-1"></i>Césarienne
+                                    </span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </td>
+
+                        <!-- Gynécologue -->
+                        <td>
+                            <div class="d-flex align-items-center">
+                                <span class="text-dark small text-truncate"
+                                    style="max-width: 140px; display: inline-block;" title="{{ d.gyneco_name }}">{{
+                                    d.gyneco_name }}</span>
+                                {% if d.est_gyneco_interne %}
+                                <span class="badge bg-success-subtle text-success ms-2"
+                                    style="font-size: 0.65em;">Interne</span>
+                                {% else %}
+                                <span class="badge bg-primary-subtle text-primary ms-2"
+                                    style="font-size: 0.65em;">Externe</span>
+                                {% endif %}
+                            </div>
+                        </td>
+
+                        <!-- Complétion -->
+                        <td>
+
+                            {% if d.statut_medical == 'VALIDE' and d.statut_financier == 'VALIDE' %}
+                            <span class="badge bg-success-subtle text-success border border-success-subtle"
+                                title="Dossier validé et complet">
+                                <i class="fas fa-check-circle me-1"></i>Complet
+                            </span>
+                            {% else %}
+                            <div class="d-flex flex-column gap-1">
+                                {# Médical #}
+                                {% if d.statut_medical == 'VALIDE' %}
+                                <span class="badge bg-pink-light text-pink border border-pink-light"
+                                    title="Médical validé" style="width: fit-content;">
+                                    <i class="fas fa-check me-1"></i>Méd
+                                </span>
+                                {% else %}
+                                <span class="badge bg-light text-muted border"
+                                    title="Statut Médical: {{ d.statut_medical }}" style="width: fit-content;">
+                                    <i class="fas fa-clock me-1"></i>Méd
+                                </span>
+                                {% endif %}
+
+                                {# Financier #}
+                                {% if d.statut_financier == 'VALIDE' %}
+                                <span class="badge bg-warning-subtle text-warning border border-warning-subtle"
+                                    title="Finance validée" style="width: fit-content;">
+                                    <i class="fas fa-check me-1"></i>Fin
+                                </span>
+                                {% else %}
+                                <span class="badge bg-light text-muted border"
+                                    title="Statut Financier: {{ d.statut_financier }}" style="width: fit-content;">
+                                    <i class="fas fa-clock me-1"></i>Fin
+                                </span>
+                                {% endif %}
+                            </div>
+                            {% endif %}
+                        </td>
+
+                        <!-- Tarification & Statut -->
+                        <td>
+                            <div class="d-flex flex-column">
+                                <span class="fw-bold text-dark small mb-1">
+                                    {% if d.type_tarification == 'CONVENTION' %}
+                                    <span class="text-success">Convention</span>
+                                    {% elif d.type_tarification == 'PAYANT' %}
+                                    <span class="text-warning">Payant</span>
+                                    {% else %}
+                                    --
+                                    {% endif %}
+                                </span>
+
+                                {% if d.statut_paiement == 'SOLDE' %}
+                                <span class="badge bg-success-subtle text-success rounded-pill"
+                                    style="font-size: 0.7em; width: fit-content;">
+                                    <i class="fas fa-check me-1"></i>Soldé
+                                </span>
+                                {% elif d.statut_paiement == 'COMPLEMENT_MEDECIN' %}
+                                <span class="badge bg-danger-subtle text-danger rounded-pill"
+                                    style="font-size: 0.7em; width: fit-content;">
+                                    <i class="fas fa-exclamation me-1"></i>À payer
+                                </span>
+                                {% elif d.statut_paiement == 'SURPLUS_CLINIQUE' %}
+                                <span class="badge bg-info-subtle text-info rounded-pill"
+                                    style="font-size: 0.7em; width: fit-content;">
+                                    <i class="fas fa-plus me-1"></i>Surplus
+                                </span>
+                                {% else %}
+                                <span class="badge bg-light text-muted border rounded-pill"
+                                    style="font-size: 0.7em; width: fit-content;">
+                                    <i class="fas fa-clock me-1"></i>Attente
+                                </span>
+                                {% endif %}
+                            </div>
+                        </td>
+
+                        <!-- Finances (Total / Payé) -->
+                        <td class="text-end">
+                            <div class="d-flex flex-column align-items-end">
+                                <span class="fw-bold text-dark amount">{{ "{:,.2f}".format(d.prix_total or
+                                    0).replace(",", " ") }}</span>
+                                <small
+                                    class="{{ 'text-success' if (d.montant_paye or 0) >= (d.prix_total or 0) else 'text-danger fw-bold' }}">
+                                    {{ "{:,.2f}".format(d.montant_paye or 0).replace(",", " ") }}
+                                </small>
+                            </div>
+                        </td>
+                        <!-- Actions -->
+                        <td class="text-center">
+                            <div class="d-flex gap-1 justify-content-center">
+                                <a href="{{ url_for('accouchement_detail', id_dossier=d.id_dossier) }}"
+                                    class="btn-action-icon btn-action-view" title="Voir">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+
+                                <a href="{{ url_for('accouchement_edit', id_dossier=d.id_dossier) }}"
+                                    class="btn-action-icon btn-action-edit js-perm-edit-accouchement" title="Modifier">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+
+                                <a href="{{ url_for('dossier_print_qr', module_url='MATERNITE', id_dossier=d.id_dossier) }}"
+                                    class="btn-action-icon" title="Imprimer QR Code" target="_blank"
+                                    onclick="event.stopPropagation()">
+                                    <i class="fas fa-qrcode"></i>
+                                </a>
+
+                                {# Delete button removed - use Detail view to Cancel #}
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Pagination -->
+        {% if total_pages > 1 %}
+        <div class="d-flex justify-content-between align-items-center p-3 border-top">
+            <div class="text-muted small">
+                Affichage {{ (page - 1) * per_page + 1 }} - {{ [page * per_page, total_count]|min }}
+                sur {{ total_count }}
+            </div>
+            <nav>
+                <ul class="pagination mb-0">
+                    <li class="page-item {{ 'disabled' if page == 1 }}">
+                        <a class="page-link"
+                            href="{{ url_for('accouchement_list', page=page-1, **filters) if page > 1 else '#' }}">
+                            <i class="fas fa-chevron-left"></i>
+                        </a>
+                    </li>
+
+                    {% set start_page = [1, page - 2]|max %}
+                    {% set end_page = [total_pages, page + 2]|min %}
+
+                    {% if start_page > 1 %}
+                    <li class="page-item"><a class="page-link"
+                            href="{{ url_for('accouchement_list', page=1, **filters) }}">1</a>
+                    </li>
+                    {% if start_page > 2 %}
+                    <li class="page-item disabled"><span class="page-link">...</span></li>
+                    {% endif %}
+                    {% endif %}
+
+                    {% for p in range(start_page, end_page + 1) %}
+                    <li class="page-item {{ 'active' if p == page }}">
+                        <a class="page-link" href="{{ url_for('accouchement_list', page=p, **filters) }}">{{ p }}</a>
+                    </li>
+                    {% endfor %}
+
+                    {% if end_page < total_pages %} {% if end_page < total_pages - 1 %} <li class="page-item disabled">
+                        <span class="page-link">...</span></li>
+                        {% endif %}
+                        <li class="page-item"><a class="page-link"
+                                href="{{ url_for('accouchement_list', page=total_pages, **filters) }}">{{ total_pages
+                                }}</a>
+                        </li>
+                        {% endif %}
+
+                        <li class="page-item {{ 'disabled' if page == total_pages }}">
+                            <a class="page-link"
+                                href="
+                                            {{ url_for('accouchement_list', page=page+1, **filters) if page < total_pages else '#' }}">
+                                <i class="fas fa-chevron-right"></i>
+                            </a>
+                        </li>
+                </ul>
+            </nav>
+        </div>
+        {% endif %}
+
+        {% else %}
+        <div class="empty-state">
+            <i class="fas fa-baby"></i>
+            <h4>Aucun accouchement trouvé</h4>
+            <p class="text-muted">Aucun dossier ne correspond aux critères de recherche.</p>
+            <a href="{{ url_for('accouchement_create') }}" class="btn btn-pink mt-3">
+                <i class="fas fa-plus me-1"></i>Créer un dossier
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Delete Modal Removed -->
+
+
+<!-- ✅ AJOUTER LE MODAL HIS -->
+{{ his_selector.render_modal('modalPatientHistoryDirect') }}
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/moment.min.js') }}"></script>
+<script src="{{ url_for('static', filename='js/daterangepicker.min.js') }}"></script>
+<script>
+    // confirmDelete Removed
+
+    // Auto-submit on filter change
+    document.querySelectorAll('#filterForm select').forEach(sel => {
+        sel.addEventListener('change', () => document.getElementById('filterForm').submit());
+    });
+
+    // ✅ Fonction globale pour afficher l'historique patient
+    window.showPatientHistoryDirect = function (patientOid) {
+        if (typeof PatientHistoryModal !== 'undefined' && PatientHistoryModal.show) {
+            PatientHistoryModal.show(patientOid);
+        } else {
+            console.error('PatientHistoryModal not loaded');
+        }
+    };
+
+    // Initialize tooltips
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl)
+    })
+
+    // Date Range Picker Initialization
+    $(function () {
+        // Check if daterangepicker is loaded
+        if (typeof $.fn.daterangepicker === 'undefined') {
+            console.warn('daterangepicker not loaded');
+            return;
+        }
+
+        var startInput = $('input[name="date_debut"]');
+        var endInput = $('input[name="date_fin"]');
+        var rangeInput = $('#date_range');
+
+        // French Locale
+        moment.locale('fr');
+
+        // Setup options
+        var options = {
+            autoUpdateInput: false,
+            autoApply: false,
+            opens: 'left',
+            locale: {
+                format: 'DD/MM/YYYY',
+                applyLabel: "Appliquer",
+                cancelLabel: "Effacer",
+                fromLabel: "De",
+                toLabel: "À",
+                customRangeLabel: "Personnalisé",
+                weekLabel: "S",
+                daysOfWeek: ["Di", "Lu", "Ma", "Me", "Je", "Ve", "Sa"],
+                monthNames: ["Janvier", "Février", "Mars", "Avril", "Mai", "Juin", "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre"],
+                firstDay: 1
+            },
+            ranges: {
+                'Aujourd\'hui': [moment(), moment()],
+                'Hier': [moment().subtract(1, 'days'), moment().subtract(1, 'days')],
+                'Les 7 derniers jours': [moment().subtract(6, 'days'), moment()],
+                'Ce mois-ci': [moment().startOf('month'), moment().endOf('month')],
+                'Le mois dernier': [moment().subtract(1, 'month').startOf('month'), moment().subtract(1, 'month').endOf('month')],
+                'Cette année': [moment().startOf('year'), moment().endOf('year')]
+            }
+        };
+
+        // Initialize
+        rangeInput.daterangepicker(options);
+
+        // Set initial value if both dates exist
+        if (startInput.val() && endInput.val()) {
+            var start = moment(startInput.val());
+            var end = moment(endInput.val());
+            if (start.isValid() && end.isValid()) {
+                rangeInput.val(start.format('DD/MM/YYYY') + ' - ' + end.format('DD/MM/YYYY'));
+                rangeInput.data('daterangepicker').setStartDate(start);
+                rangeInput.data('daterangepicker').setEndDate(end);
+            }
+        }
+
+        // Apply event
+        rangeInput.on('apply.daterangepicker', function (ev, picker) {
+            $(this).val(picker.startDate.format('DD/MM/YYYY') + ' - ' + picker.endDate.format('DD/MM/YYYY'));
+            startInput.val(picker.startDate.format('YYYY-MM-DD'));
+            endInput.val(picker.endDate.format('YYYY-MM-DD'));
+        });
+
+        // Cancel event
+        rangeInput.on('cancel.daterangepicker', function (ev, picker) {
+            $(this).val('');
+            startInput.val('');
+            endInput.val('');
+        });
+    });
+</script>
+{% endblock %}

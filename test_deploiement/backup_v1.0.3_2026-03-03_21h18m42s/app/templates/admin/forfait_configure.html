@@ -1,0 +1,1385 @@
+{% extends 'admin/admin_layout.html' %}
+
+{% block style %}
+<!-- Choices.js CSS -->
+
+<style>
+    .toast-container {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        z-index: 9999;
+    }
+
+    .card {
+        border-radius: 10px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        margin-bottom: 20px;
+    }
+
+    .card-header {
+        font-weight: 600;
+        border-bottom: 2px solid rgba(0, 0, 0, 0.125);
+    }
+
+    .list-group-item {
+        transition: all 0.3s ease;
+    }
+
+    .list-group-item.removing {
+        opacity: 0.5;
+        transform: translateX(-10px);
+    }
+
+    .empty-state {
+        padding: 3rem;
+        text-align: center;
+        color: #6c757d;
+    }
+
+    .empty-state i {
+        font-size: 3rem;
+        margin-bottom: 1rem;
+        opacity: 0.5;
+    }
+
+    .section-header {
+        border-left: 4px solid #0d6efd;
+        padding-left: 15px;
+        margin-bottom: 20px;
+    }
+
+    .badge-lg {
+        font-size: 1rem;
+        padding: 0.5rem 1rem;
+    }
+
+    .info-card {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border: none;
+    }
+
+    .stats-card {
+        border-left: 4px solid;
+    }
+
+    .stats-card.produits {
+        border-color: #28a745;
+    }
+
+    .stats-card.actes {
+        border-color: #17a2b8;
+    }
+
+    /* ==================== CORRECTIONS Z-INDEX CHOICES.JS ==================== */
+
+    .choices {
+        position: relative;
+        z-index: 1 !important;
+    }
+
+    .choices.is-open {
+        z-index: 1060 !important;
+    }
+
+    .choices__list--dropdown,
+    .choices__list[aria-expanded="true"] {
+        z-index: 1070 !important;
+        position: absolute;
+        width: 100%;
+        background-color: #fff;
+        border: 1px solid #ddd;
+        border-radius: 0.375rem;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+        max-height: 300px;
+        overflow-y: auto;
+        margin-top: 1px;
+    }
+
+    .card {
+        position: relative;
+        overflow: visible !important;
+    }
+
+    .card .choices {
+        z-index: auto !important;
+    }
+
+    .card .choices.is-open {
+        z-index: 1060 !important;
+    }
+
+    .card .choices__list--dropdown {
+        z-index: 1070 !important;
+    }
+
+    .card-body {
+        overflow: visible !important;
+        position: relative;
+    }
+
+    .card form {
+        position: relative;
+        z-index: 1;
+    }
+
+    .choices__list--dropdown .choices__item {
+        padding: 10px 15px;
+        transition: background-color 0.2s ease;
+        cursor: pointer;
+    }
+
+    .choices__list--dropdown .choices__item--selectable.is-highlighted {
+        background-color: #0d6efd !important;
+        color: white !important;
+    }
+
+    .btn-info {
+        background-color: #17a2b8;
+        border-color: #17a2b8;
+    }
+
+    .btn-info:hover {
+        background-color: #138496;
+        border-color: #117a8b;
+    }
+
+    .btn-group .btn {
+        margin: 0;
+        border-radius: 0;
+    }
+
+    .btn-group .btn:first-child {
+        border-top-left-radius: 0.25rem;
+        border-bottom-left-radius: 0.25rem;
+    }
+
+    .btn-group .btn:last-child {
+        border-top-right-radius: 0.25rem;
+        border-bottom-right-radius: 0.25rem;
+    }
+
+    @media (max-width: 768px) {
+        .choices__list--dropdown {
+            max-height: 200px;
+            position: fixed !important;
+            z-index: 9999 !important;
+        }
+
+        .choices.is-open {
+            z-index: 9999 !important;
+        }
+    }
+
+    .choices__input {
+        z-index: 1 !important;
+    }
+
+    .choices__list--dropdown.is-active {
+        visibility: visible !important;
+        opacity: 1 !important;
+        transform: none !important;
+    }
+
+    .row>.col-md-6 {
+        position: relative;
+        z-index: 1;
+    }
+
+    .toast-container {
+        z-index: 99999 !important;
+    }
+
+    .breakdown-item {
+        padding: 15px;
+        background: #f8f9fa;
+        border-radius: 8px;
+        border-left: 4px solid;
+        border-left-color: #0d6efd;
+        transition: all 0.3s ease;
+    }
+
+    .breakdown-item:hover {
+        background: #fff;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .breakdown-item h6 {
+        font-weight: 600;
+        margin-bottom: 10px;
+    }
+
+    .border-left-primary {
+        border-left: 4px solid #0d6efd;
+    }
+
+    #totalCalcule {
+        font-size: 1.8rem;
+        color: #28a745;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Toast Container -->
+<div class="toast-container" id="toastContainer"></div>
+
+<!-- En-tête -->
+<div class="mb-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <div>
+            <div class="mb-2">
+                <a href="{{ url_for('forfait') }}" class="btn btn-outline-secondary btn-sm">
+                    <i class="fas fa-arrow-left me-1"></i>Retour à la liste
+                </a>
+
+                <!-- Bouton de duplication -->
+                <button type="button" class="btn btn-info btn-sm" data-bs-toggle="modal"
+                    data-bs-target="#duplicateForfaitModal">
+                    <i class="fas fa-copy me-1"></i>Dupliquer ce forfait
+                </button>
+
+                <!-- Bouton d'impression -->
+                <a href="{{ url_for('print_forfait', id_forfait=forfait.id_forfait) }}" target="_blank"
+                    class="btn btn-secondary btn-sm ms-1">
+                    <i class="fas fa-print me-1"></i>Imprimer / Exporter
+                </a>
+            </div>
+            <h2 class="mb-1">
+                <i class="fas fa-cog me-2"></i>Configuration du Forfait
+            </h2>
+            <p class="text-muted mb-0">Gérez les détails, produits et actes inclus dans ce forfait</p>
+        </div>
+        <button class="btn btn-primary btn-lg" data-bs-toggle="modal" data-bs-target="#editForfaitModal">
+            <i class="fas fa-edit me-2"></i>Modifier les Informations
+        </button>
+    </div>
+</div>
+
+<!-- Informations du forfait -->
+<div class="row mb-4">
+    <div class="col-md-8">
+        <div class="h-40 card info-card">
+            <div class="card-body">
+                <h3 class="card-title mb-3">
+                    <i class="fas fa-briefcase-medical me-2"></i>{{ forfait.name_forfait }}
+                </h3>
+                <div class="row">
+                    <div class="col-md-3">
+                        <p class="mb-2"><strong>Spécialité:</strong></p>
+                        <span class="badge bg-light text-dark badge-lg">
+                            <i class="fas fa-user-md me-1"></i>{{ forfait.name_specialty }}
+                        </span>
+                    </div>
+                    <div class="col-md-3">
+                        <p class="mb-2"><strong>Prix:</strong></p>
+                        <span class="badge bg-success badge-lg">
+                            <i class="fas fa-money-bill-wave me-1"></i>{{ forfait.prix_forfait }} DA
+                        </span>
+                    </div>
+                    <div class="col-md-3">
+                        <p class="mb-2"><strong>Durée:</strong></p>
+                        <span class="badge bg-info badge-lg">
+                            <i class="fas fa-clock me-1"></i>
+                            {% if forfait.duree_forfait %}{{ forfait.duree_forfait }} min{% else %}-{% endif %}
+                        </span>
+                    </div>
+                    <div class="col-md-3">
+                        <p class="mb-2"><strong>Nuits:</strong></p>
+                        <span class="badge bg-secondary badge-lg">
+                            <i class="fas fa-moon me-1"></i>
+                            {% if forfait.nbr_nuit %}{{ forfait.nbr_nuit }}{% else %}-{% endif %}
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="card stats-card produits">
+            <div class="card-body text-center">
+                <h3 class="text-success mb-0">{{ produits_inclus|length }}</h3>
+                <p class="text-muted mb-0">Produits Inclus</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="card stats-card actes">
+            <div class="card-body text-center">
+                <h3 class="text-info mb-0">{{ actes_inclus|length }}</h3>
+                <p class="text-muted mb-0">Actes Inclus</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- RÉSUMÉ DES COÛTS DÉTAILLÉ -->
+<div class="row mb-4">
+    <div class="col-12 mb-3">
+        <div class="card border-left-primary">
+            <div class="card-header bg-light">
+                <h5 class="mb-0">
+                    <i class="fas fa-calculator me-2"></i>Détail du Calcul du Coût Total
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <!-- 1. Total Produits -->
+                    <div class="col-md-3 mb-3">
+                        <div class="breakdown-item">
+                            <h6 class="text-muted mb-2">
+                                <i class="fas fa-box text-success me-2"></i>Produits Inclus
+                            </h6>
+                            <div class="h5 text-success mb-1" id="detailProduits">
+                                {{ "%.2f"|format(total_produits) }} DA
+                            </div>
+                            <small class="text-muted">
+                                <span id="countProduits">{{ produits_inclus|length }}</span> produit(s)
+                            </small>
+                        </div>
+                    </div>
+
+                    <!-- 2. Total Actes -->
+                    <div class="col-md-3 mb-3">
+                        <div class="breakdown-item">
+                            <h6 class="text-muted mb-2">
+                                <i class="fas fa-stethoscope text-info me-2"></i>Actes Inclus
+                            </h6>
+                            <div class="h5 text-info mb-1" id="detailActes">
+                                {{ "%.2f"|format(total_actes) }} DA
+                            </div>
+                            <small class="text-muted">
+                                <span id="countActes">{{ actes_inclus|length }}</span> acte(s)
+                            </small>
+                        </div>
+                    </div>
+
+                    <!-- 3. Prix Bloc Opératoire -->
+                    <div class="col-md-3 mb-3">
+                        <div class="breakdown-item">
+                            <h6 class="text-muted mb-2">
+                                <i class="fas fa-procedures text-warning me-2"></i>Bloc Opératoire
+                            </h6>
+                            <div class="h5 text-warning mb-1" id="detailBloc">
+                                {{ "%.2f"|format(prix_bloc) }} DA
+                            </div>
+                            <small class="text-muted">
+                                {% if forfait.duree_forfait %}
+                                {{ forfait.duree_forfait }} min
+                                {% if is_ortho %}
+                                <span class="badge bg-secondary ms-1">Orthopédie</span>
+                                {% endif %}
+                                {% else %}
+                                -
+                                {% endif %}
+                            </small>
+                        </div>
+                    </div>
+
+                    <!-- 4. Prix Nuits -->
+                    <div class="col-md-3 mb-3">
+                        <div class="breakdown-item">
+                            <h6 class="text-muted mb-2">
+                                <i class="fas fa-moon text-primary me-2"></i>Nuits Incluses
+                            </h6>
+                            <div class="h5 text-primary mb-1" id="detailNuits">
+                                {{ "%.2f"|format(prix_nuits) }} DA
+                            </div>
+                            <small class="text-muted">
+                                {% if forfait.nbr_nuit %}
+                                {{ forfait.nbr_nuit }} nuit(s) × 12 000 DA
+                                {% else %}
+                                -
+                                {% endif %}
+                            </small>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Ligne séparatrice -->
+                <hr class="my-3">
+
+                <div class="row">
+                    <!-- Total Calculé -->
+                    <div class="col-md-6">
+                        <div class="p-3 bg-light rounded">
+                            <h6 class="text-muted mb-2">
+                                <i class="fas fa-sum me-2"></i>Total Calculé
+                            </h6>
+                            <div class="h4 text-dark mb-0" id="totalCalcule">
+                                <strong>{{ "%.2f"|format(total_calcule) }} DA</strong>
+                            </div>
+                            <small class="text-muted mt-1 d-block">
+                                Somme : Produits + Actes + Bloc + Nuits
+                            </small>
+                        </div>
+                    </div>
+
+                    <!-- Prix Admin vs Calculé -->
+                    <div class="col-md-6">
+                        <div class="p-3 bg-light rounded">
+                            <h6 class="text-muted mb-2">
+                                <i class="fas fa-tag me-2"></i>Prix Proposé (Admin)
+                            </h6>
+                            <div class="h4 mb-2">
+                                <strong>{{ "%.2f"|format(prix_admin) }} DA</strong>
+                            </div>
+                            {% if difference >= 0 %}
+                            <div class="alert alert-success mb-0 py-2">
+                                <i class="fas fa-arrow-up me-2"></i>
+                                <strong>+{{ "%.2f"|format(difference) }} DA</strong>
+                                <small class="d-block">Marge ajoutée par l'admin</small>
+                            </div>
+                            {% else %}
+                            <div class="alert alert-warning mb-0 py-2">
+                                <i class="fas fa-arrow-down me-2"></i>
+                                <strong>{{ "%.2f"|format(difference) }} DA</strong>
+                                <small class="d-block">Réduction appliquée</small>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Détail Bloc Opératoire (si durée) -->
+                {% if forfait.duree_forfait %}
+                <div class="mt-3 p-3 bg-warning bg-opacity-10 rounded border border-warning">
+                    <h6 class="mb-2">
+                        <i class="fas fa-info-circle me-2"></i>Calcul du Bloc Opératoire
+                    </h6>
+                    <small class="d-block mb-2">
+                        {% if is_ortho %}
+                        <strong>Spécialité:</strong> Orthopédie (30 000 DA pour 90 min)
+                        {% else %}
+                        <strong>Spécialité:</strong> Autre (25 000 DA pour 90 min)
+                        {% endif %}
+                    </small>
+                    <small class="d-block">
+                        <strong>Prix base:</strong> {{ "%.2f"|format(prix_bloc_base) }} DA
+                    </small>
+                    {% if prix_bloc_supplement > 0 %}
+                    <small class="d-block">
+                        <strong>Supplément:</strong> {{ "%.2f"|format(prix_bloc_supplement) }} DA
+                        ({{ forfait.duree_forfait - 90 }} min × 5 000 DA / 30 min)
+                    </small>
+                    {% endif %}
+                    <small class="d-block mt-2 text-success">
+                        <strong>Total Bloc:</strong> {{ "%.2f"|format(prix_bloc) }} DA
+                    </small>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de modification -->
+<div class="modal fade" id="editForfaitModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title">
+                    <i class="fas fa-edit me-2"></i>Modifier le Forfait
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST" action="{{ url_for('update_forfait') }}">
+                <div class="modal-body">
+                    <input type="hidden" name="id_forfait" value="{{ forfait.id_forfait }}">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="name_forfait" class="form-label">
+                                <i class="fas fa-tag me-1"></i>Nom du Forfait <span class="text-danger">*</span>
+                            </label>
+                            <input type="text" name="name_forfait" id="name_forfait" class="form-control"
+                                value="{{ forfait.name_forfait }}" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="specialty_forfait" class="form-label">
+                                <i class="fas fa-user-md me-1"></i>Spécialité <span class="text-danger">*</span>
+                            </label>
+                            <select class="form-select" id="specialty_forfait" name="specialty_forfait" required>
+                                <option value="">Choisir une spécialité</option>
+                                {% for specialty in specialtys %}
+                                <option value="{{ specialty.id_specialty }}" {% if
+                                    specialty.id_specialty==forfait.id_specialty %}selected{% endif %}>
+                                    {{ specialty.name_specialty }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <label for="duree_forfait" class="form-label">
+                                <i class="fas fa-clock me-1"></i>Durée (Minutes)
+                            </label>
+                            <input type="number" name="duree_forfait" id="duree_forfait" class="form-control"
+                                value="{{ forfait.duree_forfait }}" min="0">
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label for="nbr_nuit" class="form-label">
+                                <i class="fas fa-moon me-1"></i>Nombre de Nuits
+                            </label>
+                            <input type="number" name="nbr_nuit" id="nbr_nuit" class="form-control"
+                                value="{{ forfait.nbr_nuit }}" min="0">
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label for="prix_forfait" class="form-label">
+                                <i class="fas fa-money-bill-wave me-1"></i>Prix (DA) <span class="text-danger">*</span>
+                            </label>
+                            <input type="number" name="prix_forfait" id="prix_forfait" class="form-control"
+                                value="{{ forfait.prix_forfait }}" required min="0" step="0.01">
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times me-1"></i>Annuler
+                    </button>
+                    <button type="submit" class="btn btn-success">
+                        <i class="fas fa-save me-1"></i>Enregistrer
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Gestion des Produits -->
+<div class="row">
+    <div class="col-md-6 mb-4">
+        <div class="section-header">
+            <h4 class="mb-0">
+                <i class="fas fa-box me-2"></i>Produits Inclus
+            </h4>
+        </div>
+
+        <!-- Formulaire d'ajout de produit -->
+        <div class="card choices-dropdown-above border-success mb-3">
+            <div class="card-header bg-success text-white">
+                <h6 class="mb-0">
+                    <i class="fas fa-plus-circle me-1"></i>Ajouter un Produit
+                </h6>
+            </div>
+            <div class="card-body">
+                <form id="formProduit">
+                    <div class="mb-3">
+                        <label for="id_produit" class="form-label">
+                            <i class="fas fa-box me-1"></i>Produit <span class="text-danger">*</span>
+                        </label>
+                        <select id="id_produit" name="id_produit" class="form-select choices-select" required>
+                            <option value="">-- Sélectionner un produit --</option>
+                            {% for produit in produits %}
+                            <option value="{{ produit.id_produit }}" data-prix="{{ produit.prix }}">
+                                {{ produit.description }} ({{ produit.prix }} DA)
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="qte" class="form-label">
+                            <i class="fas fa-sort-numeric-up me-1"></i>Quantité <span class="text-danger">*</span>
+                        </label>
+                        <input type="number" name="qte" id="qte" class="form-control" min="1" value="1" required>
+                    </div>
+                    <button type="submit" class="btn btn-success w-100">
+                        <i class="fas fa-plus me-2"></i>Ajouter le Produit
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Liste des produits -->
+        <div class="card">
+            <div class="card-header bg-light">
+                <h6 class="mb-0">
+                    <i class="fas fa-list me-1"></i>Produits du Forfait
+                    <span class="badge bg-success float-end" id="badgeProduits">{{ produits_inclus|length }}</span>
+                </h6>
+            </div>
+            <div class="p-0">
+                <ul class="list-group list-group-flush" id="listProduits">
+                    {% if produits_inclus %}
+                    {% for produit in produits_inclus %}
+                    <li class="list-group-item" data-produit-id="{{ produit.id_produit }}">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div class="flex-grow-1">
+                                <div class="d-flex align-items-center mb-2">
+                                    <i class="fas fa-check-circle text-success me-2"></i>
+                                    <strong>{{ produit.description }}</strong>
+                                </div>
+                                <div class="row text-muted small">
+                                    <div class="col-6">
+                                        <i class="fas fa-boxes me-1"></i>Quantité: <strong>{{ produit.qte }}</strong>
+                                    </div>
+                                    <div class="col-6">
+                                        <i class="fas fa-tag me-1"></i>Prix unitaire: <strong>{{
+                                            "%.2f"|format(produit.prix) }}</strong> DA
+                                    </div>
+                                </div>
+                                <div class="row text-muted small">
+                                    <div class="col-12">
+                                        <i class="fas fa-calculator me-1"></i>Total: <strong
+                                            class="produit-total text-success">{{ "%.2f"|format(produit.total_produit)
+                                            }}</strong> DA
+                                    </div>
+                                </div>
+                            </div>
+                            <button class="btn btn-danger btn-sm btn-remove-produit ms-2"
+                                data-produit-id="{{ produit.id_produit }}" title="Supprimer">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </li>
+                    {% endfor %}
+                    {% else %}
+                    <li class="list-group-item empty-state" id="emptyProduits">
+                        <i class="fas fa-inbox"></i>
+                        <p class="mb-0">Aucun produit inclus dans ce forfait</p>
+                    </li>
+                    {% endif %}
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- Gestion des Actes -->
+    <div class="col-md-6 mb-4">
+        <div class="section-header">
+            <h4 class="mb-0">
+                <i class="fas fa-stethoscope me-2"></i>Actes Inclus
+            </h4>
+        </div>
+
+        <!-- Formulaire d'ajout d'acte -->
+        <div class="card choices-dropdown-above border-info mb-3">
+            <div class="card-header bg-info text-white">
+                <h6 class="mb-0">
+                    <i class="fas fa-plus-circle me-1"></i>Ajouter un Acte
+                </h6>
+            </div>
+            <div class="card-body">
+                <form id="formActe">
+                    <div class="mb-3">
+                        <label for="id_acte" class="form-label">
+                            <i class="fas fa-stethoscope me-1"></i>Acte Médical <span class="text-danger">*</span>
+                        </label>
+                        <select id="id_acte" name="id_acte" class="form-select choices-select" required>
+                            <option value="">-- Sélectionner un acte --</option>
+                            {% for acte in actes %}
+                            <option value="{{ acte.id_acte }}" data-prix="{{ acte.prix }}">
+                                {{ acte.nom_acte }} ({{ acte.prix }} DA)
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <button type="submit" class="btn btn-info w-100">
+                        <i class="fas fa-plus me-2"></i>Ajouter l'Acte
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Liste des actes -->
+        <div class="card">
+            <div class="card-header bg-light">
+                <h6 class="mb-0">
+                    <i class="fas fa-list me-1"></i>Actes du Forfait
+                    <span class="badge bg-info float-end" id="badgeActes">{{ actes_inclus|length }}</span>
+                </h6>
+            </div>
+            <div class="p-0">
+                <ul class="list-group list-group-flush" id="listActes">
+                    {% if actes_inclus %}
+                    {% for acte in actes_inclus %}
+                    <li class="list-group-item" data-acte-id="{{ acte.id_acte }}">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div class="flex-grow-1">
+                                <div class="d-flex align-items-center mb-2">
+                                    <i class="fas fa-check-circle text-success me-2"></i>
+                                    <strong>{{ acte.nom_acte }}</strong>
+                                </div>
+                                <div class="row text-muted small">
+                                    <div class="col-12">
+                                        <i class="fas fa-money-bill-wave me-1"></i>Prix: <strong
+                                            class="acte-prix text-info">{{ "%.2f"|format(acte.prix) }}</strong> DA
+                                    </div>
+                                </div>
+                            </div>
+                            <button class="btn btn-danger btn-sm btn-remove-acte ms-2" data-acte-id="{{ acte.id_acte }}"
+                                title="Supprimer">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </li>
+                    {% endfor %}
+                    {% else %}
+                    <li class="list-group-item empty-state" id="emptyActes">
+                        <i class="fas fa-inbox"></i>
+                        <p class="mb-0">Aucun acte inclus dans ce forfait</p>
+                    </li>
+                    {% endif %}
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de confirmation de duplication -->
+<div class="modal fade" id="duplicateForfaitModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-info text-white">
+                <h5 class="modal-title">
+                    <i class="fas fa-copy me-2"></i>Dupliquer le forfait
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST" action="{{ url_for('duplicate_forfait', id_forfait=forfait.id_forfait) }}">
+                <div class="modal-body">
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i>
+                        <strong>Cette action va créer une copie complète du forfait incluant :</strong>
+                    </div>
+                    <ul>
+                        <li><strong>{{ forfait.name_forfait }}</strong> → <strong>{{ forfait.name_forfait }}
+                                (Copie)</strong></li>
+                        <li><i class="fas fa-box text-success me-1"></i>{{ produits_inclus|length }} produits</li>
+                        <li><i class="fas fa-stethoscope text-info me-1"></i>{{ actes_inclus|length }} actes</li>
+                        <li><i class="fas fa-money-bill-wave text-success me-1"></i>Prix : {{ forfait.prix_forfait }} DA
+                        </li>
+                    </ul>
+                    <p class="text-muted mb-0">
+                        <i class="fas fa-lightbulb me-1"></i>
+                        Vous serez redirigé vers la page de configuration du nouveau forfait après la duplication.
+                    </p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times me-1"></i>Annuler
+                    </button>
+                    <button type="submit" class="btn btn-info">
+                        <i class="fas fa-copy me-1"></i>Dupliquer le forfait
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- TEMPLATE POUR AFFICHER UN PRODUIT AVEC SON PRIX -->
+<template id="produitTemplate">
+    <li class="list-group-item" data-produit-id="">
+        <div class="d-flex justify-content-between align-items-start">
+            <div class="flex-grow-1">
+                <div class="d-flex align-items-center mb-2">
+                    <i class="fas fa-check-circle text-success me-2"></i>
+                    <strong class="produit-name"></strong>
+                </div>
+                <div class="row text-muted small">
+                    <div class="col-6">
+                        <i class="fas fa-boxes me-1"></i>Quantité: <strong class="produit-qte">1</strong>
+                    </div>
+                    <div class="col-6">
+                        <i class="fas fa-tag me-1"></i>Prix unitaire: <strong class="produit-prix">0.00</strong> DA
+                    </div>
+                </div>
+                <div class="row text-muted small">
+                    <div class="col-12">
+                        <i class="fas fa-calculator me-1"></i>Total: <strong
+                            class="produit-total text-success">0.00</strong> DA
+                    </div>
+                </div>
+            </div>
+            <button class="btn btn-danger btn-sm btn-remove-produit ms-2" type="button" title="Supprimer">
+                <i class="fas fa-trash"></i>
+            </button>
+        </div>
+    </li>
+</template>
+
+<!-- TEMPLATE POUR AFFICHER UN ACTE AVEC SON PRIX -->
+<template id="acteTemplate">
+    <li class="list-group-item" data-acte-id="">
+        <div class="d-flex justify-content-between align-items-start">
+            <div class="flex-grow-1">
+                <div class="d-flex align-items-center mb-2">
+                    <i class="fas fa-check-circle text-success me-2"></i>
+                    <strong class="acte-name"></strong>
+                </div>
+                <div class="row text-muted small">
+                    <div class="col-12">
+                        <i class="fas fa-money-bill-wave me-1"></i>Prix: <strong
+                            class="acte-prix text-info">0.00</strong> DA
+                    </div>
+                </div>
+            </div>
+            <button class="btn btn-danger btn-sm btn-remove-acte ms-2" type="button" title="Supprimer">
+                <i class="fas fa-trash"></i>
+            </button>
+        </div>
+    </li>
+</template>
+
+{% endblock %}
+
+{% block scripts %}
+<!-- Choices.js -->
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        'use strict';
+
+        // ==================== VARIABLES GLOBALES ====================
+        const forfaitId = {{ forfait.id_forfait }
+    };
+    const prixForfaitAdmin = parseFloat({{ prix_admin }}) || 0;
+    const choicesInstances = new Map();
+
+    // Constantes de calcul
+    const PRIX_BLOC_ORTHO = {{ PRIX_BLOC_ORTHO }};
+    const PRIX_BLOC_AUTRE = {{ PRIX_BLOC_AUTRE }};
+    const PRIX_SUPPLEMENT_30MIN = {{ PRIX_SUPPLEMENT_30MIN }};
+    const PRIX_NUIT = {{ PRIX_NUIT }};
+
+    // Données du forfait
+    const duree = {{ forfait.duree_forfait or 0 }};
+    const nbNuits = {{ forfait.nbr_nuit or 0 }};
+    const isOrtho = {{ 'true' if is_ortho else 'false' }};
+
+    // ==================== INITIALISATION ====================
+    initializeChoices();
+    calculateTotals();
+
+    // ==================== INITIALISATION CHOICES.JS ====================
+    function initializeChoices() {
+        console.log('🎨 Initialisation de Choices.js...');
+        document.querySelectorAll('.choices-select').forEach(element => {
+            if (!choicesInstances.has(element.id)) {
+                try {
+                    const instance = new Choices(element, {
+                        searchEnabled: true,
+                        searchPlaceholderValue: 'Rechercher...',
+                        noResultsText: 'Aucun résultat trouvé',
+                        noChoicesText: 'Aucun choix disponible',
+                        itemSelectText: 'Cliquer pour sélectionner',
+                        removeItemButton: false,
+                        shouldSort: false,
+                        position: 'auto'
+                    });
+                    choicesInstances.set(element.id, instance);
+                    console.log('✅ Choices.js initialisé pour:', element.id);
+                } catch (error) {
+                    console.error('❌ Erreur Choices.js pour', element.id, error);
+                }
+            }
+        });
+    }
+
+    // ==================== CALCUL BLOC OPÉRATOIRE ====================
+    function calculBloc(dureeMins) {
+        if (!dureeMins || dureeMins <= 0) {
+            return { prixBase: 0, prixSupplement: 0, prixTotal: 0 };
+        }
+
+        const prixBase = isOrtho ? PRIX_BLOC_ORTHO : PRIX_BLOC_AUTRE;
+        let prixSupplement = 0;
+
+        if (dureeMins > 90) {
+            const dureeSupp = dureeMins - 90;
+            const nbTranches = Math.ceil(dureeSupp / 30);
+            prixSupplement = nbTranches * PRIX_SUPPLEMENT_30MIN;
+        }
+
+        return {
+            prixBase: prixBase,
+            prixSupplement: prixSupplement,
+            prixTotal: prixBase + prixSupplement
+        };
+    }
+
+    // ==================== CALCUL PRIX NUITS ====================
+    function calculNuits(nbNuits) {
+        if (!nbNuits || nbNuits <= 0) return 0;
+        return nbNuits * PRIX_NUIT;
+    }
+
+    // ==================== RECALCUL TOTAL ====================
+    function calculateTotals() {
+        console.log('📢 Recalcul des totaux...');
+
+        // 1. Total produits - Somme des lignes (qte × prix)
+        let totalProduits = 0;
+        document.querySelectorAll('#listProduits li:not(.empty-state)').forEach(li => {
+            const totalText = li.querySelector('.produit-total')?.textContent || '0';
+            // Nettoyer le texte : enlever "DA", espaces, et convertir
+            const cleanText = totalText.replace(/DA/gi, '').replace(/\s/g, '').trim();
+            const value = parseFloat(cleanText) || 0;
+            totalProduits += value;
+            console.log('Produit total:', totalText, '→', value);
+        });
+
+        // 2. Total actes
+        let totalActes = 0;
+        document.querySelectorAll('#listActes li:not(.empty-state)').forEach(li => {
+            const prixText = li.querySelector('.acte-prix')?.textContent || '0';
+            const cleanText = prixText.replace(/DA/gi, '').replace(/\s/g, '').trim();
+            const value = parseFloat(cleanText) || 0;
+            totalActes += value;
+            console.log('Acte prix:', prixText, '→', value);
+        });
+
+        // 3. Prix bloc
+        const blocData = calculBloc(duree);
+        const prixBloc = blocData.prixTotal;
+
+        // 4. Prix nuits
+        const prixNuits = calculNuits(nbNuits);
+
+        // Total calculé
+        const totalCalcule = totalProduits + totalActes + prixBloc + prixNuits;
+
+        // Différence
+        const difference = prixForfaitAdmin - totalCalcule;
+
+        // ==================== MISE À JOUR UI ====================
+
+        // Détails des composantes
+        const detailProduits = document.getElementById('detailProduits');
+        const detailActes = document.getElementById('detailActes');
+        const detailBloc = document.getElementById('detailBloc');
+        const detailNuits = document.getElementById('detailNuits');
+        const totalCalculeEl = document.getElementById('totalCalcule');
+        const countProduits = document.getElementById('countProduits');
+        const countActes = document.getElementById('countActes');
+
+        if (detailProduits) {
+            detailProduits.textContent = formatPrice(totalProduits) + ' DA';
+        }
+        if (detailActes) {
+            detailActes.textContent = formatPrice(totalActes) + ' DA';
+        }
+        if (detailBloc) {
+            detailBloc.textContent = formatPrice(prixBloc) + ' DA';
+        }
+        if (detailNuits) {
+            detailNuits.textContent = formatPrice(prixNuits) + ' DA';
+        }
+        if (totalCalculeEl) {
+            totalCalculeEl.innerHTML = `<strong>${formatPrice(totalCalcule)} DA</strong>`;
+        }
+
+        // Mise à jour des compteurs
+        if (countProduits) {
+            const nbProduits = document.querySelectorAll('#listProduits li:not(.empty-state)').length;
+            countProduits.textContent = nbProduits;
+        }
+        if (countActes) {
+            const nbActes = document.querySelectorAll('#listActes li:not(.empty-state)').length;
+            countActes.textContent = nbActes;
+        }
+
+        // Mise à jour des badges de comptage
+        updateBadgeCount('produits');
+        updateBadgeCount('actes');
+
+        console.log(`💰 Totaux calculés:`, {
+            produits: totalProduits,
+            actes: totalActes,
+            bloc: prixBloc,
+            nuits: prixNuits,
+            total: totalCalcule,
+            admin: prixForfaitAdmin,
+            difference: difference
+        });
+    }
+
+    // ==================== GESTION DES PRODUITS ====================
+
+    // Ajout de produit
+    document.getElementById('formProduit')?.addEventListener('submit', async function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+
+        console.log('=== DÉBUT SOUMISSION FORMULAIRE PRODUIT ===');
+
+        const submitBtn = this.querySelector('button[type="submit"]');
+        const originalBtnText = submitBtn.innerHTML;
+        const formData = new FormData(this);
+
+        const data = {
+            id_produit: formData.get('id_produit'),
+            qte: parseInt(formData.get('qte'))
+        };
+
+        console.log('Données du formulaire:', data);
+
+        if (!data.id_produit || !data.qte || data.qte < 1) {
+            console.error('Validation échouée:', data);
+            showToast('Erreur', 'Veuillez remplir tous les champs correctement', 'danger');
+            return false;
+        }
+
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Ajout...';
+
+        try {
+            const url = `/api/forfait/${forfaitId}/produit`;
+            console.log('URL de la requête:', url);
+            console.log('Données envoyées:', JSON.stringify(data));
+
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify(data)
+            });
+
+            console.log('Status de la réponse:', response.status);
+
+            const contentType = response.headers.get('content-type');
+            if (!contentType || !contentType.includes('application/json')) {
+                const textResponse = await response.text();
+                console.error('Réponse non-JSON reçue:', textResponse);
+                throw new Error('La réponse du serveur n\'est pas au format JSON');
+            }
+
+            const result = await response.json();
+            console.log('Résultat JSON:', result);
+
+            if (result.success) {
+                console.log('Succès! Ajout du produit à la liste');
+                showToast('Succès', result.message, 'success');
+
+                // Récupérer le prix depuis le select ou depuis le résultat
+                const selectElement = document.getElementById('id_produit');
+                const selectedOption = selectElement.querySelector(`option[value="${data.id_produit}"]`);
+                const prixFromSelect = parseFloat(selectedOption?.dataset.prix || 0);
+                const prixFromResult = parseFloat(result.produit?.prix || 0);
+
+                // Utiliser le prix du résultat en priorité, sinon celui du select
+                const prixProduit = prixFromResult > 0 ? prixFromResult : prixFromSelect;
+
+                console.log('Prix récupérés:', {
+                    select: prixFromSelect,
+                    result: prixFromResult,
+                    utilise: prixProduit
+                });
+
+                addProduitToList({
+                    ...result.produit,
+                    prix: prixProduit
+                });
+
+                calculateTotals();
+                this.reset();
+
+                const choicesInstance = choicesInstances.get('id_produit');
+                if (choicesInstance) {
+                    choicesInstance.setChoiceByValue('');
+                }
+            } else {
+                console.error('Échec:', result.message);
+                showToast('Erreur', result.message, 'danger');
+            }
+        } catch (error) {
+            console.error('Erreur attrapée:', error);
+            console.error('Stack:', error.stack);
+            showToast('Erreur', `Une erreur est survenue: ${error.message}`, 'danger');
+        } finally {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = originalBtnText;
+            console.log('=== FIN SOUMISSION FORMULAIRE ===');
+        }
+
+        return false;
+    });
+
+    // Suppression de produit
+    document.addEventListener('click', async function (e) {
+        if (e.target.closest('.btn-remove-produit')) {
+            e.preventDefault();
+            const btn = e.target.closest('.btn-remove-produit');
+            const produitId = btn.dataset.produitId;
+
+            if (!confirm('Êtes-vous sûr de vouloir supprimer ce produit ?')) return;
+
+            const listItem = btn.closest('li');
+            listItem.classList.add('removing');
+            btn.disabled = true;
+
+            try {
+                const response = await fetch(`/api/forfait/${forfaitId}/produit/${produitId}`, {
+                    method: 'DELETE',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    showToast('Succès', result.message, 'success');
+                    setTimeout(() => {
+                        listItem.remove();
+                        checkEmptyList('produits');
+                        calculateTotals();
+                    }, 300);
+                } else {
+                    listItem.classList.remove('removing');
+                    btn.disabled = false;
+                    showToast('Erreur', result.message, 'danger');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                listItem.classList.remove('removing');
+                btn.disabled = false;
+                showToast('Erreur', 'Une erreur est survenue', 'danger');
+            }
+        }
+    });
+
+    // ==================== GESTION DES ACTES ====================
+
+    // Ajout d'acte
+    document.getElementById('formActe')?.addEventListener('submit', async function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+
+        console.log('=== DÉBUT SOUMISSION FORMULAIRE ACTE ===');
+
+        const submitBtn = this.querySelector('button[type="submit"]');
+        const originalBtnText = submitBtn.innerHTML;
+        const formData = new FormData(this);
+
+        const data = { id_acte: formData.get('id_acte') };
+
+        console.log('Données:', data);
+
+        if (!data.id_acte) {
+            console.error('Pas d\'acte sélectionné');
+            showToast('Erreur', 'Veuillez sélectionner un acte', 'danger');
+            return false;
+        }
+
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Ajout...';
+
+        try {
+            const url = `/api/forfait/${forfaitId}/acte`;
+            console.log('URL:', url);
+
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify(data)
+            });
+
+            console.log('Status:', response.status);
+
+            const result = await response.json();
+            console.log('Résultat:', result);
+
+            if (result.success) {
+                console.log('Succès!');
+                showToast('Succès', result.message, 'success');
+                addActeToList(result.acte);
+                calculateTotals();
+                this.reset();
+
+                const choicesInstance = choicesInstances.get('id_acte');
+                if (choicesInstance) {
+                    choicesInstance.setChoiceByValue('');
+                }
+            } else {
+                console.error('Échec:', result.message);
+                showToast('Erreur', result.message, 'danger');
+            }
+        } catch (error) {
+            console.error('Erreur:', error);
+            showToast('Erreur', `Une erreur est survenue: ${error.message}`, 'danger');
+        } finally {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = originalBtnText;
+            console.log('=== FIN SOUMISSION FORMULAIRE ACTE ===');
+        }
+
+        return false;
+    });
+
+    // Suppression d'acte
+    document.addEventListener('click', async function (e) {
+        if (e.target.closest('.btn-remove-acte')) {
+            e.preventDefault();
+            const btn = e.target.closest('.btn-remove-acte');
+            const acteId = btn.dataset.acteId;
+
+            if (!confirm('Êtes-vous sûr de vouloir supprimer cet acte ?')) return;
+
+            const listItem = btn.closest('li');
+            listItem.classList.add('removing');
+            btn.disabled = true;
+
+            try {
+                const response = await fetch(`/api/forfait/${forfaitId}/acte/${acteId}`, {
+                    method: 'DELETE',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    showToast('Succès', result.message, 'success');
+                    setTimeout(() => {
+                        listItem.remove();
+                        checkEmptyList('actes');
+                        calculateTotals();
+                    }, 300);
+                } else {
+                    listItem.classList.remove('removing');
+                    btn.disabled = false;
+                    showToast('Erreur', result.message, 'danger');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                listItem.classList.remove('removing');
+                btn.disabled = false;
+                showToast('Erreur', 'Une erreur est survenue', 'danger');
+            }
+        }
+    });
+
+    // ==================== FONCTIONS UTILITAIRES ====================
+
+    function addProduitToList(produit) {
+        console.log('➕ Ajout du produit à la liste:', produit);
+
+        const list = document.getElementById('listProduits');
+        const emptyState = document.getElementById('emptyProduits');
+        if (emptyState) emptyState.remove();
+
+        const template = document.getElementById('produitTemplate');
+        const li = template.content.cloneNode(true);
+
+        // Récupérer le prix depuis l'objet produit
+        const prix = parseFloat(produit.prix) || 0;
+        const qte = parseInt(produit.qte) || 1;
+        const totalProduit = prix * qte;
+
+        console.log('Détails produit:', { prix, qte, total: totalProduit });
+
+        li.querySelector('li').setAttribute('data-produit-id', produit.id_produit);
+        li.querySelector('.produit-name').textContent = escapeHtml(produit.description);
+        li.querySelector('.produit-qte').textContent = qte;
+        li.querySelector('.produit-prix').textContent = formatPrice(prix);
+        li.querySelector('.produit-total').textContent = formatPrice(totalProduit);
+        li.querySelector('.btn-remove-produit').setAttribute('data-produit-id', produit.id_produit);
+
+        list.appendChild(li);
+        console.log('✅ Produit ajouté avec succès');
+    }
+
+    function addActeToList(acte) {
+        console.log('➕ Ajout de l\'acte à la liste:', acte);
+
+        const list = document.getElementById('listActes');
+        const emptyState = document.getElementById('emptyActes');
+        if (emptyState) emptyState.remove();
+
+        const template = document.getElementById('acteTemplate');
+        const li = template.content.cloneNode(true);
+
+        const prix = parseFloat(acte.prix) || 0;
+        console.log('Prix acte:', prix);
+
+        li.querySelector('li').setAttribute('data-acte-id', acte.id_acte);
+        li.querySelector('.acte-name').textContent = escapeHtml(acte.nom_acte);
+        li.querySelector('.acte-prix').textContent = formatPrice(prix);
+        li.querySelector('.btn-remove-acte').setAttribute('data-acte-id', acte.id_acte);
+
+        list.appendChild(li);
+        console.log('✅ Acte ajouté avec succès');
+    }
+
+    function checkEmptyList(type) {
+        const listId = type === 'produits' ? 'listProduits' : 'listActes';
+        const emptyId = type === 'produits' ? 'emptyProduits' : 'emptyActes';
+        const list = document.getElementById(listId);
+
+        const hasItems = list.querySelectorAll('li:not(.empty-state)').length > 0;
+
+        if (!hasItems) {
+            const emptyLi = document.createElement('li');
+            emptyLi.className = 'list-group-item empty-state';
+            emptyLi.id = emptyId;
+            emptyLi.innerHTML = `
+                <i class="fas fa-inbox"></i>
+                <p class="mb-0">Aucun ${type === 'produits' ? 'produit' : 'acte'} inclus dans ce forfait</p>
+            `;
+            list.appendChild(emptyLi);
+        }
+    }
+
+    function updateBadgeCount(type, increment = 0) {
+        const badgeId = type === 'produits' ? 'badgeProduits' : 'badgeActes';
+        const badge = document.getElementById(badgeId);
+        const listId = type === 'produits' ? 'listProduits' : 'listActes';
+        const list = document.getElementById(listId);
+
+        if (badge && list) {
+            const count = list.querySelectorAll('li:not(.empty-state)').length;
+            badge.textContent = count;
+        }
+    }
+
+    function formatPrice(price) {
+        const num = parseFloat(price) || 0;
+        return num.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+    }
+
+    function showToast(title, message, type) {
+        console.log(`📢 Toast: [${type}] ${title}: ${message}`);
+
+        const toastContainer = document.getElementById('toastContainer');
+        if (!toastContainer) {
+            console.error('❌ Toast container introuvable');
+            alert(`${title}: ${message}`);
+            return;
+        }
+
+        const toastId = 'toast-' + Date.now();
+        const bgClass = type === 'success' ? 'bg-success' : type === 'danger' ? 'bg-danger' : 'bg-info';
+        const icon = type === 'success' ? 'fa-check-circle' : type === 'danger' ? 'fa-exclamation-circle' : 'fa-info-circle';
+
+        const toastHTML = `
+            <div id="${toastId}" class="toast align-items-center text-white ${bgClass} border-0" role="alert">
+                <div class="d-flex">
+                    <div class="toast-body">
+                        <i class="fas ${icon} me-2"></i><strong>${title}:</strong> ${message}
+                    </div>
+                    <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+                </div>
+            </div>
+        `;
+
+        toastContainer.insertAdjacentHTML('beforeend', toastHTML);
+        const toastElement = document.getElementById(toastId);
+        const toast = new bootstrap.Toast(toastElement, { delay: 4000 });
+        toast.show();
+        toastElement.addEventListener('hidden.bs.toast', () => toastElement.remove());
+    }
+
+    function escapeHtml(text) {
+        const map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' };
+        return String(text).replace(/[&<>"']/g, m => map[m]);
+    }
+
+    console.log('✅ Script complètement initialisé');
+});
+</script>
+{% endblock %}

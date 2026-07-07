@@ -1,0 +1,670 @@
+<!-- Modal Modifier Informations Patient - AVEC SÉLECTEUR HIS -->
+<div class="modal fade" id="modifierPatientModal" tabindex="-1" aria-labelledby="modifierPatientModalLabel"
+    aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content">
+            <!-- Header -->
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="modifierPatientModalLabel">
+                    <i class="fas fa-user-edit"></i> Modifier les Informations Patient
+                </h5>
+
+                <!-- ✅ Bouton Historique HIS -->
+                {% if facture.patient_oid_his %}
+                <button type="button" class="btn btn-sm btn-light me-2"
+                    onclick="showPatientHistoryDirect('{{ facture.patient_oid_his }}')" title="Voir l'historique HIS">
+                    <i class="fas fa-history"></i> Historique
+                </button>
+                {% endif %}
+
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                    aria-label="Fermer"></button>
+            </div>
+
+            <!-- Body -->
+            <div class="modal-body">
+
+                <form id="modifierPatientForm">
+                    <!-- ✅ NOUVEAU : Recherche HIS -->
+                    <div class="mb-4">
+                        <label class="form-label fw-bold">
+                            <i class="fas fa-search"></i>
+                            Rechercher dans HIS
+                            <span class="badge bg-info ms-2">Nouveau</span>
+                        </label>
+                        <select id="patientHisSearchModal" class="form-select">
+                            <option value="">Rechercher un patient dans HIS...</option>
+                        </select>
+                        <small class="text-muted mt-2 d-block">
+                            <i class="fas fa-info-circle"></i>
+                            Sélectionnez un patient depuis HIS, puis modifiez les informations si nécessaire
+                        </small>
+                    </div>
+
+                    <!-- ✅ Badge HIS -->
+                    <div class="his-badge-container mb-3" id="hisBadgeContainerModal" style="display: none;">
+                        <div class="alert alert-info d-flex justify-content-between align-items-center mb-0">
+                            <div>
+                                <i class="fas fa-database"></i>
+                                <strong>Patient HIS sélectionné</strong>
+                                <br>
+                                <small id="hisPatientInfoModal"></small>
+                            </div>
+                            <button type="button" class="btn btn-sm btn-info"
+                                onclick="showPatientHistoryDirect(document.getElementById('edit_patient_oid_his').value)"
+                                title="Voir l'historique">
+                                <i class="fas fa-history"></i> Historique
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Type de patient (Entreprise ou Particulier) -->
+                    <div class="mb-4">
+                        <div class="form-check form-switch form-check-lg">
+                            <input class="form-check-input" type="checkbox" id="estEntreprise" role="switch" {% if
+                                facture.patient_raison_sociale %}checked{% endif %}>
+                            <label class="form-check-label fw-bold" for="estEntreprise">
+                                <i class="fas fa-building"></i> Le patient est une entreprise / organisme
+                            </label>
+                        </div>
+                        <small class="form-text text-muted ms-4">
+                            Cochez cette case si la facture est destinée à une entreprise ou un organisme
+                        </small>
+                    </div>
+
+                    <!-- Raison sociale (entreprise uniquement) -->
+                    <div id="raisonSocialeGroup" class="mb-4" {% if not facture.patient_raison_sociale
+                        %}style="display: none;" {% endif %}>
+                        <div class="card border-primary">
+                            <div class="card-body">
+                                <label class="form-label fw-bold text-primary">
+                                    <i class="fas fa-building"></i> Raison sociale
+                                    <span class="text-danger">*</span>
+                                </label>
+                                <input type="text" id="edit_patient_raison_sociale" class="form-control form-control-lg"
+                                    value="{{ facture.patient_raison_sociale or '' }}"
+                                    placeholder="Ex: CLINIQUE INAYA, SONATRACH, SONELGAZ...">
+                                <small class="form-text text-muted">
+                                    Nom officiel de l'entreprise ou de l'organisme
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Nom et Prénom (Particulier ou Contact entreprise) -->
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold" id="labelEditNom">
+                                <i class="fas fa-user"></i> Nom
+                                <span class="text-danger">*</span>
+                            </label>
+                            <input type="text" id="edit_patient_nom" class="form-control form-control-lg"
+                                value="{{ facture.patient_nom }}" required placeholder="Ex: BENALI">
+                            <small class="text-muted" id="nomHintModal"></small>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold" id="labelEditPrenom">
+                                <i class="fas fa-user"></i> Prénom
+                                <span class="text-danger">*</span>
+                            </label>
+                            <input type="text" id="edit_patient_prenom" class="form-control form-control-lg"
+                                value="{{ facture.patient_prenom }}" required placeholder="Ex: Mohamed">
+                            <small class="text-muted" id="prenomHintModal"></small>
+                        </div>
+                    </div>
+
+                    <!-- ✅ Hidden fields HIS -->
+                    <input type="hidden" id="edit_patient_oid_his" value="{{ facture.patient_oid_his or '' }}">
+                    <input type="hidden" id="edit_patient_code_his" value="{{ facture.patient_code_his or '' }}">
+
+                    <!-- Adresse -->
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">
+                            <i class="fas fa-map-marker-alt"></i> Adresse
+                        </label>
+                        <textarea id="edit_patient_adresse" class="form-control" rows="2"
+                            placeholder="Ex: 04 Rue Duguet, Vieux Kouba, Alger">{{ facture.patient_adresse or '' }}</textarea>
+                        <small class="form-text text-muted">
+                            Adresse complète du patient ou de l'entreprise
+                        </small>
+                    </div>
+
+                    <!-- Téléphone -->
+                    <div class="mb-4">
+                        <label class="form-label fw-bold">
+                            <i class="fas fa-phone"></i> Téléphone
+                        </label>
+                        <div class="input-group input-group-lg">
+                            <span class="input-group-text">📞</span>
+                            <input type="tel" id="edit_patient_telephone" class="form-control"
+                                value="{{ facture.patient_telephone or '' }}"
+                                placeholder="Ex: 021-82-72-71 ou 0550 12 34 56" pattern="[0-9\-\s\+\(\)]+">
+                        </div>
+                        <small class="form-text text-muted">
+                            Numéro de téléphone fixe ou mobile
+                        </small>
+                    </div>
+
+                    <!-- Séparateur -->
+                    <hr class="my-4">
+
+                    <!-- Coordonnées Fiscales (Optionnel) -->
+                    <div class="card border-secondary">
+                        <div class="card-header bg-light">
+                            <h6 class="mb-0 text-secondary">
+                                <i class="fas fa-receipt"></i> Coordonnées Fiscales
+                                <span class="badge bg-secondary ms-2">Optionnel</span>
+                            </h6>
+                            <small class="text-muted">
+                                Ces informations sont nécessaires uniquement pour les entreprises ou pour une
+                                facturation fiscale
+                            </small>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <!-- NIF -->
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label">
+                                        <i class="fas fa-id-card"></i> NIF
+                                        <span class="text-muted">(Numéro d'Identification Fiscale)</span>
+                                    </label>
+                                    <input type="text" id="edit_patient_nif" class="form-control"
+                                        value="{{ facture.patient_nif or '' }}" placeholder="Ex: 001916100040926"
+                                        maxlength="15">
+                                    <small class="form-text text-muted">
+                                        15 chiffres
+                                    </small>
+                                </div>
+
+                                <!-- RC -->
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label">
+                                        <i class="fas fa-building"></i> RC
+                                        <span class="text-muted">(Registre de Commerce)</span>
+                                    </label>
+                                    <input type="text" id="edit_patient_rc" class="form-control"
+                                        value="{{ facture.patient_rc or '' }}" placeholder="Ex: 16/00-1000409 B 19">
+                                    <small class="form-text text-muted">
+                                        Format: XX/XX-XXXXXXX X XX
+                                    </small>
+                                </div>
+
+                                <!-- N° Article -->
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label">
+                                        <i class="fas fa-file-invoice"></i> N° Article
+                                        <span class="text-muted">(Article d'imposition)</span>
+                                    </label>
+                                    <input type="text" id="edit_patient_article" class="form-control"
+                                        value="{{ facture.patient_article or '' }}" placeholder="Ex: 16185014022"
+                                        maxlength="11">
+                                    <small class="form-text text-muted">
+                                        11 chiffres
+                                    </small>
+                                </div>
+                            </div>
+
+                            <!-- Info supplémentaire -->
+                            <div class="alert alert-info mb-0">
+                                <i class="fas fa-info-circle"></i>
+                                <strong>Note :</strong> Ces informations apparaîtront sur la facture et sont importantes
+                                pour la conformité fiscale en cas de contrôle.
+                            </div>
+                        </div>
+                    </div>
+
+
+                </form>
+            </div>
+
+            <!-- Footer -->
+            <div class="modal-footer bg-light">
+                <!-- Boutons d'action -->
+                <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-4 w-100">
+                    <button type="button" class="btn btn-outline-secondary btn-lg" data-bs-dismiss="modal">
+                        <i class="fas fa-times"></i> Annuler
+                    </button>
+                    <button type="button" class="btn btn-primary btn-lg" onclick="modifierPatient()">
+                        <i class="fas fa-save"></i> Enregistrer les modifications
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<style>
+    /* ==================== STYLES MODAL MODIFIER PATIENT ==================== */
+
+    /* Sélecteur HIS dans modal */
+    #modifierPatientModal .choices {
+        margin-bottom: 1rem;
+    }
+
+    #modifierPatientModal .choices__inner {
+        min-height: 52px !important;
+        padding: 0.75rem 1rem !important;
+        border: 2px solid #e2e8f0 !important;
+        border-radius: 0.5rem !important;
+        transition: all 0.3s ease !important;
+    }
+
+    #modifierPatientModal .choices.is-focused .choices__inner {
+        border-color: #6366f1 !important;
+        box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1) !important;
+    }
+
+    #modifierPatientModal .choices__list--dropdown {
+        border: 2px solid #6366f1 !important;
+        border-radius: 0.5rem !important;
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15) !important;
+        margin-top: 0.5rem !important;
+    }
+
+    #modifierPatientModal .choices__item--selectable {
+        padding: 0.75rem 1rem !important;
+        transition: all 0.2s ease !important;
+    }
+
+    #modifierPatientModal .choices__item--selectable.is-highlighted {
+        background: #6366f1 !important;
+    }
+
+    /* Badge HIS dans modal */
+    #modifierPatientModal .his-badge-container {
+        animation: slideDown 0.3s ease;
+    }
+
+    @keyframes slideDown {
+        from {
+            opacity: 0;
+            transform: translateY(-10px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    #modifierPatientModal .his-badge-container .alert {
+        background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+        border: 2px solid #3b82f6;
+        border-radius: 0.75rem;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+    }
+
+    /* Validation visuelle */
+    #modifierPatientModal .form-control.is-valid {
+        border-color: #10b981 !important;
+        padding-right: calc(1.5em + 0.75rem);
+        background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 8 8'%3e%3cpath fill='%2310b981' d='M2.3 6.73L.6 4.53c-.4-1.04.46-1.4 1.1-.8l1.1 1.4 3.4-3.8c.6-.63 1.6-.27 1.2.7l-4 4.6c-.43.5-.8.4-1.1.1z'/%3e%3c/svg%3e");
+        background-repeat: no-repeat;
+        background-position: right calc(0.375em + 0.1875rem) center;
+        background-size: calc(0.75em + 0.375rem) calc(0.75em + 0.375rem);
+    }
+
+    /* Styles pour le formulaire patient */
+    #modifierPatientForm .form-control:focus,
+    #modifierPatientForm .form-control-lg:focus {
+        border-color: #6366f1;
+        box-shadow: 0 0 0 0.25rem rgba(99, 102, 241, 0.25);
+    }
+
+    /* Switch pour entreprise */
+    .form-check-lg .form-check-input {
+        width: 3rem;
+        height: 1.5rem;
+        cursor: pointer;
+    }
+
+    .form-check-lg .form-check-label {
+        font-size: 1.1rem;
+        cursor: pointer;
+        padding-left: 0.5rem;
+    }
+
+    /* Animation pour raison sociale */
+    #raisonSocialeGroup {
+        animation: slideDown 0.3s ease-out;
+    }
+
+    /* Card raison sociale */
+    #raisonSocialeGroup .card {
+        transition: all 0.3s ease;
+    }
+
+    #raisonSocialeGroup .card:hover {
+        box-shadow: 0 0.5rem 1rem rgba(99, 102, 241, 0.15);
+        transform: translateY(-2px);
+    }
+
+    /* Coordonnées fiscales */
+    .card.border-secondary {
+        transition: all 0.3s ease;
+    }
+
+    .card.border-secondary:hover {
+        box-shadow: 0 0.25rem 0.5rem rgba(0, 0, 0, 0.1);
+    }
+
+    /* Labels avec icônes */
+    #modifierPatientForm .form-label i {
+        width: 1.25rem;
+        text-align: center;
+        color: #6b7280;
+    }
+
+    /* Input groups */
+    #modifierPatientForm .input-group-text {
+        font-size: 1.25rem;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+        .form-check-lg .form-check-label {
+            font-size: 1rem;
+        }
+
+        .btn-lg {
+            padding: 0.5rem 1rem;
+            font-size: 1rem;
+        }
+
+        #modifierPatientForm .col-md-4 {
+            margin-bottom: 1rem !important;
+        }
+    }
+
+    /* Placeholder styling */
+    #modifierPatientForm input::placeholder,
+    #modifierPatientForm textarea::placeholder {
+        color: #adb5bd;
+        font-style: italic;
+    }
+
+    /* Badge optionnel */
+    .badge.bg-secondary {
+        font-size: 0.75rem;
+        vertical-align: middle;
+    }
+
+    /* Alert info dans coordonnées fiscales */
+    .card-body .alert-info {
+        background-color: #cff4fc;
+        border-left: 4px solid #0dcaf0;
+    }
+
+    /* Hover effect pour les boutons */
+    #modifierPatientForm .btn {
+        transition: all 0.3s ease;
+    }
+
+    #modifierPatientForm .btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 0.25rem 0.5rem rgba(0, 0, 0, 0.15);
+    }
+
+    #modifierPatientForm .btn:active {
+        transform: translateY(0);
+    }
+
+    /* Séparateur stylisé */
+    #modifierPatientForm hr {
+        border-top: 2px solid #dee2e6;
+        opacity: 0.5;
+    }
+</style>
+
+<script>
+    // ============================================================================
+    // SÉLECTEUR PATIENT HIS DANS MODAL
+    // ============================================================================
+    let patientChoicesModal = null;
+    let searchTimeoutModal = null;
+
+    // Initialiser lors de l'ouverture du modal
+    document.getElementById('modifierPatientModal')?.addEventListener('shown.bs.modal', function () {
+        initPatientHisSelectorModal();
+    });
+
+    function initPatientHisSelectorModal() {
+        const selectElement = document.getElementById('patientHisSearchModal');
+        if (!selectElement || typeof Choices === 'undefined') return;
+
+        // Détruire l'instance existante si elle existe
+        if (patientChoicesModal) {
+            patientChoicesModal.destroy();
+        }
+
+        patientChoicesModal = new Choices(selectElement, {
+            searchEnabled: true,
+            searchPlaceholderValue: 'Tapez nom, prénom, code ou carte ID...',
+            noResultsText: 'Aucun patient trouvé',
+            noChoicesText: 'Aucun patient disponible',
+            itemSelectText: 'Cliquer pour sélectionner',
+            loadingText: 'Recherche en cours...',
+            searchResultLimit: 20,
+            shouldSort: false,
+            removeItemButton: true
+        });
+
+        selectElement.addEventListener('search', function (event) {
+            const searchTerm = event.detail.value;
+            if (searchTerm.length < 2) return;
+
+            clearTimeout(searchTimeoutModal);
+            searchTimeoutModal = setTimeout(() => searchPatientsHISModal(searchTerm), 300);
+        });
+
+        selectElement.addEventListener('change', function (event) {
+            if (event.detail.value) loadPatientDetailsModal(event.detail.value);
+        });
+
+        selectElement.addEventListener('removeItem', function () {
+            resetPatientSelectionModal();
+        });
+    }
+
+    async function searchPatientsHISModal(searchTerm) {
+        try {
+            patientChoicesModal.setChoices(
+                [{ value: '', label: 'Recherche en cours...', disabled: true }],
+                'value', 'label', true
+            );
+
+            const response = await fetch(
+                `/api/his-direct/patients/search?q=${encodeURIComponent(searchTerm)}&limit=20`
+            );
+
+            if (!response.ok) throw new Error('Erreur lors de la recherche');
+
+            const data = await response.json();
+
+            if (!data.success || !data.patients || data.patients.length === 0) {
+                patientChoicesModal.setChoices(
+                    [{ value: '', label: 'Aucun patient trouvé', disabled: true }],
+                    'value', 'label', true
+                );
+                return;
+            }
+
+            const choices = data.patients.map(patient => ({
+                value: patient.oid,
+                label: `${patient.first_name} ${patient.last_name} - ${patient.code}`,
+                customProperties: {
+                    firstName: patient.first_name,
+                    lastName: patient.last_name,
+                    code: patient.code,
+                    birthDate: patient.birth_date ? new Date(patient.birth_date).toLocaleDateString('fr-FR') : 'N/A',
+                    age: patient.age || 'N/A',
+                    idCard: patient.id_card_number || '',
+                    fullName: `${patient.first_name} ${patient.last_name}`
+                }
+            }));
+
+            patientChoicesModal.setChoices(choices, 'value', 'label', true);
+
+        } catch (error) {
+            console.error('Erreur recherche HIS modal:', error);
+            patientChoicesModal.setChoices(
+                [{ value: '', label: 'Erreur lors de la recherche', disabled: true }],
+                'value', 'label', true
+            );
+            showNotification('error', 'Erreur', 'Impossible de rechercher dans HIS');
+        }
+    }
+
+    async function loadPatientDetailsModal(patientOid) {
+        try {
+            const response = await fetch(`/api/his-direct/patients/${patientOid}`);
+            if (!response.ok) throw new Error('Erreur lors du chargement');
+
+            const data = await response.json();
+            if (!data.success || !data.patient) throw new Error('Patient non trouvé');
+
+            const patient = data.patient;
+
+            // Remplir les champs
+            document.getElementById('edit_patient_nom').value = patient.last_name || '';
+            document.getElementById('edit_patient_nom').classList.add('is-valid');
+            document.getElementById('edit_patient_prenom').value = patient.first_name || '';
+            document.getElementById('edit_patient_prenom').classList.add('is-valid');
+
+            // Hints
+            document.getElementById('nomHintModal').innerHTML =
+                `<i class="fas fa-database text-info"></i> Depuis HIS: ${patient.last_name || 'N/A'}`;
+            document.getElementById('prenomHintModal').innerHTML =
+                `<i class="fas fa-database text-info"></i> Depuis HIS: ${patient.first_name || 'N/A'}`;
+
+            // Hidden fields
+            document.getElementById('edit_patient_oid_his').value = patient.oid || '';
+            document.getElementById('edit_patient_code_his').value = patient.code || '';
+
+            // Téléphone
+            if (patient.mobile || patient.telephone) {
+                const telInput = document.getElementById('edit_patient_telephone');
+                if (telInput) telInput.value = patient.mobile || patient.telephone || '';
+            }
+
+            // Badge HIS
+            const hisBadge = document.getElementById('hisBadgeContainerModal');
+            const hisInfo = document.getElementById('hisPatientInfoModal');
+            if (hisBadge && hisInfo) {
+                hisBadge.style.display = 'block';
+                hisInfo.textContent = `Code HIS: ${patient.code} - ${patient.first_name} ${patient.last_name}`;
+            }
+
+            showNotification('success', 'Patient chargé',
+                `${patient.first_name} ${patient.last_name} - Vous pouvez modifier les informations si nécessaire`);
+            animatePatientLoadModal();
+
+        } catch (error) {
+            console.error('Erreur chargement patient modal:', error);
+            showNotification('error', 'Erreur', 'Impossible de charger les détails du patient');
+        }
+    }
+
+    function resetPatientSelectionModal() {
+        // Réinitialiser hints
+        document.getElementById('nomHintModal').innerHTML = '';
+        document.getElementById('prenomHintModal').innerHTML = '';
+
+        // Réinitialiser hidden fields
+        document.getElementById('edit_patient_oid_his').value = '';
+        document.getElementById('edit_patient_code_his').value = '';
+
+        // Masquer badge
+        const hisBadge = document.getElementById('hisBadgeContainerModal');
+        if (hisBadge) hisBadge.style.display = 'none';
+
+        // Retirer validation visuelle
+        document.getElementById('edit_patient_nom').classList.remove('is-valid');
+        document.getElementById('edit_patient_prenom').classList.remove('is-valid');
+    }
+
+    function animatePatientLoadModal() {
+        const inputs = [
+            document.getElementById('edit_patient_nom'),
+            document.getElementById('edit_patient_prenom')
+        ].filter(Boolean);
+
+        inputs.forEach(input => {
+            input.style.transition = 'all 0.3s ease';
+            input.style.transform = 'scale(1.02)';
+            input.style.boxShadow = '0 0 15px rgba(16, 185, 129, 0.3)';
+
+            setTimeout(() => {
+                input.style.transform = 'scale(1)';
+                input.style.boxShadow = '';
+            }, 300);
+        });
+    }
+
+    // ============================================================================
+    // GESTION ENTREPRISE / PARTICULIER
+    // ============================================================================
+    document.addEventListener('DOMContentLoaded', function () {
+        const estEntrepriseCheckbox = document.getElementById('estEntreprise');
+
+        if (estEntrepriseCheckbox) {
+            estEntrepriseCheckbox.addEventListener('change', function () {
+                const raisonSocialeGroup = document.getElementById('raisonSocialeGroup');
+                const labelEditNom = document.getElementById('labelEditNom');
+                const labelEditPrenom = document.getElementById('labelEditPrenom');
+                const editNom = document.getElementById('edit_patient_nom');
+                const editPrenom = document.getElementById('edit_patient_prenom');
+
+                if (this.checked) {
+                    raisonSocialeGroup.style.display = 'block';
+                    labelEditNom.innerHTML = '<i class="fas fa-user"></i> Nom du contact <span class="text-muted">(optionnel)</span>';
+                    labelEditPrenom.innerHTML = '<i class="fas fa-user"></i> Prénom du contact <span class="text-muted">(optionnel)</span>';
+                    editNom.required = false;
+                    editPrenom.required = false;
+                } else {
+                    raisonSocialeGroup.style.display = 'none';
+                    labelEditNom.innerHTML = '<i class="fas fa-user"></i> Nom <span class="text-danger">*</span>';
+                    labelEditPrenom.innerHTML = '<i class="fas fa-user"></i> Prénom <span class="text-danger">*</span>';
+                    editNom.required = true;
+                    editPrenom.required = true;
+                }
+            });
+        }
+    });
+
+    // ============================================================================
+    // FONCTION DE NOTIFICATION
+    // ============================================================================
+    function showNotification(type, title, message) {
+        const colors = {
+            'success': '#10b981',
+            'error': '#ef4444',
+            'warning': '#f59e0b',
+            'info': '#3b82f6'
+        };
+
+        const icons = {
+            'success': 'fa-check-circle',
+            'error': 'fa-exclamation-circle',
+            'warning': 'fa-exclamation-triangle',
+            'info': 'fa-info-circle'
+        };
+
+        // Utiliser Toastify si disponible
+        if (typeof Toastify !== 'undefined') {
+            Toastify({
+                text: `<strong>${title}</strong><br>${message}`,
+                duration: 5000,
+                gravity: 'bottom',
+                position: 'right',
+                style: {
+                    background: `linear-gradient(135deg, ${colors[type]} 0%, ${colors[type]}dd 100%)`
+                },
+                escapeMarkup: false
+            }).showToast();
+        } else {
+            showToast(`${title}: ${message}`, type === 'danger' ? 'error' : type);
+        }
+    }
+</script>

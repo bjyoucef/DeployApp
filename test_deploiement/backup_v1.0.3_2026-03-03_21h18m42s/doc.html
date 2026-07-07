@@ -1,0 +1,935 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Documentation - NexusUI</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --bg: #08090d;
+            --bg-elevated: #0f1117;
+            --fg: #e4e4eb;
+            --muted: #6e6e80;
+            --accent: #00e5bf;
+            --accent-dim: rgba(0, 229, 191, 0.12);
+            --card: #13151c;
+            --border: #22242e;
+            --code-bg: #0a0c10;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'IBM Plex Sans', sans-serif;
+            background-color: var(--bg);
+            color: var(--fg);
+            overflow-x: hidden;
+        }
+
+        .font-mono {
+            font-family: 'Space Mono', monospace;
+        }
+
+        /* Animated grid background */
+        .bg-grid {
+            background-image:
+                linear-gradient(rgba(0, 229, 191, 0.04) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0, 229, 191, 0.04) 1px, transparent 1px);
+            background-size: 60px 60px;
+            background-position: center center;
+        }
+
+        /* Glow orbs */
+        .glow-orb {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(100px);
+            pointer-events: none;
+            opacity: 0.6;
+        }
+
+        /* Offcanvas styles */
+        .offcanvas-backdrop {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.35s ease, visibility 0.35s ease;
+            z-index: 40;
+        }
+
+        .offcanvas-backdrop.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .offcanvas-panel {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 88vh;
+            max-height: 88vh;
+            background: var(--bg-elevated);
+            border-top-left-radius: 28px;
+            border-top-right-radius: 28px;
+            transform: translateY(100%);
+            transition: transform 0.5s cubic-bezier(0.32, 0.72, 0, 1);
+            z-index: 50;
+            overflow: hidden;
+            border-top: 1px solid var(--border);
+            box-shadow: 0 -20px 80px rgba(0, 0, 0, 0.5);
+        }
+
+        .offcanvas-panel.active {
+            transform: translateY(0);
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            .offcanvas-panel,
+            .offcanvas-backdrop,
+            .reveal {
+                transition: none !important;
+            }
+            .reveal { opacity: 1; transform: none; }
+        }
+
+        /* Code block */
+        .code-block {
+            background: var(--code-bg);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            font-family: 'Space Mono', monospace;
+            font-size: 13px;
+            line-height: 1.7;
+        }
+
+        /* Syntax highlighting */
+        .token-keyword { color: var(--accent); }
+        .token-string { color: #f0a8d0; }
+        .token-comment { color: var(--muted); }
+        .token-tag { color: #7dd3fc; }
+        .token-attr { color: var(--accent); }
+        .token-value { color: #fcd34d; }
+
+        /* Tab styles */
+        .tab-btn {
+            position: relative;
+            color: var(--muted);
+            padding-bottom: 16px;
+            transition: color 0.2s ease;
+        }
+
+        .tab-btn:hover {
+            color: var(--fg);
+        }
+
+        .tab-btn.active {
+            color: var(--accent);
+        }
+
+        .tab-btn::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: var(--accent);
+            border-radius: 2px;
+            transform: scaleX(0);
+            transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .tab-btn.active::after {
+            transform: scaleX(1);
+        }
+
+        /* Scroll reveal */
+        .reveal {
+            opacity: 0;
+            transform: translateY(30px);
+            transition: opacity 0.7s ease, transform 0.7s ease;
+        }
+
+        .reveal.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Buttons */
+        .btn-primary {
+            background: var(--accent);
+            color: var(--bg);
+            font-weight: 600;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 32px rgba(0, 229, 191, 0.25);
+        }
+
+        .btn-primary:active {
+            transform: translateY(0);
+        }
+
+        .btn-ghost {
+            background: transparent;
+            border: 1px solid var(--border);
+            color: var(--fg);
+            transition: border-color 0.2s ease, background 0.2s ease;
+        }
+
+        .btn-ghost:hover {
+            border-color: var(--accent);
+            background: var(--accent-dim);
+        }
+
+        /* Focus states */
+        button:focus-visible,
+        a:focus-visible {
+            outline: 2px solid var(--accent);
+            outline-offset: 3px;
+        }
+
+        /* Copy button */
+        .copy-btn {
+            opacity: 0;
+            transition: opacity 0.2s ease, color 0.2s ease;
+        }
+
+        .code-block:hover .copy-btn,
+        .copy-btn:focus {
+            opacity: 1;
+        }
+
+        /* Drag indicator */
+        .drag-indicator {
+            width: 48px;
+            height: 5px;
+            background: var(--border);
+            border-radius: 3px;
+            transition: background 0.2s ease, width 0.2s ease;
+        }
+
+        .drag-handle:hover .drag-indicator {
+            background: var(--muted);
+            width: 56px;
+        }
+
+        /* Custom scrollbar */
+        .custom-scroll::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .custom-scroll::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .custom-scroll::-webkit-scrollbar-thumb {
+            background: var(--border);
+            border-radius: 3px;
+        }
+
+        .custom-scroll::-webkit-scrollbar-thumb:hover {
+            background: var(--muted);
+        }
+
+        /* Feature card hover */
+        .feature-card {
+            transition: transform 0.3s ease, border-color 0.3s ease;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-4px);
+            border-color: rgba(0, 229, 191, 0.3);
+        }
+
+        /* Badge pulse */
+        @keyframes pulse-ring {
+            0% { transform: scale(0.95); opacity: 1; }
+            100% { transform: scale(1.4); opacity: 0; }
+        }
+
+        .badge-pulse::before {
+            content: '';
+            position: absolute;
+            inset: -2px;
+            border-radius: inherit;
+            background: var(--accent);
+            animation: pulse-ring 2s ease-out infinite;
+            z-index: -1;
+        }
+
+        /* Floating animation */
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
+        .float-anim {
+            animation: float 6s ease-in-out infinite;
+        }
+
+        /* Line numbers */
+        .line-numbers {
+            counter-reset: line;
+        }
+
+        .line-numbers > span {
+            counter-increment: line;
+        }
+
+        .line-numbers > span::before {
+            content: counter(line);
+            display: inline-block;
+            width: 2rem;
+            margin-right: 1rem;
+            text-align: right;
+            color: var(--muted);
+            opacity: 0.5;
+        }
+    </style>
+</head>
+<body class="min-h-screen bg-grid">
+    <!-- Glow orbs -->
+    <div class="glow-orb w-[500px] h-[500px] bg-[#00e5bf] -top-64 -left-64" style="opacity: 0.15;"></div>
+    <div class="glow-orb w-[400px] h-[400px] bg-[#7c3aed] top-1/3 -right-48" style="opacity: 0.1;"></div>
+    <div class="glow-orb w-[300px] h-[300px] bg-[#00e5bf] bottom-0 left-1/3" style="opacity: 0.08;"></div>
+
+    <!-- Header -->
+    <header class="fixed top-0 left-0 right-0 z-30 backdrop-blur-2xl bg-[var(--bg)]/70 border-b border-[var(--border)]">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div class="w-9 h-9 rounded-xl bg-[var(--accent)] flex items-center justify-center">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--bg)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <polygon points="12 2 2 7 12 12 22 7 12 2"/>
+                        <polyline points="2 17 12 22 22 17"/>
+                        <polyline points="2 12 12 17 22 12"/>
+                    </svg>
+                </div>
+                <span class="font-mono font-bold text-lg tracking-tight">NexusUI</span>
+                <span class="hidden sm:inline-flex text-xs text-[var(--muted)] border border-[var(--border)] rounded-md px-2 py-0.5 ml-2">v2.5.0</span>
+            </div>
+
+            <nav class="hidden lg:flex items-center gap-1">
+                <a href="#" class="px-4 py-2 rounded-lg text-[var(--muted)] hover:text-[var(--fg)] hover:bg-[var(--card)] transition-all text-sm">Guide</a>
+                <a href="#" class="px-4 py-2 rounded-lg text-[var(--fg)] bg-[var(--card)] text-sm">Composants</a>
+                <a href="#" class="px-4 py-2 rounded-lg text-[var(--muted)] hover:text-[var(--fg)] hover:bg-[var(--card)] transition-all text-sm">API</a>
+                <a href="#" class="px-4 py-2 rounded-lg text-[var(--muted)] hover:text-[var(--fg)] hover:bg-[var(--card)] transition-all text-sm">Exemples</a>
+            </nav>
+
+            <div class="flex items-center gap-2">
+                <button class="p-2.5 rounded-xl border border-[var(--border)] hover:border-[var(--accent)] hover:bg-[var(--accent-dim)] transition-all" aria-label="Rechercher dans la documentation">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="11" cy="11" r="8"/>
+                        <path d="m21 21-4.3-4.3"/>
+                    </svg>
+                </button>
+                <button class="btn-ghost px-4 py-2 rounded-xl text-sm font-medium hidden sm:flex items-center gap-2">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
+                    </svg>
+                    GitHub
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main content -->
+    <main class="pt-24 pb-32">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <!-- Hero -->
+            <section class="py-12 md:py-20 lg:py-28">
+                <div class="reveal max-w-4xl">
+                    <div class="relative inline-flex items-center gap-2.5 px-4 py-2 rounded-full bg-[var(--accent-dim)] border border-[var(--accent)]/20 text-[var(--accent)] text-sm font-medium mb-8">
+                        <span class="relative flex h-2.5 w-2.5">
+                            <span class="badge-pulse absolute inline-flex h-full w-full rounded-full bg-[var(--accent)]"></span>
+                            <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-[var(--accent)]"></span>
+                        </span>
+                        Nouveau : Composant Offcanvas avec gestures
+                    </div>
+
+                    <h1 class="font-mono text-4xl sm:text-5xl lg:text-7xl font-bold leading-[1.1] mb-6 tracking-tight">
+                        Construisez des<br>
+                        <span class="text-[var(--accent)]">interfaces modernes</span>
+                    </h1>
+
+                    <p class="text-lg sm:text-xl text-[var(--muted)] leading-relaxed mb-10 max-w-2xl">
+                        Une bibliothèque de composants accessible, performante et entièrement personnalisable. Conçue pour les développeurs qui exigent l'excellence.
+                    </p>
+
+                    <div class="flex flex-wrap gap-4">
+                        <button class="btn-primary px-8 py-4 rounded-xl text-base" id="openDocsBtn">
+                            Explorer la documentation
+                        </button>
+                        <button class="btn-ghost px-6 py-4 rounded-xl font-medium text-base flex items-center gap-2">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <polygon points="5 3 19 12 5 21 5 3"/>
+                            </svg>
+                            Démarrage rapide
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Code preview -->
+            <section class="py-8">
+                <div class="reveal max-w-3xl" style="transition-delay: 0.15s;">
+                    <div class="code-block p-5 relative float-anim">
+                        <div class="flex items-center justify-between mb-4">
+                            <div class="flex items-center gap-2">
+                                <span class="w-3 h-3 rounded-full bg-[#ff5f57]"></span>
+                                <span class="w-3 h-3 rounded-full bg-[#febc2e]"></span>
+                                <span class="w-3 h-3 rounded-full bg-[#28c840]"></span>
+                            </div>
+                            <span class="text-[var(--muted)] text-xs font-mono">App.tsx</span>
+                        </div>
+                        <pre class="text-sm overflow-x-auto"><code><span class="token-keyword">import</span> { Offcanvas, Button } <span class="token-keyword">from</span> <span class="token-string">'@nexusui/core'</span>
+
+<span class="token-keyword">function</span> <span class="token-value">App</span>() {
+  <span class="token-keyword">const</span> [open, setOpen] = <span class="token-value">useState</span>(<span class="token-keyword">false</span>)
+
+  <span class="token-keyword">return</span> (
+    <span class="token-tag">&lt;&gt;</span>
+      <span class="token-tag">&lt;Button</span> <span class="token-attr">onClick</span>=<span class="token-string">{() => setOpen(true)}</span><span class="token-tag">&gt;</span>
+        Ouvrir le panneau
+      <span class="token-tag">&lt;/Button&gt;</span>
+
+      <span class="token-tag">&lt;Offcanvas</span> <span class="token-attr">open</span>=<span class="token-string">{open}</span> <span class="token-attr">onClose</span>=<span class="token-string">{() => setOpen(false)}</span><span class="token-tag">&gt;</span>
+        Contenu du panneau
+      <span class="token-tag">&lt;/Offcanvas&gt;</span>
+    <span class="token-tag">&lt;/&gt;</span>
+  )
+}</code></pre>
+                        <button class="copy-btn absolute top-4 right-4 text-xs text-[var(--muted)] hover:text-[var(--fg)] bg-[var(--card)] px-3 py-1.5 rounded-lg" data-code="import { Offcanvas, Button } from '@nexusui/core'
+
+function App() {
+  const [open, setOpen] = useState(false)
+
+  return (
+    <>
+      <Button onClick={() => setOpen(true)}>
+        Ouvrir le panneau
+      </Button>
+
+      <Offcanvas open={open} onClose={() => setOpen(false)}>
+        Contenu du panneau
+      </Offcanvas>
+    </>
+  )
+}">
+                            Copier
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Features grid -->
+            <section class="py-16">
+                <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
+                    <div class="reveal feature-card p-7 rounded-2xl bg-[var(--card)] border border-[var(--border)]" style="transition-delay: 0.1s;">
+                        <div class="w-14 h-14 rounded-2xl bg-[var(--accent-dim)] border border-[var(--accent)]/20 flex items-center justify-center mb-5">
+                            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
+                            </svg>
+                        </div>
+                        <h3 class="font-mono font-bold text-lg mb-2.5">Ultra performant</h3>
+                        <p class="text-[var(--muted)] text-sm leading-relaxed">
+                            Animations 60fps garanties avec GPU acceleration. Bundle minifié de seulement 12kb.
+                        </p>
+                    </div>
+
+                    <div class="reveal feature-card p-7 rounded-2xl bg-[var(--card)] border border-[var(--border)]" style="transition-delay: 0.2s;">
+                        <div class="w-14 h-14 rounded-2xl bg-[var(--accent-dim)] border border-[var(--accent)]/20 flex items-center justify-center mb-5">
+                            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <circle cx="12" cy="12" r="10"/>
+                                <circle cx="12" cy="12" r="4"/>
+                                <line x1="4.93" y1="4.93" x2="9.17" y2="9.17"/>
+                                <line x1="14.83" y1="14.83" x2="19.07" y2="19.07"/>
+                                <line x1="14.83" y1="9.17" x2="19.07" y2="4.93"/>
+                                <line x1="4.93" y1="19.07" x2="9.17" y2="14.83"/>
+                            </svg>
+                        </div>
+                        <h3 class="font-mono font-bold text-lg mb-2.5">100% accessible</h3>
+                        <p class="text-[var(--muted)] text-sm leading-relaxed">
+                            Conforme WCAG 2.1 AA. Support natif des lecteurs d'écran et navigation clavier.
+                        </p>
+                    </div>
+
+                    <div class="reveal feature-card p-7 rounded-2xl bg-[var(--card)] border border-[var(--border)]" style="transition-delay: 0.3s;">
+                        <div class="w-14 h-14 rounded-2xl bg-[var(--accent-dim)] border border-[var(--accent)]/20 flex items-center justify-center mb-5">
+                            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/>
+                            </svg>
+                        </div>
+                        <h3 class="font-mono font-bold text-lg mb-2.5">Thèmes flexibles</h3>
+                        <p class="text-[var(--muted)] text-sm leading-relaxed">
+                            Variables CSS pour une personnalisation totale. Mode clair et sombre inclus.
+                        </p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Component showcase -->
+            <section class="py-16">
+                <div class="reveal" style="transition-delay: 0.2s;">
+                    <div class="flex flex-col lg:flex-row gap-8 items-start">
+                        <div class="lg:w-1/2">
+                            <h2 class="font-mono font-bold text-3xl mb-4">Composant Offcanvas</h2>
+                            <p class="text-[var(--muted)] text-lg mb-6 leading-relaxed">
+                                Panneau latéral ou modal qui glisse depuis n'importe quel bord. Idéal pour les formulaires, menus de navigation ou détails de produits.
+                            </p>
+                            <ul class="space-y-3 mb-8">
+                                <li class="flex items-center gap-3 text-[var(--muted)]">
+                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                        <polyline points="20 6 9 17 4 12"/>
+                                    </svg>
+                                    Animation fluide depuis le bas
+                                </li>
+                                <li class="flex items-center gap-3 text-[var(--muted)]">
+                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                        <polyline points="20 6 9 17 4 12"/>
+                                    </svg>
+                                    Gesture swipe pour fermer
+                                </li>
+                                <li class="flex items-center gap-3 text-[var(--muted)]">
+                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                        <polyline points="20 6 9 17 4 12"/>
+                                    </svg>
+                                    Focus trap automatique
+                                </li>
+                                <li class="flex items-center gap-3 text-[var(--muted)]">
+                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                        <polyline points="20 6 9 17 4 12"/>
+                                    </svg>
+                                    Support de la touche Escape
+                                </li>
+                            </ul>
+                            <button class="btn-primary px-8 py-4 rounded-xl text-base" id="openOffcanvasBtn">
+                                Voir la démonstration
+                            </button>
+                        </div>
+
+                        <div class="lg:w-1/2 w-full">
+                            <div class="rounded-2xl bg-gradient-to-br from-[var(--card)] to-[var(--bg)] border border-[var(--border)] p-8 relative overflow-hidden">
+                                <!-- Decorative elements -->
+                                <div class="absolute top-0 right-0 w-32 h-32 bg-[var(--accent)] opacity-5 blur-3xl"></div>
+
+                                <div class="relative flex flex-col items-center justify-center py-12">
+                                    <div class="w-full max-w-xs space-y-4">
+                                        <div class="h-4 bg-[var(--border)] rounded-full w-3/4"></div>
+                                        <div class="h-4 bg-[var(--border)] rounded-full w-1/2"></div>
+                                        <div class="h-10 bg-[var(--accent)]/20 rounded-xl mt-6 flex items-center justify-center text-[var(--accent)] text-sm font-medium">
+                                            Cliquez pour ouvrir
+                                        </div>
+                                    </div>
+
+                                    <!-- Mini offcanvas preview -->
+                                    <div class="absolute bottom-0 left-0 right-0 h-16 bg-[var(--bg-elevated)] border-t border-[var(--border)] flex items-center justify-center">
+                                        <div class="w-12 h-1.5 bg-[var(--border)] rounded-full"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <!-- Offcanvas Backdrop -->
+    <div class="offcanvas-backdrop" id="offcanvasBackdrop" aria-hidden="true"></div>
+
+    <!-- Offcanvas Panel -->
+    <div class="offcanvas-panel flex flex-col" id="offcanvasPanel" role="dialog" aria-modal="true" aria-labelledby="offcanvasTitle">
+        <!-- Drag handle -->
+        <div class="flex justify-center py-4 cursor-grab active:cursor-grabbing" id="dragHandle">
+            <div class="drag-indicator"></div>
+        </div>
+
+        <!-- Header -->
+        <div class="px-6 pb-5 border-b border-[var(--border)] flex items-start justify-between">
+            <div>
+                <h2 id="offcanvasTitle" class="font-mono font-bold text-xl mb-1">Offcanvas</h2>
+                <p class="text-[var(--muted)] text-sm">Panneau modal avec animation depuis le bas</p>
+            </div>
+            <button id="closeOffcanvasBtn" class="p-2.5 rounded-xl hover:bg-[var(--card)] border border-transparent hover:border-[var(--border)] transition-all" aria-label="Fermer le panneau">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M18 6L6 18"/>
+                    <path d="M6 6l12 12"/>
+                </svg>
+            </button>
+        </div>
+
+        <!-- Tabs -->
+        <div class="px-6 border-b border-[var(--border)]">
+            <div class="flex gap-8">
+                <button class="tab-btn text-sm font-medium active" data-tab="usage">Utilisation</button>
+                <button class="tab-btn text-sm font-medium" data-tab="props">API</button>
+                <button class="tab-btn text-sm font-medium" data-tab="examples">Exemples</button>
+            </div>
+        </div>
+
+        <!-- Tab content -->
+        <div class="overflow-y-auto flex-1 px-6 py-6 custom-scroll" id="tabContent">
+            <!-- Usage tab -->
+            <div id="tab-usage" class="tab-panel space-y-6">
+                <p class="text-[var(--muted)] leading-relaxed">
+                    Le composant Offcanvas affiche un panneau qui glisse depuis le bas de l'écran. Parfait pour les formulaires, les détails de produits, ou tout contenu nécessitant l'attention de l'utilisateur.
+                </p>
+
+                <div>
+                    <h4 class="font-mono font-bold mb-3 text-sm uppercase tracking-wider text-[var(--muted)]">Installation</h4>
+                    <div class="code-block p-4 relative">
+                        <button class="copy-btn absolute top-3 right-3 text-xs text-[var(--muted)] hover:text-[var(--fg)] bg-[var(--card)] px-2.5 py-1 rounded-lg" data-code="npm install @nexusui/core">
+                            Copier
+                        </button>
+                        <pre class="text-sm"><code><span class="token-keyword">npm</span> install @nexusui/core</code></pre>
+                    </div>
+                </div>
+
+                <div>
+                    <h4 class="font-mono font-bold mb-3 text-sm uppercase tracking-wider text-[var(--muted)]">Import</h4>
+                    <div class="code-block p-4 relative">
+                        <button class="copy-btn absolute top-3 right-3 text-xs text-[var(--muted)] hover:text-[var(--fg)] bg-[var(--card)] px-2.5 py-1 rounded-lg" data-code="import { Offcanvas } from '@nexusui/core'">
+                            Copier
+                        </button>
+                        <pre class="text-sm"><code><span class="token-keyword">import</span> { Offcanvas } <span class="token-keyword">from</span> <span class="token-string">'@nexusui/core'</span></code></pre>
+                    </div>
+                </div>
+
+                <div>
+                    <h4 class="font-mono font-bold mb-3 text-sm uppercase tracking-wider text-[var(--muted)]">Utilisation</h4>
+                    <div class="code-block p-4 relative">
+                        <button class="copy-btn absolute top-3 right-3 text-xs text-[var(--muted)] hover:text-[var(--fg)] bg-[var(--card)] px-2.5 py-1 rounded-lg" data-code="function Example() {
+  const [open, setOpen] = useState(false)
+
+  return (
+    <>
+      <Button onClick={() => setOpen(true)}>
+        Ouvrir
+      </Button>
+
+      <Offcanvas open={open} onClose={() => setOpen(false)}>
+        <Offcanvas.Header>Titre</Offcanvas.Header>
+        <Offcanvas.Body>
+          Contenu du panneau
+        </Offcanvas.Body>
+      </Offcanvas>
+    </>
+  )
+}">
+                            Copier
+                        </button>
+                        <pre class="text-sm overflow-x-auto"><code><span class="token-keyword">function</span> <span class="token-value">Example</span>() {
+  <span class="token-keyword">const</span> [open, setOpen] = <span class="token-value">useState</span>(<span class="token-keyword">false</span>)
+
+  <span class="token-keyword">return</span> (
+    <span class="token-tag">&lt;&gt;</span>
+      <span class="token-tag">&lt;Button</span> <span class="token-attr">onClick</span>=<span class="token-string">{() => setOpen(true)}</span><span class="token-tag">&gt;</span>
+        Ouvrir
+      <span class="token-tag">&lt;/Button&gt;</span>
+
+      <span class="token-tag">&lt;Offcanvas</span> <span class="token-attr">open</span>=<span class="token-string">{open}</span> <span class="token-attr">onClose</span>=<span class="token-string">{() => setOpen(false)}</span><span class="token-tag">&gt;</span>
+        <span class="token-tag">&lt;Offcanvas.Header&gt;</span>Titre<span class="token-tag">&lt;/Offcanvas.Header&gt;</span>
+        <span class="token-tag">&lt;Offcanvas.Body&gt;</span>
+          Contenu du panneau
+        <span class="token-tag">&lt;/Offcanvas.Body&gt;</span>
+      <span class="token-tag">&lt;/Offcanvas&gt;</span>
+    <span class="token-tag">&lt;/&gt;</span>
+  )
+}</code></pre>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Props tab -->
+            <div id="tab-props" class="tab-panel hidden">
+                <p class="text-[var(--muted)] mb-6 leading-relaxed">
+                    Propriétés disponibles pour personnaliser le comportement du composant.
+                </p>
+
+                <div class="overflow-x-auto rounded-xl border border-[var(--border)]">
+                    <table class="w-full text-sm">
+                        <thead class="bg-[var(--card)]">
+                            <tr>
+                                <th class="text-left py-4 px-5 font-mono text-[var(--accent)] font-medium">Prop</th>
+                                <th class="text-left py-4 px-5 font-medium text-[var(--muted)]">Type</th>
+                                <th class="text-left py-4 px-5 font-medium text-[var(--muted)]">Défaut</th>
+                                <th class="text-left py-4 px-5 font-medium text-[var(--muted)]">Description</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-[var(--border)]">
+                            <tr class="hover:bg-[var(--card)] transition-colors">
+                                <td class="py-4 px-5 font-mono text-[var(--fg)]">open</td>
+                                <td class="py-4 px-5 text-[var(--muted)]">boolean</td>
+                                <td class="py-4 px-5 text-[var(--muted)]">false</td>
+                                <td class="py-4 px-5 text-[var(--muted)]">Contrôle la visibilité</td>
+                            </tr>
+                            <tr class="hover:bg-[var(--card)] transition-colors">
+                                <td class="py-4 px-5 font-mono text-[var(--fg)]">onClose</td>
+                                <td class="py-4 px-5 text-[var(--muted)]">() => void</td>
+                                <td class="py-4 px-5 text-[var(--muted)]">—</td>
+                                <td class="py-4 px-5 text-[var(--muted)]">Callback de fermeture</td>
+                            </tr>
+                            <tr class="hover:bg-[var(--card)] transition-colors">
+                                <td class="py-4 px-5 font-mono text-[var(--fg)]">height</td>
+                                <td class="py-4 px-5 text-[var(--muted)]">string</td>
+                                <td class="py-4 px-5 text-[var(--muted)]">'85vh'</td>
+                                <td class="py-4 px-5 text-[var(--muted)]">Hauteur du panneau</td>
+                            </tr>
+                            <tr class="hover:bg-[var(--card)] transition-colors">
+                                <td class="py-4 px-5 font-mono text-[var(--fg)]">dismissable</td>
+                                <td class="py-4 px-5 text-[var(--muted)]">boolean</td>
+                                <td class="py-4 px-5 text-[var(--muted)]">true</td>
+                                <td class="py-4 px-5 text-[var(--muted)]">Fermeture par backdrop</td>
+                            </tr>
+                            <tr class="hover:bg-[var(--card)] transition-colors">
+                                <td class="py-4 px-5 font-mono text-[var(--fg)]">closeOnEsc</td>
+                                <td class="py-4 px-5 text-[var(--muted)]">boolean</td>
+                                <td class="py-4 px-5 text-[var(--muted)]">true</td>
+                                <td class="py-4 px-5 text-[var(--muted)]">Fermeture par Escape</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Examples tab -->
+            <div id="tab-examples" class="tab-panel hidden space-y-8">
+                <p class="text-[var(--muted)] leading-relaxed">
+                    Exemples d'utilisation dans différents scénarios.
+                </p>
+
+                <div>
+                    <h4 class="font-mono font-bold mb-3 text-sm uppercase tracking-wider text-[var(--muted)]">Formulaire de contact</h4>
+                    <div class="code-block p-4 relative">
+                        <button class="copy-btn absolute top-3 right-3 text-xs text-[var(--muted)] hover:text-[var(--fg)] bg-[var(--card)] px-2.5 py-1 rounded-lg" data-code="<Offcanvas open={showContact}>
+  <Offcanvas.Header>Nous contacter</Offcanvas.Header>
+  <Offcanvas.Body>
+    <ContactForm />
+  </Offcanvas.Body>
+  <Offcanvas.Footer>
+    <Button variant='primary'>Envoyer</Button>
+  </Offcanvas.Footer>
+</Offcanvas>">
+                            Copier
+                        </button>
+                        <pre class="text-sm overflow-x-auto"><code><span class="token-tag">&lt;Offcanvas</span> <span class="token-attr">open</span>=<span class="token-string">{showContact}</span><span class="token-tag">&gt;</span>
+  <span class="token-tag">&lt;Offcanvas.Header&gt;</span>Nous contacter<span class="token-tag">&lt;/Offcanvas.Header&gt;</span>
+  <span class="token-tag">&lt;Offcanvas.Body&gt;</span>
+    <span class="token-tag">&lt;ContactForm /&gt;</span>
+  <span class="token-tag">&lt;/Offcanvas.Body&gt;</span>
+  <span class="token-tag">&lt;Offcanvas.Footer&gt;</span>
+    <span class="token-tag">&lt;Button</span> <span class="token-attr">variant</span>=<span class="token-string">'primary'</span><span class="token-tag">&gt;</span>Envoyer<span class="token-tag">&lt;/Button&gt;</span>
+  <span class="token-tag">&lt;/Offcanvas.Footer&gt;</span>
+<span class="token-tag">&lt;/Offcanvas&gt;</span></code></pre>
+                    </div>
+                </div>
+
+                <div>
+                    <h4 class="font-mono font-bold mb-3 text-sm uppercase tracking-wider text-[var(--muted)]">Détails produit</h4>
+                    <div class="code-block p-4 relative">
+                        <button class="copy-btn absolute top-3 right-3 text-xs text-[var(--muted)] hover:text-[var(--fg)] bg-[var(--card)] px-2.5 py-1 rounded-lg" data-code="<Offcanvas open={showDetails} height='70vh'>
+  <Offcanvas.Header>
+    <ProductTitle product={product} />
+  </Offcanvas.Header>
+  <Offcanvas.Body>
+    <ProductGallery images={product.images} />
+    <ProductInfo product={product} />
+  </Offcanvas.Body>
+</Offcanvas>">
+                            Copier
+                        </button>
+                        <pre class="text-sm overflow-x-auto"><code><span class="token-tag">&lt;Offcanvas</span> <span class="token-attr">open</span>=<span class="token-string">{showDetails}</span> <span class="token-attr">height</span>=<span class="token-string">'70vh'</span><span class="token-tag">&gt;</span>
+  <span class="token-tag">&lt;Offcanvas.Header&gt;</span>
+    <span class="token-tag">&lt;ProductTitle</span> <span class="token-attr">product</span>=<span class="token-string">{product}</span> <span class="token-tag">/&gt;</span>
+  <span class="token-tag">&lt;/Offcanvas.Header&gt;</span>
+  <span class="token-tag">&lt;Offcanvas.Body&gt;</span>
+    <span class="token-tag">&lt;ProductGallery</span> <span class="token-attr">images</span>=<span class="token-string">{product.images}</span> <span class="token-tag">/&gt;</span>
+    <span class="token-tag">&lt;ProductInfo</span> <span class="token-attr">product</span>=<span class="token-string">{product}</span> <span class="token-tag">/&gt;</span>
+  <span class="token-tag">&lt;/Offcanvas.Body&gt;</span>
+<span class="token-tag">&lt;/Offcanvas&gt;</span></code></pre>
+                    </div>
+                </div>
+
+                <div>
+                    <h4 class="font-mono font-bold mb-3 text-sm uppercase tracking-wider text-[var(--muted)]">Menu de navigation</h4>
+                    <div class="code-block p-4 relative">
+                        <button class="copy-btn absolute top-3 right-3 text-xs text-[var(--muted)] hover:text-[var(--fg)] bg-[var(--card)] px-2.5 py-1 rounded-lg" data-code="<Offcanvas open={menuOpen} onClose={closeMenu}>
+  <Offcanvas.Body className='p-0'>
+    <nav>
+      <NavItem href='/dashboard'>Dashboard</NavItem>
+      <NavItem href='/settings'>Paramètres</NavItem>
+      <NavItem href='/logout'>Déconnexion</NavItem>
+    </nav>
+  </Offcanvas.Body>
+</Offcanvas>">
+                            Copier
+                        </button>
+                        <pre class="text-sm overflow-x-auto"><code><span class="token-tag">&lt;Offcanvas</span> <span class="token-attr">open</span>=<span class="token-string">{menuOpen}</span> <span class="token-attr">onClose</span>=<span class="token-string">{closeMenu}</span><span class="token-tag">&gt;</span>
+  <span class="token-tag">&lt;Offcanvas.Body</span> <span class="token-attr">className</span>=<span class="token-string">'p-0'</span><span class="token-tag">&gt;</span>
+    <span class="token-tag">&lt;nav&gt;</span>
+      <span class="token-tag">&lt;NavItem</span> <span class="token-attr">href</span>=<span class="token-string">'/dashboard'</span><span class="token-tag">&gt;</span>Dashboard<span class="token-tag">&lt;/NavItem&gt;</span>
+      <span class="token-tag">&lt;NavItem</span> <span class="token-attr">href</span>=<span class="token-string">'/settings'</span><span class="token-tag">&gt;</span>Paramètres<span class="token-tag">&lt;/NavItem&gt;</span>
+      <span class="token-tag">&lt;NavItem</span> <span class="token-attr">href</span>=<span class="token-string">'/logout'</span><span class="token-tag">&gt;</span>Déconnexion<span class="token-tag">&lt;/NavItem&gt;</span>
+    <span class="token-tag">&lt;/nav&gt;</span>
+  <span class="token-tag">&lt;/Offcanvas.Body&gt;</span>
+<span class="token-tag">&lt;/Offcanvas&gt;</span></code></pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Initialize DOM elements first
+        const offcanvasPanel = document.getElementById('offcanvasPanel');
+        const offcanvasBackdrop = document.getElementById('offcanvasBackdrop');
+        const openBtn = document.getElementById('openOffcanvasBtn');
+        const openDocsBtn = document.getElementById('openDocsBtn');
+        const closeBtn = document.getElementById('closeOffcanvasBtn');
+        const tabBtns = document.querySelectorAll('.tab-btn');
+        const tabPanels = document.querySelectorAll('.tab-panel');
+        const copyBtns = document.querySelectorAll('.copy-btn');
+        const dragHandle = document.getElementById('dragHandle');
+
+        // State variables
+        let isOpen = false;
+        let startY = 0;
+        let currentY = 0;
+        let isDragging = false;
+
+        // Open offcanvas function
+        function openOffcanvas() {
+            isOpen = true;
+            offcanvasPanel.classList.add('active');
+            offcanvasBackdrop.classList.add('active');
+            document.body.style.overflow = 'hidden';
+            closeBtn.focus();
+        }
+
+        // Close offcanvas function
+        function closeOffcanvas() {
+            isOpen = false;
+            offcanvasPanel.classList.remove('active');
+            offcanvasBackdrop.classList.remove('active');
+            document.body.style.overflow = '';
+        }
+
+        // Event listeners for open/close
+        openBtn.addEventListener('click', openOffcanvas);
+        openDocsBtn.addEventListener('click', openOffcanvas);
+        closeBtn.addEventListener('click', closeOffcanvas);
+        offcanvasBackdrop.addEventListener('click', closeOffcanvas);
+
+        // Keyboard navigation
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && isOpen) {
+                closeOffcanvas();
+            }
+        });
+
+        // Tab switching
+        tabBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                const tabId = btn.dataset.tab;
+
+                tabBtns.forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+
+                tabPanels.forEach(panel => {
+                    if (panel.id === `tab-${tabId}`) {
+                        panel.classList.remove('hidden');
+                    } else {
+                        panel.classList.add('hidden');
+                    }
+                });
+            });
+        });
+
+        // Copy to clipboard
+        copyBtns.forEach(btn => {
+            btn.addEventListener('click', async () => {
+                const code = btn.dataset.code;
+                try {
+                    await navigator.clipboard.writeText(code);
+                    const originalText = btn.textContent;
+                    btn.textContent = 'Copié !';
+                    btn.style.color = 'var(--accent)';
+                    setTimeout(() => {
+                        btn.textContent = originalText;
+                        btn.style.color = '';
+                    }, 2000);
+                } catch (err) {
+                    console.error('Failed to copy:', err);
+                }
+            });
+        });
+
+        // Drag to close (touch support)
+        dragHandle.addEventListener('touchstart', (e) => {
+            isDragging = true;
+            startY = e.touches[0].clientY;
+            offcanvasPanel.style.transition = 'none';
+        }, { passive: true });
+
+        document.addEventListener('touchmove', (e) => {
+            if (!isDragging) return;
+            currentY = e.touches[0].clientY;
+            const diff = currentY - startY;
+            if (diff > 0) {
+                offcanvasPanel.style.transform = `translateY(${diff}px)`;
+            }
+        }, { passive: true });
+
+        document.addEventListener('touchend', () => {
+            if (!isDragging) return;
+            isDragging = false;
+            offcanvasPanel.style.transition = '';
+            offcanvasPanel.style.transform = '';
+
+            const diff = currentY - startY;
+            if (diff > 100) {
+                closeOffcanvas();
+            }
+            startY = 0;
+            currentY = 0;
+        });
+
+        // Scroll reveal with IntersectionObserver
+        const revealElements = document.querySelectorAll('.reveal');
+
+        const revealObserver = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('visible');
+                }
+            });
+        }, {
+            threshold: 0.1,
+            rootMargin: '0px 0px -80px 0px'
+        });
+
+        revealElements.forEach(el => revealObserver.observe(el));
+
+        // Respect reduced motion preference
+        const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+        if (prefersReducedMotion.matches) {
+            revealElements.forEach(el => el.classList.add('visible'));
+        }
+    </script>
+</body>
+</html>

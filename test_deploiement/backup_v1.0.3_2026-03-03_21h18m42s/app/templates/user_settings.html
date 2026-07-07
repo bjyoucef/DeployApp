@@ -1,0 +1,1135 @@
+{% extends "layout.html" %}
+
+{% block title %}Paramètres du compte{% endblock %}
+
+{% block style %}
+<style>
+    /* =============================================
+       USER SETTINGS PAGE STYLES
+    ============================================= */
+
+    .settings-container {
+        max-width: 1400px;
+        margin: 0 auto;
+    }
+
+    /* Profile Header */
+    .profile-header {
+        background: linear-gradient(135deg, #450A54 0%, #6B2D7B 50%, #8B4D9B 100%);
+        border-radius: 24px;
+        padding: 2.5rem;
+        color: white;
+        position: relative;
+        overflow: hidden;
+        margin-bottom: 2rem;
+    }
+
+    .profile-header::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -30%;
+        width: 60%;
+        height: 200%;
+        background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 70%);
+        border-radius: 50%;
+    }
+
+    .profile-avatar {
+        width: 100px;
+        height: 100px;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.2);
+        backdrop-filter: blur(10px);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 2.5rem;
+        font-weight: 700;
+        border: 4px solid rgba(255, 255, 255, 0.3);
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+    }
+
+    .profile-info h2 {
+        font-size: 1.75rem;
+        font-weight: 700;
+        margin-bottom: 0.5rem;
+    }
+
+    .profile-info .role-badge {
+        background: rgba(255, 255, 255, 0.2);
+        padding: 0.375rem 1rem;
+        border-radius: 20px;
+        font-size: 0.875rem;
+        backdrop-filter: blur(10px);
+        display: inline-block;
+        margin-right: 0.5rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .profile-info .service-info {
+        opacity: 0.9;
+        font-size: 0.95rem;
+        margin-top: 0.5rem;
+    }
+
+    /* Settings Cards */
+    .settings-card {
+        background: var(--bg-card);
+        border-radius: 20px;
+        border: 1px solid var(--border-color);
+        box-shadow: var(--card-shadow);
+        transition: all 0.3s ease;
+        overflow: hidden;
+        height: 100%;
+    }
+
+    .settings-card:hover {
+        box-shadow: var(--card-hover-shadow);
+        transform: translateY(-4px);
+    }
+
+    .settings-card-header {
+        background: linear-gradient(135deg, rgba(69, 10, 84, 0.05) 0%, rgba(107, 45, 123, 0.05) 100%);
+        padding: 1.25rem 1.5rem;
+        border-bottom: 1px solid var(--border-color);
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+
+    [data-theme="dark"] .settings-card-header {
+        background: linear-gradient(135deg, rgba(69, 10, 84, 0.2) 0%, rgba(107, 45, 123, 0.2) 100%);
+    }
+
+    .settings-card-header i {
+        width: 40px;
+        height: 40px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: linear-gradient(135deg, #450A54, #8B4D9B);
+        color: white;
+        font-size: 1.1rem;
+    }
+
+    .settings-card-header h5 {
+        margin: 0;
+        font-weight: 600;
+        color: var(--text-main);
+    }
+
+    .settings-card-body {
+        padding: 1.5rem;
+    }
+
+    /* Form Styling */
+    .form-floating-custom {
+        position: relative;
+        margin-bottom: 1.25rem;
+    }
+
+    .form-floating-custom label {
+        font-weight: 500;
+        color: var(--text-muted);
+        margin-bottom: 0.5rem;
+        font-size: 0.875rem;
+        display: block;
+    }
+
+    .form-floating-custom .form-control {
+        background: var(--input-bg);
+        border: 2px solid var(--border-color);
+        border-radius: 12px;
+        padding: 0.875rem 1rem;
+        font-size: 0.95rem;
+        transition: all 0.3s ease;
+        color: var(--input-text);
+    }
+
+    .form-floating-custom .form-control:focus {
+        border-color: #450A54;
+        box-shadow: 0 0 0 4px rgba(69, 10, 84, 0.1);
+    }
+
+    .form-floating-custom .input-icon {
+        position: absolute;
+        right: 1rem;
+        top: 50%;
+        transform: translateY(-50%);
+        color: var(--text-muted);
+    }
+
+    /* Button Styles */
+    .btn-settings {
+        background: linear-gradient(135deg, #450A54, #6B2D7B);
+        border: none;
+        color: white;
+        padding: 0.75rem 1.5rem;
+        border-radius: 12px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .btn-settings:hover {
+        background: linear-gradient(135deg, #3A0845, #5B1D6B);
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(69, 10, 84, 0.3);
+        color: white;
+    }
+
+    .btn-settings:active {
+        transform: translateY(0);
+    }
+
+    /* History Section */
+    .history-section {
+        background: var(--bg-card);
+        border-radius: 20px;
+        border: 1px solid var(--border-color);
+        box-shadow: var(--card-shadow);
+        overflow: hidden;
+    }
+
+    .history-header {
+        background: linear-gradient(135deg, rgba(69, 10, 84, 0.05) 0%, rgba(107, 45, 123, 0.05) 100%);
+        padding: 1.25rem 1.5rem;
+        border-bottom: 1px solid var(--border-color);
+        display: flex;
+        align-items: center;
+        justify-content: between;
+        flex-wrap: wrap;
+        gap: 1rem;
+    }
+
+    [data-theme="dark"] .history-header {
+        background: linear-gradient(135deg, rgba(69, 10, 84, 0.2) 0%, rgba(107, 45, 123, 0.2) 100%);
+    }
+
+    .history-filters {
+        display: flex;
+        gap: 1rem;
+        flex-wrap: wrap;
+    }
+
+    .history-list {
+        max-height: 600px;
+        overflow-y: auto;
+    }
+
+    .history-item {
+        display: flex;
+        align-items: flex-start;
+        gap: 1rem;
+        padding: 1rem 1.5rem;
+        border-bottom: 1px solid var(--border-color);
+        transition: all 0.2s ease;
+    }
+
+    .history-item:last-child {
+        border-bottom: none;
+    }
+
+    .history-item:hover {
+        background: var(--table-hover);
+    }
+
+    .history-icon {
+        width: 44px;
+        height: 44px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        font-size: 1.1rem;
+    }
+
+    .history-icon.primary {
+        background: rgba(13, 110, 253, 0.15);
+        color: #0d6efd;
+    }
+
+    .history-icon.success {
+        background: rgba(25, 135, 84, 0.15);
+        color: #198754;
+    }
+
+    .history-icon.info {
+        background: rgba(13, 202, 240, 0.15);
+        color: #0dcaf0;
+    }
+
+    .history-icon.warning {
+        background: rgba(255, 193, 7, 0.15);
+        color: #ffc107;
+    }
+
+    .history-icon.danger {
+        background: rgba(220, 53, 69, 0.15);
+        color: #dc3545;
+    }
+
+    .history-icon.secondary {
+        background: rgba(108, 117, 125, 0.15);
+        color: #6c757d;
+    }
+
+    .history-content {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .history-action {
+        font-weight: 600;
+        color: var(--text-main);
+        margin-bottom: 0.25rem;
+    }
+
+    .history-description {
+        color: var(--text-muted);
+        font-size: 0.875rem;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .history-time {
+        color: var(--text-muted);
+        font-size: 0.8rem;
+        white-space: nowrap;
+    }
+
+    /* Stats Cards */
+    .stat-card {
+        background: var(--bg-card);
+        border-radius: 16px;
+        padding: 1.5rem;
+        border: 1px solid var(--border-color);
+        box-shadow: var(--card-shadow);
+        transition: all 0.3s ease;
+        text-align: center;
+    }
+
+    .stat-card:hover {
+        transform: translateY(-4px);
+        box-shadow: var(--card-hover-shadow);
+    }
+
+    .stat-icon {
+        width: 56px;
+        height: 56px;
+        border-radius: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 1rem;
+        font-size: 1.5rem;
+    }
+
+    .stat-icon.primary {
+        background: linear-gradient(135deg, rgba(13, 110, 253, 0.15), rgba(13, 110, 253, 0.25));
+        color: #0d6efd;
+    }
+
+    .stat-icon.success {
+        background: linear-gradient(135deg, rgba(25, 135, 84, 0.15), rgba(25, 135, 84, 0.25));
+        color: #198754;
+    }
+
+    .stat-icon.warning {
+        background: linear-gradient(135deg, rgba(255, 193, 7, 0.15), rgba(255, 193, 7, 0.25));
+        color: #ffc107;
+    }
+
+    .stat-icon.info {
+        background: linear-gradient(135deg, rgba(13, 202, 240, 0.15), rgba(13, 202, 240, 0.25));
+        color: #0dcaf0;
+    }
+
+    .stat-icon.danger {
+        background: linear-gradient(135deg, rgba(220, 53, 69, 0.15), rgba(220, 53, 69, 0.25));
+        color: #dc3545;
+    }
+
+    .stat-icon.secondary {
+        background: linear-gradient(135deg, rgba(108, 117, 125, 0.15), rgba(108, 117, 125, 0.25));
+        color: #6c757d;
+    }
+
+    .stat-value {
+        font-size: 1.75rem;
+        font-weight: 700;
+        color: var(--text-main);
+        margin-bottom: 0.25rem;
+    }
+
+    .stat-label {
+        color: var(--text-muted);
+        font-size: 0.875rem;
+    }
+
+    .stat-amount {
+        font-size: 0.8rem;
+        color: var(--primary-color);
+        font-weight: 600;
+        margin-top: 0.5rem;
+    }
+
+    /* Password Toggle */
+    .password-toggle {
+        position: absolute;
+        right: 1rem;
+        top: 50%;
+        transform: translateY(-50%);
+        background: none;
+        border: none;
+        color: var(--text-muted);
+        cursor: pointer;
+        padding: 0.25rem;
+        transition: color 0.2s ease;
+    }
+
+    .password-toggle:hover {
+        color: var(--primary-color);
+    }
+
+    /* Tabs */
+    .settings-tabs {
+        display: flex;
+        gap: 0.5rem;
+        margin-bottom: 1.5rem;
+        background: var(--bg-card);
+        padding: 0.5rem;
+        border-radius: 16px;
+        border: 1px solid var(--border-color);
+        flex-wrap: wrap;
+    }
+
+    .settings-tab {
+        padding: 0.75rem 1.5rem;
+        border-radius: 12px;
+        background: transparent;
+        border: none;
+        color: var(--text-muted);
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .settings-tab:hover {
+        background: rgba(69, 10, 84, 0.1);
+        color: #450A54;
+    }
+
+    .settings-tab.active {
+        background: linear-gradient(135deg, #450A54, #6B2D7B);
+        color: white;
+        box-shadow: 0 4px 15px rgba(69, 10, 84, 0.3);
+    }
+
+    /* Empty State */
+    .empty-state {
+        text-align: center;
+        padding: 3rem;
+        color: var(--text-muted);
+    }
+
+    .empty-state i {
+        font-size: 4rem;
+        margin-bottom: 1rem;
+        opacity: 0.5;
+    }
+
+    /* Scrollbar */
+    .history-list::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    .history-list::-webkit-scrollbar-track {
+        background: transparent;
+    }
+
+    .history-list::-webkit-scrollbar-thumb {
+        background: var(--border-color);
+        border-radius: 3px;
+    }
+
+    .history-list::-webkit-scrollbar-thumb:hover {
+        background: var(--text-muted);
+    }
+
+    /* Loading Spinner */
+    .loading-overlay {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 3rem;
+        color: var(--text-muted);
+    }
+
+    .loading-overlay .spinner-border {
+        width: 2rem;
+        height: 2rem;
+        margin-right: 1rem;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+        .profile-header {
+            padding: 1.5rem;
+        }
+
+        .profile-avatar {
+            width: 80px;
+            height: 80px;
+            font-size: 2rem;
+        }
+
+        .profile-info h2 {
+            font-size: 1.5rem;
+        }
+
+        .settings-tabs {
+            overflow-x: auto;
+            flex-wrap: nowrap;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .settings-tab {
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+    }
+
+    /* Tab Content Visibility */
+    .tab-content {
+        display: none;
+        animation: fadeIn 0.3s ease-out;
+    }
+
+    .tab-content.active {
+        display: block;
+    }
+
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(10px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="settings-container">
+    <!-- Page Title -->
+    <div class="d-flex align-items-center justify-content-between mb-4">
+        <h1 class="h3 mb-0 fw-bold">
+            <i class="fas fa-cog me-2 text-muted"></i>
+            Paramètres du compte
+        </h1>
+        <a href="{{ url_for('index') }}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left me-2"></i>Retour
+        </a>
+    </div>
+
+    <!-- Profile Header -->
+    <div class="profile-header">
+        <div class="row align-items-center">
+            <div class="col-auto">
+                <div class="profile-avatar">
+                    {{ user_info.nom[0] | upper if user_info.nom else 'U' }}{{ user_info.prenom[0] | upper if
+                    user_info.prenom else '' }}
+                </div>
+            </div>
+            <div class="col">
+                <div class="profile-info">
+                    <h2>{{ user_info.nom|upper if user_info.nom else 'Utilisateur' }} {{ user_info.prenom|capitalize if
+                        user_info.prenom else '' }}</h2>
+                    <div class="mb-2">
+                        {% for role in user_roles %}
+                        <span class="role-badge">{{ role.nom_role }}</span>
+                        {% endfor %}
+                    </div>
+                    <div class="service-info">
+                        <i class="fas fa-building me-2"></i>
+                        {{ user_info.service_name if user_info.service_name else 'Aucun service' }}
+                        <span class="mx-3">|</span>
+                        <i class="fas fa-user me-2"></i>
+                        @{{ user_info.username if user_info.username else 'Non défini' }}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Settings Tabs -->
+    <div class="settings-tabs" id="settingsTabs">
+        <button class="settings-tab active" data-tab="profile">
+            <i class="fas fa-user"></i>
+            Profil
+        </button>
+        <button class="settings-tab" data-tab="security">
+            <i class="fas fa-shield-alt"></i>
+            Sécurité
+        </button>
+        <button class="settings-tab" data-tab="history">
+            <i class="fas fa-history"></i>
+            Historique
+        </button>
+        <button class="settings-tab" data-tab="stats">
+            <i class="fas fa-chart-bar"></i>
+            Statistiques
+        </button>
+    </div>
+
+    <!-- Tab Contents -->
+    <div class="tab-contents">
+
+        <!-- Profile Tab -->
+        <div class="tab-content active" id="tab-profile">
+            <div class="row g-4">
+                <!-- Modifier le nom d'utilisateur -->
+                <div class="col-lg-6">
+                    <div class="settings-card">
+                        <div class="settings-card-header">
+                            <i class="fas fa-user-edit"></i>
+                            <h5>Modifier le nom d'utilisateur</h5>
+                        </div>
+                        <div class="settings-card-body">
+                            <form action="{{ url_for('update_username') }}" method="POST">
+                                <div class="form-floating-custom">
+                                    <label for="current_username">Nom d'utilisateur actuel</label>
+                                    <input type="text" class="form-control" id="current_username"
+                                        value="{{ user_info.username if user_info.username else '' }}" disabled>
+                                </div>
+                                <div class="form-floating-custom">
+                                    <label for="new_username">Nouveau nom d'utilisateur</label>
+                                    <input type="text" class="form-control" id="new_username" name="new_username"
+                                        placeholder="Entrez le nouveau nom d'utilisateur" required>
+                                </div>
+                                <div class="form-floating-custom position-relative">
+                                    <label for="password_confirm">Mot de passe actuel (confirmation)</label>
+                                    <input type="password" class="form-control" id="password_confirm"
+                                        name="password_confirm" placeholder="Entrez votre mot de passe" required>
+                                    <button type="button" class="password-toggle"
+                                        onclick="toggleSettingsPassword('password_confirm')">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                </div>
+                                <button type="submit" class="btn btn-settings">
+                                    <i class="fas fa-save"></i>
+                                    Enregistrer
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Modifier le téléphone -->
+                <div class="col-lg-6">
+                    <div class="settings-card">
+                        <div class="settings-card-header">
+                            <i class="fas fa-phone"></i>
+                            <h5>Modifier le numéro de téléphone</h5>
+                        </div>
+                        <div class="settings-card-body">
+                            <form action="{{ url_for('update_phone') }}" method="POST">
+                                <div class="form-floating-custom">
+                                    <label for="current_phone">Numéro actuel</label>
+                                    <input type="text" class="form-control" id="current_phone"
+                                        value="{{ user_info.telephone if user_info.telephone else 'Non défini' }}"
+                                        disabled>
+                                </div>
+                                <div class="form-floating-custom">
+                                    <label for="new_phone">Nouveau numéro de téléphone</label>
+                                    <input type="tel" class="form-control" id="new_phone" name="new_phone"
+                                        placeholder="Entrez le nouveau numéro" required>
+                                </div>
+                                <button type="submit" class="btn btn-settings">
+                                    <i class="fas fa-save"></i>
+                                    Enregistrer
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Informations du compte -->
+                <div class="col-12">
+                    <div class="settings-card">
+                        <div class="settings-card-header">
+                            <i class="fas fa-info-circle"></i>
+                            <h5>Informations du compte</h5>
+                        </div>
+                        <div class="settings-card-body">
+                            <div class="row g-3">
+                                <div class="col-md-4">
+                                    <div class="form-floating-custom">
+                                        <label>Nom</label>
+                                        <input type="text" class="form-control"
+                                            value="{{ user_info.nom|upper if user_info.nom else '-' }}" disabled>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="form-floating-custom">
+                                        <label>Prénom</label>
+                                        <input type="text" class="form-control"
+                                            value="{{ user_info.prenom|capitalize if user_info.prenom else '-' }}"
+                                            disabled>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="form-floating-custom">
+                                        <label>Rôle/Fonction</label>
+                                        <input type="text" class="form-control"
+                                            value="{{ user_info.role if user_info.role else '-' }}" disabled>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-floating-custom">
+                                        <label>Service</label>
+                                        <input type="text" class="form-control"
+                                            value="{{ user_info.service_name if user_info.service_name else '-' }}"
+                                            disabled>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-floating-custom">
+                                        <label>Créé le</label>
+                                        <input type="text" class="form-control"
+                                            value="{{ user_info.created_at.strftime('%d/%m/%Y à %H:%M') if user_info.created_at else '-' }}"
+                                            disabled>
+                                    </div>
+                                </div>
+                            </div>
+                            <p class="text-muted mt-3 mb-0">
+                                <i class="fas fa-info-circle me-2"></i>
+                                Pour modifier ces informations, veuillez contacter un administrateur.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Security Tab -->
+        <div class="tab-content" id="tab-security">
+            <div class="row g-4">
+                <div class="col-lg-6">
+                    <div class="settings-card">
+                        <div class="settings-card-header">
+                            <i class="fas fa-lock"></i>
+                            <h5>Modifier le mot de passe</h5>
+                        </div>
+                        <div class="settings-card-body">
+                            <form action="{{ url_for('update_password') }}" method="POST">
+                                <div class="form-floating-custom position-relative">
+                                    <label for="current_password">Mot de passe actuel</label>
+                                    <input type="password" class="form-control" id="current_password"
+                                        name="current_password" placeholder="Entrez le mot de passe actuel" required>
+                                    <button type="button" class="password-toggle"
+                                        onclick="toggleSettingsPassword('current_password')">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                </div>
+                                <div class="form-floating-custom position-relative">
+                                    <label for="new_password">Nouveau mot de passe</label>
+                                    <input type="password" class="form-control" id="new_password" name="new_password"
+                                        placeholder="Entrez le nouveau mot de passe" required>
+                                    <button type="button" class="password-toggle"
+                                        onclick="toggleSettingsPassword('new_password')">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                </div>
+                                <div class="form-floating-custom position-relative">
+                                    <label for="confirm_password">Confirmer le nouveau mot de passe</label>
+                                    <input type="password" class="form-control" id="confirm_password"
+                                        name="confirm_password" placeholder="Confirmez le nouveau mot de passe"
+                                        required>
+                                    <button type="button" class="password-toggle"
+                                        onclick="toggleSettingsPassword('confirm_password')">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                </div>
+                                <button type="submit" class="btn btn-settings">
+                                    <i class="fas fa-key"></i>
+                                    Changer le mot de passe
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-6">
+                    <div class="settings-card">
+                        <div class="settings-card-header">
+                            <i class="fas fa-user-shield"></i>
+                            <h5>Vos rôles et permissions</h5>
+                        </div>
+                        <div class="settings-card-body">
+                            <div class="mb-3">
+                                <label class="form-label fw-bold text-muted">Rôles assignés</label>
+                                <div>
+                                    {% if user_roles %}
+                                    {% for role in user_roles %}
+                                    <span class="badge bg-primary me-2 mb-2 py-2 px-3 rounded-pill">
+                                        <i class="fas fa-user-tag me-1"></i>
+                                        {{ role.nom_role }}
+                                    </span>
+                                    {% endfor %}
+                                    {% else %}
+                                    <p class="text-muted">Aucun rôle assigné</p>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <p class="text-muted mt-3 mb-0">
+                                <i class="fas fa-info-circle me-2"></i>
+                                Les rôles et permissions sont gérés par les administrateurs.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- History Tab -->
+        <div class="tab-content" id="tab-history">
+            <div class="history-section">
+                <div class="history-header">
+                    <div class="d-flex align-items-center gap-3">
+                        <i class="fas fa-history" style="font-size: 1.5rem; color: #450A54;"></i>
+                        <h5 class="mb-0 fw-bold">Historique de vos activités</h5>
+                    </div>
+                    <div class="history-filters ms-auto">
+                        <button class="btn btn-settings btn-sm" onclick="loadHistory()">
+                            <i class="fas fa-sync-alt"></i>
+                            Actualiser
+                        </button>
+                    </div>
+                </div>
+                <div class="history-list" id="historyList">
+                    <div class="loading-overlay">
+                        <div class="spinner-border text-primary" role="status"></div>
+                        <span>Chargement de l'historique...</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Stats Tab -->
+        <div class="tab-content" id="tab-stats">
+            <!-- Stats Header -->
+            <div class="d-flex align-items-center justify-content-between mb-4">
+                <h5 class="mb-0 fw-bold">Résumé des activités (dernières 24h)</h5>
+                <button class="btn btn-settings btn-sm" onclick="loadStats()">
+                    <i class="fas fa-sync-alt"></i>
+                    Actualiser
+                </button>
+            </div>
+
+            <!-- Stats Grid -->
+            <div class="row g-4" id="statsGrid">
+                <div class="col-md-4 col-lg-2">
+                    <div class="stat-card">
+                        <div class="stat-icon primary">
+                            <i class="fas fa-baby"></i>
+                        </div>
+                        <div class="stat-value" id="stat-accouchements">-</div>
+                        <div class="stat-label">Accouchements</div>
+                        <div class="stat-amount" id="stat-accouchements-total"></div>
+                    </div>
+                </div>
+                <div class="col-md-4 col-lg-2">
+                    <div class="stat-card">
+                        <div class="stat-icon info">
+                            <i class="fas fa-file-invoice"></i>
+                        </div>
+                        <div class="stat-value" id="stat-factures">-</div>
+                        <div class="stat-label">Factures</div>
+                        <div class="stat-amount" id="stat-factures-total"></div>
+                    </div>
+                </div>
+                <div class="col-md-4 col-lg-2">
+                    <div class="stat-card">
+                        <div class="stat-icon warning">
+                            <i class="fas fa-building"></i>
+                        </div>
+                        <div class="stat-value" id="stat-location">-</div>
+                        <div class="stat-label">Location Bloc</div>
+                        <div class="stat-amount" id="stat-location-total"></div>
+                    </div>
+                </div>
+                <div class="col-md-4 col-lg-2">
+                    <div class="stat-card">
+                        <div class="stat-icon success">
+                            <i class="fas fa-file-medical"></i>
+                        </div>
+                        <div class="stat-value" id="stat-gyneco">-</div>
+                        <div class="stat-label">Décharges Gynéco</div>
+                        <div class="stat-amount" id="stat-gyneco-total"></div>
+                    </div>
+                </div>
+                <div class="col-md-4 col-lg-2">
+                    <div class="stat-card">
+                        <div class="stat-icon danger">
+                            <i class="fas fa-heart"></i>
+                        </div>
+                        <div class="stat-value" id="stat-kt">-</div>
+                        <div class="stat-label">Décharges KT</div>
+                        <div class="stat-amount" id="stat-kt-total"></div>
+                    </div>
+                </div>
+                <div class="col-md-4 col-lg-2">
+                    <div class="stat-card">
+                        <div class="stat-icon secondary">
+                            <i class="fas fa-money-bill-wave"></i>
+                        </div>
+                        <div class="stat-value" id="stat-paiements">-</div>
+                        <div class="stat-label">Paiements</div>
+                        <div class="stat-amount" id="stat-paiements-total"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    (function () {
+        // =====================================================
+        // USER SETTINGS PAGE JAVASCRIPT
+        // =====================================================
+
+        // Password toggle for settings page (renamed to avoid conflict with layout.html)
+        window.toggleSettingsPassword = function (inputId) {
+            const input = document.getElementById(inputId);
+            if (!input) return;
+            const icon = input.parentElement.querySelector('.password-toggle i');
+
+            if (input.type === 'password') {
+                input.type = 'text';
+                if (icon) {
+                    icon.classList.remove('fa-eye');
+                    icon.classList.add('fa-eye-slash');
+                }
+            } else {
+                input.type = 'password';
+                if (icon) {
+                    icon.classList.remove('fa-eye-slash');
+                    icon.classList.add('fa-eye');
+                }
+            }
+        };
+
+        // Set default dates
+        function setDefaultDates() {
+            const today = new Date();
+            const monthAgo = new Date();
+            monthAgo.setDate(monthAgo.getDate() - 30);
+
+            const formatDate = (d) => {
+                const year = d.getFullYear();
+                const month = String(d.getMonth() + 1).padStart(2, '0');
+                const day = String(d.getDate()).padStart(2, '0');
+                return `${year}-${month}-${day}`;
+            };
+
+            const historyStart = document.getElementById('historyDateStart');
+            const historyEnd = document.getElementById('historyDateEnd');
+            const statsStart = document.getElementById('statsDateStart');
+            const statsEnd = document.getElementById('statsDateEnd');
+
+            // History: Last 30 days
+            if (historyStart) historyStart.value = formatDate(monthAgo);
+            if (historyEnd) historyEnd.value = formatDate(today);
+
+            // Stats: Last 24 hours (today)
+            if (statsStart) statsStart.value = formatDate(today);
+            if (statsEnd) statsEnd.value = formatDate(today);
+        }
+
+        // Format date/time helper
+        function formatDateTime(dateStr) {
+            if (!dateStr) return '-';
+            const date = new Date(dateStr);
+            return date.toLocaleDateString('fr-FR', {
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        }
+
+        // Format money helper
+        function formatMoney(amount) {
+            if (!amount || amount === 0) return '';
+            return new Intl.NumberFormat('fr-DZ', {
+                style: 'decimal',
+                minimumFractionDigits: 0,
+                maximumFractionDigits: 0
+            }).format(amount) + ' DZD';
+        }
+
+        // Load history - automatically calculated last 30 days
+        window.loadHistory = function () {
+            const today = new Date();
+            const monthAgo = new Date();
+            monthAgo.setDate(monthAgo.getDate() - 30);
+
+            // Re-use the existing formatDate logic
+            const formatDate = (d) => {
+                const year = d.getFullYear();
+                const month = String(d.getMonth() + 1).padStart(2, '0');
+                const day = String(d.getDate()).padStart(2, '0');
+                return `${year}-${month}-${day}`;
+            };
+
+            const dateStart = formatDate(monthAgo);
+            const dateEnd = formatDate(today);
+            const container = document.getElementById('historyList');
+
+            if (!container) return;
+
+            container.innerHTML = `
+        <div class="loading-overlay">
+          <div class="spinner-border text-primary" role="status"></div>
+          <span>Chargement de l'historique...</span>
+        </div>
+      `;
+
+            fetch(`/api/user/history?date_debut=${dateStart}&date_fin=${dateEnd}&limit=100`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success && data.history && data.history.length > 0) {
+                        container.innerHTML = data.history.map(item => `
+              <div class="history-item">
+                <div class="history-icon ${item.color || 'primary'}">
+                  <i class="${item.icon || 'fas fa-circle'}"></i>
+                </div>
+                <div class="history-content">
+                  <div class="history-action">${item.action_type || '-'}</div>
+                  <div class="history-description" title="${item.description || ''}">${item.description || '-'}</div>
+                </div>
+                <div class="history-time">
+                  ${formatDateTime(item.action_date)}
+                </div>
+              </div>
+            `).join('');
+                    } else {
+                        container.innerHTML = `
+              <div class="empty-state">
+                <i class="fas fa-inbox"></i>
+                <h5>Aucune activité</h5>
+                <p>Aucune activité enregistrée pour cette période.</p>
+              </div>
+            `;
+                    }
+                })
+                .catch(error => {
+                    console.error('Error loading history:', error);
+                    container.innerHTML = `
+            <div class="empty-state">
+              <i class="fas fa-exclamation-triangle text-danger"></i>
+              <h5>Erreur</h5>
+              <p>Impossible de charger l'historique.</p>
+            </div>
+          `;
+                });
+        };
+
+        // Load stats - automatically calculated last 24h
+        window.loadStats = function () {
+            const today = new Date();
+            const formatDate = (d) => {
+                const year = d.getFullYear();
+                const month = String(d.getMonth() + 1).padStart(2, '0');
+                const day = String(d.getDate()).padStart(2, '0');
+                return `${year}-${month}-${day}`;
+            };
+
+            const dayStr = formatDate(today);
+            const dateStart = dayStr;
+            const dateEnd = dayStr;
+
+            fetch(`/api/user/stats?date_debut=${dateStart}&date_fin=${dateEnd}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success && data.stats) {
+                        const stats = data.stats;
+
+                        const setStatValue = (id, value) => {
+                            const el = document.getElementById(id);
+                            if (el) el.textContent = value;
+                        };
+
+                        setStatValue('stat-accouchements', stats.accouchements ? stats.accouchements.count : 0);
+                        setStatValue('stat-accouchements-total', stats.accouchements ? formatMoney(stats.accouchements.total) : '');
+
+                        setStatValue('stat-factures', stats.factures ? stats.factures.count : 0);
+                        setStatValue('stat-factures-total', stats.factures ? formatMoney(stats.factures.total) : '');
+
+                        setStatValue('stat-location', stats.location_bloc ? stats.location_bloc.count : 0);
+                        setStatValue('stat-location-total', stats.location_bloc ? formatMoney(stats.location_bloc.total) : '');
+
+                        setStatValue('stat-gyneco', stats.decharges_gyneco ? stats.decharges_gyneco.count : 0);
+                        setStatValue('stat-gyneco-total', stats.decharges_gyneco ? formatMoney(stats.decharges_gyneco.total) : '');
+
+                        setStatValue('stat-kt', stats.decharges_kt ? stats.decharges_kt.count : 0);
+                        setStatValue('stat-kt-total', stats.decharges_kt ? formatMoney(stats.decharges_kt.total) : '');
+
+                        setStatValue('stat-paiements', stats.paiements ? stats.paiements.count : 0);
+                        setStatValue('stat-paiements-total', stats.paiements ? formatMoney(stats.paiements.total) : '');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error loading stats:', error);
+                });
+        };
+
+        // Tab navigation
+        document.querySelectorAll('.settings-tab').forEach(tab => {
+            tab.addEventListener('click', function () {
+                // Update tabs
+                document.querySelectorAll('.settings-tab').forEach(t => t.classList.remove('active'));
+                this.classList.add('active');
+
+                // Update content
+                document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+                const tabContent = document.getElementById('tab-' + this.dataset.tab);
+                if (tabContent) tabContent.classList.add('active');
+
+                // Load data for specific tabs
+                if (this.dataset.tab === 'history') {
+                    window.loadHistory();
+                } else if (this.dataset.tab === 'stats') {
+                    window.loadStats();
+                }
+            });
+        });
+
+        // Initialize on DOM ready
+        document.addEventListener('DOMContentLoaded', function () {
+            setDefaultDates();
+        });
+
+    })();
+</script>
+{% endblock %}

@@ -1,0 +1,4195 @@
+{% extends "layout.html" %}
+{% import 'his/macros/his_direct_selector.html' as his_selector %}
+
+{% block style %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/flatpickr.min.css') }}">
+
+<style>
+  /* ==================== Variables Modernes ==================== */
+  :root {
+    --primary: #6366f1;
+    --primary-dark: #4f46e5;
+    --primary-light: #818cf8;
+    --success: #10b981;
+    --success-dark: #059669;
+    --warning: #f59e0b;
+    --danger: #ef4444;
+    --info: #3b82f6;
+    --pink: #ec4899;
+    --pink-dark: #db2777;
+    --dark: #1f2937;
+    --light: #f9fafb;
+    --border: #e5e7eb;
+    --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+    --shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+    --shadow-lg: 0 20px 25px -5px rgb(0 0 0 / 0.1);
+    --radius: 12px;
+    --radius-lg: 16px;
+    --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+
+    /* Theme-aware variables */
+    --bg-surface: white;
+    --bg-body-local: linear-gradient(135deg, #fdf2f8 0%, #fce7f3 100%);
+    --bg-input: white;
+    --text-primary: #1f2937;
+    --text-secondary: #6b7280;
+  }
+
+  [data-theme="dark"] {
+    --primary: #818cf8;
+    --primary-dark: #6366f1;
+    --primary-light: #4f46e5;
+    --pink: #f472b6;
+    --pink-dark: #ec4899;
+    --success: #34d399;
+    --success-dark: #10b981;
+    --warning: #fbbf24;
+    --danger: #f87171;
+    --info: #60a5fa;
+    --dark: #f9fafb;
+    --light: #1f2937;
+    --border: #374151;
+    --bg-surface: #1e1e1e;
+    --bg-body-local: #121212;
+    --bg-input: #2d2d2d;
+    --text-primary: #f9fafb;
+    --text-secondary: #9ca3af;
+    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.5);
+    --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.5);
+    --shadow-lg: 0 20px 25px -5px rgba(0, 0, 0, 0.5);
+  }
+
+  body {
+    font-family: "Inter", -apple-system, sans-serif;
+    background: var(--bg-body-local);
+    color: var(--text-primary);
+  }
+
+  /* À ajouter dans la section <style> de create.html ou dans votre fichier CSS global */
+
+  .badge.bg-pink {
+    background: linear-gradient(135deg,
+        var(--pink),
+        var(--pink-dark)) !important;
+    color: white !important;
+  }
+
+  /* Si les variables CSS ne sont pas définies, utiliser des valeurs directes */
+  .badge.bg-pink {
+    background: linear-gradient(135deg, #ec4899, #db2777) !important;
+    color: white !important;
+  }
+
+  /* Animation pour attirer l'attention sur les cartes non sélectionnées */
+  .type-accouchement-card {
+    transition: all 0.3s ease;
+  }
+
+  .type-accouchement-card:not(.selected):hover {
+    transform: translateY(-8px) scale(1.02);
+    border-color: var(--pink);
+  }
+
+  /* État initial - légère bordure pour indiquer que c'est cliquable */
+  .type-accouchement-card {
+    border: 2px solid var(--border);
+  }
+
+  /* Animation subtile pour indiquer que c'est interactif */
+  @keyframes pulseCard {
+
+    0%,
+    100% {
+      box-shadow: 0 0 0 0 rgba(236, 72, 153, 0.4);
+    }
+
+    50% {
+      box-shadow: 0 0 0 10px rgba(236, 72, 153, 0);
+    }
+  }
+
+  /* Appliquer l'animation uniquement si aucune carte n'est sélectionnée */
+  .selection-grid:not(:has(.selected)) .type-accouchement-card {
+    animation: pulseCard 2s infinite;
+  }
+
+  /* Masquer les radio buttons visuellement mais les garder pour l'accessibilité */
+  .selection-card input[type="radio"] {
+    opacity: 0;
+  }
+
+  /* Afficher un checkmark quand sélectionné */
+  .selection-card.selected::after {
+    content: "\f058";
+    font-family: "Font Awesome 5 Free";
+    font-weight: 900;
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    font-size: 1.5rem;
+    color: var(--pink);
+    animation: checkmarkPop 0.3s ease;
+  }
+
+  @keyframes checkmarkPop {
+    0% {
+      transform: scale(0);
+      opacity: 0;
+    }
+
+    50% {
+      transform: scale(1.2);
+    }
+
+    100% {
+      transform: scale(1);
+      opacity: 1;
+    }
+  }
+
+  /* ==================== Bouton Historique Flottant ==================== */
+  .btn-floating-history {
+    position: fixed;
+    right: 30px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--info), #2563eb);
+    color: white;
+    border: none;
+    box-shadow: 0 8px 16px rgba(59, 130, 246, 0.3),
+      0 0 0 0 rgba(59, 130, 246, 0.5);
+    cursor: pointer;
+    z-index: 999;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    transition: var(--transition);
+    overflow: hidden;
+    opacity: 0;
+  }
+
+  .btn-floating-history:not(:disabled) {
+    opacity: 1;
+    pointer-events: auto;
+    animation: floatPulse 2s ease-in-out infinite;
+  }
+
+  .btn-floating-history i {
+    font-size: 1.5rem;
+    transition: var(--transition);
+  }
+
+  .btn-floating-history .btn-floating-text {
+    font-size: 0.7rem;
+    font-weight: 600;
+    margin-top: 2px;
+    opacity: 0;
+    max-height: 0;
+    transition: var(--transition);
+  }
+
+  .btn-floating-history:hover {
+    width: 70px;
+    height: 70px;
+    box-shadow: 0 12px 24px rgba(59, 130, 246, 0.4),
+      0 0 0 8px rgba(59, 130, 246, 0.2);
+    transform: translateY(-50%) scale(1.05);
+  }
+
+  .btn-floating-history:hover i {
+    transform: scale(1.1) rotate(15deg);
+  }
+
+  .btn-floating-history:hover .btn-floating-text {
+    opacity: 1;
+    max-height: 20px;
+  }
+
+  .btn-floating-history:active {
+    transform: translateY(-50%) scale(0.95);
+  }
+
+  .btn-floating-history:disabled {
+    background: linear-gradient(135deg, #9ca3af, #6b7280);
+    cursor: not-allowed;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  }
+
+  @keyframes floatPulse {
+
+    0%,
+    100% {
+      box-shadow: 0 8px 16px rgba(59, 130, 246, 0.3),
+        0 0 0 0 rgba(59, 130, 246, 0.5);
+    }
+
+    50% {
+      box-shadow: 0 8px 16px rgba(59, 130, 246, 0.3),
+        0 0 0 12px rgba(59, 130, 246, 0);
+    }
+  }
+
+  /* Badge de notification */
+  .btn-floating-history::after {
+    content: attr(data-count);
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    width: 24px;
+    height: 24px;
+    background: var(--danger);
+    color: white;
+    border-radius: 50%;
+    font-size: 0.7rem;
+    font-weight: 700;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid white;
+    animation: badgePop 0.3s ease;
+  }
+
+  .btn-floating-history[data-count]:not([data-count=""]):not([data-count="0"])::after {
+    display: flex;
+  }
+
+  @keyframes badgePop {
+    0% {
+      transform: scale(0);
+    }
+
+    50% {
+      transform: scale(1.2);
+    }
+
+    100% {
+      transform: scale(1);
+    }
+  }
+
+  /* Responsive */
+  @media (max-width: 768px) {
+    .btn-floating-history {
+      right: 15px;
+      width: 50px;
+      height: 50px;
+    }
+
+    .btn-floating-history:hover {
+      width: 50px;
+      height: 50px;
+    }
+
+    .btn-floating-history i {
+      font-size: 1.2rem;
+    }
+
+    .btn-floating-history .btn-floating-text {
+      display: none;
+    }
+  }
+
+  /* ==================== Reset & Base ==================== */
+  body {
+    font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI",
+      sans-serif;
+    background: linear-gradient(135deg, #f5f7fa 0%, #e4e9f2 100%);
+    color: var(--dark);
+  }
+
+  /* ==================== Modal Personnalisé ==================== */
+  .custom-modal .modal-content {
+    border: none;
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-lg);
+    overflow: hidden;
+  }
+
+  .custom-modal .modal-header {
+    border-bottom: 2px solid var(--border);
+    padding: 1.5rem;
+    background: linear-gradient(135deg,
+        rgba(99, 102, 241, 0.05),
+        rgba(129, 140, 248, 0.05));
+  }
+
+  .custom-modal .modal-header.modal-danger {
+    background: linear-gradient(135deg,
+        rgba(239, 68, 68, 0.1),
+        rgba(220, 38, 38, 0.05));
+    border-bottom-color: var(--danger);
+  }
+
+  .custom-modal .modal-header.modal-warning {
+    background: linear-gradient(135deg,
+        rgba(245, 158, 11, 0.1),
+        rgba(217, 119, 6, 0.05));
+    border-bottom-color: var(--warning);
+  }
+
+  .custom-modal .modal-header.modal-success {
+    background: linear-gradient(135deg,
+        rgba(16, 185, 129, 0.1),
+        rgba(5, 150, 105, 0.05));
+    border-bottom-color: var(--success);
+  }
+
+  .custom-modal .modal-title {
+    font-weight: 700;
+    font-size: 1.25rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+
+  .custom-modal .modal-title i {
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 10px;
+    font-size: 1.25rem;
+  }
+
+  .custom-modal .modal-title.text-danger i {
+    background: linear-gradient(135deg, var(--danger), #dc2626);
+    color: white;
+  }
+
+  .custom-modal .modal-title.text-warning i {
+    background: linear-gradient(135deg, var(--warning), #d97706);
+    color: white;
+  }
+
+  .custom-modal .modal-title.text-success i {
+    background: linear-gradient(135deg, var(--success), var(--success-dark));
+    color: white;
+  }
+
+  .custom-modal .modal-title.text-info i {
+    background: linear-gradient(135deg, var(--info), #2563eb);
+    color: white;
+  }
+
+  .custom-modal .modal-body {
+    padding: 2rem;
+    font-size: 1rem;
+    line-height: 1.6;
+  }
+
+  .custom-modal .modal-body ul {
+    margin-top: 1rem;
+    padding-left: 1.5rem;
+  }
+
+  .custom-modal .modal-body ul li {
+    margin-bottom: 0.5rem;
+    color: var(--dark);
+  }
+
+  .custom-modal .modal-footer {
+    border-top: 2px solid var(--border);
+    padding: 1rem 1.5rem;
+    background: var(--light);
+  }
+
+  .custom-modal .btn-close {
+    background-size: 1.2rem;
+  }
+
+  .custom-modal .modal-footer .btn {
+    min-width: 100px;
+  }
+
+  /* Animation pour le modal */
+  .custom-modal.fade .modal-dialog {
+    transform: scale(0.9);
+    transition: transform 0.3s ease-out;
+  }
+
+  .custom-modal.show .modal-dialog {
+    transform: scale(1);
+  }
+
+  /* Style pour la césarienne */
+  .type-accouchement-card.cesarienne.selected::after {
+    color: var(--info);
+  }
+
+  .wizard-container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 2rem 1rem;
+    padding-bottom: 150px;
+    /* Prevent content occlusion by floating nav */
+  }
+
+  /* ✅ Fix stacking context: Bring card to front when it contains an open dropdown */
+  .modern-card:has(.choices.is-open) {
+    z-index: 20 !important;
+    position: relative;
+  }
+
+  .stepper-wrapper {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 3rem;
+    background: var(--bg-surface);
+    padding: 2rem;
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow);
+    position: relative;
+  }
+
+  .stepper-wrapper::before {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 10%;
+    right: 10%;
+    height: 3px;
+    background: var(--border);
+    transform: translateY(-50%);
+    z-index: 0;
+  }
+
+  .stepper-item {
+    position: relative;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    z-index: 1;
+  }
+
+  .stepper-circle {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background: var(--bg-surface);
+    border: 3px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--text-secondary);
+    transition: var(--transition);
+    margin-bottom: 0.75rem;
+  }
+
+  .stepper-item.active .stepper-circle {
+    background: var(--pink);
+    border-color: var(--pink);
+    color: white;
+    box-shadow: 0 0 0 8px rgba(236, 72, 153, 0.1);
+    transform: scale(1.1);
+  }
+
+  .stepper-item.completed .stepper-circle {
+    background: var(--success);
+    border-color: var(--success);
+    color: white;
+  }
+
+  .stepper-label {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    text-align: center;
+    transition: var(--transition);
+  }
+
+  .stepper-item.active .stepper-label {
+    color: var(--pink);
+    font-size: 0.95rem;
+  }
+
+  .stepper-item.completed .stepper-label {
+    color: var(--success);
+  }
+
+  /* ==================== Step Content ==================== */
+  .step-content {
+    display: none;
+    animation: fadeInUp 0.4s ease;
+  }
+
+  .step-content.active {
+    display: block;
+  }
+
+  @keyframes fadeInUp {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  /* ==================== Cards Modernes ==================== */
+  .modern-card {
+    background: var(--bg-surface);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow);
+    padding: 2rem;
+    margin-bottom: 1.5rem;
+    transition: var(--transition);
+    border: 1px solid var(--border);
+  }
+
+  .modern-card:hover {
+    box-shadow: var(--shadow-lg);
+    transform: translateY(-2px);
+  }
+
+  .card-title {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+
+  .card-title i {
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, var(--pink), var(--pink-dark));
+    color: white;
+    border-radius: 10px;
+    font-size: 1.25rem;
+  }
+
+  /* ==================== Form Styling ==================== */
+  .form-label {
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 0.5rem;
+    font-size: 0.875rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .form-control,
+  .form-select {
+    border: 2px solid var(--border);
+    border-radius: var(--radius);
+    padding: 0.75rem 1rem;
+    transition: var(--transition);
+    font-size: 0.95rem;
+    background: var(--bg-input);
+    color: var(--text-primary);
+  }
+
+  .form-control:focus,
+  .form-select:focus {
+    border-color: var(--pink);
+    box-shadow: 0 0 0 4px rgba(236, 72, 153, 0.1);
+    outline: none;
+    background: var(--bg-input);
+  }
+
+  .selection-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 1.5rem;
+    margin-top: 1.5rem;
+  }
+
+  .selection-card {
+    position: relative;
+    background: var(--bg-surface);
+    border: 2px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 1.5rem;
+    cursor: pointer;
+    transition: var(--transition);
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+  }
+
+  .selection-card:hover {
+    border-color: var(--pink);
+    box-shadow: var(--shadow-lg);
+    transform: translateY(-4px);
+  }
+
+  .selection-card.selected {
+    border-color: var(--pink);
+    background: linear-gradient(135deg,
+        rgba(236, 72, 153, 0.05),
+        rgba(219, 39, 119, 0.05));
+    box-shadow: 0 0 0 4px rgba(236, 72, 153, 0.1);
+  }
+
+  .selection-card input[type="radio"] {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    width: 24px;
+    height: 24px;
+    accent-color: var(--pink);
+  }
+
+  .selection-card-icon {
+    width: 60px;
+    height: 60px;
+    background: linear-gradient(135deg, var(--pink), var(--pink-dark));
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 1rem;
+  }
+
+  .selection-card-icon i {
+    font-size: 2rem;
+    color: white;
+  }
+
+  .selection-card-title {
+    font-size: 1.125rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 0.5rem;
+  }
+
+  .selection-card-subtitle {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+    margin-bottom: 1rem;
+    flex-grow: 1;
+  }
+
+  .selection-card-price {
+    display: inline-block;
+    background: linear-gradient(135deg, var(--success), var(--success-dark));
+    color: white;
+    padding: 0.5rem 1.25rem;
+    border-radius: 50px;
+    font-weight: 700;
+    font-size: 1.125rem;
+  }
+
+  /* ==================== Selection Checkbox Cards ==================== */
+  .selection-checkbox-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 1rem;
+    margin-top: 1rem;
+  }
+
+  .selection-checkbox-card {
+    position: relative;
+    display: flex;
+    align-items: center;
+    background: var(--bg-surface);
+    border: 2px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1rem 1.25rem;
+    cursor: pointer;
+    transition: var(--transition);
+    height: 100%;
+    user-select: none;
+    min-height: 80px;
+  }
+
+  .selection-checkbox-card:hover {
+    border-color: var(--pink);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow);
+  }
+
+  /* Cache l'input original mais garde la fonctionnalité */
+  .selection-checkbox-card input[type="checkbox"] {
+    position: absolute;
+    opacity: 0;
+    width: 0;
+    height: 0;
+    pointer-events: none;
+  }
+
+  /* État sélectionné */
+  .selection-checkbox-card:has(input:checked) {
+    border-color: var(--pink);
+    background: linear-gradient(135deg, rgba(236, 72, 153, 0.05), rgba(219, 39, 119, 0.05));
+    box-shadow: 0 0 0 2px rgba(236, 72, 153, 0.1);
+  }
+
+  .selection-checkbox-card .card-content {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    width: 100%;
+  }
+
+  .selection-checkbox-card .check-indicator {
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    border: 2px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: var(--transition);
+    flex-shrink: 0;
+    background: white;
+  }
+
+  /* Dark mode support for indicator background */
+  [data-theme="dark"] .selection-checkbox-card .check-indicator {
+    background: var(--bg-input);
+    border-color: var(--border);
+  }
+
+  .selection-checkbox-card:has(input:checked) .check-indicator {
+    background: var(--pink);
+    border-color: var(--pink);
+    color: white;
+    transform: scale(1.1);
+  }
+
+  .selection-checkbox-card:has(input:checked) .check-indicator i {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  .selection-checkbox-card .check-indicator i {
+    font-size: 0.8rem;
+    opacity: 0;
+    transform: scale(0);
+    transition: var(--transition);
+    color: white;
+  }
+
+  .selection-checkbox-card .card-label-text {
+    font-weight: 600;
+    color: var(--text-primary);
+    font-size: 0.95rem;
+    line-height: 1.4;
+    flex-grow: 1;
+  }
+
+  .selection-checkbox-card:hover .card-label-text {
+    color: var(--pink);
+  }
+
+  .btn {
+    border: none;
+    border-radius: var(--radius);
+    padding: 0.875rem 2rem;
+    font-weight: 600;
+    font-size: 0.95rem;
+    transition: var(--transition);
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    cursor: pointer;
+  }
+
+  .btn:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-lg);
+  }
+
+  .btn-primary {
+    background: linear-gradient(135deg, var(--pink), var(--pink-dark));
+    color: white;
+  }
+
+  .btn-success {
+    background: linear-gradient(135deg, var(--success), var(--success-dark));
+    color: white;
+  }
+
+  .btn-outline-primary {
+    background: transparent;
+    border: 2px solid var(--pink);
+    color: var(--pink);
+  }
+
+  .btn-outline-primary:hover {
+    background: var(--pink);
+    color: white;
+  }
+
+  .btn-secondary {
+    background: #6b7280;
+    color: white;
+  }
+
+
+  /* Boutons de navigation flottants */
+  .floating-nav-container {
+    position: fixed;
+    bottom: 30px;
+    left: 0;
+    right: 0;
+    display: flex;
+    justify-content: center;
+    z-index: 1000;
+    pointer-events: none;
+    /* ✅ Fix: Permettre de cliquer au travers du conteneur (ex: sidebar) */
+  }
+
+  /* ✅ Ajout d'une marge en bas du contenu pour éviter que la nav flottante ne cache le contenu */
+  .wizard-container {
+    padding-bottom: 100px;
+  }
+
+
+  .floating-nav {
+    background: white;
+    padding: 1rem 2rem;
+    border-radius: var(--radius-lg);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15), 0 0 0 1px rgba(0, 0, 0, 0.05);
+    display: flex;
+    gap: 1rem;
+    pointer-events: auto;
+    border: 2px solid var(--pink-light);
+    backdrop-filter: blur(10px);
+    animation: floatIn 0.5s ease;
+  }
+
+  @keyframes floatIn {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .floating-nav .btn {
+    min-width: 140px;
+    padding: 0.875rem 1.5rem;
+    font-weight: 600;
+  }
+
+  /* Cacher la navigation originale sur les grands écrans */
+  @media (min-width: 769px) {
+    .wizard-nav:not(.floating-nav) {
+      display: none;
+    }
+  }
+
+  /* Sur mobile, afficher la navigation originale et cacher la flottante */
+  @media (max-width: 768px) {
+    .floating-nav-container {
+      display: none;
+    }
+
+    .wizard-nav:not(.floating-nav) {
+      display: flex;
+    }
+  }
+
+  .btn-danger {
+    background: var(--danger);
+    color: white;
+  }
+
+  .btn-lg {
+    padding: 1.125rem 2.5rem;
+    font-size: 1.05rem;
+  }
+
+  .wizard-nav {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 2rem;
+    padding-top: 2rem;
+    border-top: 2px solid var(--border);
+  }
+
+  .summary-panel {
+    position: sticky;
+    top: 2rem;
+    background: var(--bg-surface);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-lg);
+    padding: 2rem;
+    border: 2px solid var(--pink);
+  }
+
+  .summary-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+
+  .summary-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.75rem 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 0.95rem;
+  }
+
+  .summary-row:last-child {
+    border-bottom: none;
+  }
+
+  .summary-total {
+    background: linear-gradient(135deg,
+        rgba(236, 72, 153, 0.1),
+        rgba(219, 39, 119, 0.1));
+    padding: 1.5rem;
+    border-radius: var(--radius);
+    margin-top: 1rem;
+  }
+
+  .summary-total .summary-row {
+    border: none;
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--pink);
+  }
+
+  .product-row,
+  .act-row {
+    background: var(--bg-surface);
+    border: 2px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1rem;
+    margin-bottom: 1rem;
+    transition: var(--transition);
+  }
+
+  .product-row:hover,
+  .act-row:hover {
+    border-color: var(--pink);
+    box-shadow: var(--shadow);
+  }
+
+  .badge {
+    display: inline-block;
+    padding: 0.375rem 0.75rem;
+    border-radius: 50px;
+    font-size: 0.875rem;
+    font-weight: 600;
+  }
+
+  .badge-info {
+    background: #dbeafe;
+    color: #1e40af;
+  }
+
+  .badge-success {
+    background: #d1fae5;
+    color: #065f46;
+  }
+
+  .badge-pink {
+    background: #fce7f3;
+    color: #be185d;
+  }
+
+  .type-accouchement-card {
+    border-left: 4px solid var(--pink);
+  }
+
+  .type-accouchement-card.cesarienne {
+    border-left-color: var(--info);
+  }
+
+  .type-accouchement-card.cesarienne .selection-card-icon {
+    background: linear-gradient(135deg, var(--info), #1d4ed8);
+  }
+
+  .input-group {
+    display: flex;
+    border-radius: var(--radius);
+    overflow: hidden;
+    box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  }
+
+  .input-group-text {
+    background: linear-gradient(135deg, var(--pink), var(--pink-dark));
+    color: white;
+    border: none;
+    padding: 0.75rem 1rem;
+    font-weight: 600;
+  }
+
+  .input-group .form-control {
+    border-radius: 0;
+  }
+
+  .tarif-details {
+    background: #fdf2f8;
+    border-radius: var(--radius);
+    padding: 1rem;
+    margin-top: 1rem;
+  }
+
+  .tarif-details h6 {
+    color: var(--pink-dark);
+    margin-bottom: 0.75rem;
+  }
+
+  .tarif-details .row {
+    font-size: 0.9rem;
+  }
+
+  .gyneco-interne-badge {
+    background: linear-gradient(135deg, var(--success), var(--success-dark));
+    color: white;
+    padding: 0.25rem 0.75rem;
+    border-radius: 50px;
+    font-size: 0.75rem;
+    margin-left: 0.5rem;
+  }
+
+  .gyneco-externe-badge {
+    background: linear-gradient(135deg, var(--info), #1d4ed8);
+    color: white;
+    padding: 0.25rem 0.75rem;
+    border-radius: 50px;
+    font-size: 0.75rem;
+    margin-left: 0.5rem;
+  }
+
+  .choices__inner {
+    border: 2px solid var(--border) !important;
+    border-radius: var(--radius) !important;
+    padding: 0.65rem 1rem !important;
+    min-height: 52px !important;
+  }
+
+  .choices.is-focused .choices__inner {
+    border-color: var(--pink) !important;
+    box-shadow: 0 0 0 4px rgba(236, 72, 153, 0.1) !important;
+  }
+
+  .choices__list--dropdown .choices__item--selectable.is-highlighted {
+    background: var(--pink) !important;
+  }
+
+  @media (max-width: 768px) {
+    .stepper-wrapper {
+      flex-wrap: wrap;
+    }
+
+    .stepper-circle {
+      width: 50px;
+      height: 50px;
+      font-size: 1.25rem;
+    }
+
+    .selection-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .wizard-nav {
+      flex-direction: column;
+      gap: 1rem;
+    }
+  }
+
+  /* ==================== Animations ==================== */
+  @keyframes pulse {
+
+    0%,
+    100% {
+      opacity: 1;
+    }
+
+    50% {
+      opacity: 0.5;
+    }
+  }
+
+  .loading {
+    animation: pulse 1.5s infinite;
+  }
+
+  /* ==================== Input Groups ==================== */
+  .input-group {
+    display: flex;
+    border-radius: var(--radius);
+    overflow: hidden;
+    box-shadow: var(--shadow-sm);
+  }
+
+  .input-group-text {
+    background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+    color: white;
+    border: none;
+    padding: 0.75rem 1rem;
+    font-weight: 600;
+  }
+
+  .input-group .form-control {
+    border-radius: 0;
+  }
+
+  /* ==================== Empty State ==================== */
+  .empty-state {
+    text-align: center;
+    padding: 3rem 2rem;
+  }
+
+  .empty-state i {
+    font-size: 4rem;
+    color: var(--primary);
+    margin-bottom: 1rem;
+  }
+
+  .empty-state p {
+    color: #6b7280;
+    font-size: 1rem;
+  }
+
+  .exploration-row .form-control::placeholder {
+    color: #9ca3af;
+    font-style: italic;
+  }
+
+  .exploration-row .form-label {
+    color: #6b7280;
+  }
+
+  .acte-anesth-row {
+    background: linear-gradient(135deg,
+        rgba(99, 102, 241, 0.05),
+        rgba(129, 140, 248, 0.05));
+    border-left: 4px solid var(--primary);
+  }
+
+  .acte-anesth-row:hover {
+    border-color: var(--primary-dark);
+    box-shadow: var(--shadow-lg);
+  }
+
+  .honoraires-anesth {
+    color: var(--success);
+    font-size: 0.95rem;
+  }
+
+  /* ==================== CHOICES.JS STYLES ==================== */
+  .choices {
+    margin-bottom: 0;
+    position: relative;
+    z-index: auto;
+    /* Reset z-index */
+  }
+
+  /* ✅ FIX PRINCIPAL: Quand le dropdown est ouvert, isoler le conteneur */
+  .choices.is-open {
+    z-index: 9999 !important;
+    position: relative;
+  }
+
+  /* ✅ Le dropdown lui-même doit avoir un z-index très élevé */
+  .choices__list--dropdown,
+  .choices__list[aria-expanded] {
+    background-color: var(--bg-surface) !important;
+    border: 1px solid var(--pink) !important;
+    border-radius: var(--radius) !important;
+    box-shadow: var(--shadow-lg) !important;
+    z-index: 10000 !important;
+    /* Augmenté à 10000 */
+    position: absolute;
+    /* S'assurer qu'il est positionné */
+    width: 100%;
+    overflow-y: auto !important;
+    max-height: 300px !important;
+  }
+
+  /* ✅ Important: Le wrapper doit créer un nouveau contexte d'empilement */
+  .choices__inner {
+    background-color: var(--bg-input) !important;
+    border: 2px solid var(--border) !important;
+    border-radius: var(--radius) !important;
+    min-height: 48px !important;
+    color: var(--text-primary) !important;
+    display: flex;
+    align-items: center;
+    position: relative;
+    z-index: auto;
+  }
+
+  /* ✅ Quand un select est dans une carte ouverte, ajuster le z-index */
+  .modern-card .choices.is-open {
+    z-index: 10002 !important;
+    /* Plus élevé que la carte */
+  }
+
+  /* ✅ Pour les selects dans les modales */
+  .modal .choices.is-open {
+    z-index: 1065 !important;
+    /* Bootstrap modals ont z-index 1050-1060 */
+  }
+
+  .choices__input {
+    background-color: transparent !important;
+    color: var(--text-primary) !important;
+    margin-bottom: 0 !important;
+  }
+
+  .choices__list--dropdown,
+  .choices__list[aria-expanded] {
+    background-color: var(--bg-surface) !important;
+    border: 1px solid var(--pink) !important;
+    border-radius: var(--radius) !important;
+    box-shadow: var(--shadow-lg) !important;
+    z-index: 1060 !important;
+  }
+
+  .choices__list--dropdown .choices__item,
+  .choices__list[aria-expanded] .choices__item {
+    color: var(--text-primary) !important;
+    font-size: 0.95rem;
+    padding: 0.75rem 1rem;
+  }
+
+  .choices__list--dropdown .choices__item--selectable.is-highlighted,
+  .choices__list[aria-expanded] .choices__item--selectable.is-highlighted {
+    background-color: var(--pink) !important;
+    background-image: linear-gradient(135deg, var(--pink), var(--pink-dark)) !important;
+    color: white !important;
+  }
+
+  .choices__item {
+    color: var(--text-primary);
+  }
+
+  /* Placeholder */
+  .choices__placeholder {
+    color: var(--text-secondary) !important;
+    opacity: 1;
+  }
+
+  /* Remove default ugly arrow/backgrounds */
+  .choices[data-type*="select-one"] .choices__inner {
+    padding-bottom: 0;
+  }
+
+  .choices[data-type*="select-one"]::after {
+    border-color: var(--text-secondary) transparent transparent transparent !important;
+    right: 1.5rem;
+  }
+
+  .choices__list--dropdown {
+    overflow-y: auto !important;
+    max-height: 300px !important;
+  }
+
+  /* ✅ Pour les selects multiples */
+  .choices[data-type*="multiple"] .choices__list--dropdown {
+    z-index: 10000 !important;
+  }
+
+  /* ✅ Dark mode adjustments */
+  [data-theme="dark"] .choices__list--dropdown,
+  [data-theme="dark"] .choices__list[aria-expanded] {
+    border-color: var(--pink) !important;
+    background-color: var(--bg-surface) !important;
+  }
+
+  /* ✅ Responsive fixes */
+  @media (max-width: 768px) {
+    .choices__list--dropdown {
+      position: fixed !important;
+      width: 90% !important;
+      left: 5% !important;
+      right: 5% !important;
+      top: auto !important;
+      bottom: 0 !important;
+      max-height: 50vh !important;
+      z-index: 10050 !important;
+    }
+
+    .choices.is-open {
+      z-index: 10049 !important;
+    }
+  }
+
+  /* Focus state */
+  .is-focused .choices__inner {
+    border-color: var(--pink) !important;
+  }
+
+  /* ==================== MODAL BOOTSTRAP STYLES ==================== */
+  .modal-content {
+    background: var(--bg-surface) !important;
+    border: 1px solid var(--border) !important;
+    border-radius: var(--radius-lg) !important;
+    box-shadow: var(--shadow-lg) !important;
+    color: var(--text-primary) !important;
+  }
+
+  .modal-header {
+    border-bottom: 1px solid var(--border) !important;
+    background: var(--bg-surface) !important;
+  }
+
+  .modal-title {
+    color: var(--text-primary) !important;
+  }
+
+  .modal-body {
+    background: var(--bg-surface) !important;
+    color: var(--text-primary) !important;
+  }
+
+  .modal-footer {
+    border-top: 1px solid var(--border) !important;
+    background: var(--bg-surface) !important;
+  }
+
+  .btn-close {
+    filter: var(--btn-close-filter, none);
+  }
+
+  [data-theme="dark"] .btn-close {
+    filter: invert(1) grayscale(100%) brightness(200%);
+  }
+
+  /* ==================== ACCORDION STYLES ==================== */
+  .accordion-item {
+    background: var(--bg-surface);
+    border: 1px solid var(--border);
+  }
+
+  .accordion-button {
+    background: var(--bg-surface);
+    color: var(--text-primary);
+  }
+
+  .accordion-button:not(.collapsed) {
+    background: linear-gradient(135deg, rgba(236, 72, 153, 0.05), rgba(219, 39, 119, 0.05));
+    color: var(--pink);
+  }
+
+  .accordion-button::after {
+    filter: var(--accordion-icon-filter, none);
+  }
+
+  [data-theme="dark"] .accordion-button::after {
+    filter: invert(1) grayscale(100%) brightness(200%);
+  }
+
+  .accordion-body {
+    background: var(--bg-surface);
+    color: var(--text-primary);
+  }
+
+  /* ==================== DARK MODE SPECIFIC OVERRIDES ==================== */
+  [data-theme="dark"] .floating-nav {
+    background: var(--bg-surface);
+    border-color: var(--border);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4);
+  }
+
+  [data-theme="dark"] .product-row,
+  [data-theme="dark"] .act-row,
+  [data-theme="dark"] .acte-anesth-row,
+  [data-theme="dark"] .exploration-row {
+    background: var(--bg-surface);
+    border-color: var(--border);
+  }
+
+  [data-theme="dark"] .summary-panel {
+    background: var(--bg-surface);
+  }
+
+  [data-theme="dark"] .summary-title {
+    color: var(--text-primary);
+  }
+
+  [data-theme="dark"] .summary-row {
+    border-color: var(--border);
+    color: var(--text-secondary);
+  }
+
+  [data-theme="dark"] .badge-info {
+    background: rgba(59, 130, 246, 0.2);
+    color: #93c5fd;
+  }
+
+  [data-theme="dark"] .badge-success {
+    background: rgba(16, 185, 129, 0.2);
+    color: #6ee7b7;
+  }
+
+  [data-theme="dark"] .badge-pink {
+    background: rgba(236, 72, 153, 0.2);
+    color: #f9a8d4;
+  }
+
+  [data-theme="dark"] .empty-state p {
+    color: var(--text-secondary);
+  }
+
+  [data-theme="dark"] .tarif-details {
+    background: rgba(236, 72, 153, 0.1);
+  }
+
+  [data-theme="dark"] .exploration-row .form-label {
+    color: var(--text-secondary);
+  }
+
+  /* Alerts Dark Mode */
+  [data-theme="dark"] .alert-light {
+    background: rgba(255, 255, 255, 0.05);
+    border-color: var(--border);
+    color: var(--text-primary);
+  }
+
+  [data-theme="dark"] .alert-info {
+    background: rgba(59, 130, 246, 0.15);
+    color: #93c5fd;
+    border-color: rgba(59, 130, 246, 0.2);
+  }
+</style>
+{% endblock %}
+{% block content %}
+<!-- Modal Personnalisé Réutilisable -->
+<div class="modal fade custom-modal" id="customModal" tabindex="-1" aria-labelledby="customModalLabel"
+  aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header" id="modalHeader">
+        <h5 class="modal-title" id="customModalLabel">
+          <i id="modalIcon" class="fas fa-info-circle"></i>
+          <span id="modalTitle">Information</span>
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body" id="modalBody">
+        <!-- Le contenu sera injecté dynamiquement -->
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-primary" data-bs-dismiss="modal">
+          <i class="fas fa-check"></i> Compris
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="wizard-container">
+  <!-- Stepper Header -->
+  <div class="stepper-wrapper">
+    <div class="stepper-item active" data-step="1">
+      <div class="stepper-circle"><i class="fas fa-info-circle"></i></div>
+      <div class="stepper-label">Informations</div>
+    </div>
+    <div class="stepper-item" data-step="2">
+      <div class="stepper-circle"><i class="fas fa-stethoscope"></i></div>
+      <div class="stepper-label">Médical</div>
+    </div>
+    <div class="stepper-item" data-step="3">
+      <div class="stepper-circle"><i class="fas fa-box"></i></div>
+      <div class="stepper-label">Produits & Actes</div>
+    </div>
+    <div class="stepper-item" data-step="4">
+      <div class="stepper-circle"><i class="fas fa-hospital"></i></div>
+      <div class="stepper-label">Hospitalisation</div>
+    </div>
+    <div class="stepper-item" data-step="5">
+      <div class="stepper-circle"><i class="fas fa-clipboard-list"></i></div>
+      <div class="stepper-label">Explorations</div>
+    </div>
+    <div class="stepper-item" data-step="6">
+      <div class="stepper-circle"><i class="fas fa-check-circle"></i></div>
+      <div class="stepper-label">Validation</div>
+    </div>
+  </div>
+
+  <form method="POST" id="accouchementForm">
+    <!-- ÉTAPE 1: Informations -->
+    <div class="step-content active" data-step="1">
+      <div class="row">
+        <div class="col-lg-8">
+          <div class="modern-card">
+            <h3 class="card-title">
+              <i class="fas fa-user-md"></i>Informations générales
+            </h3>
+
+            <div class="row mb-3">
+              <div class="col-md-6">
+                <label class="form-label text-danger"><i class="fas fa-user-md"></i> Gynécologue *</label>
+                <select name="id_gyneco" id="gynecoSelect" class="form-select" required>
+                  <option value="">-- Sélectionner --</option>
+                  {% for g in gynecos %}
+                  <option value="{{ g.id }}" data-interne="{{ g.est_interne or 0 }}" {% if g.id==dossier.id_gyneco
+                    %}selected{% endif %}>
+                    {{ g.name }} {% if g.est_interne %}(Interne){% else %}(Externe){% endif %}
+                  </option>
+                  {% endfor %}
+                </select>
+                <small class="text-muted" id="gynecoTypeInfo"></small>
+              </div>
+              <div class="col-md-6">
+                {{ his_selector.render(field_name='patient_oid',
+                field_id='patientSelectDirect', filter_gender='F', min_age=14, selected_value=dossier.patient_oid,
+                selected_label=dossier.patiente) }}
+                <input type="hidden" name="patiente" id="patientNameHidden" value="{{ dossier.patiente }}" />
+                <input type="hidden" name="age_patiente" id="patientAgeHidden" value="{{ dossier.age_patiente }}" />
+              </div>
+            </div>
+
+            <div class="row mb-3">
+              <div class="col-md-6">
+                <label class="form-label"><i class="fas fa-ring"></i> Nom de l'époux</label>
+                <input type="text" name="nom_epoux" class="form-control" placeholder="Nom du mari"
+                  value="{{ dossier.nom_epoux or '' }}" />
+              </div>
+            </div>
+
+            <div class="row mb-3">
+              <div class="col-md-6">
+                <label class="form-label text-danger"><i class="far fa-calendar-alt"></i> Date d'accouchement
+                  *</label>
+                <input type="date" name="date_accouchement" id="dateAccouchement" class="form-control" required
+                  value="{{ dossier.date_accouchement or '' }}" />
+              </div>
+              <div class="col-md-6">
+                <label class="form-label"><i class="fas fa-clock"></i> Heure</label>
+                <input type="time" name="heure_accouchement" class="form-control"
+                  value="{{ dossier.heure_accouchement or '' }}" />
+              </div>
+            </div>
+          </div>
+
+          <!-- Type d'accouchement avec cardes uniquement -->
+          <div class="modern-card">
+            <h3 class="card-title">
+              <i class="fas fa-baby"></i>Type d'accouchement
+              <span class="text-danger">*</span>
+            </h3>
+
+            <!-- Input hidden pour le formulaire -->
+            <input type="hidden" name="type_accouchement" id="typeAccouchement" required
+              value="{{ dossier.type_accouchement }}" />
+
+            <div class="selection-grid">
+              <div class="selection-card type-accouchement-card" id="cardVoieBasse"
+                onclick="selectTypeAccouchement('VOIE_BASSE')">
+                <input type="radio" name="type_acc_radio" value="VOIE_BASSE" required {% if
+                  dossier.type_accouchement=="VOIE_BASSE" %}checked{% endif %} />
+                <div class="selection-card-icon">
+                  <i class="fas fa-baby"></i>
+                </div>
+                <div class="selection-card-title">Voie Basse</div>
+                <div class="selection-card-subtitle">
+                  Accouchement par voie naturelle<br /><small>1 nuitée incluse</small>
+                </div>
+              </div>
+              <div class="selection-card type-accouchement-card cesarienne" id="cardCesarienne"
+                onclick="selectTypeAccouchement('CESARIENNE')">
+                <input type="radio" name="type_acc_radio" value="CESARIENNE" required {% if
+                  dossier.type_accouchement=="CESARIENNE" %}checked{% endif %} />
+                <div class="selection-card-icon">
+                  <i class="fas fa-procedures"></i>
+                </div>
+                <div class="selection-card-title">Césarienne</div>
+                <div class="selection-card-subtitle">
+                  Intervention chirurgicale<br /><small>2 nuitées incluses</small>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="modern-card">
+            <h3 class="card-title">
+              <i class="fas fa-money-bill-alt"></i>Type de tarification
+            </h3>
+            <div class="selection-grid">
+              <div class="selection-card" onclick="selectTarification('CONVENTION')">
+                <input type="radio" name="type_tarification" id="tarifConvention" value="CONVENTION" {% if
+                  dossier.type_tarification=="CONVENTION" %}checked{% endif %} />
+                <div class="selection-card-icon" style="
+                                    background: linear-gradient(
+                                      135deg,
+                                      var(--success),
+                                      var(--success-dark)
+                                    );
+                                  ">
+                  <i class="fas fa-file-contract"></i>
+                </div>
+                <div class="selection-card-title">Convention (CNAS/CASNOS)</div>
+                <div class="selection-card-subtitle">
+                  Tarif conventionné avec la sécurité sociale
+                </div>
+                <span class="badge badge-success">Conventionné</span>
+              </div>
+              <div class="selection-card" onclick="selectTarification('PAYANT')">
+                <input type="radio" name="type_tarification" id="tarifPayant" value="PAYANT" {% if
+                  dossier.type_tarification=="PAYANT" %}checked{% endif %} />
+                <div class="selection-card-icon" style="
+                                    background: linear-gradient(
+                                      135deg,
+                                      var(--warning),
+                                      #d97706
+                                    );
+                                  ">
+                  <i class="fas fa-wallet"></i>
+                </div>
+                <div class="selection-card-title">Payant</div>
+                <div class="selection-card-subtitle">
+                  Tarification libre, patient à charge
+                </div>
+                <span class="badge" style="background: #fef3c7; color: #92400e">Libre</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Détails tarification -->
+          <div class="modern-card" id="tarifDetailsCard" style="display: none">
+            <h3 class="card-title">
+              <i class="fas fa-calculator"></i>Détails de la tarification
+            </h3>
+
+            <div class="tarif-details" id="tarifDetailsContent">
+              <!-- Rempli dynamiquement -->
+            </div>
+
+            <div class="row mt-4" id="supplementGynecoRow" style="display: none">
+              <div class="col-md-6">
+                <label class="form-label"><i class="fas fa-plus-circle"></i> Supplément demandé par le
+                  gynécologue</label>
+                <div class="input-group">
+                  <input type="number" name="supplement_gyneco" id="supplementGyneco" class="form-control" step="1000"
+                    min="0" value="0" onchange="recalculerTarifs()" />
+                  <span class="input-group-text">DA</span>
+                </div>
+                <small class="text-muted">Ce montant s'ajoute à la part du gynécologue externe</small>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-lg-4">
+          <div class="summary-panel">
+            <h4 class="summary-title">
+              <i class="fas fa-info-circle text-pink-500"></i>Guide Étape 1
+            </h4>
+            <div class="alert alert-light">
+              <small>
+                <strong><i class="far fa-lightbulb text-warning"></i> Conseils
+                  :</strong>
+                <ul class="mt-2 mb-0" style="padding-left: 1.2rem">
+                  <li>
+                    <strong>Gynécologue interne</strong> : honoraires fixes
+                  </li>
+                  <li>
+                    <strong>Gynécologue externe</strong> : peut demander un
+                    supplément
+                  </li>
+                  <li><strong>Voie basse</strong> : 1 nuitée incluse</li>
+                  <li><strong>Césarienne</strong> : 2 nuitées incluses</li>
+                </ul>
+              </small>
+              <div class="summary-row">
+                <span>Prix de base :</span><strong id="prixBaseDisplay">0.00 DA</strong>
+              </div>
+
+              <div class="summary-row">
+                <span>Part gynécologue :</span><strong id="partGynecoDisplay">0.00 DA</strong>
+              </div>
+              <div class="summary-row">
+                <span>Nuitées incluses :</span><strong id="nuiteesInclusesDisplay">0</strong>
+              </div>
+              <div class="summary-total">
+                <div class="summary-row">
+                  <span>BASE :</span><strong id="prixBaseTotalDisplay">0.00 DA</strong>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ÉTAPE 2: Médical & Anesthésie -->
+    <div class="step-content" data-step="2">
+      <div class="row">
+        <div class="col-lg-8">
+          <!-- Anesthésie -->
+          <div class="modern-card">
+            <h3 class="card-title">
+              <i class="fas fa-syringe"></i>Anesthésie
+            </h3>
+
+            <div class="alert alert-info mb-3">
+              <i class="fas fa-info-circle"></i>
+              <small>
+                <strong>Tarification :</strong> Le tarif forfaitaire est unique
+                par acte d'anesthésie, indépendamment du nombre d'intervenants.
+              </small>
+            </div>
+            <div class="row mb-3">
+              <div class="col-md-12">
+                <label class="form-label"><i class="fas fa-syringe"></i> Type d'acte d'anesthésie</label>
+                <select name="acte_anesth_id" id="acteAnesthId" class="form-select" onchange="updateTarifAnesthesie()">
+                  <option value="">-- Sélectionner --</option>
+                </select>
+              </div>
+            </div>
+            <div class="row mb-3">
+              <div class="col-md-6">
+                <label class="form-label">
+                  <i class="fas fa-user-md"></i> Intervenant 1 (Réanimateur)
+                  <span class="badge bg-secondary" style="font-size: 0.7rem">Optionnel</span>
+                </label>
+                <select name="intervenant1_id" id="intervenant1Id" class="form-select"
+                  onchange="updateTarifAnesthesie()">
+                  <option value="">-- Sélectionner --</option>
+                </select>
+                <small class="text-muted d-block mt-1">
+                  Honoraires estimés : <span id="tarif1Display" class="fw-bold">0.00 DA</span>
+                </small>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">
+                  <i class="fas fa-user-nurse"></i> Intervenant 2 (Technicien)
+                  <span class="badge bg-secondary" style="font-size: 0.7rem">Optionnel</span>
+                </label>
+                <select name="intervenant2_id" id="intervenant2Id" class="form-select"
+                  onchange="updateTarifAnesthesie()">
+                  <option value="">-- Sélectionner --</option>
+                </select>
+                <small class="text-muted d-block mt-1">
+                  Honoraires estimés : <span id="tarif2Display" class="fw-bold">0.00 DA</span>
+                </small>
+              </div>
+            </div>
+
+            <div class="alert alert-success d-flex justify-content-between align-items-center" id="tarifAnesthesieTotal"
+              style="display: none !important">
+              <div>
+                <strong><i class="fas fa-money-bill-wave me-2"></i>Prix anesthésie (tarif forfaitaire)</strong>
+                <br /><small class="text-muted">Prix facturé au patient</small>
+              </div>
+              <div class="text-end">
+                <strong class="text-success" style="font-size: 1.5rem">
+                  <span id="totalAnesthesieDisplay">0.00 DA</span>
+                </strong>
+              </div>
+            </div>
+
+            <div class="alert alert-light border mt-2" id="tarifAnesthesieTotalDisplay" style="display: none">
+              <div class="row align-items-center">
+                <div class="col-md-12">
+                  <strong><i class="fas fa-info-circle text-info me-1"></i>Information</strong>
+                  <p class="mb-0 mt-2 small">
+                    Les honoraires affichés ci-dessus sont des estimations
+                    basées sur une durée standard de 90 minutes.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Informations Médicales -->
+          <div class="modern-card" id="medicalInfoCard">
+            <h3 class="card-title">
+              <i class="fas fa-stethoscope"></i>Informations Médicales
+              <span class="badge bg-info ms-2" style="font-size: 0.7rem;">Sage-femme/Gynéco</span>
+            </h3>
+
+            <!-- Informations du nouveau-né -->
+            <div class="row mb-4">
+              <div class="col-12">
+                <h6 class="text-muted mb-3"><i class="fas fa-baby-carriage me-2"></i>Nouveau-né</h6>
+              </div>
+              <div class="col-md-3">
+                <label class="form-label"><i class="fas fa-venus-mars"></i> Sexe du bébé</label>
+                <select name="sexe_bebe" id="sexeBebe" class="form-select">
+                  <option value="">-- Sélectionner --</option>
+                  <option value="MASCULIN" {% if dossier.sexe_bebe=='MASCULIN' %}selected{% endif %}>Masculin</option>
+                  <option value="FEMININ" {% if dossier.sexe_bebe=='FEMININ' %}selected{% endif %}>Féminin</option>
+                </select>
+              </div>
+              <div class="col-md-3">
+                <label class="form-label"><i class="fas fa-weight"></i> Poids (grammes)</label>
+                <input type="number" name="poids_naissance" id="poidsNaissance" class="form-control"
+                  placeholder="Ex: 3200" min="500" max="6000" step="10" value="{{ dossier.poids_naissance or '' }}" />
+              </div>
+              <div class="col-md-3">
+                <label class="form-label"><i class="fas fa-heartbeat"></i> Score APGAR</label>
+                <input type="text" name="apgar_score" id="apgarScore" class="form-control" placeholder="Ex: 9/10"
+                  maxlength="10" value="{{ dossier.apgar_score or '' }}" />
+              </div>
+              <div class="col-md-3">
+                <label class="form-label"><i class="fas fa-user"></i> Prénom</label>
+                <input type="text" name="prenom_bebe" id="prenomBebe" class="form-control" placeholder="Prénom du bébé"
+                  value="{{ dossier.prenom_bebe or '' }}" />
+              </div>
+            </div>
+
+            <!-- Mode d'accouchement - Voie Basse -->
+            <div class="row mb-4" id="detailsVoieBasse" style="display: none;">
+              <div class="col-12">
+                <h6 class="text-muted mb-3"><i class="fas fa-baby me-2"></i>Détails voie basse</h6>
+              </div>
+              <div class="col-md-4">
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" name="avec_peridurale" id="avecPeridurale" value="1"
+                    {% if 'Avec péridurale' in (dossier.mode_accouchement_detail or '' ) %}checked{% endif %}>
+                  <label class="form-check-label" for="avecPeridurale">
+                    <i class="fas fa-syringe text-info me-1"></i> Avec péridurale
+                  </label>
+                </div>
+              </div>
+              <div class="col-md-4">
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" name="avec_episiotomie" id="avecEpisiotomie" value="1"
+                    {% if 'Avec épisiotomie' in (dossier.mode_accouchement_detail or '' ) %}checked{% endif %}>
+                  <label class="form-check-label" for="avecEpisiotomie">
+                    <i class="fas fa-cut text-warning me-1"></i> Avec épisiotomie
+                  </label>
+                </div>
+              </div>
+              <div class="col-md-4">
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" name="avec_forceps" id="avecForceps" value="1" {%
+                    if 'Avec forceps' in (dossier.mode_accouchement_detail or '' ) %}checked{% endif %}>
+                  <label class="form-check-label" for="avecForceps">
+                    <i class="fas fa-tools text-danger me-1"></i> Avec forceps
+                  </label>
+                </div>
+              </div>
+            </div>
+
+            <!-- Mode d'accouchement - Césarienne -->
+            <div class="row mb-4" id="detailsCesarienne" style="display: none;">
+              <div class="col-12">
+                <h6 class="text-muted mb-3"><i class="fas fa-procedures me-2"></i>Détails césarienne</h6>
+              </div>
+              <div class="col-md-6 mb-3">
+                <label class="form-label">Type de césarienne</label>
+                <select name="type_cesarienne" id="typeCesarienne" class="form-select">
+                  <option value="">-- Sélectionner --</option>
+                  <option value="URGENCE" {% if dossier.type_cesarienne=='URGENCE' %}selected{% endif %}>Césarienne
+                    d'urgence</option>
+                  <option value="PROPHYLACTIQUE" {% if dossier.type_cesarienne=='PROPHYLACTIQUE' %}selected{% endif %}>
+                    Césarienne prophylactique</option>
+                </select>
+              </div>
+
+              <!-- Indications césarienne urgence -->
+              <div class="col-12" id="indicationsUrgence" style="display: none;">
+                <label class="form-label text-danger">Indications (urgence)</label>
+                <div class="selection-checkbox-grid">
+                  <label class="selection-checkbox-card">
+                    <input type="checkbox" name="indic_ercf" value="1" {% if 'ERCF pathologique' in
+                      (dossier.indication_cesarienne or '' ) or 'Souffrance' in (dossier.indication_cesarienne or '' )
+                      %}checked{% endif %}>
+                    <div class="card-content">
+                      <div class="check-indicator"><i class="fas fa-check"></i></div>
+                      <span class="card-label-text">ERCF pathologique / Souffrance fœtale aiguë</span>
+                    </div>
+                  </label>
+
+                  <label class="selection-checkbox-card">
+                    <input type="checkbox" name="indic_liquide" value="1" {% if 'liquide' in
+                      (dossier.indication_cesarienne or '' ).lower() %}checked{% endif %}>
+                    <div class="card-content">
+                      <div class="check-indicator"><i class="fas fa-check"></i></div>
+                      <span class="card-label-text">Virage liquide amniotique verdâtre</span>
+                    </div>
+                  </label>
+
+                  <label class="selection-checkbox-card">
+                    <input type="checkbox" name="indic_dilatation" value="1" {% if 'Dilatation stationnaire' in
+                      (dossier.indication_cesarienne or '' ) %}checked{% endif %}>
+                    <div class="card-content">
+                      <div class="check-indicator"><i class="fas fa-check"></i></div>
+                      <span class="card-label-text">Dilatation stationnaire</span>
+                    </div>
+                  </label>
+
+                  <label class="selection-checkbox-card">
+                    <input type="checkbox" name="indic_engagement" value="1" {% if "Défaut d\'engagement" in
+                      (dossier.indication_cesarienne or "" ) %}checked{% endif %}>
+                    <div class="card-content">
+                      <div class="check-indicator"><i class="fas fa-check"></i></div>
+                      <span class="card-label-text">Défaut d'engagement</span>
+                    </div>
+                  </label>
+
+                  <label class="selection-checkbox-card">
+                    <input type="checkbox" name="indic_presentation" value="1" {% if "Présentation vicieuse" in
+                      (dossier.indication_cesarienne or "" ) %}checked{% endif %}>
+                    <div class="card-content">
+                      <div class="check-indicator"><i class="fas fa-check"></i></div>
+                      <span class="card-label-text">Présentation vicieuse</span>
+                    </div>
+                  </label>
+
+                  <label class="selection-checkbox-card">
+                    <input type="checkbox" name="indic_echec" value="1" {% if "Échec de déclenchement" in
+                      (dossier.indication_cesarienne or "" ) %}checked{% endif %}>
+                    <div class="card-content">
+                      <div class="check-indicator"><i class="fas fa-check"></i></div>
+                      <span class="card-label-text">Échec de déclenchement</span>
+                    </div>
+                  </label>
+                </div>
+              </div>
+
+              <!-- Indications césarienne prophylactique -->
+              <div class="col-12" id="indicationsProphylactique" style="display: none;">
+                <label class="form-label text-info">Indications (prophylactique)</label>
+                <div class="selection-checkbox-grid">
+                  <label class="selection-checkbox-card">
+                    <input type="checkbox" name="indic_uterus" value="1" {% if "Utérus cicatriciel ou multi-cicatriciel"
+                      in (dossier.indication_cesarienne or "" ) %}checked{% endif %}>
+                    <div class="card-content">
+                      <div class="check-indicator"><i class="fas fa-check"></i></div>
+                      <span class="card-label-text">Utérus cicatriciel ou multi-cicatriciel</span>
+                    </div>
+                  </label>
+
+                  <label class="selection-checkbox-card">
+                    <input type="checkbox" name="indic_bassin" value="1" {% if "Bassin vicié" in
+                      (dossier.indication_cesarienne or "" ) %}checked{% endif %}>
+                    <div class="card-content">
+                      <div class="check-indicator"><i class="fas fa-check"></i></div>
+                      <span class="card-label-text">Bassin vicié</span>
+                    </div>
+                  </label>
+
+                  <label class="selection-checkbox-card">
+                    <input type="checkbox" name="indic_siege" value="1" {% if "Présentation de siège" in
+                      (dossier.indication_cesarienne or "" ) %}checked{% endif %}>
+                    <div class="card-content">
+                      <div class="check-indicator"><i class="fas fa-check"></i></div>
+                      <span class="card-label-text">Présentation du siège ou transverse</span>
+                    </div>
+                  </label>
+
+                  <label class="selection-checkbox-card">
+                    <input type="checkbox" name="indic_macrosomie" value="1" {% if "Macrosomie fœtale" in
+                      (dossier.indication_cesarienne or "" ) %}checked{% endif %}>
+                    <div class="card-content">
+                      <div class="check-indicator"><i class="fas fa-check"></i></div>
+                      <span class="card-label-text">Macrosomie fœtale</span>
+                    </div>
+                  </label>
+
+                  <label class="selection-checkbox-card">
+                    <input type="checkbox" name="indic_bishop" value="1" {% if 'BISHOP' in
+                      (dossier.indication_cesarienne or '' ).upper() %}checked{% endif %}>
+                    <div class="card-content">
+                      <div class="check-indicator"><i class="fas fa-check"></i></div>
+                      <span class="card-label-text">Mauvais BISHOP</span>
+                    </div>
+                  </label>
+                </div>
+              </div>
+            </div>
+
+            <!-- Pathologies maternelles -->
+            <div class="row mb-4">
+              <div class="col-12">
+                <h6 class="text-muted mb-3"><i class="fas fa-notes-medical me-2"></i>Pathologies maternelles associées
+                </h6>
+                <div class="selection-checkbox-grid">
+                  <label class="selection-checkbox-card">
+                    <input type="checkbox" name="patho_hta" id="pathoHta" value="1" {% if 'HTA artérielle' in
+                      (dossier.mode_accouchement_detail or '' ) or 'HTA artérielle' in (dossier.pathologies_maternelles
+                      or '' ) %}checked{% endif %}>
+                    <div class="card-content">
+                      <div class="check-indicator"><i class="fas fa-check"></i></div>
+                      <span class="card-label-text">HTA artérielle</span>
+                    </div>
+                  </label>
+
+                  <label class="selection-checkbox-card">
+                    <input type="checkbox" name="patho_diabete" id="pathoDiabete" value="1" {% if 'Diabète' in
+                      (dossier.mode_accouchement_detail or '' ) or 'Diabète' in (dossier.pathologies_maternelles or '' )
+                      %}checked{% endif %}>
+                    <div class="card-content">
+                      <div class="check-indicator"><i class="fas fa-check"></i></div>
+                      <span class="card-label-text">Diabète</span>
+                    </div>
+                  </label>
+
+                  <label class="selection-checkbox-card">
+                    <input type="checkbox" name="patho_hypothyroidie" id="pathoHypothyroidie" value="1" {%
+                      if 'Hypothyroïdie' in (dossier.mode_accouchement_detail or '' ) or 'Hypothyroïdie' in
+                      (dossier.pathologies_maternelles or '' ) %}checked{% endif %}>
+                    <div class="card-content">
+                      <div class="check-indicator"><i class="fas fa-check"></i></div>
+                      <span class="card-label-text">Hypothyroïdie</span>
+                    </div>
+                  </label>
+
+                  <label class="selection-checkbox-card">
+                    <input type="checkbox" name="patho_immunitaire" id="pathoImmunitaire" value="1" {%
+                      if 'Maladie immunitaire' in (dossier.mode_accouchement_detail or '' ) or 'Maladie immunitaire' in
+                      (dossier.pathologies_maternelles or '' ) %}checked{% endif %}>
+                    <div class="card-content">
+                      <div class="check-indicator"><i class="fas fa-check"></i></div>
+                      <span class="card-label-text">Maladie immunitaire</span>
+                    </div>
+                  </label>
+                </div>
+              </div>
+            </div>
+
+            <!-- Informations Obstétricales -->
+            <div class="modern-card">
+              <div class="card-title">
+                <i class="fas fa-baby-carriage"></i> Informations Obstétricales
+              </div>
+              <div class="row g-3">
+                <div class="col-md-3">
+                  <label class="form-label">DDR</label>
+                  <input type="date" name="ddr" id="ddr" class="form-control" value="{{ dossier.ddr or '' }}">
+                </div>
+                <div class="col-md-3">
+                  <label class="form-label">Age Gestationnel</label>
+                  <input type="text" name="age_gestationnel" class="form-control" placeholder="ex: 39 SA"
+                    value="{{ dossier.age_gestationnel or '' }}">
+                </div>
+                <div class="col-md-3">
+                  <label class="form-label">Parité</label>
+                  <input type="text" name="parite" class="form-control" placeholder="ex: G2P1"
+                    value="{{ dossier.parite or '' }}">
+                </div>
+                <div class="col-md-4">
+                  <label class="form-label">Groupage Sanguin</label>
+                  <select name="groupage_sanguin" class="form-select">
+                    <option value="">-- Choisir --</option>
+                    <option value="A" {% if dossier.groupage_sanguin=='A' %}selected{% endif %}>A</option>
+                    <option value="B" {% if dossier.groupage_sanguin=='B' %}selected{% endif %}>B</option>
+                    <option value="AB" {% if dossier.groupage_sanguin=='AB' %}selected{% endif %}>AB</option>
+                    <option value="O" {% if dossier.groupage_sanguin=='O' %}selected{% endif %}>O</option>
+                  </select>
+                </div>
+                <div class="col-md-4">
+                  <label class="form-label">Rhésus</label>
+                  <select name="rhesus" class="form-select">
+                    <option value="">-- Choisir --</option>
+                    <option value="+" {% if dossier.rhesus=='+' %}selected{% endif %}>Positif (+)</option>
+                    <option value="-" {% if dossier.rhesus=='-' %}selected{% endif %}>Négatif (-)</option>
+                  </select>
+                </div>
+                <div class="col-md-12">
+                  <label class="form-label">Pathologie de la grossesse</label>
+                  <textarea name="pathologie_grossesse" class="form-control" rows="2"
+                    placeholder="HTA, Diabète...">{{ dossier.pathologie_grossesse or '' }}</textarea>
+                </div>
+              </div>
+            </div>
+
+            <!-- Observations -->
+            <div class="row">
+              <div class="col-md-6">
+                <label class="form-label"><i class="fas fa-comment-medical"></i> Complications médicales</label>
+                <textarea name="complications_medicales" id="complicationsMedicales" class="form-control" rows="2"
+                  placeholder="Complications éventuelles...">{{ dossier.observations_medicales or '' }}</textarea>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label"><i class="fas fa-clipboard"></i> Observations</label>
+                <textarea name="observations" id="observationsMedicales" class="form-control" rows="2"
+                  placeholder="Observations générales...">{{ dossier.observations or '' }}</textarea>
+              </div>
+            </div>
+
+            <!-- 🆕 Données Post-Opératoires (Césarienne) -->
+            <div class="modern-card" id="postOpSection" style="display: none;">
+              <div class="card-title">
+                <i class="fas fa-notes-medical"></i> Données Post-Opératoires
+              </div>
+              <div class="row g-3">
+                <div class="col-md-4">
+                  <label class="form-label">TA Post-Opératoire</label>
+                  <input type="text" name="ta_postop" id="taPostop" class="form-control" placeholder="ex: 12/8"
+                    value="{{ dossier.ta_postop or '' }}">
+                </div>
+                <div class="col-md-4">
+                  <label class="form-label">Diurèse</label>
+                  <input type="text" name="diurese_postop" id="diuresePostop" class="form-control"
+                    placeholder="ex: Normale" value="{{ dossier.diurese_postop or '' }}">
+                </div>
+                <div class="col-md-4">
+                  <label class="form-label">Réveil</label>
+                  <input type="text" name="reveil_postop" id="reveilPostop" class="form-control" placeholder="ex: RAS"
+                    value="{{ dossier.reveil_postop or '' }}">
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label">Compte des Compresses</label>
+                  <textarea name="compte_compresses" id="compteCompresses" class="form-control" rows="2"
+                    placeholder="Détails du compte des compresses...">{{ dossier.compte_compresses or '' }}</textarea>
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label">Hémostases</label>
+                  <textarea name="hemostases" id="hemostases" class="form-control" rows="2"
+                    placeholder="Détails des hémostases effectuées...">{{ dossier.hemostases or '' }}</textarea>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- ✅ Validation Médicale -->
+          <div class="d-flex justify-content-end mt-5 mb-5 pb-5">
+            <button type="submit" name="action" value="valider_medical" id="btn-valider-medical-edit"
+              class="btn btn-success btn-lg shadow-lg position-relative" style="z-index: 1002;" formnovalidate>
+              <i class="fas fa-check-double me-2"></i> Valider Données Médicales
+            </button>
+          </div>
+        </div>
+
+        <div class="col-lg-4">
+          <div class="summary-panel">
+            <h4 class="summary-title">
+              <i class="fas fa-stethoscope text-info"></i>Guide Étape 2
+            </h4>
+            <div class="alert alert-light">
+              <small>
+                <strong><i class="far fa-lightbulb text-warning"></i> Informations médicales :</strong>
+                <ul class="mt-2 mb-0" style="padding-left: 1.2rem">
+                  <li>Renseignez les informations du <strong>nouveau-né</strong></li>
+                  <li>Précisez le <strong>mode d'accouchement</strong> (péridurale, épisiotomie...)</li>
+                  <li>Indiquez les <strong>pathologies</strong> maternelles si présentes</li>
+                  <li>Sélectionnez l'<strong>anesthésie</strong> et les intervenants</li>
+                </ul>
+              </small>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ÉTAPE 3: Produits & Actes -->
+    <div class="step-content" data-step="3">
+      <div class="row">
+        <div class="col-lg-8">
+          <div class="modern-card">
+            <h3 class="card-title">
+              <i class="fas fa-plus-circle"></i>Produits supplémentaires
+            </h3>
+
+            <div id="produitsSuppContainer">
+              {% for p in produits %}
+              <div class="product-row mb-3">
+                <div class="row align-items-center">
+                  <div class="col-md-6">
+                    <select name="produit_supp_id[]" class="form-select form-select-sm produit-supp-select"
+                      onchange="calculerSupplements()">
+                      <option value="">-- Produit --</option>
+                      {% for item in produits_disponibles %}
+                      <option value="{{ item.id_produit }}" data-prix="{{ item.prix }}" {% if
+                        item.id_produit==p.id_produit %}selected{% endif %}>{{ item.description }} ({{ item.prix }} DA)
+                      </option>
+                      {% endfor %}
+                    </select>
+                  </div>
+                  <div class="col-md-3">
+                    <input type="number" name="produit_supp_qte[]" class="form-control form-control-sm produit-supp-qte"
+                      value="{{ p.qte_utilisee }}" min="0.1" step="0.1" onchange="calculerSupplements()">
+                  </div>
+                  <div class="col-md-3">
+                    <button type="button" class="btn btn-sm btn-danger w-100" onclick="removeProduitSupp(this)">
+                      <i class="fas fa-trash-alt"></i>
+                    </button>
+                  </div>
+                </div>
+              </div>
+              {% endfor %}
+            </div>
+
+            <button type="button" class="btn btn-outline-primary" onclick="addProduitSupp()">
+              <i class="fas fa-plus"></i> Ajouter un produit
+            </button>
+          </div>
+
+          <div class="modern-card">
+            <h3 class="card-title">
+              <i class="fas fa-plus-circle"></i>Actes supplémentaires
+            </h3>
+
+            <div id="actesSuppContainer">
+              {% for a in actes %}
+              <div class="act-row mb-3">
+                <div class="row align-items-center">
+                  <div class="col-md-6">
+                    <select name="acte_supp_id[]" class="form-select form-select-sm acte-supp-select"
+                      onchange="calculerSupplements()">
+                      <option value="">-- Acte --</option>
+                      {% for item in actes_disponibles %}
+                      <option value="{{ item.id_acte }}" data-prix="{{ item.prix }}" {% if item.id_acte==a.id_acte
+                        %}selected{% endif %}>{{ item.nom_acte }} ({{ item.prix }} DA)</option>
+                      {% endfor %}
+                    </select>
+                  </div>
+                  <div class="col-md-3">
+                    <input type="number" name="acte_supp_qte[]" class="form-control form-control-sm acte-supp-qte"
+                      value="{{ a.qte_utilisee }}" min="1" onchange="calculerSupplements()">
+                  </div>
+                  <div class="col-md-3">
+                    <button type="button" class="btn btn-sm btn-danger w-100" onclick="removeActeSupp(this)">
+                      <i class="fas fa-trash-alt"></i>
+                    </button>
+                  </div>
+                </div>
+              </div>
+              {% endfor %}
+            </div>
+
+            <button type="button" class="btn btn-outline-primary" onclick="addActeSupp()">
+              <i class="fas fa-plus"></i> Ajouter un acte
+            </button>
+          </div>
+        </div>
+
+        <div class="col-lg-4">
+          <div class="summary-panel">
+            <h4 class="summary-title">
+              <i class="fas fa-calculator text-success"></i>Suppléments
+            </h4>
+            <div class="summary-row">
+              <span>Produits :</span><strong id="prixSuppProduits">0.00 DA</strong>
+            </div>
+            <div class="summary-row">
+              <span>Actes :</span><strong id="prixSuppActes">0.00 DA</strong>
+            </div>
+            <div class="summary-row">
+              <span>Anesthésie :</span><strong id="prixAnesthesie">0.00 DA</strong>
+            </div>
+            <div class="summary-total">
+              <div class="summary-row">
+                <span>SUPPLÉMENTS :</span><strong id="totalSupplements">0.00 DA</strong>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ÉTAPE 4: Hospitalisation -->
+    <div class="step-content" data-step="4">
+      <div class="row">
+        <div class="col-lg-8">
+          <div class="modern-card">
+            <h3 class="card-title">
+              <i class="fas fa-hospital"></i>Hospitalisation & Nuitées
+            </h3>
+            <div class="alert alert-info mb-3">
+              <i class="fas fa-info-circle"></i>
+              <strong id="nuiteesInclusesInfo">1 nuitée(s) incluse(s)</strong>
+              selon le type d'accouchement. Les nuitées supplémentaires seront
+              facturées.
+            </div>
+
+            <div id="hospitalisationsContainer">
+              {% for h in nuitees %}
+              <div class="modern-card mb-3 hospitalisation-item" id="hosp-{{ loop.index }}"
+                style="border-left:4px solid var(--pink);">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                  <h6 class="mb-0"><i class="fas fa-building"></i> Hospitalisation #{{ loop.index }}</h6>
+                  <button type="button" class="btn btn-sm btn-danger" onclick="removeHospitalisation({{ loop.index }})">
+                    <i class="fas fa-trash-alt"></i>
+                  </button>
+                </div>
+                <div class="row mb-3">
+                  <div class="col-md-6">
+                    <label class="form-label">Type de chambre *</label>
+                    <select name="id_type_chambre[]" class="form-select" data-hosp-id="{{ loop.index }}"
+                      onchange="calculateHospNuitees({{ loop.index }})" required>
+                      <option value="">-- Sélectionner --</option>
+                      {% for tc in types_chambres %}
+                      <option value="{{ tc.id_type_chambre }}" data-prix="{{ tc.prix_unitaire }}"
+                        data-standard="{{ tc.est_standard or 0 }}" {% if tc.id_type_chambre==h.id_type_chambre
+                        %}selected{% endif %}>
+                        {{ tc.nom_type }} - {{ tc.prix_unitaire }} DA
+                      </option>
+                      {% endfor %}
+                    </select>
+                  </div>
+                  <div class="col-md-6">
+                    <label class="form-label">Nombre de nuitées</label>
+                    <input type="number" class="form-control" id="nuitees-{{ loop.index }}" readonly
+                      style="background:#f8f9fa;font-weight:bold;" value="{{ h.nombre_nuitees }}">
+                  </div>
+                </div>
+                <div class="row">
+                  <div class="col-md-6">
+                    <label class="form-label">Date d'entrée *</label>
+                    <input type="date" name="date_entree_hospitalisation[]" class="form-control hosp-date-entree"
+                      data-hosp-id="{{ loop.index }}" value="{{ h.date_entree }}"
+                      onchange="calculateHospNuitees({{ loop.index }})" required>
+                  </div>
+                  <div class="col-md-6">
+                    <label class="form-label">Date de sortie *</label>
+                    <input type="date" name="date_sortie_hospitalisation[]" class="form-control hosp-date-sortie"
+                      data-hosp-id="{{ loop.index }}" value="{{ h.date_sortie }}"
+                      onchange="calculateHospNuitees({{ loop.index }})" required>
+                  </div>
+                </div>
+                <div class="alert alert-light mt-3" id="hosp-summary-{{ loop.index }}" style="display:block;">
+                  <div class="d-flex justify-content-between">
+                    <span>Prix unitaire: <strong id="hosp-prix-unit-{{ loop.index }}">{{ h.prix_unitaire }}</strong>
+                      DA</span>
+                    <span>Prix: <strong class="text-pink-600" id="hosp-prix-{{ loop.index }}">{{ h.prix_total
+                        }}</strong> DA</span>
+                  </div>
+                </div>
+              </div>
+              {% endfor %}
+            </div>
+
+            <button type="button" class="btn btn-outline-primary" onclick="addHospitalisation()">
+              <i class="fas fa-plus"></i> Ajouter une hospitalisation
+            </button>
+
+            <div class="alert alert-light mt-4" id="nuiteesSummary" style="display: none">
+              <h6>
+                <i class="fas fa-info-circle"></i> Récapitulatif des nuitées
+              </h6>
+              <hr />
+              <div class="row">
+                <div class="col-md-4">
+                  <strong>Total nuitées :</strong>
+                  <span id="totalNuitees">0</span>
+                </div>
+                <div class="col-md-4">
+                  <strong>Incluses :</strong>
+                  <span id="nuiteesIncluses" class="text-success">0</span>
+                </div>
+                <div class="col-md-4">
+                  <strong>Facturables :</strong>
+                  <span id="nuiteesFacturables" class="text-warning">0</span>
+                </div>
+              </div>
+              <hr />
+              <div class="text-end">
+                <strong class="text-pink-600" style="font-size: 1.5rem">Prix nuitées:
+                  <span id="prixTotalNuitees">0.00</span> DA</strong>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-lg-4">
+          <div class="summary-panel">
+            <h4 class="summary-title">
+              <i class="fas fa-bed text-info"></i>Guide
+            </h4>
+            <div class="alert alert-light">
+              <small>
+                <ul class="mb-0" style="padding-left: 1rem">
+                  <li><strong>Voie basse</strong> : 1 nuitée incluse</li>
+                  <li><strong>Césarienne</strong> : 2 nuitées incluses</li>
+                  <li>Chambre non-standard : différence facturée</li>
+                </ul>
+              </small>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ÉTAPE 5: Explorations -->
+    <div class="step-content" data-step="5">
+      <div class="row">
+        <div class="col-lg-8">
+          <div class="modern-card">
+            <h3 class="card-title">
+              <i class="fas fa-clipboard-list"></i>Explorations médicales
+            </h3>
+            <div class="alert alert-info mb-4">
+              <i class="fas fa-info-circle"></i>
+              <small>Examens complémentaires (échographie, analyses, etc.)</small>
+            </div>
+
+            <div id="explorationsContainer">
+              {% for e in explorations %}
+              <div class="product-row exploration-row mb-3" id="exploration-{{ loop.index }}">
+                <div class="row align-items-center">
+                  <div class="col-md-3">
+                    <select name="exploration_type[]" class="form-select form-select-sm">
+                      <option value="">-- Type --</option>
+                      <option value="ECHOGRAPHIE" {% if e.type_exploration=='ECHOGRAPHIE' %}selected{% endif %}>
+                        Échographie</option>
+                      <option value="LABORATOIRE" {% if e.type_exploration=='LABORATOIRE' %}selected{% endif %}>
+                        Laboratoire</option>
+                      <option value="IMAGERIE" {% if e.type_exploration=='IMAGERIE' %}selected{% endif %}>Imagerie
+                      </option>
+                      <option value="AUTRE" {% if e.type_exploration=='AUTRE' %}selected{% endif %}>Autre</option>
+                    </select>
+                  </div>
+                  <div class="col-md-3">
+                    <input type="text" name="exploration_nom[]" class="form-control form-control-sm"
+                      placeholder="Nom (optionnel)" value="{{ e.nom_exploration or '' }}">
+                  </div>
+                  <div class="col-md-2">
+                    <input type="date" name="exploration_date[]" class="form-control form-control-sm"
+                      value="{{ e.date_exploration or '' }}">
+                  </div>
+                  <div class="col-md-2">
+                    <input type="number" name="exploration_prix[]" class="form-control form-control-sm exploration-prix"
+                      step="0.01" min="0" value="{{ e.prix }}" onchange="calculerExplorations()">
+                  </div>
+                  <div class="col-md-2">
+                    <button type="button" class="btn btn-sm btn-danger w-100"
+                      onclick="removeExploration({{ loop.index }})">
+                      <i class="fas fa-trash-alt"></i>
+                    </button>
+                  </div>
+                </div>
+                <div class="row mt-2">
+                  <div class="col-12"><textarea name="exploration_obs[]" class="form-control form-control-sm" rows="1"
+                      placeholder="Observations">{{ e.observations or '' }}</textarea></div>
+                </div>
+              </div>
+              {% endfor %}
+            </div>
+
+            <button type="button" class="btn btn-outline-primary" onclick="addExploration()">
+              <i class="fas fa-plus"></i> Ajouter une exploration
+            </button>
+          </div>
+        </div>
+
+        <div class="col-lg-4">
+          <div class="summary-panel">
+            <h4 class="summary-title">
+              <i class="fas fa-calculator text-success"></i>Total explorations
+            </h4>
+            <div class="summary-total">
+              <div class="summary-row">
+                <span>TOTAL :</span><strong id="prixTotalExplorations">0.00 DA</strong>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ÉTAPE 6: Validation -->
+    <div class="step-content" data-step="6">
+      <div class="row">
+        <div class="col-lg-8">
+          <div class="modern-card">
+            <h3 class="card-title">
+              <i class="fas fa-wallet"></i>Paiement et observations
+            </h3>
+
+            <!-- ✅ NOUVEAU : Message d'information selon le type de gynéco -->
+            <div class="alert alert-info mb-3" id="paiementInfo">
+              <i class="fas fa-info-circle"></i>
+              <strong>Flux de paiement</strong>
+              <ul class="mb-0 mt-2 small">
+                <li>
+                  <strong>Direct :</strong> Le patient paie la clinique
+                  directement
+                </li>
+                <li>
+                  <strong>Via gynécologue :</strong> Le patient paie le gynéco,
+                  qui règle ensuite avec la clinique
+                </li>
+                <li>
+                  <strong>Différé :</strong> Le paiement sera enregistré
+                  ultérieurement
+                </li>
+              </ul>
+            </div>
+            <!-- ✅ Guide de sélection du mode -->
+            <div class="card border-primary mb-3">
+              <div class="card-header bg-primary text-white">
+                <i class="fas fa-question-circle"></i> Quel mode choisir ?
+              </div>
+              <div class="card-body">
+                <div class="row">
+                  <div class="col-md-4">
+                    <div class="text-center p-2">
+                      <i class="fas fa-cash-register fa-2x text-success mb-2"></i>
+                      <h6>Direct</h6>
+                      <small class="text-muted">
+                        Patient → Clinique<br />
+                        <strong>Montant requis</strong>
+                      </small>
+                    </div>
+                  </div>
+                  <div class="col-md-4">
+                    <div class="text-center p-2">
+                      <i class="fas fa-user-md fa-2x text-info mb-2"></i>
+                      <h6>Via gynécologue</h6>
+                      <small class="text-muted">
+                        Patient → Gynéco → Clinique<br />
+                        <strong>Peut être 0 DA</strong>
+                      </small>
+                    </div>
+                  </div>
+                  <div class="col-md-4">
+                    <div class="text-center p-2">
+                      <i class="fas fa-clock fa-2x text-warning mb-2"></i>
+                      <h6>Différé</h6>
+                      <small class="text-muted">
+                        Paiement ultérieur<br />
+                        <strong>Peut être 0 DA</strong>
+                      </small>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <!-- ✅ ALERTE POUR GYNÉCO EXTERNE -->
+            <div class="alert alert-warning mb-3" id="alerteGynecoExterne" style="display: none">
+              <i class="fas fa-exclamation-triangle"></i>
+              <strong>Attention :</strong> Pour un gynécologue externe avec
+              paiement DIRECT, le montant encaissé doit être supérieur à 0 DA.
+              <br /><small>Utilisez "Via gynécologue" ou "Différé" si le patient n'a pas
+                encore payé.</small>
+            </div>
+
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <label class="form-label">
+                  <i class="fas fa-money-bill-wave"></i> Montant encaissé par la
+                  clinique
+                  <span id="montantRequired" class="text-danger" style="display: none">*</span>
+                </label>
+                <div class="input-group">
+                  <input type="number" name="montant_paye" id="montantPaye" class="form-control" step="0.01" min="0"
+                    value="{{ dossier.montant_paye or 0 }}" onchange="calculerBalance()" />
+                  <span class="input-group-text">DA</span>
+                </div>
+                <small class="text-muted" id="montantHelper">
+                  <i class="fas fa-lightbulb"></i>
+                  Le montant payé par le patient à la clinique
+                </small>
+              </div>
+
+              <div class="col-md-6 mb-3">
+                <label class="form-label">
+                  <i class="fas fa-exchange-alt"></i> Mode de paiement
+                </label>
+                <select name="mode_paiement" id="modePaiement" class="form-select">
+                  <option value="DIFFERE" {% if dossier.mode_paiement=='DIFFERE' %}selected{% endif %}>Paiement différé
+                  </option>
+                  <option value="DIRECT" {% if dossier.mode_paiement=='DIRECT' %}selected{% endif %}>Paiement direct à
+                    la clinique</option>
+                  <option value="VIA_GYNECO" {% if dossier.mode_paiement=='VIA_GYNECO' %}selected{% endif %}>
+                    Via gynécologue (patient → gynéco → clinique)
+                  </option>
+                </select>
+                <small class="text-muted">
+                  Sélectionner le flux de paiement utilisé
+                </small>
+              </div>
+
+              <div class="col-md-12 mb-3">
+                <label class="form-label"><i class="far fa-comment-dots"></i> Observations</label>
+                <textarea name="observations" class="form-control" rows="3"
+                  placeholder="Notes sur le paiement, accords particuliers...">{{ dossier.observations or '' }}</textarea>
+              </div>
+            </div>
+
+            <!-- Balance / Statut -->
+            <div class="alert" id="balanceAlert" style="display: none"></div>
+          </div>
+        </div>
+
+        <div class="col-lg-4">
+          <div class="summary-panel">
+            <h4 class="summary-title">
+              <i class="fas fa-check-circle text-success"></i>Récapitulatif
+              final
+            </h4>
+            <div class="summary-row">
+              <span>Prix de base :</span><strong id="prixBaseFinal">0.00 DA</strong>
+            </div>
+            <div class="summary-row">
+              <span>Produits :</span><strong id="prixProduitsFinal">0.00 DA</strong>
+            </div>
+            <div class="summary-row">
+              <span>Actes :</span><strong id="prixActesFinal">0.00 DA</strong>
+            </div>
+            <div class="summary-row">
+              <span>Anesthésie :</span><strong id="prixAnesthesieFinal">0.00 DA</strong>
+            </div>
+            <div class="summary-row">
+              <span>Nuitées :</span><strong id="prixNuiteesFinal">0.00 DA</strong>
+            </div>
+            <div class="summary-row">
+              <span>Explorations :</span><strong id="prixExplorationsFinal">0.00 DA</strong>
+            </div>
+            <div class="summary-total">
+              <div class="summary-row">
+                <span>TOTAL :</span><strong id="prixTotalFinal">0.00 DA</strong>
+              </div>
+            </div>
+            <hr />
+
+            <div class="summary-row">
+              <span>Part gynécologue :</span><strong id="partGynecoFinal">0.00 DA</strong>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="floating-nav-container">
+      <div class="floating-nav">
+        <button type="button" class="btn btn-secondary btn-prev">
+          <i class="fas fa-arrow-left"></i> Précédent
+        </button>
+        <button type="button" class="btn btn-primary btn-next">
+          Suivant <i class="fas fa-arrow-right"></i>
+        </button>
+      </div>
+    </div>
+  </form>
+  <!-- Bouton Historique Flottant -->
+  <button type="button" class="btn-floating-history" id="btnPatientHistoryDirect" disabled
+    title="Voir l'historique complet du patient">
+    <i class="fas fa-history"></i>
+    <span class="btn-floating-text">Historique</span>
+  </button>
+
+  <!-- Modal Historique -->
+  {{ his_selector.render_modal('modalPatientHistoryDirect') }}
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+
+<script>
+  // Mock Select2 to prevent errors from legacy scripts
+  if (typeof jQuery !== 'undefined') {
+    jQuery.fn.select2 = function () {
+      console.warn('Select2 call intercepted by Choices.js proxy');
+      return this;
+    };
+  }
+
+  // Helper functionality for Choices.js initialization
+  function initChoices(element) {
+    if (!element) return;
+
+    // Robust check for existing initialization
+    if (element.classList.contains('choices__input') ||
+      element.closest('.choices') ||
+      element.dataset.choice === 'active') {
+      return;
+    }
+
+    try {
+      const instance = new Choices(element, {
+        searchEnabled: true,
+        itemSelectText: '',
+        shouldSort: false,
+        noResultsText: 'Aucun résultat',
+        noChoicesText: 'Aucun choix disponible',
+        placeholder: true,
+        placeholderValue: '-- Sélectionner --',
+      });
+      element.dataset.choice = 'active'; // Mark as initialized
+      return instance;
+    } catch (e) {
+      console.warn('Choices.js initialization skipped for', element, e);
+    }
+  }
+
+  // Initialize Choices.js on all selects
+  document.addEventListener('DOMContentLoaded', function () {
+    // Exclude patientSelectDirect which is handled by the macro
+    // Exclude anesthesia selects - they are populated via API later
+    const anesthesiaSelectIds = ['patientSelectDirect', 'acteAnesthId', 'intervenant1Id', 'intervenant2Id'];
+    const selects = document.querySelectorAll('select.form-select, select.select2, select[name="gyneco_oid"]');
+
+    selects.forEach(selectElement => {
+      // Skip if it is the patient selector (handled by macro) or anesthesia selects (populated via API)
+      if (anesthesiaSelectIds.includes(selectElement.id) || selectElement.name === 'patient_oid') return;
+      initChoices(selectElement);
+    });
+  });
+</script>
+<script>
+  // ============================================================================
+  // VARIABLES GLOBALES
+  // ============================================================================
+  const produitsDisponibles = {{ produits_disponibles | tojson | safe }};
+  const actesDisponibles = {{ actes_disponibles | tojson | safe }};
+  const typesChambres = {{ types_chambres| tojson | safe }};
+  const TARIFS = {{ tarifs| tojson | safe }};
+
+  let currentStep = 1;
+  let estGynecoInterne = false;
+  let typeTarification = null;
+  let typeAccouchement = null;
+  let nuiteesIncluses = 1;
+  let hospitalisationCounter = {{ nuitees| length }};
+  let explorationCounter = {{ explorations| length }};
+  let prixChambreStandard = 0;
+
+  const prixData = {
+    base: 0,
+    produits: 0,
+    actes: 0,
+    anesthesie: 0,
+    nuitees: 0,
+    explorations: 0,
+    partClinique: 0,
+    partGyneco: 0
+  };
+
+  // Anesthésie
+  let actesAnesthesie = [];
+  let personnelAnesthesie = [];
+  // Données existantes d'anesthésie pour la modification
+  const existingAnesthesie = {{ anesthesie | tojson | safe }};
+
+  // ============================================================================
+  // HELPER FUNCTIONS
+  // ============================================================================
+
+  /**
+   * Convertit une valeur en nombre de manière sécurisée
+   */
+  function toNumber(value, defaultValue = 0) {
+    if (value === null || value === undefined || value === '') {
+      return defaultValue;
+    }
+    const num = parseFloat(value);
+    return isNaN(num) ? defaultValue : num;
+  }
+
+  /**
+   * Affiche un modal Bootstrap
+   */
+  function showModal(title, message, type = 'info') {
+    const modalId = 'dynamicModal';
+    let existingModal = document.getElementById(modalId);
+
+    if (existingModal) {
+      existingModal.remove();
+    }
+
+    const iconMap = {
+      'success': 'fa-check-circle text-success',
+      'danger': 'fa-exclamation-triangle text-danger',
+      'warning': 'fa-exclamation-circle text-warning',
+      'info': 'fa-info-circle text-info'
+    };
+
+    const modalHTML = `
+          <div class="modal fade" id="${modalId}" tabindex="-1" aria-hidden="true">
+              <div class="modal-dialog modal-dialog-centered">
+                  <div class="modal-content">
+                      <div class="modal-header">
+                          <h5 class="modal-title">
+                              <i class="fas ${iconMap[type]} me-2"></i>${title}
+                          </h5>
+                          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                      </div>
+                      <div class="modal-body">
+                          ${message}
+                      </div>
+                      <div class="modal-footer">
+                          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fermer</button>
+                      </div>
+                  </div>
+              </div>
+          </div>
+      `;
+
+    document.body.insertAdjacentHTML('beforeend', modalHTML);
+    const modal = new bootstrap.Modal(document.getElementById(modalId));
+    modal.show();
+
+    document.getElementById(modalId).addEventListener('hidden.bs.modal', function () {
+      this.remove();
+    });
+  }
+
+  // Auto-suggérer le mode selon le montant et le type de gynéco
+  function suggestModePaiement() {
+    const montantPaye = toNumber(document.getElementById('montantPaye')?.value, 0);
+    const mode = document.getElementById('modePaiement');
+
+    if (!mode) return;
+
+    // Si gynéco externe et montant = 0 et mode = DIRECT
+    if (!estGynecoInterne && montantPaye === 0 && mode.value === 'DIRECT') {
+      // Afficher une suggestion
+      showModal(
+        'Suggestion',
+        '<i class="fas fa-lightbulb text-warning fa-2x mb-3"></i><br>' +
+        'Le montant est 0 DA. Voulez-vous changer le mode de paiement ?<br><br>' +
+        '<button class="btn btn-info btn-sm" onclick="document.getElementById(\'modePaiement\').value=\'VIA_GYNECO\'; updateModesPaiementInfo(); bootstrap.Modal.getInstance(document.getElementById(\'dynamicModal\')).hide();">' +
+        '<i class="fas fa-user-md"></i> Via gynécologue' +
+        '</button> ' +
+        '<button class="btn btn-warning btn-sm" onclick="document.getElementById(\'modePaiement\').value=\'DIFFERE\'; updateModesPaiementInfo(); bootstrap.Modal.getInstance(document.getElementById(\'dynamicModal\')).hide();">' +
+        '<i class="fas fa-clock"></i> Différé' +
+        '</button>',
+        'info'
+      );
+    }
+  }
+
+  /**
+   * Affiche un modal de confirmation
+   */
+  function showConfirmModal(title, message, onConfirm) {
+    const modalId = 'confirmModal';
+    let existingModal = document.getElementById(modalId);
+
+    if (existingModal) {
+      existingModal.remove();
+    }
+
+    const modalHTML = `
+          <div class="modal fade" id="${modalId}" tabindex="-1" aria-hidden="true">
+              <div class="modal-dialog modal-dialog-centered">
+                  <div class="modal-content">
+                      <div class="modal-header">
+                          <h5 class="modal-title">
+                              <i class="fas fa-question-circle text-warning me-2"></i>${title}
+                          </h5>
+                          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                      </div>
+                      <div class="modal-body">
+                          ${message}
+                      </div>
+                      <div class="modal-footer">
+                          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                          <button type="button" class="btn btn-primary" id="confirmBtn">Confirmer</button>
+                      </div>
+                  </div>
+              </div>
+          </div>
+      `;
+
+    document.body.insertAdjacentHTML('beforeend', modalHTML);
+    const modal = new bootstrap.Modal(document.getElementById(modalId));
+    modal.show();
+
+    document.getElementById('confirmBtn').addEventListener('click', function () {
+      modal.hide();
+      onConfirm();
+    });
+
+    document.getElementById(modalId).addEventListener('hidden.bs.modal', function () {
+      this.remove();
+    });
+  }
+
+  // ============================================================================
+  // INITIALISATION
+  // ============================================================================
+  document.addEventListener('DOMContentLoaded', async () => {
+    // Event listener pour le bouton historique flottant
+    document.getElementById('btnPatientHistoryDirect').addEventListener('click', function () {
+      const patientOid = this.getAttribute('data-patient-oid');
+      if (patientOid && typeof showPatientHistoryDirect === 'function') {
+        showPatientHistoryDirect(patientOid);
+      }
+    });
+
+    // Prix chambre standard
+    const std = typesChambres.find(c => c.est_standard === 1);
+    if (std) {
+      prixChambreStandard = toNumber(std.prix_unitaire);
+      console.log('Prix chambre standard:', prixChambreStandard);
+    }
+
+    // Événement changement gynécologue
+    document.getElementById('gynecoSelect').addEventListener('change', function () {
+      const opt = this.options[this.selectedIndex];
+      estGynecoInterne = opt.dataset.interne === '1';
+      const info = document.getElementById('gynecoTypeInfo');
+
+      if (estGynecoInterne) {
+        info.innerHTML = '<span class="gyneco-interne-badge">Gynécologue Interne</span>';
+      } else if (this.value) {
+        info.innerHTML = '<span class="gyneco-externe-badge">Gynécologue Externe</span>';
+      } else {
+        info.innerHTML = '';
+      }
+
+      recalculerTarifs();
+      updateModesPaiementInfo();
+    });
+
+
+    // Événement changement mode paiement
+    const modePaiementSelect = document.getElementById('modePaiement');
+    if (modePaiementSelect) {
+      modePaiementSelect.addEventListener('change', updateModesPaiementInfo);
+      document.getElementById('montantPaye')?.addEventListener('blur', suggestModePaiement);
+    }
+
+    // Événement changement montant payé
+    const montantPayeInput = document.getElementById('montantPaye');
+    if (montantPayeInput) {
+      montantPayeInput.addEventListener('input', updateModesPaiementInfo);
+      document.getElementById('montantPaye')?.addEventListener('blur', suggestModePaiement);
+    }
+
+    // Charger données anesthésie via API (comme location_bloc)
+    await loadAnesthesieData();
+
+    // Rendre les étapes cliquables
+
+    // Recalcul initial
+    recalculerTarifs();
+    calculerSupplements();
+    calculateAllNuitees();
+    calculerExplorations();
+    updateModesPaiementInfo();
+
+    // Select correct stepper - actually step 1 is fine to start
+
+    initClickableSteps();
+
+    // Initialiser la validation du formulaire
+    initFormValidation();
+
+    // Initialize complex UI states
+    const typeAcc = "{{ dossier.type_accouchement|default('', true) }}";
+    if (typeAcc && typeAcc !== 'None') {
+      selectTypeAccouchement(typeAcc);
+      // If type is CESARIENNE, set subtype and show details
+      if (typeAcc === 'CESARIENNE') {
+        const typeCes = "{{ dossier.type_cesarienne|default('', true) }}";
+        const sel = document.getElementById('typeCesarienne');
+        // Show cesarienne details section
+        const detailsCesarienne = document.getElementById('detailsCesarienne');
+        if (detailsCesarienne) detailsCesarienne.style.display = 'block';
+
+        if (sel && typeCes && typeCes !== 'None') {
+          sel.value = typeCes;
+          handleCesarienneTypeChange();
+        }
+      } else if (typeAcc === 'VOIE_BASSE') {
+        // Show voie basse details section
+        const detailsVoieBasse = document.getElementById('detailsVoieBasse');
+        if (detailsVoieBasse) detailsVoieBasse.style.display = 'block';
+      }
+    }
+
+    const typeTarif = "{{ dossier.type_tarification }}";
+    if (typeTarif) {
+      selectTarification(typeTarif);
+    }
+
+    // Trigger update for balance/payments
+    updateModesPaiementInfo();
+    calculerBalance();
+
+
+    // Set values for selects
+    const selectsToSet = {
+      'groupage_sanguin': '{{ dossier.groupage_sanguin|default("", true) }}',
+      'rhesus': '{{ dossier.rhesus|default("", true) }}',
+      'mode_paiement': '{{ dossier.mode_paiement|default("", true) }}',
+      'gyneco_oid': '{{ dossier.id_gyneco|default("", true) }}',
+      'statut_financier': '{{ dossier.statut_financier|default("", true) }}'
+    };
+    for (const [name, val] of Object.entries(selectsToSet)) {
+      if (!val || val === 'None') continue; // Skip empty or None values
+      const el = document.querySelector(`select[name="${name}"]`);
+      if (el) {
+        el.value = val;
+        // Check if Choices.js instance exists and update it
+        if (el._choices) {
+          el._choices.setChoiceByValue(val);
+        }
+        // Trigger change for logic updates
+        el.dispatchEvent(new Event('change'));
+      }
+    }
+
+  });
+
+  // ============================================================================
+  // ÉTAPES CLIQUABLES
+  // ============================================================================
+  function initClickableSteps() {
+    document.querySelectorAll('.stepper-item').forEach((item, index) => {
+      item.style.cursor = 'pointer';
+      item.addEventListener('click', function () {
+        const targetStep = index + 1;
+
+        if (targetStep <= currentStep) {
+          // Retour en arrière autorisé
+          showStep(targetStep);
+        } else if (targetStep === currentStep + 1) {
+          // Passage à l'étape suivante
+          nextStep(targetStep);
+        } else {
+          // Saut d'étapes non autorisé
+          showModal(
+            'Navigation',
+            'Veuillez compléter les étapes dans l\'ordre.',
+            'warning'
+          );
+        }
+      });
+    });
+  }
+
+  // ============================================================================
+  // ANESTHÉSIE - FONCTIONS CORRIGÉES
+  // ============================================================================
+
+  /**
+   * Charge les données d'anesthésie via API (types d'actes et personnel)
+   * Cette approche est identique à location_bloc/create.html
+   */
+  async function loadAnesthesieData() {
+    try {
+      const responseActes = await fetch('/api/anesthesie/types_actes');
+      actesAnesthesie = await responseActes.json();
+      populateActesAnesthesie();
+
+      // Pré-sélectionner l'acte d'anesthésie existant
+      if (existingAnesthesie && existingAnesthesie.length > 0 && existingAnesthesie[0].id_acte_anesthesie) {
+        const el = document.getElementById("acteAnesthId");
+        if (el) {
+          el.value = existingAnesthesie[0].id_acte_anesthesie;
+        }
+      }
+    } catch (e) {
+      console.error('Erreur chargement actes anesthésie:', e);
+    }
+
+    try {
+      const responsePersonnel = await fetch('/api/anesthesie/personnel');
+      personnelAnesthesie = await responsePersonnel.json();
+      populatePersonnelAnesthesie();
+
+      // Pré-sélectionner les intervenants existants
+      if (existingAnesthesie && existingAnesthesie.length > 0) {
+        // Filtrer les réanimateurs et techniciens parmi les données existantes
+        const reanimateur = existingAnesthesie.find(a => {
+          const pers = personnelAnesthesie.find(p => p.id_personnel_anesthesie == a.id_personnel_anesthesie);
+          return pers && (pers.nom_type.toLowerCase().includes('réanimateur') || pers.nom_type.toLowerCase().includes('reanimateur'));
+        });
+        const technicien = existingAnesthesie.find(a => {
+          const pers = personnelAnesthesie.find(p => p.id_personnel_anesthesie == a.id_personnel_anesthesie);
+          return pers && pers.nom_type.toLowerCase().includes('tech');
+        });
+
+        if (reanimateur) {
+          const p1 = document.getElementById("intervenant1Id");
+          if (p1) p1.value = reanimateur.id_personnel_anesthesie;
+        }
+        if (technicien) {
+          const p2 = document.getElementById("intervenant2Id");
+          if (p2) p2.value = technicien.id_personnel_anesthesie;
+        }
+      }
+
+      // Mettre à jour l'affichage des tarifs après le chargement
+      updateTarifAnesthesie();
+    } catch (e) {
+      console.error('Erreur chargement personnel anesthésie:', e);
+    }
+  }
+
+
+  function populateActesAnesthesie() {
+    const sel = document.getElementById('acteAnesthId');
+    if (!sel) return;
+
+    actesAnesthesie.forEach(a => {
+      const opt = document.createElement('option');
+      opt.value = a.id_acte_anesthesie;
+      opt.textContent = `${a.nom_acte} (${a.tarif_forfaitaire} DA)`;
+      opt.dataset.tarif = a.tarif_forfaitaire;
+      sel.appendChild(opt);
+    });
+  }
+
+  function populatePersonnelAnesthesie() {
+    const sel1 = document.getElementById('intervenant1Id');
+    const sel2 = document.getElementById('intervenant2Id');
+    if (!sel1 || !sel2) return;
+
+    const reanimateurs = personnelAnesthesie.filter(p =>
+      p.nom_type.toLowerCase().includes('réanimateur') ||
+      p.nom_type.toLowerCase().includes('reanimateur')
+    );
+    const techniciens = personnelAnesthesie.filter(p =>
+      p.nom_type.toLowerCase().includes('tech')
+    );
+
+    reanimateurs.forEach(p => {
+      const opt = document.createElement('option');
+      opt.value = p.id_personnel_anesthesie;
+      opt.textContent = `${p.nom_complet} (${p.nom_type})`;
+      opt.dataset.type = p.id_type_intervenant;
+      sel1.appendChild(opt);
+    });
+
+    techniciens.forEach(p => {
+      const opt = document.createElement('option');
+      opt.value = p.id_personnel_anesthesie;
+      opt.textContent = `${p.nom_complet} (${p.nom_type})`;
+      opt.dataset.type = p.id_type_intervenant;
+      sel2.appendChild(opt);
+    });
+  }
+
+  /**
+   * Met à jour l'affichage des tarifs d'anesthésie
+   */
+  async function updateTarifAnesthesie() {
+    const acteId = document.getElementById('acteAnesthId')?.value;
+    const int1 = document.getElementById('intervenant1Id')?.value;
+    const int2 = document.getElementById('intervenant2Id')?.value;
+
+    // Réinitialiser l'affichage
+    const tarif1Display = document.getElementById('tarif1Display');
+    const tarif2Display = document.getElementById('tarif2Display');
+    const totalAnesthesieDisplay = document.getElementById('totalAnesthesieDisplay');
+    const tarifAnesthesieTotalDisplay = document.getElementById('tarifAnesthesieTotalDisplay');
+
+    if (tarif1Display) tarif1Display.textContent = '0.00 DA';
+    if (tarif2Display) tarif2Display.textContent = '0.00 DA';
+    if (tarifAnesthesieTotalDisplay) tarifAnesthesieTotalDisplay.style.display = 'none';
+
+    prixData.anesthesie = 0;
+
+    if (!acteId) {
+      updateTotalDisplay();
+      return;
+    }
+
+    try {
+      // Récupérer le tarif forfaitaire UNE SEULE FOIS
+      const acteSelectionne = actesAnesthesie.find(a => a.id_acte_anesthesie == acteId);
+      const tarifForfaitaire = toNumber(acteSelectionne?.tarif_forfaitaire, 0);
+
+      // Afficher le tarif forfaitaire si au moins un intervenant est sélectionné
+      if (int1 || int2) {
+        if (totalAnesthesieDisplay) {
+          totalAnesthesieDisplay.textContent = tarifForfaitaire.toFixed(2) + ' DA';
+        }
+
+        if (tarifAnesthesieTotalDisplay) {
+          tarifAnesthesieTotalDisplay.style.display = 'block';
+        }
+
+        // UN SEUL tarif forfaitaire
+        prixData.anesthesie = tarifForfaitaire;
+      }
+
+      // Récupérer les honoraires estimés pour chaque intervenant
+      if (int1) {
+        const honInt1 = await fetchHonorairesIntervenant(acteId, int1);
+        if (tarif1Display) {
+          tarif1Display.textContent = `${honInt1.toFixed(2)} DA`;
+        }
+      }
+
+      if (int2) {
+        const honInt2 = await fetchHonorairesIntervenant(acteId, int2);
+        if (tarif2Display) {
+          tarif2Display.textContent = `${honInt2.toFixed(2)} DA`;
+        }
+      }
+
+    } catch (e) {
+      console.error('Erreur calcul anesthésie:', e);
+      prixData.anesthesie = 0;
+    }
+
+    updateTotalDisplay();
+  }
+
+  /**
+   * Récupère les honoraires estimés d'un intervenant
+   */
+  async function fetchHonorairesIntervenant(acteId, personnelId) {
+    try {
+      const interv = personnelAnesthesie.find(p => p.id_personnel_anesthesie == personnelId);
+      if (!interv) return 0;
+
+      const respTarifs = await fetch(`/api/anesthesie/tarifs/${acteId}`);
+      const tarifs = await respTarifs.json();
+
+      const tarifIntervenant = tarifs.find(t =>
+        t.id_type_intervenant == interv.id_type_intervenant
+      );
+
+      if (!tarifIntervenant) return 0;
+
+      const dureeStandard = 90;
+      const dureeAvantSupplement = toNumber(tarifIntervenant.duree_avant_supplement, 0);
+      const honorairesBase = toNumber(tarifIntervenant.honoraires_base, 0);
+      const supplement30min = toNumber(tarifIntervenant.supplement_30min, 0);
+
+      let total = honorairesBase;
+
+      if (dureeStandard > dureeAvantSupplement && supplement30min > 0) {
+        const minutesSup = dureeStandard - dureeAvantSupplement;
+        const tranches = Math.ceil(minutesSup / 30);
+        total += tranches * supplement30min;
+      }
+
+      return total;
+    } catch (e) {
+      console.error('Erreur fetch honoraires:', e);
+      return 0;
+    }
+  }
+
+  // ============================================================================
+  // NAVIGATION STEPPER
+  // ============================================================================
+
+  function nextStep(step) {
+    if (validateStep(currentStep)) {
+      showStep(step);
+    }
+  }
+
+  function prevStep(step) {
+    showStep(step);
+  }
+
+  function showStep(step) {
+    document.querySelectorAll('.step-content').forEach(el => el.classList.remove('active'));
+    const stepContent = document.querySelector(`.step-content[data-step="${step}"]`);
+    if (stepContent) {
+      stepContent.classList.add('active');
+    }
+
+    document.querySelectorAll('.stepper-item').forEach((item, i) => {
+      item.classList.remove('active', 'completed');
+      if (i + 1 < step) item.classList.add('completed');
+      else if (i + 1 === step) item.classList.add('active');
+    });
+
+    currentStep = step;
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+
+    if (step === 6) {
+      updateFinalSummary();
+    }
+  }
+
+  function validateStep(step) {
+    if (step === 1) {
+      const g = document.getElementById('gynecoSelect')?.value;
+      const p = document.querySelector('[name="patiente"]')?.value;
+      const d = document.getElementById('dateAccouchement')?.value;
+      const t = document.getElementById('typeAccouchement')?.value;
+
+      if (!g || !p || !d || !t) {
+        showModal(
+          'Champs obligatoires',
+          'Veuillez remplir tous les champs obligatoires :<br>' +
+          '<ul>' +
+          (!g ? '<li>Gynécologue</li>' : '') +
+          (!p ? '<li>Patiente</li>' : '') +
+          (!d ? '<li>Date d\'accouchement</li>' : '') +
+          (!t ? '<li>Type d\'accouchement (sélectionnez une carte)</li>' : '') +
+          '</ul>',
+          'warning'
+        );
+        return false;
+      }
+
+      if (!typeTarification) {
+        showModal(
+          'Tarification requise',
+          'Veuillez sélectionner un type de tarification.',
+          'warning'
+        );
+        return false;
+      }
+    }
+
+    // Validation Étape 2 : Médical (pour Sage-Femme uniquement)
+    if (window.userPrivileges && window.userPrivileges.includes('VALIDER_ACCOUCHEMENT_MEDICAL')) {
+      if (step === 2) {
+        const sexe = document.getElementById('sexeBebe')?.value;
+        const poids = document.getElementById('poidsNaissance')?.value;
+        const apgar = document.getElementById('apgarScore')?.value;
+
+        if (!sexe || !poids || !apgar) {
+          showModal(
+            'Données médicales requises',
+            'En tant que Sage-Femme, vous devez renseigner les informations médicales (Sexe, Poids, Apgar) avant de continuer.',
+            'warning'
+          );
+          return false;
+        }
+      }
+    }
+    return true;
+  }
+
+  // ============================================================================
+  // SÉLECTION TYPE ACCOUCHEMENT
+  // ============================================================================
+
+  function selectTypeAccouchement(type) {
+    typeAccouchement = type;
+    document.getElementById('typeAccouchement').value = type;
+
+    document.querySelectorAll('.type-accouchement-card').forEach(c => {
+      c.classList.remove('selected');
+    });
+
+    // Toggle medical details sections
+    const detailsVoieBasse = document.getElementById('detailsVoieBasse');
+    const detailsCesarienne = document.getElementById('detailsCesarienne');
+
+    if (type === 'VOIE_BASSE') {
+      const card = document.getElementById('cardVoieBasse');
+      if (card) {
+        card.classList.add('selected');
+        const radio = card.querySelector('input[type="radio"]');
+        if (radio) radio.checked = true;
+      }
+      nuiteesIncluses = 1;
+      // Show voie basse details, hide cesarienne details
+      if (detailsVoieBasse) detailsVoieBasse.style.display = 'flex';
+      if (detailsCesarienne) detailsCesarienne.style.display = 'none';
+
+      // 🆕 Hide post-operative section for voie basse
+      const postOpSection = document.getElementById('postOpSection');
+      if (postOpSection) postOpSection.style.display = 'none';
+    } else {
+      const card = document.getElementById('cardCesarienne');
+      if (card) {
+        card.classList.add('selected');
+        const radio = card.querySelector('input[type="radio"]');
+        if (radio) radio.checked = true;
+      }
+      nuiteesIncluses = 2;
+      // Show cesarienne details, hide voie basse details
+      if (detailsVoieBasse) detailsVoieBasse.style.display = 'none';
+      if (detailsCesarienne) detailsCesarienne.style.display = 'flex';
+
+      // 🆕 Show post-operative section for cesarean
+      const postOpSection = document.getElementById('postOpSection');
+      if (postOpSection) postOpSection.style.display = 'block';
+    }
+
+    const nuiteesInfo = document.getElementById('nuiteesInclusesInfo');
+    if (nuiteesInfo) {
+      nuiteesInfo.textContent = nuiteesIncluses + ' nuitée(s) incluse(s)';
+    }
+
+    recalculerTarifs();
+  }
+
+  // ============================================================================
+  // GESTION TYPE CÉSARIENNE (urgence/prophylactique)
+  // ============================================================================
+
+  function handleCesarienneTypeChange() {
+    const typeCesarienne = document.getElementById('typeCesarienne');
+    const indicationsUrgence = document.getElementById('indicationsUrgence');
+    const indicationsProphylactique = document.getElementById('indicationsProphylactique');
+
+    if (!typeCesarienne) return;
+
+    const value = typeCesarienne.value;
+
+    if (indicationsUrgence) {
+      indicationsUrgence.style.display = value === 'URGENCE' ? 'block' : 'none';
+    }
+    if (indicationsProphylactique) {
+      indicationsProphylactique.style.display = value === 'PROPHYLACTIQUE' ? 'block' : 'none';
+    }
+  }
+
+  // Initialiser le handler au chargement
+  document.addEventListener('DOMContentLoaded', function () {
+    const typeCesarienne = document.getElementById('typeCesarienne');
+    if (typeCesarienne) {
+      typeCesarienne.addEventListener('change', handleCesarienneTypeChange);
+    }
+  });
+
+  // ============================================================================
+  // SÉLECTION TARIFICATION
+  // ============================================================================
+
+
+  function selectTarification(type) {
+    typeTarification = type;
+
+    if (type === 'CONVENTION') {
+      const radio = document.getElementById('tarifConvention');
+      if (radio) radio.checked = true;
+    } else {
+      const radio = document.getElementById('tarifPayant');
+      if (radio) radio.checked = true;
+    }
+
+    document.querySelectorAll('.selection-card').forEach(c => {
+      if (c.querySelector('[name="type_tarification"]')) {
+        c.classList.remove('selected');
+      }
+    });
+
+    const radioId = type === 'CONVENTION' ? 'tarifConvention' : 'tarifPayant';
+    const selectedRadio = document.getElementById(radioId);
+    if (selectedRadio) {
+      const card = selectedRadio.closest('.selection-card');
+      if (card) card.classList.add('selected');
+    }
+
+    const detailsCard = document.getElementById('tarifDetailsCard');
+    if (detailsCard) {
+      detailsCard.style.display = 'block';
+    }
+
+    const supplementRow = document.getElementById('supplementGynecoRow');
+    if (supplementRow) {
+      supplementRow.style.display = estGynecoInterne ? 'none' : 'block';
+    }
+
+    recalculerTarifs();
+  }
+
+  // ============================================================================
+  // CALCUL TARIFS
+  // ============================================================================
+
+  function recalculerTarifs() {
+    if (!typeTarification || !typeAccouchement) return;
+
+    if (!TARIFS[typeTarification] || !TARIFS[typeTarification][typeAccouchement]) {
+      console.error('Tarifs introuvables:', typeTarification, typeAccouchement);
+      return;
+    }
+
+    const tarifs = TARIFS[typeTarification][typeAccouchement];
+    const supplementInput = document.getElementById('supplementGyneco');
+    const supplement = toNumber(supplementInput?.value, 0);
+
+    let prixBase, partClinique, partGyneco;
+
+    if (typeTarification === 'CONVENTION') {
+      prixBase = toNumber(tarifs.forfait_supplement, 0);
+      if (estGynecoInterne) {
+        partGyneco = toNumber(tarifs.honoraires_gyneco_interne, 0);
+      } else {
+        partGyneco = toNumber(tarifs.part_gyneco_externe, 0) + supplement;
+      }
+      partClinique = prixBase - partGyneco;
+    } else { // PAYANT
+      prixBase = toNumber(tarifs.prix_base, 0) + supplement;
+      if (estGynecoInterne) {
+        partGyneco = toNumber(tarifs.honoraires_gyneco_interne, 0);
+        partClinique = prixBase - partGyneco;
+      } else {
+        partClinique = toNumber(tarifs.part_clinique_base, 0);
+        partGyneco = prixBase - partClinique;
+      }
+    }
+
+    nuiteesIncluses = toNumber(tarifs.nuitees_incluses, 1);
+
+    // Mise à jour affichage
+    const prixBaseDisplay = document.getElementById('prixBaseDisplay');
+    const partCliniqueDisplay = document.getElementById('partCliniqueDisplay');
+    const partGynecoDisplay = document.getElementById('partGynecoDisplay');
+    const nuiteesDisplay = document.getElementById('nuiteesInclusesDisplay');
+    const prixBaseTotalDisplay = document.getElementById('prixBaseTotalDisplay');
+
+    if (prixBaseDisplay) prixBaseDisplay.textContent = prixBase.toFixed(2) + ' DA';
+    if (partCliniqueDisplay) partCliniqueDisplay.textContent = partClinique.toFixed(2) + ' DA';
+    if (partGynecoDisplay) partGynecoDisplay.textContent = partGyneco.toFixed(2) + ' DA';
+    if (nuiteesDisplay) nuiteesDisplay.textContent = nuiteesIncluses;
+    if (prixBaseTotalDisplay) prixBaseTotalDisplay.textContent = prixBase.toFixed(2) + ' DA';
+
+
+    // Mise à jour détails
+    let html = `<h6><i class="fas fa-info-circle"></i> ${typeTarification === 'CONVENTION' ? 'Convention CNAS/CASNOS' : 'Tarification Payante'
+      }</h6>`;
+    html += `<div class="row">`;
+    html += `<div class="col-6">Type: <strong>${typeAccouchement === 'VOIE_BASSE' ? 'Voie Basse' : 'Césarienne'
+      }</strong></div>`;
+    html += `<div class="col-6">Nuitées incluses: <strong>${nuiteesIncluses}</strong></div>`;
+    html += `</div>`;
+    html += `<div class="row mt-2">`;
+    html += `<div class="col-6">Prix base: <strong>${prixBase.toFixed(2)} DA</strong></div>`;
+    html += `<div class="col-6">Gynéco ${estGynecoInterne ? 'Interne' : 'Externe'}: `;
+    html += `<strong>${partGyneco.toFixed(2)} DA</strong></div>`;
+    html += `</div>`;
+
+    const tarifDetailsContent = document.getElementById('tarifDetailsContent');
+    if (tarifDetailsContent) {
+      tarifDetailsContent.innerHTML = html;
+    }
+
+    prixData.base = prixBase;
+    prixData.partClinique = partClinique;
+    prixData.partGyneco = partGyneco;
+
+    updateTotalDisplay();
+  }
+
+  // ============================================================================
+  // PRODUITS & ACTES SUPPLÉMENTAIRES
+  // ============================================================================
+
+  function addProduitSupp() {
+    const cont = document.getElementById('produitsSuppContainer');
+    if (!cont) return;
+
+    const html = `
+      <div class="product-row mb-3">
+        <div class="row align-items-center">
+            <div class="col-md-6">
+                  <select name="produit_supp_id[]" class="form-select form-select-sm produit-supp-select" onchange="calculerSupplements()">
+                    <option value="">-- Produit --</option>
+                    ${produitsDisponibles.map(p => `<option value="${p.id_produit}" data-prix="${p.prix}">${p.description} (${p.prix} DA)</option>`).join('')}
+                </select>
+            </div>
+              <div class="col-md-3">
+                  <input type="number" name="produit_supp_qte[]" class="form-control form-control-sm produit-supp-qte"
+                         value="1" min="0.1" step="0.1" onchange="calculerSupplements()">
+              </div>
+              <div class="col-md-3">
+                  <button type="button" class="btn btn-sm btn-danger w-100"
+                          onclick="removeProduitSupp(this)">
+                      <i class="fas fa-trash-alt"></i>
+                  </button>
+              </div>
+        </div>
+    </div>`;
+    cont.insertAdjacentHTML('beforeend', html);
+
+    // Initialize Choices on the new select
+    const newRow = cont.lastElementChild;
+    const newSelect = newRow.querySelector('select');
+    if (newSelect) initChoices(newSelect);
+  }
+
+  function removeProduitSupp(btn) {
+    showConfirmModal(
+      'Supprimer le produit',
+      'Êtes-vous sûr de vouloir supprimer ce produit ?',
+      () => {
+        btn.closest('.product-row').remove();
+        calculerSupplements();
+      }
+    );
+  }
+
+  function addActeSupp() {
+    const cont = document.getElementById('actesSuppContainer');
+    if (!cont) return;
+
+    const html = `
+      <div class="act-row mb-3">
+        <div class="row align-items-center">
+            <div class="col-md-6">
+                  <select name="acte_supp_id[]" class="form-select form-select-sm acte-supp-select" onchange="calculerSupplements()">
+                    <option value="">-- Acte --</option>
+                    ${actesDisponibles.map(a => `<option value="${a.id_acte}" data-prix="${a.prix}">${a.nom_acte} (${a.prix} DA)</option>`).join('')}
+                </select>
+            </div>
+              <div class="col-md-3">
+                  <input type="number" name="acte_supp_qte[]" class="form-control form-control-sm acte-supp-qte"
+                         value="1" min="1" onchange="calculerSupplements()">
+              </div>
+              <div class="col-md-3">
+                  <button type="button" class="btn btn-sm btn-danger w-100"
+                          onclick="removeActeSupp(this)">
+                      <i class="fas fa-trash-alt"></i>
+                  </button>
+              </div>
+        </div>
+    </div>`;
+    cont.insertAdjacentHTML('beforeend', html);
+
+    // Initialize Choices on the new select
+    const newRow = cont.lastElementChild;
+    const newSelect = newRow.querySelector('select');
+    if (newSelect) initChoices(newSelect);
+  }
+
+  function removeActeSupp(btn) {
+    showConfirmModal(
+      'Supprimer l\'acte',
+      'Êtes-vous sûr de vouloir supprimer cet acte ?',
+      () => {
+        btn.closest('.act-row').remove();
+        calculerSupplements();
+      }
+    );
+  }
+
+  function calculerSupplements() {
+    let produits = 0, actes = 0;
+
+    document.querySelectorAll('.produit-supp-select').forEach((sel, i) => {
+      if (sel.value) {
+        const prix = toNumber(sel.options[sel.selectedIndex]?.dataset.prix, 0);
+        const qteInputs = document.querySelectorAll('.produit-supp-qte');
+        const qte = toNumber(qteInputs[i]?.value, 0);
+        produits += prix * qte;
+      }
+    });
+
+    document.querySelectorAll('.acte-supp-select').forEach((sel, i) => {
+      if (sel.value) {
+        const prix = toNumber(sel.options[sel.selectedIndex]?.dataset.prix, 0);
+        const qteInputs = document.querySelectorAll('.acte-supp-qte');
+        const qte = toNumber(qteInputs[i]?.value, 0);
+        actes += prix * qte;
+      }
+    });
+
+    prixData.produits = produits;
+    prixData.actes = actes;
+
+    const prixSuppProduits = document.getElementById('prixSuppProduits');
+    const prixSuppActes = document.getElementById('prixSuppActes');
+
+    if (prixSuppProduits) prixSuppProduits.textContent = produits.toFixed(2) + ' DA';
+    if (prixSuppActes) prixSuppActes.textContent = actes.toFixed(2) + ' DA';
+
+    updateTotalDisplay();
+  }
+
+  // ============================================================================
+  // HOSPITALISATION
+  // ============================================================================
+
+  function addHospitalisation() {
+    hospitalisationCounter++;
+    const id = hospitalisationCounter;
+    const cont = document.getElementById('hospitalisationsContainer');
+    if (!cont) return;
+
+    const chambreOptions = typesChambres.map(c =>
+      `<option value="${c.id_type_chambre}" data-prix="${c.prix_unitaire}" data-standard="${c.est_standard || 0}">
+              ${c.nom_type} - ${c.prix_unitaire} DA
+          </option>`
+    ).join('');
+
+    const today = new Date().toISOString().split('T')[0];
+    const tomorrow = new Date(Date.now() + 86400000).toISOString().split('T')[0];
+
+    const html = `
+      <div class="modern-card mb-3 hospitalisation-item" id="hosp-${id}" style="border-left:4px solid var(--pink);">
+          <div class="d-flex justify-content-between align-items-center mb-3">
+              <h6 class="mb-0"><i class="fas fa-building"></i> Hospitalisation #${id}</h6>
+              <button type="button" class="btn btn-sm btn-danger" onclick="removeHospitalisation(${id})">
+                  <i class="fas fa-trash-alt"></i>
+              </button>
+          </div>
+          <div class="row mb-3">
+              <div class="col-md-6">
+                  <label class="form-label">Type de chambre *</label>
+                  <select name="id_type_chambre[]" class="form-select" data-hosp-id="${id}"
+                          onchange="calculateHospNuitees(${id})" required>
+                      <option value="">-- Sélectionner --</option>
+                      ${chambreOptions}
+                </select>
+            </div>
+              <div class="col-md-6">
+                  <label class="form-label">Nombre de nuitées</label>
+                  <input type="number" class="form-control" id="nuitees-${id}" readonly
+                         style="background:#f8f9fa;font-weight:bold;">
+              </div>
+          </div>
+          <div class="row">
+              <div class="col-md-6">
+                  <label class="form-label">Date d'entrée *</label>
+                  <input type="date" name="date_entree_hospitalisation[]"
+                         class="form-control hosp-date-entree" data-hosp-id="${id}"
+                         value="${today}" onchange="calculateHospNuitees(${id})" required>
+              </div>
+              <div class="col-md-6">
+                  <label class="form-label">Date de sortie *</label>
+                  <input type="date" name="date_sortie_hospitalisation[]"
+                         class="form-control hosp-date-sortie" data-hosp-id="${id}"
+                         value="${tomorrow}" onchange="calculateHospNuitees(${id})" required>
+            </div>
+            </div>
+          <div class="alert alert-light mt-3" id="hosp-summary-${id}" style="display:none;">
+              <div class="d-flex justify-content-between">
+                  <span>Prix unitaire: <strong id="hosp-prix-unit-${id}">0</strong> DA</span>
+                  <span>Prix: <strong class="text-pink-600" id="hosp-prix-${id}">0.00</strong> DA</span>
+            </div>
+        </div>
+    </div>`;
+
+    cont.insertAdjacentHTML('beforeend', html);
+    calculateHospNuitees(id);
+  }
+
+  function removeHospitalisation(id) {
+    showConfirmModal(
+      'Supprimer l\'hospitalisation',
+      'Êtes-vous sûr de vouloir supprimer cette hospitalisation ?',
+      () => {
+        document.getElementById(`hosp-${id}`)?.remove();
+        calculateAllNuitees();
+      }
+    );
+  }
+
+  function calculateHospNuitees(id) {
+    const entry = document.querySelector(`.hosp-date-entree[data-hosp-id="${id}"]`);
+    const sortie = document.querySelector(`.hosp-date-sortie[data-hosp-id="${id}"]`);
+    const nuitees = document.getElementById(`nuitees-${id}`);
+
+    if (!entry?.value || !sortie?.value) {
+      if (nuitees) nuitees.value = 0;
+      return;
+    }
+
+    const d1 = new Date(entry.value);
+    const d2 = new Date(sortie.value);
+    const diff = Math.ceil(Math.abs(d2 - d1) / (1000 * 60 * 60 * 24));
+    if (nuitees) nuitees.value = diff;
+
+    calculateAllNuitees();
+  }
+
+  function calculateAllNuitees() {
+    let totalNuits = 0;
+    let prixTotal = 0;
+    let restInclus = nuiteesIncluses;
+
+    document.querySelectorAll('.hospitalisation-item').forEach(item => {
+      const id = item.id.split('-')[1];
+      const nbNuits = toNumber(document.getElementById(`nuitees-${id}`)?.value, 0);
+      const sel = document.querySelector(`select[data-hosp-id="${id}"]`);
+
+      if (!sel?.value || nbNuits === 0) return;
+
+      totalNuits += nbNuits;
+      const prixU = toNumber(sel.options[sel.selectedIndex]?.dataset.prix, 0);
+      const estStd = sel.options[sel.selectedIndex]?.dataset.standard === '1';
+
+      let prix = 0;
+      let restant = nbNuits;
+
+      if (restInclus > 0) {
+        const utilise = Math.min(restant, restInclus);
+        if (!estStd) {
+          const diff = prixU - prixChambreStandard;
+          if (diff > 0) {
+            prix += utilise * diff;
+          }
+        }
+        restant -= utilise;
+        restInclus -= utilise;
+      }
+
+      if (restant > 0) {
+        prix += restant * prixU;
+      }
+
+      prixTotal += prix;
+
+      const hospPrixUnit = document.getElementById(`hosp-prix-unit-${id}`);
+      const hospPrix = document.getElementById(`hosp-prix-${id}`);
+      const hospSummary = document.getElementById(`hosp-summary-${id}`);
+
+      if (hospPrixUnit) hospPrixUnit.textContent = prixU.toFixed(2);
+      if (hospPrix) hospPrix.textContent = prix.toFixed(2);
+      if (hospSummary) hospSummary.style.display = 'block';
+    });
+
+    const totalNuiteesDisplay = document.getElementById('totalNuitees');
+    const nuiteesInclusesDisplay = document.getElementById('nuiteesIncluses');
+    const nuiteesFacturablesDisplay = document.getElementById('nuiteesFacturables');
+    const prixTotalNuiteesDisplay = document.getElementById('prixTotalNuitees');
+    const nuiteesSummary = document.getElementById('nuiteesSummary');
+
+    if (totalNuiteesDisplay) totalNuiteesDisplay.textContent = totalNuits;
+    if (nuiteesInclusesDisplay) nuiteesInclusesDisplay.textContent = nuiteesIncluses;
+    if (nuiteesFacturablesDisplay) nuiteesFacturablesDisplay.textContent = Math.max(0, totalNuits - nuiteesIncluses);
+    if (prixTotalNuiteesDisplay) prixTotalNuiteesDisplay.textContent = prixTotal.toFixed(2);
+    if (nuiteesSummary) nuiteesSummary.style.display = totalNuits > 0 ? 'block' : 'none';
+
+    prixData.nuitees = prixTotal;
+    updateTotalDisplay();
+  }
+
+  // ============================================================================
+  // EXPLORATIONS
+  // ============================================================================
+
+  function addExploration() {
+    explorationCounter++;
+    const cont = document.getElementById('explorationsContainer');
+    if (!cont) return;
+
+    const html = `
+      <div class="product-row exploration-row mb-3" id="exploration-${explorationCounter}">
+          <div class="row align-items-center">
+            <div class="col-md-3">
+                <select name="exploration_type[]" class="form-select form-select-sm">
+                      <option value="">-- Type --</option>
+                    <option value="ECHOGRAPHIE">Échographie</option>
+                    <option value="LABORATOIRE">Laboratoire</option>
+                    <option value="IMAGERIE">Imagerie</option>
+                    <option value="AUTRE">Autre</option>
+                </select>
+            </div>
+              <div class="col-md-3">
+                  <input type="text" name="exploration_nom[]" class="form-control form-control-sm"
+                         placeholder="Nom (optionnel)">
+              </div>
+              <div class="col-md-2">
+                  <input type="date" name="exploration_date[]" class="form-control form-control-sm">
+              </div>
+              <div class="col-md-2">
+                  <input type="number" name="exploration_prix[]"
+                         class="form-control form-control-sm exploration-prix"
+                         step="0.01" min="0" value="0" onchange="calculerExplorations()">
+              </div>
+              <div class="col-md-2">
+                  <button type="button" class="btn btn-sm btn-danger w-100"
+                          onclick="removeExploration(${explorationCounter})">
+                      <i class="fas fa-trash-alt"></i>
+                  </button>
+              </div>
+        </div>
+        <div class="row mt-2">
+            <div class="col-12"><textarea name="exploration_obs[]" class="form-control form-control-sm" rows="1" placeholder="Observations"></textarea></div>
+        </div>
+    </div>`;
+    cont.insertAdjacentHTML('beforeend', html);
+  }
+
+  function removeExploration(id) {
+    showConfirmModal(
+      'Supprimer l\'exploration',
+      'Êtes-vous sûr de vouloir supprimer cette exploration ?',
+      () => {
+        document.getElementById(`exploration-${id}`)?.remove();
+        calculerExplorations();
+      }
+    );
+  }
+
+  function calculerExplorations() {
+    let total = 0;
+    document.querySelectorAll('.exploration-prix').forEach(input => {
+      total += toNumber(input.value, 0);
+    });
+
+    const prixTotalExplorations = document.getElementById('prixTotalExplorations');
+    if (prixTotalExplorations) {
+      prixTotalExplorations.textContent = total.toFixed(2) + ' DA';
+    }
+
+    prixData.explorations = total;
+    updateTotalDisplay();
+  }
+
+  // ============================================================================
+  // AFFICHAGE TOTAUX
+  // ============================================================================
+
+  function updateTotalDisplay() {
+    const supplements = prixData.produits + prixData.actes + prixData.anesthesie;
+
+    const prixAnesthesie = document.getElementById('prixAnesthesie');
+    const totalSupplements = document.getElementById('totalSupplements');
+
+    if (prixAnesthesie) prixAnesthesie.textContent = prixData.anesthesie.toFixed(2) + ' DA';
+    if (totalSupplements) {
+      totalSupplements.textContent = (supplements + prixData.nuitees + prixData.explorations).toFixed(2) + ' DA';
+    }
+  }
+
+  function updateFinalSummary() {
+    const supplements = prixData.produits + prixData.actes + prixData.anesthesie +
+      prixData.explorations + prixData.nuitees;
+    const total = prixData.base + supplements;
+
+    // Mise à jour des affichages
+    const elements = {
+      'prixBaseFinal': prixData.base,
+      'prixProduitsFinal': prixData.produits,
+      'prixActesFinal': prixData.actes,
+      'prixAnesthesieFinal': prixData.anesthesie,
+      'prixNuiteesFinal': prixData.nuitees,
+      'prixExplorationsFinal': prixData.explorations,
+      'prixTotalFinal': total
+    };
+
+    for (const [id, value] of Object.entries(elements)) {
+      const el = document.getElementById(id);
+      if (el) el.textContent = value.toFixed(2) + ' DA';
+    }
+
+    // Calcul des parts
+    let partClinique = prixData.partClinique + supplements;
+    let partGyneco = prixData.partGyneco;
+
+    // Pour PAYANT externe, recalculer selon le montant payé
+    const montantPayeInput = document.getElementById('montantPaye');
+    const montantPaye = toNumber(montantPayeInput?.value, 0);
+
+    if (typeTarification === 'PAYANT' && !estGynecoInterne && montantPaye > 0) {
+      partGyneco = montantPaye - partClinique;
+    }
+
+    const partCliniqueFinal = document.getElementById('partCliniqueFinal');
+    const partGynecoFinal = document.getElementById('partGynecoFinal');
+
+    if (partCliniqueFinal) partCliniqueFinal.textContent = partClinique.toFixed(2) + ' DA';
+    if (partGynecoFinal) partGynecoFinal.textContent = partGyneco.toFixed(2) + ' DA';
+
+    calculerBalance();
+  }
+
+  // ============================================================================
+  // BALANCE ET MODE PAIEMENT
+  // ============================================================================
+
+  function updateModesPaiementInfo() {
+    const mode = document.getElementById('modePaiement')?.value;
+    const montantPaye = toNumber(document.getElementById('montantPaye')?.value, 0);
+    const alerteGynecoExterne = document.getElementById('alerteGynecoExterne');
+    const montantRequired = document.getElementById('montantRequired');
+    const montantHelper = document.getElementById('montantHelper');
+
+    // Afficher/masquer l'alerte pour gynéco externe
+    if (alerteGynecoExterne) {
+      if (!estGynecoInterne && mode === 'DIRECT') {
+        alerteGynecoExterne.style.display = 'block';
+        if (montantRequired) montantRequired.style.display = 'inline';
+      } else {
+        alerteGynecoExterne.style.display = 'none';
+        if (montantRequired) montantRequired.style.display = 'none';
+      }
+    }
+
+    // Adapter le texte d'aide selon le mode
+    if (montantHelper) {
+      if (mode === 'DIRECT') {
+        montantHelper.innerHTML = '<i class="fas fa-lightbulb"></i> Le montant payé par le patient à la clinique';
+      } else if (mode === 'VIA_GYNECO') {
+        montantHelper.innerHTML = '<i class="fas fa-lightbulb"></i> Patient → Gynéco → Clinique (laisser à 0 si pas encore réglé)';
+      } else {
+        montantHelper.innerHTML = '<i class="fas fa-lightbulb"></i> Le paiement sera enregistré ultérieurement';
+      }
+    }
+
+    calculerBalance();
+  }
+
+  function calculerBalance() {
+    const total = prixData.base + prixData.produits + prixData.actes +
+      prixData.anesthesie + prixData.nuitees + prixData.explorations;
+    const montantPaye = toNumber(document.getElementById('montantPaye')?.value, 0);
+    const diff = montantPaye - total;
+
+    const alert = document.getElementById('balanceAlert');
+    if (!alert) return;
+
+    if (montantPaye === 0) {
+      alert.className = 'alert alert-warning';
+      alert.innerHTML = `
+              <i class="fas fa-exclamation-circle"></i>
+              <strong>Aucun paiement enregistré</strong>
+              <br>
+              <small>Total à payer : <strong>${total.toFixed(2)} DA</strong></small>
+              <br>
+              <small class="text-muted">
+                  <i class="fas fa-info-circle"></i>
+                  Le patient peut payer le gynécologue directement, qui règlera ensuite avec la clinique.
+              </small>
+          `;
+    } else if (Math.abs(diff) < 0.01) {
+      alert.className = 'alert alert-success';
+      alert.innerHTML = '<i class="fas fa-check-circle"></i> Soldé - Le montant payé correspond au total';
+    } else if (diff > 0) {
+      alert.className = 'alert alert-info';
+      alert.innerHTML = `<i class="fas fa-info-circle"></i> Surplus clinique: <strong>${diff.toFixed(2)} DA</strong>`;
+    } else {
+      alert.className = 'alert alert-warning';
+      alert.innerHTML = `<i class="fas fa-exclamation-triangle"></i> Reste à payer: <strong>${Math.abs(diff).toFixed(2)} DA</strong>`;
+    }
+
+    alert.style.display = 'block';
+
+    // Recalculer part gynéco pour PAYANT externe
+    if (typeTarification === 'PAYANT' && !estGynecoInterne && montantPaye > 0) {
+      const supplements = prixData.produits + prixData.actes + prixData.anesthesie +
+        prixData.explorations + prixData.nuitees;
+      const partClinique = prixData.partClinique + supplements;
+      const partGyneco = montantPaye - partClinique;
+
+      const partGynecoFinal = document.getElementById('partGynecoFinal');
+      if (partGynecoFinal) {
+        partGynecoFinal.textContent = partGyneco.toFixed(2) + ' DA';
+      }
+    }
+  }
+
+  // ============================================================================
+  // VALIDATION FORMULAIRE
+  // ============================================================================
+
+  function initFormValidation() {
+    const form = document.getElementById('accouchementForm');
+    if (!form) return;
+
+    form.addEventListener('submit', function (e) {
+      e.preventDefault();
+
+      const montantPaye = toNumber(document.getElementById('montantPaye')?.value, 0);
+      const mode = document.getElementById('modePaiement')?.value;
+
+      // ✅ Validation relaxée : On permet la soumission même avec montant = 0
+
+      // Confirmation avant création
+      showConfirmModal(
+        'Créer l\'accouchement',
+        'Êtes-vous sûr de vouloir créer ce dossier d\'accouchement ?',
+        () => {
+          form.submit();
+        }
+      );
+    });
+  }
+
+  // ============================================================================
+  // NAVIGATION FLOTTANTE
+  // ============================================================================
+
+  // Mettre à jour les boutons flottants
+  function updateFloatingNav() {
+    const floatingPrev = document.querySelector('.btn-prev');
+    const floatingNext = document.querySelector('.btn-next');
+    if (!floatingPrev || !floatingNext) return;
+
+    if (currentStep === 1) {
+      floatingPrev.disabled = true;
+      floatingPrev.innerHTML = '<i class="fas fa-arrow-left"></i> Précédent';
+      floatingNext.innerHTML = 'Suivant <i class="fas fa-arrow-right"></i>';
+      floatingNext.onclick = () => nextStep(2);
+      floatingNext.className = 'btn btn-primary btn-next';
+    } else if (currentStep === 6) {
+      floatingPrev.disabled = false;
+      floatingPrev.innerHTML = '<i class="fas fa-arrow-left"></i> Précédent';
+      floatingPrev.onclick = () => prevStep(5);
+
+      floatingNext.innerHTML = '<i class="fas fa-check-circle"></i> Valider';
+      floatingNext.className = 'btn btn-success btn-next';
+      floatingNext.onclick = () => submitForm('save');
+
+    } else {
+      floatingPrev.disabled = false;
+      floatingPrev.innerHTML = '<i class="fas fa-arrow-left"></i> Précédent';
+      floatingPrev.onclick = () => prevStep(currentStep - 1);
+      floatingNext.innerHTML = 'Suivant <i class="fas fa-arrow-right"></i>';
+      floatingNext.onclick = () => nextStep(currentStep + 1);
+      floatingNext.className = 'btn btn-primary btn-next';
+    }
+  }
+
+  function submitForm(actionName) {
+    const form = document.getElementById('accouchementForm');
+    // Mettre à jour l'input hidden action
+    let actionInput = form.querySelector('input[name="action"]');
+    if (!actionInput) {
+      actionInput = document.createElement('input');
+      actionInput.type = 'hidden';
+      actionInput.name = 'action';
+      form.appendChild(actionInput);
+    }
+    actionInput.value = actionName;
+
+    // Submit
+    form.requestSubmit();
+  }
+
+  // Mettre à jour la navigation flottante lorsque l'étape change
+  const originalShowStep = showStep;
+  showStep = function (step) {
+    originalShowStep.call(this, step);
+    updateFloatingNav();
+  };
+
+  // Initialiser la navigation flottante et l'état de l'interface
+  document.addEventListener('DOMContentLoaded', () => {
+    updateFloatingNav();
+
+    // 1. Initialiser Type Accouchement (Visual Selection)
+    const activeTypeAcc = document.querySelector('input[name="type_acc_radio"]:checked');
+    if (activeTypeAcc) {
+      selectTypeAccouchement(activeTypeAcc.value);
+    }
+
+    // 2. Initialiser Gynéco interne/externe
+    const gynecoSelect = document.getElementById('gynecoSelect');
+    if (gynecoSelect && gynecoSelect.value) {
+      const selectedOption = gynecoSelect.options[gynecoSelect.selectedIndex];
+      if (selectedOption) {
+        const isInterne = selectedOption.getAttribute('data-interne') == '1';
+        estGynecoInterne = isInterne;
+
+        const typeInfo = document.getElementById('gynecoTypeInfo');
+        if (typeInfo) {
+          typeInfo.innerHTML = isInterne
+            ? '<span class="badge badge-success">Interne</span>'
+            : '<span class="badge badge-warning">Externe</span>';
+        }
+      }
+    }
+
+    // 3. Initialiser Tarification
+    const activeTarif = document.querySelector('input[name="type_tarification"]:checked');
+    if (activeTarif) {
+      selectTarification(activeTarif.value);
+    }
+  });
+
+  // Synchroniser le nom du patient sélectionné
+  document.getElementById('patientSelectDirect').addEventListener('change', function (e) {
+    const select = e.target;
+    const selectedOption = select.options[select.selectedIndex];
+
+    if (selectedOption && selectedOption.value) {
+      // Extraire le nom du label
+      const label = selectedOption.text;
+      const patientName = label.split(' - ')[0]; // "Nom Prénom - CODE"
+
+      document.getElementById('patientNameHidden').value = patientName;
+
+      // Extraire l'âge (Format: "Nom - Code (Age ans)")
+      const ageMatch = label.match(/\((\d+)\s*ans\)/);
+      if (ageMatch && ageMatch[1]) {
+        document.getElementById('patientAgeHidden').value = ageMatch[1];
+      } else {
+        document.getElementById('patientAgeHidden').value = '';
+      }
+    }
+  });
+</script>
+{% endblock %}

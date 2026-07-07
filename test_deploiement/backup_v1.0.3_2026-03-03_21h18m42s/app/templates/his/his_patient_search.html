@@ -1,0 +1,833 @@
+{%extends "layout.html"%}
+{% import 'his/macros/his_direct_selector.html' as his_selector %}
+{% block content%}
+<style>
+    .search-hero {
+        background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+        color: white;
+        border-radius: 15px;
+        margin-bottom: 30px;
+    }
+
+    .search-card {
+        transition: all 0.3s ease;
+        border: 2px solid transparent;
+    }
+
+    .search-card:hover {
+        transform: translateY(-5px);
+        border-color: #28a745;
+        box-shadow: 0 10px 25px rgba(40, 167, 69, 0.2);
+    }
+
+    .quick-stats {
+        background: white;
+        border-radius: 10px;
+        padding: 15px;
+        margin-bottom: 20px;
+        box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+    }
+
+    .filter-tag {
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+    .filter-tag:hover {
+        transform: scale(1.05);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    }
+
+    .recent-searches {
+        background: #f8f9fa;
+        border-radius: 10px;
+        padding: 15px;
+    }
+
+    .filter-tag.active {
+        background-color: #20c997 !important;
+        transform: scale(1.1);
+        box-shadow: 0 4px 12px rgba(32, 201, 151, 0.4);
+    }
+
+    .result-item {
+        transition: all 0.3s ease;
+
+        border-left: 4px solid #28a745;
+        padding: 12px 15px;
+        margin-bottom: 15px;
+        border-radius: 5px;
+        background: white;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        transition: all 0.2s;
+        cursor: pointer;
+    }
+
+    .result-item:hover {
+        transform: translateX(8px);
+        box-shadow: 0 6px 15px rgba(0, 0, 0, 0.15);
+        background-color: #f8f9fa;
+    }
+
+    .highlight {
+        background-color: #fff3cd;
+        padding: 2px 5px;
+        border-radius: 3px;
+    }
+
+    .advanced-panel {
+        max-height: 0;
+        overflow: hidden;
+        transition: max-height 0.3s ease-out;
+    }
+
+    .advanced-panel.show {
+        max-height: 1000px;
+    }
+
+    .search-type-badge {
+        font-size: 0.7em;
+        vertical-align: middle;
+    }
+
+    .patient-avatar {
+        width: 50px;
+        height: 50px;
+        background: linear-gradient(135deg, #28a745, #20c997);
+        color: white;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.2em;
+        font-weight: bold;
+        box-shadow: 0 3px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    .page-item.active .page-link {
+        background-color: #28a745;
+        border-color: #28a745;
+    }
+
+    .page-link {
+        color: #28a745;
+    }
+
+    .page-link:hover {
+        color: #1e7e34;
+    }
+</style>
+
+<div class="container-fluid py-4">
+    <!-- En-tête -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="search-hero p-4">
+                <h1 class="display-5 mb-3">
+                    <i class="fas fa-search-plus"></i>
+                    Recherche Intelligente Patients
+                </h1>
+                <p class="lead mb-0">
+                    Recherchez des patients en temps réel avec des algorithmes avancés de correspondance.
+                    Données directes depuis PostgreSQL HIS.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Colonne principale de recherche -->
+        <div class="col-lg-8">
+            <!-- Barre de recherche principale -->
+            <div class="card shadow-sm mb-4 search-card">
+                <div class="card-body">
+                    <div class="row g-3 align-items-end">
+                        <div class="col-md-8">
+                            <label class="form-label text-success fw-bold">
+                                <i class="fas fa-user-injured"></i>
+                                Recherche Patient
+                            </label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-success text-white">
+                                    <i class="fas fa-search"></i>
+                                </span>
+                                <input type="text" class="form-control form-control-lg" id="searchInput"
+                                    placeholder="Nom, prénom, code patient, carte ID..."
+                                    onkeyup="handleSearchInput(event)">
+                            </div>
+                            <div class="mt-2">
+                                <small class="text-muted">
+                                    <i class="fas fa-lightbulb"></i>
+                                    Astuce: Tapez "nom prénom", "code:ABC123" ou "carte:123456"
+                                </small>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="d-grid">
+                                <button class="btn btn-success btn-lg" onclick="performSearch()">
+                                    <i class="fas fa-search"></i> Rechercher
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Filtres rapides -->
+                    <div class="mt-4">
+                        <div class="d-flex flex-wrap gap-2">
+                            <span class="text-muted me-2">Filtrer par:</span>
+                            <span class="badge filter-tag bg-primary" onclick="setFilter('gender', 'M')">
+                                <i class="fas fa-male"></i> Hommes
+                            </span>
+                            <span class="badge filter-tag bg-danger" onclick="setFilter('gender', 'F')">
+                                <i class="fas fa-female"></i> Femmes
+                            </span>
+                            <span class="badge filter-tag bg-warning" onclick="setFilter('age_range', 'child')">
+                                <i class="fas fa-child"></i> Enfants
+                            </span>
+                            <span class="badge filter-tag bg-info" onclick="setFilter('age_range', 'adult')">
+                                <i class="fas fa-user"></i> Adultes
+                            </span>
+                            <span class="badge filter-tag bg-secondary" onclick="setFilter('has_balance', 'true')">
+                                <i class="fas fa-wallet"></i> Avec solde
+                            </span>
+                            <button class="btn btn-sm btn-outline-success ms-auto" onclick="toggleAdvanced()">
+                                <i class="fas fa-sliders-h"></i> Avancé
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Panneau de recherche avancée -->
+                    <div class="advanced-panel mt-3" id="advancedPanel">
+                        <div class="row g-3">
+                            <div class="col-md-3">
+                                <label class="form-label">Âge minimum</label>
+                                <input type="number" class="form-control" id="minAge" min="0" max="120">
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label">Âge maximum</label>
+                                <input type="number" class="form-control" id="maxAge" min="0" max="120">
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label">Date création (début)</label>
+                                <input type="date" class="form-control" id="startDate">
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label">Date création (fin)</label>
+                                <input type="date" class="form-control" id="endDate">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Tiers payant</label>
+                                <select class="form-select" id="thirdParty">
+                                    <option value="">Tous</option>
+                                    <option value="has">Avec tiers payant</option>
+                                    <option value="none">Sans tiers payant</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Solde financier</label>
+                                <select class="form-select" id="balanceStatus">
+                                    <option value="">Tous</option>
+                                    <option value="positive">Solde positif</option>
+                                    <option value="negative">Solde négatif</option>
+                                    <option value="zero">Solde nul</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Résultats de recherche -->
+            <div class="card shadow-sm">
+                <div class="card-header bg-white border-bottom">
+                    <h5 class="mb-0">
+                        <i class="fas fa-list"></i>
+                        Résultats
+                        <span class="badge bg-success" id="resultsCount">0</span>
+                    </h5>
+                    <div class="small text-muted" id="searchSummary">
+                        Tapez un terme pour rechercher
+                    </div>
+                </div>
+                <div class="card-body">
+                    <!-- Liste des résultats -->
+                    <div id="searchResults">
+                        <div class="text-center py-5">
+                            <i class="fas fa-search fa-3x text-muted mb-3"></i>
+                            <h5 class="text-muted">Aucune recherche effectuée</h5>
+                            <p class="text-muted">Utilisez la barre de recherche pour trouver des patients</p>
+                        </div>
+                    </div>
+
+                    <!-- Pagination -->
+                    <nav aria-label="Pagination" id="paginationContainer" style="display: none;">
+                        <ul class="pagination justify-content-center mt-4">
+                            <!-- Généré dynamiquement -->
+                        </ul>
+                    </nav>
+                </div>
+            </div>
+        </div>
+
+        <!-- Colonne latérale -->
+        <div class="col-lg-4">
+            <!-- Statistiques rapides -->
+            <div class="quick-stats">
+                <h6><i class="fas fa-chart-bar"></i> Statistiques</h6>
+                <div class="row text-center mt-3">
+                    <div class="col-6 mb-3">
+                        <div class="display-6 text-primary" id="statTotalPatients">0</div>
+                        <small class="text-muted">Patients</small>
+                    </div>
+                    <div class="col-6 mb-3">
+                        <div class="display-6 text-success" id="statActivePatients">0</div>
+                        <small class="text-muted">Actifs</small>
+                    </div>
+                    <div class="col-6 mb-3">
+                        <div class="display-6 text-warning" id="statTodayVisits">0</div>
+                        <small class="text-muted">Visites aujourd'hui</small>
+                    </div>
+                    <div class="col-6 mb-3">
+                        <div class="display-6 text-danger" id="statBalanceDue">0</div>
+                        <small class="text-muted">À recouvrer</small>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recherches récentes -->
+            <div class="recent-searches mb-4">
+                <h6><i class="fas fa-history"></i> Recherches récentes</h6>
+                <div class="list-group list-group-flush mt-3" id="recentSearches">
+                    <div class="list-group-item border-0 py-2">
+                        <small class="text-muted">Aucune recherche récente</small>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<!-- ✅ Utiliser le modal depuis his_direct_selector.html -->
+{{ his_selector.render_modal('modalPatientHistoryDirect') }}
+
+<!-- Scripts -->
+<script src="{{ url_for('static', filename='js/axios.min.js') }}"></script>
+<script>
+    // Configuration globale
+    let currentFilters = {};
+    let searchHistory = [];
+    let currentPage = 1;
+    const itemsPerPage = 20;
+
+    // Gérer l'entrée dans la recherche
+    function handleSearchInput(event) {
+        if (event.key === 'Enter') {
+            performSearch();
+        } else if (event.key === 'Escape') {
+            document.getElementById('searchInput').value = '';
+            clearResults();
+        }
+    }
+
+    // Basculer le panneau avancé
+    function toggleAdvanced() {
+        const panel = document.getElementById('advancedPanel');
+        panel.classList.toggle('show');
+    }
+
+    // Définir un filtre rapide
+    function setFilter(type, value) {
+        if (currentFilters[type] === value) {
+            delete currentFilters[type];
+        } else {
+            currentFilters[type] = value;
+        }
+
+        updateFilterDisplay();
+        currentPage = 1;
+
+        performSearch();
+    }
+
+    // Mettre à jour l'affichage des filtres
+    function updateFilterDisplay() {
+        document.querySelectorAll('.filter-tag').forEach(tag => {
+            tag.classList.remove('active');
+        });
+
+        for (const [type, value] of Object.entries(currentFilters)) {
+            document.querySelectorAll('.filter-tag').forEach(tag => {
+                const onclickAttr = tag.getAttribute('onclick');
+                if (onclickAttr && onclickAttr.includes(`'${type}'`) && onclickAttr.includes(`'${value}'`)) {
+                    tag.classList.add('active');
+                }
+            });
+        }
+    }
+
+    // Effacer tous les filtres
+    function clearAllFilters() {
+        currentFilters = {};
+        document.getElementById('minAge').value = '';
+        document.getElementById('maxAge').value = '';
+        document.getElementById('startDate').value = '';
+        document.getElementById('endDate').value = '';
+        document.getElementById('thirdParty').value = '';
+        document.getElementById('balanceStatus').value = '';
+        document.querySelectorAll('.filter-tag').forEach(tag => {
+            tag.classList.remove('active');
+        });
+        currentPage = 1;
+
+        performSearch();
+    }
+
+    // Effectuer la recherche
+    async function performSearch() {
+        const query = document.getElementById('searchInput').value.trim();
+        if (!query) {
+            showToast('Veuillez entrer un terme de recherche', "warning");
+            return;
+        }
+
+        addToSearchHistory(query);
+
+        document.getElementById('searchResults').innerHTML = `
+                <div class="text-center py-5">
+                    <div class="spinner-border text-success" role="status">
+                        <span class="visually-hidden">Chargement...</span>
+                    </div>
+                    <p class="mt-3">Recherche en cours...</p>
+                </div>
+            `;
+
+        try {
+            const params = new URLSearchParams({
+                q: query,
+                page: currentPage,
+                limit: itemsPerPage
+            });
+
+            if (currentFilters.gender) {
+                params.append('gender', currentFilters.gender);
+            }
+            if (currentFilters.age_range) {
+                params.append('age_range', currentFilters.age_range);
+            }
+            if (currentFilters.has_balance) {
+                params.append('balance_status', 'positive');
+            }
+
+            const advancedFilters = [
+                { param: 'min_age', elementId: 'minAge' },
+                { param: 'max_age', elementId: 'maxAge' },
+                { param: 'start_date', elementId: 'startDate' },
+                { param: 'end_date', elementId: 'endDate' },
+                { param: 'third_party', elementId: 'thirdParty' },
+                { param: 'balance_status', elementId: 'balanceStatus' }
+            ];
+
+            advancedFilters.forEach(filter => {
+                const element = document.getElementById(filter.elementId);
+                if (element && element.value && element.value.trim() !== '') {
+                    params.append(filter.param, element.value);
+                }
+            });
+
+            const response = await axios.get(`/api/his-direct/search/intelligent?${params.toString()}`);
+
+            if (response.data.success) {
+                displaySearchResults(response.data);
+
+                if (response.data.stats) {
+                    updateStatistics(response.data.stats);
+                }
+            } else {
+                throw new Error(response.data.message || 'Erreur de recherche');
+            }
+        } catch (error) {
+            console.error('❌ Erreur recherche:', error);
+            let errorMessage = 'Erreur inconnue';
+            if (error.response) {
+                errorMessage = `Erreur serveur (${error.response.status}): ${error.response.data?.message || error.message}`;
+            } else if (error.request) {
+                errorMessage = 'Impossible de contacter le serveur. Vérifiez votre connexion.';
+            } else {
+                errorMessage = error.message;
+            }
+
+            document.getElementById('searchResults').innerHTML = `
+                    <div class="alert alert-danger">
+                        <i class="fas fa-exclamation-triangle"></i>
+                <strong>Erreur lors de la recherche:</strong> ${errorMessage}
+                <br><small>Vérifiez votre connexion et réessayez.</small>
+                <hr>
+                <button class="btn btn-sm btn-outline-danger" onclick="performSearch()">
+                    <i class="fas fa-redo"></i> Réessayer
+                </button>
+                    </div>
+                `;
+        }
+    }
+
+    // Afficher les résultats
+    function displaySearchResults(data) {
+        const container = document.getElementById('searchResults');
+        const results = data.results || [];
+        const total = data.total || 0;
+        const query = data.query || '';
+
+        document.getElementById('resultsCount').textContent = total;
+
+        let summaryText = `${total} résultat(s) trouvé(s)`;
+        if (query) summaryText += ` pour "${query}"`;
+
+        const filtersApplied = data.filters_applied || {};
+        const activeFilters = Object.entries(filtersApplied)
+            .filter(([_, value]) => value)
+            .map(([key, value]) => {
+                switch (key) {
+                    case 'gender': return value === 'M' ? 'Hommes' : 'Femmes';
+                    case 'age_range': return value === 'child' ? 'Enfants' : 'Adultes';
+                    case 'balance_status':
+                        return value === 'positive' ? 'Avec solde dû' :
+                            value === 'negative' ? 'Avec crédit' : 'Solde nul';
+                    default: return null;
+                }
+            })
+            .filter(Boolean);
+
+        if (activeFilters.length > 0) {
+            summaryText += ` (Filtres: ${activeFilters.join(', ')})`;
+        }
+
+        document.getElementById('searchSummary').textContent = summaryText;
+
+        if (results.length === 0) {
+            container.innerHTML = `
+                    <div class="text-center py-5">
+                        <i class="fas fa-search fa-3x text-muted mb-3"></i>
+                        <h5 class="text-muted">Aucun résultat trouvé</h5>
+                <p class="text-muted">
+                    ${activeFilters.length > 0
+                    ? 'Essayez de supprimer certains filtres'
+                    : 'Essayez avec d\'autres termes de recherche'}
+                </p>
+                ${activeFilters.length > 0 ? `
+                    <button class="btn btn-outline-primary mt-2" onclick="clearAllFilters()">
+                        <i class="fas fa-filter-circle-xmark"></i> Effacer les filtres
+                    </button>
+                ` : ''}
+                    </div>
+                `;
+            document.getElementById('paginationContainer').style.display = 'none';
+            return;
+        }
+
+        let html = '';
+        results.forEach((patient, index) => {
+            const fullName = `${patient.first_name || ''} ${patient.last_name || ''}`.trim();
+            const initials = getInitials(fullName);
+            const age = patient.age ? `${patient.age} ans` : 'Âge inconnu';
+            const balance = patient.balance || 0;
+            const balanceClass = balance > 0 ? 'text-danger' : balance < 0 ? 'text-success' : 'text-muted';
+            const balanceText = balance > 0 ? `${balance.toFixed(2)} DA dû` :
+                balance < 0 ? `${Math.abs(balance).toFixed(2)} DA crédit` : 'Solde nul';
+            const lastVisit = patient.last_visit ? formatDate(patient.last_visit) : 'Jamais';
+            const genderIcon = patient.gender == 1 ? 'fa-male text-info' : patient.gender == 2 ? 'fa-female text-danger' : 'fa-user text-muted';
+
+            html += `
+                    <div class="result-item" onclick="showPatientHistory(${patient.oid})">
+                <div class="row align-items-center">
+                            <div class="col-auto">
+                                <div class="patient-avatar">
+                                    ${initials}
+                                </div>
+                            </div>
+                            <div class="col">
+                                <h6 class="mb-1">
+                            <strong>${fullName}</strong>
+                            <i class="fas ${genderIcon} ms-2"></i>
+                            <span class="badge search-type-badge ${getPatientTypeBadge(patient)} ms-2">
+                                        ${getPatientType(patient)}
+                                    </span>
+                                </h6>
+                        <div class="row small text-muted g-2">
+                            <div class="col-md-3">
+                                <i class="fas fa-id-card"></i> <strong>${patient.code || 'N/A'}</strong>
+                                    </div>
+                            <div class="col-md-2">
+                                        <i class="fas fa-birthday-cake"></i> ${age}
+                                    </div>
+                            <div class="col-md-3 ${balanceClass}">
+                                <i class="fas fa-wallet"></i> <strong>${balanceText}</strong>
+                                    </div>
+                            <div class="col-md-4">
+                                <i class="fas fa-calendar-check"></i> Dernière visite: ${lastVisit}
+                            </div>
+                                </div>
+                        ${patient.id_card_number ? `
+                                <div class="mt-2">
+                                <small class="text-muted">
+                                    <i class="fas fa-address-card"></i> Carte ID: <strong>${patient.id_card_number}</strong>
+                                </small>
+                                </div>
+                        ` : ''}
+                            </div>
+                            <div class="col-auto">
+                        <button class="btn btn-sm btn-outline-success"
+                                onclick="event.stopPropagation(); showPatientHistory(${patient.oid})">
+                            <i class="fas fa-eye"></i> Voir détails
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+        });
+
+        container.innerHTML = html;
+
+        if (total > itemsPerPage) {
+            document.getElementById('paginationContainer').style.display = 'block';
+            updatePagination(total);
+        } else {
+            document.getElementById('paginationContainer').style.display = 'none';
+        }
+    }
+
+    // Obtenir les initiales
+    function getInitials(name) {
+        if (!name) return '??';
+        const parts = name.split(' ');
+        if (parts.length >= 2) {
+            return (parts[0].charAt(0) + parts[1].charAt(0)).toUpperCase();
+        }
+        return name.substring(0, 2).toUpperCase();
+    }
+
+    // Obtenir le type de patient
+    function getPatientType(patient) {
+        if (!patient.last_visit) return 'Nouveau';
+
+        const lastVisit = new Date(patient.last_visit);
+        const now = new Date();
+        const diffDays = Math.floor((now - lastVisit) / (1000 * 60 * 60 * 24));
+
+        if (diffDays < 7) return 'Récent';
+        if (diffDays < 30) return 'Actif';
+        if (patient.balance > 0) return 'À recouvrer';
+        return 'Standard';
+    }
+
+    function getPatientTypeBadge(patient) {
+        const type = getPatientType(patient);
+        switch (type) {
+            case 'Nouveau': return 'bg-info';
+            case 'Récent': return 'bg-success';
+            case 'Actif': return 'bg-primary';
+            case 'À recouvrer': return 'bg-warning';
+            default: return 'bg-secondary';
+        }
+    }
+
+    // Formater une date
+    function formatDate(dateString) {
+        if (!dateString) return 'N/A';
+        const date = new Date(dateString);
+        return date.toLocaleDateString('fr-FR');
+    }
+
+    // Mettre à jour la pagination
+    function updatePagination(total) {
+        const totalPages = Math.ceil(total / itemsPerPage);
+        const paginationElement = document.querySelector('.pagination');
+
+        let paginationHtml = '';
+
+        paginationHtml += `
+        <li class="page-item ${currentPage === 1 ? 'disabled' : ''}">
+            <a class="page-link" href="#" onclick="goToPage(${currentPage - 1}); return false;">
+                <i class="fas fa-chevron-left"></i> Précédent
+            </a>
+        </li>
+    `;
+
+        for (let i = 1; i <= totalPages; i++) {
+            if (i === 1 || i === totalPages || (i >= currentPage - 2 && i <= currentPage + 2)) {
+                paginationHtml += `
+                    <li class="page-item ${i === currentPage ? 'active' : ''}">
+                    <a class="page-link" href="#" onclick="goToPage(${i}); return false;">${i}</a>
+                    </li>
+                `;
+            } else if (i === currentPage - 3 || i === currentPage + 3) {
+                paginationHtml += `<li class="page-item disabled"><span class="page-link">...</span></li>`;
+            }
+        }
+
+        paginationHtml += `
+        <li class="page-item ${currentPage === totalPages ? 'disabled' : ''}">
+            <a class="page-link" href="#" onclick="goToPage(${currentPage + 1}); return false;">
+                Suivant <i class="fas fa-chevron-right"></i>
+            </a>
+        </li>
+    `;
+
+        paginationElement.innerHTML = paginationHtml;
+    }
+
+    // Aller à une page
+    function goToPage(page) {
+        currentPage = page;
+        performSearch();
+    }
+
+    // Ajouter à l'historique
+    function addToSearchHistory(query) {
+        searchHistory = searchHistory.filter(item => item.query !== query);
+        searchHistory.unshift({
+            query: query,
+            timestamp: new Date().toISOString(),
+            count: 0
+        });
+        searchHistory = searchHistory.slice(0, 10);
+
+        updateSearchHistoryDisplay();
+    }
+
+    // Mettre à jour l'affichage de l'historique
+    function updateSearchHistoryDisplay() {
+        const container = document.getElementById('recentSearches');
+        container.innerHTML = '';
+
+        if (searchHistory.length === 0) {
+            container.innerHTML = `
+                    <div class="list-group-item border-0 py-2">
+                        <small class="text-muted">Aucune recherche récente</small>
+                    </div>
+                `;
+            return;
+        }
+
+        searchHistory.forEach(item => {
+            const timeAgo = getTimeAgo(item.timestamp);
+            const element = document.createElement('div');
+            element.className = 'list-group-item border-0 py-2';
+            element.innerHTML = `
+                    <div class="d-flex justify-content-between">
+                        <small class="text-truncate" style="max-width: 70%; cursor: pointer;"
+                               onclick="loadFromHistory('${item.query}')">
+                            <i class="fas fa-search text-muted me-2"></i>
+                            ${item.query}
+                        </small>
+                        <small class="text-muted">${timeAgo}</small>
+                    </div>
+                `;
+            container.appendChild(element);
+        });
+    }
+
+    // Charger depuis l'historique
+    function loadFromHistory(query) {
+        document.getElementById('searchInput').value = query;
+        performSearch();
+    }
+
+    // Obtenir "il y a X temps"
+    function getTimeAgo(timestamp) {
+        const now = new Date();
+        const past = new Date(timestamp);
+        const diff = now.getTime() - past.getTime();
+
+        const minutes = Math.floor(diff / (1000 * 60));
+        const hours = Math.floor(minutes / 60);
+        const days = Math.floor(hours / 24);
+
+        if (minutes < 60) return `${minutes} min`;
+        if (hours < 24) return `${hours} h`;
+        return `${days} j`;
+    }
+
+    // ✅ Utiliser PatientHistoryModal au lieu de SearchPatientHistoryModal
+    function showPatientHistory(patientOid) {
+        PatientHistoryModal.show(patientOid);
+    }
+
+    // Effacer les résultats
+    function clearResults() {
+        document.getElementById('searchResults').innerHTML = `
+                <div class="text-center py-5">
+                    <i class="fas fa-search fa-3x text-muted mb-3"></i>
+                    <h5 class="text-muted">Aucune recherche effectuée</h5>
+                    <p class="text-muted">Utilisez la barre de recherche pour trouver des patients</p>
+                </div>
+            `;
+        document.getElementById('resultsCount').textContent = '0';
+        document.getElementById('searchSummary').textContent = 'Tapez un terme pour rechercher';
+        document.getElementById('paginationContainer').style.display = 'none';
+    }
+
+    // Mettre à jour les statistiques
+    function updateStatistics(stats) {
+        if (!stats) {
+            console.warn('Statistiques non disponibles');
+            return;
+        }
+
+        document.getElementById('statTotalPatients').textContent = stats.total_patients || 0;
+        document.getElementById('statActivePatients').textContent = stats.active_patients || 0;
+        document.getElementById('statTodayVisits').textContent = stats.today_visits || 0;
+
+        const balanceDue = stats.balance_due;
+        const balanceElement = document.getElementById('statBalanceDue');
+
+        if (typeof balanceDue === 'number' && !isNaN(balanceDue)) {
+            balanceElement.textContent = `${balanceDue.toFixed(0)}K`;
+        } else if (balanceDue !== undefined && balanceDue !== null) {
+            const numericBalance = parseFloat(balanceDue);
+            if (!isNaN(numericBalance)) {
+                balanceElement.textContent = `${numericBalance.toFixed(0)}K`;
+            } else {
+                balanceElement.textContent = '0';
+            }
+        } else {
+            balanceElement.textContent = '0';
+        }
+    }
+
+    // Raccourci clavier : / pour focus la recherche
+    document.addEventListener('keydown', function (event) {
+        if (event.key === '/' && event.target.tagName !== 'INPUT') {
+            event.preventDefault();
+            document.getElementById('searchInput').focus();
+        }
+    });
+
+    // Initialisation
+    document.addEventListener('DOMContentLoaded', function () {
+        loadInitialStats();
+
+        const savedHistory = localStorage.getItem('searchHistory');
+        if (savedHistory) {
+            searchHistory = JSON.parse(savedHistory);
+            updateSearchHistoryDisplay();
+        }
+    });
+
+    window.addEventListener('beforeunload', function () {
+        localStorage.setItem('searchHistory', JSON.stringify(searchHistory));
+    });
+
+    // Charger les statistiques initiales
+    async function loadInitialStats() {
+        try {
+            const response = await axios.get('/api/his-direct/stats/search');
+            if (response.data.success) {
+                updateStatistics(response.data);
+            }
+        } catch (error) {
+            console.error('Erreur chargement stats:', error);
+        }
+    }
+</script>
+{% endblock content %}

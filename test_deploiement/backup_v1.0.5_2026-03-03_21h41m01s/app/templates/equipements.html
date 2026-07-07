@@ -1,0 +1,260 @@
+{% extends "layout.html" %}
+{% block content %}
+<!-- Bouton pour ouvrir la modal d'ajout d'équipement -->
+<div class="d-flex justify-content-center">
+    <button class="btn btn-primary btn-lg shadow" data-bs-toggle="modal" data-bs-target="#addEquipmentModal">
+        <i class="fas fa-plus me-2"></i> Ajouter un équipement
+    </button>
+</div>
+
+<!-- Modal pour ajouter un nouvel équipement -->
+<div class="modal fade" id="addEquipmentModal" tabindex="-1" role="dialog" aria-labelledby="addEquipmentModalLabel"
+     aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addEquipmentModalLabel">Ajouter un nouvel équipement</h5>
+                <button type="button" class="btn-close btn-sm" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form action="{{ url_for('equipements') }}" method="POST">
+                    <input type="hidden" name="add_equipment" value="1">
+
+                    <!-- Formulaire pour ajouter un équipement -->
+                    <div class="form-group">
+                        <label for="nom_equipement">Nom de l'équipement</label>
+                        <input type="text" class="form-control" id="nom_equipement" name="nom_equipement" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="type_equipement">Type d'équipement</label>
+                        <input type="text" class="form-control" id="type_equipement" name="type_equipement">
+                    </div>
+                    <div class="form-group">
+                        <label for="reference">Référence</label>
+                        <input type="text" class="form-control" id="reference" name="reference">
+                    </div>
+                    <div class="form-group">
+                        <label for="marque">Marque</label>
+                        <input type="text" class="form-control" id="marque" name="marque" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="serial_number">Numéro de série</label>
+                        <input type="text" class="form-control" id="serial_number" name="serial_number" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="ip_adresse">Adresse IP</label>
+                        <input type="text" class="form-control" id="ip_adresse" name="ip_adresse">
+                    </div>
+                    <div class="form-group">
+                        <label for="mac_adresse">Adresse MAC</label>
+                        <input type="text" class="form-control" id="mac_adresse" name="mac_adresse">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="login">Login</label>
+                        <input type="text" class="form-control" id="login" name="login">
+                    </div>
+                    <div class="form-group">
+                        <label for="pass">Mot de passe</label>
+                        <input type="text" class="form-control" id="pass" name="pass">
+                    </div>
+                    <div class="form-group">
+                        <label for="date_acquisition">Date d'acquisition</label>
+                        <input type="datetime-local" class="form-control" id="date_acquisition" name="date_acquisition">
+                    </div>
+                    <div class="form-group">
+                        <label for="etat">État</label>
+                        <select class="form-control" id="etat" name="etat">
+                            <option value="fonctionnel">
+                                <i class="fas fa-check-circle text-success"></i> Fonctionnel
+                            </option>
+                            <option value="en panne">
+                                <i class="fas fa-times-circle text-danger"></i> En panne
+                            </option>
+                            <option value="maintenance">
+                                <i class="fas fa-tools text-warning"></i> Maintenance
+                            </option>
+                        </select>
+                    </div>
+
+                    <div class="modal-footer">
+                        <button type="submit" class="btn btn-primary btn-sm">Ajouter</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Liste des équipements sous forme de cartes -->
+<div class="container">
+    <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+        {% for equipement in equipements %}
+        <div class="col">
+            <div class="card shadow-sm"
+                 data-bs-toggle="modal"
+                 data-bs-target="#detailsModal{{ equipements.id }}">
+                <div class="card-header">
+                    <i class="fas fa-desktop"></i> {{ equipement.nom_equipement }}
+                </div>
+                <div class="card-body text-center">
+                    <p class="card-text">
+                        <strong>Type :</strong> {{ equipement.type_equipement }}<br>
+                        <strong>Référence :</strong> {{ equipement.reference }}<br>
+                        <strong>Adresse IP :</strong> {{ equipement.ip_adresse }}<br>
+                        <strong>Adresse MAC :</strong> {{ equipement.mac_adresse }}<br>
+                        <strong>État :</strong> {{ equipement.etat }}
+                    </p>
+                    <div
+                            class="card-footer d-flex justify-content-between align-items-center"
+                    >                    <!-- Bouton Modifier -->
+                        <button type="button"
+                                class="btn btn-warning btn-sm"
+                                data-bs-toggle="modal"
+                                data-bs-target="#editEquipmentModal{{ equipement.id_equipement }}">
+                            Modifier
+                        </button>
+
+                        <!-- Formulaire pour désactiver/activer l'équipement -->
+                        <form action="{{ url_for('equipements') }}" method="POST" style="display:inline-block;">
+                            <input type="hidden" name="id_equipment" value="{{ equipements.id_equipement }}">
+                            {% if equipement.active %}
+                            <input type="hidden" name="change_status" value="0">
+                            <button type="submit" class="btn btn-danger btn-sm">Désactiver</button>
+                            {% else %}
+                            <input type="hidden" name="change_status" value="1">
+                            <button type="submit" class="btn btn-success btn-sm">Activer</button>
+                            {% endif %}
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal de détails -->
+        <div class="modal fade" id="detailsModal{{ equipements.id_equipement }}" tabindex="-1" role="dialog"
+             aria-labelledby="detailsModalLabel{{ equipements.id_equipement }}" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="detailsModalLabel{{ equipements.id_equipement }}">
+                            Détails de {{ equipement.nom }}
+                        </h5>
+                        <button type="button" class="btn-close btn-sm" data-bs-dismiss="modal"
+                                aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <p><strong>Nom :</strong> {{ equipement.nom_equipement }}</p>
+                        <p><strong>Marque :</strong> {{ equipement.marque }}</p>
+                        <p><strong>Type :</strong> {{ equipement.type_equipement }}</p>
+                        <p><strong>Référence :</strong> {{ equipement.reference }}</p>
+                        <p><strong>Adresse IP :</strong> {{ equipement.ip_adresse }}</p>
+                        <p><strong>Adresse MAC :</strong> {{ equipement.mac_adresse }}</p>
+                        <p><strong>Login :</strong> {{ equipement.login }}</p>
+                        <p><strong>Mot de passe :</strong> {{ equipement.pass }}</p>
+                        <p><strong>État :</strong> {{ equipement.etat }}</p>
+                        <p><strong>Numéro de série :</strong> {{ equipement.serial_number }}</p>
+                        <p><strong>Date d'acquisition :</strong> {{ equipement.date_acquisition }}</p>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Fermer</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal de modification d'équipement -->
+        <div class="modal fade" id="editEquipmentModal{{ equipement.id_equipement }}" tabindex="-1" role="dialog"
+             aria-labelledby="editEquipmentModalLabel{{ equipement.id_equipement }}" aria-hidden="true">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="editEquipmentModalLabel{{ equipement.id_equipement }}">Modifier
+                            l'équipement</h5>
+                        <button type="button" class="btn-close btn-sm" data-bs-dismiss="modal"
+                                aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <!-- Formulaire de modification -->
+                        <form action="{{ url_for('equipements') }}" method="POST">
+                            <input type="hidden" name="id_equipement" value="{{ equipement.id_equipement }}">
+                            <input type="hidden" name="edit_equipment" value="1">
+
+                            <!-- Nom de l'équipement -->
+                            <div class="form-group">
+                                <label for="nom_equipement{{ equipement.id_equipement }}">Nom de l'équipement</label>
+                                <input type="text" class="form-control"
+                                       id="nom_equipement{{ equipement.id_equipement }}"
+                                       name="nom_equipement" value="{{ equipement.nom_equipement }}" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="type_equipement{{ equipement.id_equipement }}">Type d'équipement</label>
+                                <input type="text" class="form-control"
+                                       id="type_equipement{{ equipement.id_equipement }}"
+                                       name="type_equipement" value="{{ equipement.type_equipement }}">
+                            </div>
+                            <div class="form-group">
+                                <label for="reference{{ equipement.id_equipement }}">Référence</label>
+                                <input type="text" class="form-control" id="reference{{ equipement.id_equipement }}"
+                                       name="reference" value="{{ equipement.reference }}">
+                            </div>
+                            <div class="form-group">
+                                <label for="marque{{ equipement.id_equipement }}">Marque</label>
+                                <input type="text" class="form-control" id="marque{{ equipement.id_equipement }}"
+                                       name="marque" value="{{ equipement.marque }}">
+                            </div>
+                            <div class="form-group">
+                                <label for="serial_number{{ equipement.id_equipement }}">Numéro de série</label>
+                                <input type="text" class="form-control" id="serial_number{{ equipement.id_equipement }}"
+                                       name="serial_number" value="{{ equipement.serial_number }}">
+                            </div>
+                            <div class="form-group">
+                                <label for="ip_adresse{{ equipement.id_equipement }}">Adresse IP</label>
+                                <input type="text" class="form-control" id="ip_adresse{{ equipement.id_equipement }}"
+                                       name="ip_adresse" value="{{ equipement.ip_adresse }}">
+                            </div>
+                            <div class="form-group">
+                                <label for="mac_adresse{{ equipement.id_equipement }}">Adresse MAC</label>
+                                <input type="text" class="form-control" id="mac_adresse{{ equipement.id_equipement }}"
+                                       name="mac_adresse" value="{{ equipement.mac_adresse }}">
+                            </div>
+                            <div class="form-group">
+                                <label for="login{{ equipement.id_equipement }}">Login</label>
+                                <input type="text" class="form-control" id="login{{ equipement.id_equipement }}"
+                                       name="login" value="{{ equipement.login }}">
+                            </div>
+                            <div class="form-group">
+                                <label for="pass{{ equipement.id_equipement }}">Mot de passe</label>
+                                <input type="text" class="form-control" id="pass{{ equipement.id_equipement }}"
+                                       name="pass" value="{{ equipement.pass }}">
+                            </div>
+                            <div class="form-group">
+                                <label for="date_acquisition{{ equipement.id_equipement }}">Date d'acquisition</label>
+                                <input type="datetime-local" class="form-control"
+                                       id="date_acquisition{{ equipement.id_equipement }}" name="date_acquisition"
+                                       value="{{ equipement.date_acquisition }}">
+                            </div>
+                            <div class="form-group">
+                                <label for="etat{{ equipement.id_equipement }}">État</label>
+                                <select class="form-control" id="etat{{ equipement.id_equipement }}" name="etat">
+                                    <option value="fonctionnel" {% if equipement.etat==
+                                    'fonctionnel' %}selected{% endif %}>Fonctionnel</option>
+                                    <option value="en panne" {% if equipement.etat==
+                                    'en panne' %}selected{% endif %}>En panne</option>
+                                    <option value="maintenance" {% if equipement.etat==
+                                    'maintenance' %}selected{% endif %}>Maintenance</option>
+                                </select>
+                            </div>
+
+                            <div class="modal-footer">
+                                <button type="submit" class="btn btn-primary btn-sm">Sauvegarder</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    {% endblock %}

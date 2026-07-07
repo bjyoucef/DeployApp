@@ -1,0 +1,2708 @@
+{% extends "layout.html" %}
+{% import 'his/macros/his_direct_selector.html' as his_selector %}
+
+{% block style %}
+<!-- Select2 CSS -->
+<link href="{{ url_for('static', filename='css/select2.min.css') }}" rel="stylesheet" />
+<link href="{{ url_for('static', filename='css/select2-bootstrap-5-theme.min.css') }}" rel="stylesheet" />
+<style>
+    /* ==================== Mêmes styles que create.html ==================== */
+    :root {
+        --primary: #6366f1;
+        --primary-dark: #4f46e5;
+        --primary-light: #818cf8;
+        --success: #10b981;
+        --success-dark: #059669;
+        --warning: #f59e0b;
+        --danger: #ef4444;
+        --info: #3b82f6;
+        --dark: #1f2937;
+        --light: #f9fafb;
+        --border: #e5e7eb;
+        --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+        --shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+        --shadow-lg: 0 20px 25px -5px rgb(0 0 0 / 0.1);
+        --radius: 12px;
+        --radius-lg: 16px;
+        --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+
+        --bg-surface: white;
+        --bg-body-local: linear-gradient(135deg, #f5f7fa 0%, #e4e9f2 100%);
+        --bg-input: white;
+        --text-primary: #1f2937;
+    }
+
+    [data-theme="dark"] {
+        --primary: #818cf8;
+        --primary-dark: #6366f1;
+        --primary-light: #4f46e5;
+        --success: #34d399;
+        --success-dark: #10b981;
+        --warning: #fbbf24;
+        --danger: #f87171;
+        --info: #60a5fa;
+        --dark: #f9fafb;
+        --light: #1f2937;
+        --border: #374151;
+        --bg-surface: #1e1e1e;
+        --bg-body-local: #121212;
+        --bg-input: #2d2d2d;
+        --text-primary: #f9fafb;
+        --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.5);
+        --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.5);
+        --shadow-lg: 0 20px 25px -5px rgba(0, 0, 0, 0.5);
+    }
+
+
+    /* Bouton Historique Flottant */
+    .btn-floating-history {
+        position: fixed;
+        right: 30px;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        border-radius: 50%;
+        background: var(--bg-surface);
+        border: 3px solid var(--border);
+        box-shadow: 0 8px 16px rgba(59, 130, 246, 0.3), 0 0 0 0 rgba(59, 130, 246, 0.5);
+        cursor: pointer;
+        z-index: 999;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        transition: var(--transition);
+        overflow: hidden;
+        opacity: 0;
+    }
+
+    .btn-floating-history:not(:disabled) {
+        opacity: 1;
+        pointer-events: auto;
+        animation: floatPulse 2s ease-in-out infinite;
+    }
+
+    .btn-floating-history i {
+        font-size: 1.5rem;
+        transition: var(--transition);
+    }
+
+    .btn-floating-history .btn-floating-text {
+        font-size: 0.7rem;
+        font-weight: 600;
+        margin-top: 2px;
+        opacity: 0;
+        max-height: 0;
+        transition: var(--transition);
+    }
+
+    .btn-floating-history:hover {
+        width: 70px;
+        height: 70px;
+        box-shadow: 0 12px 24px rgba(59, 130, 246, 0.4), 0 0 0 8px rgba(59, 130, 246, 0.2);
+        transform: translateY(-50%) scale(1.05);
+    }
+
+    .btn-floating-history:hover i {
+        transform: scale(1.1) rotate(15deg);
+    }
+
+    .btn-floating-history:hover .btn-floating-text {
+        opacity: 1;
+        max-height: 20px;
+    }
+
+    @keyframes floatPulse {
+
+        0%,
+        100% {
+            box-shadow: 0 8px 16px rgba(59, 130, 246, 0.3), 0 0 0 0 rgba(59, 130, 246, 0.5);
+        }
+
+        50% {
+            box-shadow: 0 8px 16px rgba(59, 130, 246, 0.3), 0 0 0 12px rgba(59, 130, 246, 0);
+        }
+    }
+
+    /* Reset & Base */
+    body {
+        font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        background: var(--bg-body-local);
+        color: var(--text-primary);
+    }
+
+
+    /* Modal Personnalisé */
+    .custom-modal .modal-content {
+        border: none;
+        border-radius: var(--radius-lg);
+        box-shadow: var(--shadow-lg);
+        overflow: hidden;
+    }
+
+    .custom-modal .modal-header {
+        border-bottom: 2px solid var(--border);
+        padding: 1.5rem;
+        background: linear-gradient(135deg, rgba(99, 102, 241, 0.05), rgba(129, 140, 248, 0.05));
+    }
+
+    .custom-modal .modal-title {
+        font-weight: 700;
+        font-size: 1.25rem;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+
+    /* Stepper Header */
+    .wizard-container {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 2rem 1rem;
+    }
+
+    .stepper-wrapper {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 3rem;
+        position: relative;
+        margin-bottom: 3rem;
+        position: relative;
+        background: var(--bg-surface);
+        padding: 2rem;
+
+        border-radius: var(--radius-lg);
+        box-shadow: var(--shadow);
+    }
+
+    .stepper-wrapper::before {
+        content: "";
+        position: absolute;
+        top: 50%;
+        left: 10%;
+        right: 10%;
+        height: 3px;
+        background: var(--border);
+        transform: translateY(-50%);
+        z-index: 0;
+    }
+
+    .stepper-item {
+        position: relative;
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        z-index: 1;
+    }
+
+    .stepper-circle {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        background: var(--bg-surface);
+        border: 3px solid var(--border);
+
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: #9ca3af;
+        transition: var(--transition);
+        margin-bottom: 0.75rem;
+    }
+
+    .stepper-item.active .stepper-circle {
+        background: var(--primary);
+        border-color: var(--primary);
+        color: white;
+        box-shadow: 0 0 0 8px rgba(99, 102, 241, 0.1);
+        transform: scale(1.1);
+    }
+
+    .stepper-item.completed .stepper-circle {
+        background: var(--success);
+        border-color: var(--success);
+        color: white;
+    }
+
+    .stepper-label {
+        font-size: 0.875rem;
+        font-weight: 600;
+        color: #9ca3af;
+        text-align: center;
+        transition: var(--transition);
+    }
+
+    .stepper-item.active .stepper-label {
+        color: var(--primary);
+        font-size: 0.95rem;
+    }
+
+    .stepper-item.completed .stepper-label {
+        color: var(--success);
+    }
+
+    /* Step Content */
+    .step-content {
+        display: none;
+        animation: fadeInUp 0.4s ease;
+    }
+
+    .step-content.active {
+        display: block;
+    }
+
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    /* Cards Modernes */
+    .modern-card {
+        background: var(--bg-surface);
+        border-radius: var(--radius-lg);
+        box-shadow: var(--shadow);
+        padding: 2rem;
+        margin-bottom: 1.5rem;
+        transition: var(--transition);
+        border: 1px solid var(--border);
+        position: relative;
+        /* Ensure it creates a context if z-index is set */
+    }
+
+    /* Raise z-index of the active card so its dropdowns can overflow over subsequent cards */
+    .modern-card:focus-within {
+        z-index: 1000 !important;
+    }
+
+    .modern-card:hover {
+        box-shadow: var(--shadow-lg);
+        transform: translateY(-2px);
+    }
+
+    .card-title {
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: var(--text-primary);
+        margin-bottom: 1.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+
+    .card-title i {
+        width: 40px;
+        height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: linear-gradient(135deg, var(--primary), var(--primary-light));
+        color: white;
+        border-radius: 10px;
+        font-size: 1.25rem;
+    }
+
+    /* Form Styling */
+    .form-label {
+        font-weight: 600;
+        color: var(--text-primary);
+        margin-bottom: 0.5rem;
+        font-size: 0.875rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .form-control,
+    .form-select {
+        border: 2px solid var(--border);
+        border-radius: var(--radius);
+        padding: 0.75rem 1rem;
+        transition: var(--transition);
+        font-size: 0.95rem;
+        background: var(--bg-input);
+        color: var(--text-primary);
+    }
+
+
+    .form-control:focus,
+    .form-select:focus {
+        border-color: var(--primary);
+        box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
+        outline: none;
+    }
+
+    /* Selection Cards */
+    .selection-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        gap: 1.5rem;
+        margin-top: 1.5rem;
+    }
+
+    .selection-card {
+        position: relative;
+        background: var(--bg-surface);
+        border: 2px solid var(--border);
+        border-radius: var(--radius-lg);
+        padding: 1.5rem;
+        cursor: pointer;
+        transition: var(--transition);
+    }
+
+    .selection-card:hover {
+        border-color: var(--primary);
+        box-shadow: var(--shadow-lg);
+        transform: translateY(-4px);
+    }
+
+    .selection-card.selected {
+        border-color: var(--primary);
+        background: linear-gradient(135deg, rgba(99, 102, 241, 0.05), rgba(129, 140, 248, 0.05));
+        box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
+    }
+
+    .selection-card input[type="radio"] {
+        position: absolute;
+        top: 1rem;
+        right: 1rem;
+        width: 24px;
+        height: 24px;
+        accent-color: var(--primary);
+    }
+
+    /* Tables Modernes */
+    .modern-table {
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0;
+        margin-top: 1rem;
+    }
+
+    .modern-table thead {
+        background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+    }
+
+    .modern-table thead th {
+        color: white;
+        font-weight: 600;
+        padding: 1rem;
+        text-align: left;
+        font-size: 0.875rem;
+        text-transform: uppercase;
+    }
+
+    .modern-table tbody tr {
+        background: var(--bg-surface);
+        transition: var(--transition);
+    }
+
+
+    .modern-table tbody tr:hover {
+        background: #f9fafb;
+        transform: scale(1.01);
+    }
+
+    .modern-table tbody td {
+        padding: 1rem;
+        border-bottom: 1px solid var(--border);
+    }
+
+    /* Product/Act Row */
+    .product-row,
+    .act-row {
+        background: var(--bg-surface);
+        border: 2px solid var(--border);
+        border-radius: var(--radius);
+        padding: 1rem;
+        margin-bottom: 1rem;
+        transition: var(--transition);
+        position: relative;
+        /* Ensure relative positioning */
+        overflow: visible;
+        /* Ensure content can overflow */
+    }
+
+    /* ==================== SELECT2 STYLES ==================== */
+    .select2-container--bootstrap-5 .select2-selection {
+        border: 2px solid var(--border);
+        border-radius: var(--radius);
+        padding: 0.35rem 0.5rem;
+        min-height: 48px;
+    }
+
+    .select2-container--bootstrap-5 .select2-selection--single {
+        display: flex;
+        align-items: center;
+    }
+
+    .select2-container--bootstrap-5 .select2-selection--single .select2-selection__rendered {
+        color: var(--dark);
+        font-size: 0.95rem;
+        font-weight: 500;
+    }
+
+    .select2-container--bootstrap-5 .select2-dropdown {
+        border-color: var(--primary-light);
+        border-radius: var(--radius);
+        box-shadow: var(--shadow-lg);
+        z-index: 9999;
+    }
+
+    .select2-container--bootstrap-5 .select2-results__option--highlighted {
+        background-color: var(--primary);
+        background-image: linear-gradient(135deg, var(--primary), var(--primary-dark));
+    }
+
+    /* Correction z-index pour Select2 dans les cards */
+    .select2-container {
+        z-index: 1050;
+        /* Au-dessus de Bootstrap modal parfois */
+    }
+
+    .product-row:hover,
+    .act-row:hover {
+        border-color: var(--primary);
+        box-shadow: var(--shadow);
+    }
+
+    /* Dark Mode Overrides for Select2 */
+    [data-theme="dark"] .select2-container--bootstrap-5 .select2-selection {
+        background-color: var(--bg-input);
+        border-color: var(--border);
+        color: var(--text-primary);
+    }
+
+    [data-theme="dark"] .select2-container--bootstrap-5 .select2-selection--single .select2-selection__rendered {
+        color: var(--text-primary);
+    }
+
+    [data-theme="dark"] .select2-container--bootstrap-5 .select2-dropdown {
+        background-color: var(--bg-surface);
+        border-color: var(--border);
+        color: var(--text-primary);
+    }
+
+    [data-theme="dark"] .select2-container--bootstrap-5 .select2-results__option {
+        color: var(--text-primary);
+    }
+
+    [data-theme="dark"] .select2-container--bootstrap-5 .select2-results__option--highlighted {
+        background-color: var(--primary);
+        color: white;
+    }
+
+
+    /* Buttons */
+    .btn {
+        border: none;
+        border-radius: var(--radius);
+        padding: 0.875rem 2rem;
+        font-weight: 600;
+        transition: var(--transition);
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .btn:hover {
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-lg);
+    }
+
+    .btn-primary {
+        background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+        color: white;
+    }
+
+    .btn-warning {
+        background: linear-gradient(135deg, var(--warning), #d97706);
+        color: white;
+    }
+
+    /* Navigation flottante */
+    .floating-nav-container {
+        position: fixed;
+        bottom: 30px;
+        left: 0;
+        right: 0;
+        display: flex;
+        justify-content: center;
+        z-index: 1000;
+    }
+
+    .floating-nav {
+        background: var(--bg-surface);
+        padding: 1rem 2rem;
+        border-radius: var(--radius-lg);
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+        display: flex;
+        gap: 1rem;
+        border: 2px solid var(--primary-light);
+    }
+
+    /* Summary Panel */
+    .summary-panel {
+        position: sticky;
+        top: 2rem;
+        background: var(--bg-surface);
+        border-radius: var(--radius-lg);
+        box-shadow: var(--shadow-lg);
+        padding: 2rem;
+        border: 2px solid var(--success);
+    }
+
+
+    .summary-row {
+        display: flex;
+        justify-content: space-between;
+        padding: 0.75rem 0;
+        border-bottom: 1px solid var(--border);
+    }
+
+    .summary-total {
+        background: linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(5, 150, 105, 0.1));
+        padding: 1.5rem;
+        border-radius: var(--radius);
+        margin-top: 1rem;
+    }
+
+    .summary-total .summary-row {
+        border: none;
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--success);
+    }
+
+    /* Badges */
+    .badge {
+        display: inline-block;
+        padding: 0.375rem 0.75rem;
+        border-radius: 50px;
+        font-size: 0.875rem;
+        font-weight: 600;
+    }
+
+    .badge-info {
+        background: #dbeafe;
+        color: #1e40af;
+    }
+
+    .badge-success {
+        background: #d1fae5;
+        color: #065f46;
+    }
+
+    .nuit-preop-check:disabled+label {
+        color: #9ca3af;
+        cursor: not-allowed;
+    }
+
+    .nuit-preop-check:checked+label {
+        color: var(--success);
+        font-weight: 600;
+    }
+
+    .hospitalisation-item {
+        background: var(--bg-surface);
+        border-left: 4px solid var(--primary);
+        border-radius: var(--radius);
+        padding: 1.5rem;
+        margin-bottom: 1rem;
+        box-shadow: var(--shadow);
+    }
+
+    @media (max-width: 768px) {
+        .floating-nav-container {
+            display: none;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Modal Personnalisé -->
+<div class="modal fade custom-modal" id="customModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header" id="modalHeader">
+                <h5 class="modal-title" id="customModalLabel">
+                    <i id="modalIcon" class="fas fa-info-circle"></i>
+                    <span id="modalTitle">Information</span>
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="modalBody"></div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" data-bs-dismiss="modal">
+                    <i class="fas fa-check"></i> Compris
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="wizard-container">
+    <!-- Stepper Header -->
+    <div class="stepper-wrapper">
+        <div class="stepper-item active" data-step="1">
+            <div class="stepper-circle"><i class="fas fa-info-circle"></i></div>
+            <div class="stepper-label">Informations</div>
+        </div>
+        <div class="stepper-item" data-step="2">
+            <div class="stepper-circle"><i class="fas fa-money-bill-alt"></i></div>
+            <div class="stepper-label">Tarification</div>
+        </div>
+        <div class="stepper-item" data-step="3">
+            <div class="stepper-circle"><i class="fas fa-hospital"></i></div>
+            <div class="stepper-label">Bloc & Forfait</div>
+        </div>
+        <div class="stepper-item" data-step="4">
+            <div class="stepper-circle"><i class="fas fa-box"></i></div>
+            <div class="stepper-label">Produits & Actes</div>
+        </div>
+        <div class="stepper-item" data-step="5">
+            <div class="stepper-circle"><i class="fas fa-hospital"></i></div>
+            <div class="stepper-label">Hospitalisation</div>
+        </div>
+        <div class="stepper-item" data-step="6">
+            <div class="stepper-circle"><i class="fas fa-clipboard-list"></i></div>
+            <div class="stepper-label">Explorations</div>
+        </div>
+        <div class="stepper-item" data-step="7">
+            <div class="stepper-circle"><i class="fas fa-check-circle"></i></div>
+            <div class="stepper-label">Validation</div>
+        </div>
+    </div>
+
+    <form method="POST" id="locationForm">
+        <!-- ÉTAPE 1: Informations Générales -->
+        <div class="step-content active" data-step="1">
+            <div class="row">
+                <div class="col-lg-8">
+                    <div class="modern-card">
+                        <h3 class="card-title">
+                            <i class="fas fa-user-md"></i>
+                            Informations générales
+                        </h3>
+
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label text-danger">
+                                    <i class="fas fa-user-md"></i>
+                                    Médecin *
+                                </label>
+                                <select name="id_doctor" id="doctorSelect" class="form-select" required>
+                                    <option value="">-- Sélectionner un médecin --</option>
+                                    {% for doctor in doctors %}
+                                    <option value="{{ doctor.id }}" {% if doctor.id==dossier.id_doctor %}selected{%
+                                        endif %}>
+                                        {{ doctor.name }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label text-danger">
+                                    <i class="fas fa-user"></i>
+                                    Patient *
+                                </label>
+                                <input type="text" name="patient" class="form-control" value="{{ dossier.patient }}"
+                                    required>
+                            </div>
+                        </div>
+
+                        <div class="row mb-3 align-items-end">
+                            <div class="col-md-4">
+                                <label class="form-label text-danger">
+                                    <i class="far fa-calendar-alt me-1"></i>
+                                    Date d'opération *
+                                </label>
+                                <input type="date" name="location_date" id="operationDate" class="form-control"
+                                    value="{{ dossier.location_date.strftime('%Y-%m-%d') }}" required>
+                            </div>
+
+                            <div class="col-md-3">
+                                <label class="form-label">
+                                    <i class="fas fa-history me-1"></i>
+                                    Heure d'opération
+                                </label>
+                                <input type="time" name="heure_operation" class="form-control"
+                                    value="
+
+                                                   {% if dossier.heure_operation %}{% if dossier.heure_operation is string %}{{ dossier.heure_operation }}{% else %}{{ '%02d:%02d'|format((dossier.heure_operation.seconds // 3600), ((dossier.heure_operation.seconds % 3600) // 60)) }}{% endif %}{% endif %}">
+                            </div>
+
+                            <div class="col-md-3">
+                                <label class="form-label text-danger">
+                                    <i class="fas fa-stopwatch me-1"></i>
+                                    Durée réelle (min) *
+                                </label>
+                                <input type="number" name="duree_reelle" id="dureeReelle" class="form-control fw-bold"
+                                    value="{{ dossier.duree_reelle }}" min="1" required>
+                            </div>
+
+                            <div class="col-md-2">
+                                <label class="form-label d-block">&nbsp;</label>
+                                <button type="button" class="btn btn-outline-primary w-100" data-bs-toggle="modal"
+                                    data-bs-target="#dureeModal">
+                                    <i class="fas fa-clock me-1"></i> Calculer
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-12">
+                                <label class="form-label">
+                                    <i class="fas fa-clipboard-list"></i>
+                                    Nom de l'intervention
+                                </label>
+                                <input type="text" name="nom_acte" class="form-control"
+                                    value="{{ dossier.nom_acte or '' }}">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-4">
+                    <div class="summary-panel">
+                        <h4 class="summary-title">
+                            <i class="fas fa-info-circle text-primary"></i>
+                            Guide Étape 1
+                        </h4>
+                        <div class="alert alert-light">
+                            <small>
+                                <strong><i class="far fa-lightbulb text-warning"></i> Conseils :</strong>
+                                <ul class="mt-2 mb-0" style="padding-left: 1.2rem">
+                                    <li>Vérifiez le médecin et le patient</li>
+                                    <li>La durée réelle influence le prix</li>
+                                    <li>L'heure est optionnelle mais recommandée</li>
+                                </ul>
+                            </small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ÉTAPE 2: Type de Tarification -->
+        <div class="step-content" data-step="2">
+            <div class="row">
+                <div class="col-12">
+                    <div class="modern-card">
+                        <h3 class="card-title">
+                            <i class="fas fa-money-bill-alt"></i>
+                            Type de tarification
+                        </h3>
+
+                        <div class="selection-grid">
+                            <div class="selection-card {% if dossier.type_tarification == 'DUREE' %}selected{% endif %}"
+                                onclick="selectTarif('DUREE')">
+                                <input type="radio" name="type_tarification" id="tarif_duree" value="DUREE" {% if
+                                    dossier.type_tarification=='DUREE' %}checked{% endif %}>
+                                <div class="text-center">
+                                    <i class="fas fa-clock fs-1 text-primary d-block mb-2"></i>
+                                    <h6 class="mb-0">À la durée</h6>
+                                    <small class="text-muted">Facturation selon le temps</small>
+                                </div>
+                            </div>
+
+                            <div class="selection-card {% if dossier.type_tarification == 'FORFAIT' %}selected{% endif %}"
+                                onclick="selectTarif('FORFAIT')">
+                                <input type="radio" name="type_tarification" id="tarif_forfait" value="FORFAIT" {% if
+                                    dossier.type_tarification=='FORFAIT' %}checked{% endif %}>
+                                <div class="text-center">
+                                    <i class="fas fa-box fs-1 text-success d-block mb-2"></i>
+                                    <h6 class="mb-0">Forfaitaire</h6>
+                                    <small class="text-muted">Tarif fixe</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ÉTAPE 3: Sélection Bloc & Forfait -->
+        <div class="step-content" data-step="3">
+            <div class="row">
+                <div class="col-lg-8">
+                    <div class="modern-card">
+                        <h3 class="card-title">
+                            <i class="fas fa-hospital"></i>
+                            Bloc opératoire *
+                        </h3>
+
+                        <div class="selection-grid">
+                            {% for bloc in blocs %}
+                            <div class="selection-card {% if bloc.id_bloc == dossier.id_bloc %}selected{% endif %}"
+                                onclick="selectBloc({{ bloc.id_bloc }})">
+                                <input type="radio" name="id_bloc" value="{{ bloc.id_bloc }}" {% if
+                                    bloc.id_bloc==dossier.id_bloc %}checked{% endif %} required>
+                                <h6>{{ bloc.name_bloc }}</h6>
+                                <p class="mb-1">
+                                    <strong class="text-primary">{{ bloc.prix }} DA</strong>
+                                    <span class="text-muted">({{ bloc.duree_base }} min)</span>
+                                </p>
+                                <small class="text-muted">+ {{ bloc.prix_supplement_30min }} DA / 30 min</small>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    <div class="modern-card" id="forfaitSection" {% if dossier.type_tarification !='FORFAIT'
+                        %}style="display:none;" {% endif %}>
+                        <h3 class="card-title">
+                            <i class="fas fa-tag"></i>
+                            Forfait
+                        </h3>
+
+                        <div class="selection-grid">
+                            {% for forfait in forfaits %}
+                            <div class="selection-card {% if forfait.id_forfait == dossier.forfait_id %}selected{% endif %}"
+                                onclick="selectForfait({{ forfait.id_forfait }})">
+                                <input type="radio" name="forfait_id" value="{{ forfait.id_forfait }}" {% if
+                                    forfait.id_forfait==dossier.forfait_id %}checked{% endif %}>
+                                <h6>{{ forfait.name_forfait }}</h6>
+                                <p class="mb-1">
+                                    <strong class="text-success">{{ forfait.prix_forfait }} DA</strong>
+                                </p>
+                                <small class="text-muted">Durée: {{ forfait.duree_forfait }} min</small>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-4">
+                    <div class="summary-panel">
+                        <h4 class="summary-title">
+                            <i class="fas fa-calculator text-success"></i>
+                            Récapitulatif
+                        </h4>
+
+                        <div class="summary-row">
+                            <span>Prix bloc/forfait:</span>
+                            <strong id="prixBloc">0.00 DA</strong>
+                        </div>
+                        <div class="summary-row">
+                            <span>Supplément durée:</span>
+                            <strong id="prixSuppDuree">0.00 DA</strong>
+                        </div>
+
+                        <div class="summary-total">
+                            <div class="summary-row">
+                                <span>TOTAL:</span>
+                                <strong id="prixTotal">0.00 DA</strong>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ÉTAPE 4: Produits & Actes -->
+        <div class="step-content" data-step="4">
+            <div class="row">
+                <div class="col-lg-8">
+                    <!-- Produits inclus -->
+                    <div class="modern-card">
+                        <h3 class="card-title">
+                            <i class="fas fa-box-seam"></i>
+                            Produits inclus
+                        </h3>
+                        <div id="produitsInclus">
+                            <p class="text-muted text-center py-4">Chargement...</p>
+                        </div>
+                    </div>
+
+                    <!-- Actes inclus -->
+                    <div class="modern-card">
+                        <h3 class="card-title">
+                            <i class="fas fa-heartbeat"></i>
+                            Actes inclus
+                        </h3>
+                        <div id="actesInclus">
+                            <p class="text-muted text-center py-4">Sélectionnez un forfait</p>
+                        </div>
+                    </div>
+
+                    <!-- Produits supplémentaires -->
+                    <div class="modern-card">
+                        <h3 class="card-title">
+                            <i class="fas fa-plus-circle"></i>
+                            Produits supplémentaires
+                        </h3>
+                        <div id="produitsSuppContainer"></div>
+                        <button type="button" class="btn btn-outline-primary" onclick="addProduitSupp()">
+                            <i class="fas fa-plus"></i> Ajouter un produit
+                        </button>
+                    </div>
+
+                    <!-- Actes supplémentaires -->
+                    <div class="modern-card">
+                        <h3 class="card-title">
+                            <i class="fas fa-plus-circle"></i>
+                            Actes supplémentaires
+                        </h3>
+                        <div id="actesSuppContainer"></div>
+                        <button type="button" class="btn btn-outline-primary" onclick="addActeSupp()">
+                            <i class="fas fa-plus"></i> Ajouter un acte
+                        </button>
+                    </div>
+
+                    <!-- Actes d'anesthésie -->
+                    <div class="modern-card">
+                        <h3 class="card-title">
+                            <i class="fas fa-heartbeat"></i>
+                            Acte d'anesthésie
+                        </h3>
+
+                        <div class="alert alert-info mb-3">
+                            <i class="fas fa-info-circle"></i>
+                            <small>Sélectionnez l'acte et les 2 intervenants (réanimateur + technicien)</small>
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col-md-12">
+                                <label class="form-label">Type d'acte</label>
+                                <select name="acte_anesth_id" id="acteAnesthId" class="form-select"
+                                    onchange="updateTarifAnesthesie()">
+                                    <option value="">-- Sélectionner --</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Intervenant 1 (Réanimateur)</label>
+                                <select name="intervenant1_id" id="intervenant1Id" class="form-select"
+                                    onchange="updateTarifAnesthesie()">
+                                    <option value="">-- Sélectionner --</option>
+                                </select>
+                                <small class="text-muted mt-1 d-block">Tarif: <span id="tarif1Display">0.00
+                                        DA</span></small>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label">Intervenant 2 (Technicien)</label>
+                                <select name="intervenant2_id" id="intervenant2Id" class="form-select"
+                                    onchange="updateTarifAnesthesie()">
+                                    <option value="">-- Sélectionner --</option>
+                                </select>
+                                <small class="text-muted mt-1 d-block">Tarif: <span id="tarif2Display">0.00
+                                        DA</span></small>
+                            </div>
+                        </div>
+
+                        <div class="alert alert-success" id="tarifAnesthesieTotal" style="display:none;">
+                            <strong>Total anesthésie: <span id="totalAnesthesieDisplay">0.00 DA</span></strong>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-4">
+                    <div class="summary-panel">
+                        <h4 class="summary-title">
+                            <i class="fas fa-calculator text-success"></i>
+                            Résumé
+                        </h4>
+
+                        <div class="summary-row">
+                            <span>Prix bloc/forfait:</span>
+                            <strong id="prixBlocStep4">0.00 DA</strong>
+                        </div>
+                        <div class="summary-row">
+                            <span>Supplément durée:</span>
+                            <strong id="prixSuppDureeStep4">0.00 DA</strong>
+                        </div>
+                        <div class="summary-row">
+                            <span>Suppléments produits:</span>
+                            <strong id="prixSuppProduits">0.00 DA</strong>
+                        </div>
+                        <div class="summary-row">
+                            <span>Suppléments actes:</span>
+                            <strong id="prixSuppActes">0.00 DA</strong>
+                        </div>
+                        <div class="summary-row">
+                            <span>Anesthésie:</span>
+                            <strong id="prixAnesthesie">0.00 DA</strong>
+                        </div>
+
+                        <div class="summary-total">
+                            <div class="summary-row">
+                                <span>TOTAL:</span>
+                                <strong id="prixTotalStep4">0.00 DA</strong>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ÉTAPE 5: Hospitalisation -->
+        <div class="step-content" data-step="5">
+            <div class="row">
+                <div class="col-lg-8">
+                    <div class="modern-card">
+                        <h3 class="card-title">
+                            <i class="fas fa-hospital"></i>
+                            Hospitalisation & Nuitées
+                        </h3>
+
+                        <div id="hospitalisationsContainer"></div>
+
+                        <button type="button" class="btn btn-outline-primary" onclick="addHospitalisation()">
+                            <i class="fas fa-plus"></i> Ajouter une hospitalisation
+                        </button>
+
+                        <div class="alert alert-info mt-4" id="nuiteesSummary" style="display:none;">
+                            <h6 class="alert-heading">
+                                <i class="fas fa-info-circle"></i>
+                                Récapitulatif des nuitées
+                            </h6>
+                            <hr>
+                            <div class="row">
+                                <div class="col-md-3">
+                                    <strong>Total nuitées :</strong>
+                                    <span id="totalNuitees" class="text-primary">0</span>
+                                </div>
+                                <div class="col-md-3">
+                                    <strong>Incluses forfait :</strong>
+                                    <span id="nuiteesInclusesForfait" class="text-success">0</span>
+                                </div>
+                                <div class="col-md-3">
+                                    <strong>Gratuites pré-op :</strong>
+                                    <span id="nuiteesGratuitesPreop" class="text-success">0</span>
+                                </div>
+                                <div class="col-md-3">
+                                    <strong>Facturables :</strong>
+                                    <span id="nuiteesFacturables" class="text-warning">0</span>
+                                </div>
+                            </div>
+                            <hr>
+                            <div class="text-end">
+                                <strong class="text-primary" style="font-size:1.5rem;">
+                                    Prix total : <span id="prixTotalNuitees">0.00</span> DA
+                                </strong>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-4">
+                    <div class="summary-panel">
+                        <h4 class="summary-title">
+                            <i class="fas fa-calculator text-success"></i>
+                            Total nuitées
+                        </h4>
+
+                        <div class="summary-total">
+                            <div class="summary-row">
+                                <span>TOTAL:</span>
+                                <strong id="prixNuiteesDisplay">0.00 DA</strong>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ÉTAPE 6: Explorations -->
+        <div class="step-content" data-step="6">
+            <div class="row">
+                <div class="col-lg-8">
+                    <div class="modern-card">
+                        <h3 class="card-title">
+                            <i class="fas fa-clipboard-list"></i>
+                            Explorations médicales
+                        </h3>
+
+                        <div id="explorationsContainer"></div>
+
+                        <button type="button" class="btn btn-outline-primary" onclick="addExploration()">
+                            <i class="fas fa-plus"></i> Ajouter une exploration
+                        </button>
+                    </div>
+                </div>
+
+                <div class="col-lg-4">
+                    <div class="summary-panel">
+                        <h4 class="summary-title">
+                            <i class="fas fa-calculator text-success"></i>
+                            Total explorations
+                        </h4>
+
+                        <div class="summary-total">
+                            <div class="summary-row">
+                                <span>TOTAL:</span>
+                                <strong id="prixTotalExplorations">0.00 DA</strong>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ÉTAPE 7: Validation -->
+        <div class="step-content" data-step="7">
+            <div class="row">
+                <div class="col-lg-8">
+                    <div class="modern-card">
+                        <h3 class="card-title">
+                            <i class="fas fa-wallet"></i>
+                            Paiement et observations
+                        </h3>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">
+                                    <i class="fas fa-money-bill-wave"></i>
+                                    Montant payé à la caisse
+                                </label>
+                                <div class="input-group">
+                                    <input type="number" name="montant_paye_caisse" class="form-control"
+                                        value="{{ dossier.montant_paye_caisse }}" step="0.01" min="0">
+                                    <span class="input-group-text">DA</span>
+                                </div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">
+                                    <i class="far fa-comment-dots"></i>
+                                    Observations
+                                </label>
+                                <textarea name="observations" class="form-control"
+                                    rows="3">{{ dossier.observations or '' }}</textarea>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-4">
+                    <div class="summary-panel">
+                        <h4 class="summary-title">
+                            <i class="fas fa-check-circle text-success"></i>
+                            Récapitulatif final
+                        </h4>
+
+                        <div class="summary-row">
+                            <span>Prix bloc/forfait:</span>
+                            <strong id="prixBlocFinal">0.00 DA</strong>
+                        </div>
+                        <div class="summary-row">
+                            <span>Supplément durée:</span>
+                            <strong id="prixSuppDureeFinal">0.00 DA</strong>
+                        </div>
+                        <div class="summary-row">
+                            <span>Suppléments produits:</span>
+                            <strong id="prixSuppProduitsFinal">0.00 DA</strong>
+                        </div>
+                        <div class="summary-row">
+                            <span>Suppléments actes:</span>
+                            <strong id="prixSuppActesFinal">0.00 DA</strong>
+                        </div>
+                        <div class="summary-row">
+                            <span>Nuitées:</span>
+                            <strong id="prixNuiteesFinal">0.00 DA</strong>
+                        </div>
+                        <div class="summary-row">
+                            <span>Explorations:</span>
+                            <strong id="prixExplorationsFinal">0.00 DA</strong>
+                        </div>
+                        <div class="summary-row">
+                            <span>Anesthésie:</span>
+                            <strong id="prixAnesthesieFinal">0.00 DA</strong>
+                        </div>
+
+                        <div class="summary-total">
+                            <div class="summary-row">
+                                <span>TOTAL GÉNÉRAL:</span>
+                                <strong id="prixTotalFinal">0.00 DA</strong>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="floating-nav-container">
+            <div class="floating-nav">
+                <button type="button" class="btn btn-secondary btn-prev">
+                    <i class="fas fa-arrow-left"></i> Précédent
+                </button>
+                <button type="button" class="btn btn-primary btn-next">
+                    Suivant <i class="fas fa-arrow-right"></i>
+                </button>
+            </div>
+        </div>
+    </form>
+</div>
+
+<!-- Modal Calcul Durée -->
+<div class="modal fade" id="dureeModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content shadow">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title">
+                    <i class="fas fa-hourglass-half me-2"></i> Calcul de durée
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+
+            <div class="modal-body">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label">
+                            <i class="fas fa-play-circle text-success me-1"></i> Heure début
+                        </label>
+                        <input type="time" id="heureDebut" class="form-control">
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label">
+                            <i class="fas fa-stop-circle text-danger me-1"></i> Heure fin
+                        </label>
+                        <input type="time" id="heureFin" class="form-control">
+                    </div>
+
+                    <div class="col-12">
+                        <label class="form-label">
+                            <i class="fas fa-calculator me-1"></i> Durée totale (minutes)
+                        </label>
+                        <input type="number" id="dureeMinutes" class="form-control text-center fw-bold" readonly
+                            placeholder="—">
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-1"></i> Fermer
+                </button>
+                <button type="button" class="btn btn-success" id="btnCopierDuree" data-bs-dismiss="modal" disabled>
+                    <i class="fas fa-copy me-1"></i> Copier la durée
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // ========== MÊME LOGIQUE JAVASCRIPT QUE create.html ==========
+    // (Je vais inclure tout le code JS nécessaire dans la partie suivante)
+
+    // Variables globales
+    const produitsDisponibles = {{ produits| tojson | safe }};
+    const actesDisponibles = {{ actes| tojson | safe }};
+    let actesAnesthesieDisponibles = [];
+    let personnelAnesthesieDisponible = [];
+    let typesChambres = [];
+    let prixChambreStandard = 0;
+    let forfaitNuitees = 0;
+    let hospitalisationCounter = 0;
+    let explorationCounter = 0;
+    let operationDate = null;
+    let currentBloc = {{ dossier.id_bloc }};
+    let currentForfait = {% if dossier.forfait_id %}{{ dossier.forfait_id }}
+    {% else %}
+    null{% endif %};
+    let produitsInclusData = [];
+    let actesInclusData = [];
+    let currentDoctorId = {{ dossier.id_doctor }};
+    let forfaitsMedecin = [];
+    let chambresMedecin = [];
+    let nuiteesPreopAutorisees = 0;
+
+    // État du wizard
+    let currentStep = 1;
+    let completedSteps = [];
+
+    const prixData = {
+        bloc: 0,
+        suppDuree: 0,
+        suppProduits: 0,
+        suppActes: 0,
+        nuitees: 0,
+        explorations: 0,
+        anesthesie: 0
+    };
+
+    // Données existantes à charger
+    const existingData = {
+        produits_inclus: {{ produits_groupes.BLOC| tojson | safe if dossier.type_tarification == 'DUREE' else produits_groupes.FORFAIT | tojson | safe }},
+    produits_supp: {{ produits_groupes.SUPPLEMENTAIRE | tojson | safe }},
+    actes_inclus: {{ actes_groupes.FORFAIT | tojson | safe }},
+    actes_supp: {{ actes_groupes.SUPPLEMENTAIRE | tojson | safe }},
+    nuitees: {{ nuitees | tojson | safe }},
+    explorations: {{ explorations | tojson | safe }},
+    actes_anesthesie: [] // À charger depuis le backend
+        };
+
+    // INITIALISATION AU CHARGEMENT
+    document.addEventListener('DOMContentLoaded', async () => {
+        console.log('🚀 Initialisation du formulaire d\'édition...');
+
+        operationDate = document.getElementById('operationDate').value;
+
+        // 1️⃣ Charger les données de référence AVANT tout
+        console.log('📋 Chargement des données de référence...');
+        await loadTypesChambres();
+        await loadActesAnesthesie();
+        await loadPersonnelAnesthesie();
+        await chargerTarifsPersonnalises(currentDoctorId);
+
+        // 2️⃣ Charger les produits/actes inclus
+        console.log('📦 Chargement des produits/actes...');
+        const typeTarif = '{{ dossier.type_tarification }}';
+        if (typeTarif === 'FORFAIT' && currentForfait) {
+            await loadForfaitProduits(currentForfait);
+            await loadForfaitActes(currentForfait);
+            await loadForfaitInfo(currentForfait);
+        } else {
+            await loadBlocProduits(currentBloc);
+        }
+
+        // 3️⃣ Pré-remplir les données existantes
+        console.log('🔄 Pré-remplissage des données existantes...');
+        loadExistingProduitsSupp();
+        loadExistingActesSupp();
+
+        // ✅ Hospitalisations APRÈS que les chambres soient chargées
+        console.log('🏥 Chargement des hospitalisations...');
+        loadExistingHospitalisations();
+        loadExistingExplorations();
+
+        // ✅ Anesthésie EN DERNIER (après que tous les selects soient peuplés)
+        console.log('🩺 Chargement des données d\'anesthésie...');
+        await loadExistingAnesthesie();
+
+        // 4️⃣ Event listeners
+        document.getElementById('dureeReelle').addEventListener('input', calculateTotal);
+        document.getElementById('operationDate').addEventListener('change', e => {
+            operationDate = e.target.value;
+            document.querySelectorAll('.hospitalisation-item')
+                .forEach(item => updatePreOpEligibility(item.id.split('-')[1]));
+        });
+
+        // 5️⃣ Finalisation
+        initClickableSteps();
+        updateFloatingNav();
+        calculateTotal();
+        console.log('✅ Initialisation terminée !');
+
+    });
+
+    // =========================================================================
+    // FONCTIONS UTILITAIRES
+    // =========================================================================
+
+    function to_decimal(value, default_val = 0) {
+        if (value === null || value === undefined || value === '') return default_val;
+        return parseFloat(value) || default_val;
+    }
+
+    function showToast(type, message) {
+        const container = document.getElementById('toastContainer') || createToastContainer();
+        const toastId = 'toast-' + Date.now();
+        const html = `
+    <div id="${toastId}" class="toast align-items-center text-bg-${type} border-0 mb-2"
+         role="alert" aria-live="assertive" aria-atomic="true">
+      <div class="d-flex">
+        <div class="toast-body">${message}</div>
+        <button type="button" class="btn-close btn-close-white me-2 m-auto"
+                data-bs-dismiss="toast" aria-label="Close"></button>
+      </div>
+    </div>`;
+        container.insertAdjacentHTML('beforeend', html);
+        const toastEl = document.getElementById(toastId);
+        new bootstrap.Toast(toastEl, { delay: 6000 }).show();
+    }
+
+    function createToastContainer() {
+        const div = document.createElement('div');
+        div.id = 'toastContainer';
+        div.className = 'toast-container position-fixed top-0 end-0 p-3';
+        div.style.zIndex = 1080;
+        document.body.appendChild(div);
+        return div;
+    }
+
+    function showModal(title, message, type = 'info') {
+        const modal = new bootstrap.Modal(document.getElementById('customModal'));
+        const modalTitle = document.getElementById('modalTitle');
+        const modalBody = document.getElementById('modalBody');
+        const modalIcon = document.getElementById('modalIcon');
+
+        const configs = {
+            danger: { icon: 'fas fa-exclamation-triangle' },
+            warning: { icon: 'fas fa-exclamation-circle' },
+            success: { icon: 'fas fa-check-circle' },
+            info: { icon: 'fas fa-info-circle' }
+        };
+
+        const config = configs[type] || configs.info;
+        modalIcon.className = config.icon;
+        modalTitle.textContent = title;
+        modalBody.innerHTML = '<p class="mb-0">' + message + '</p>';
+        modal.show();
+    }
+
+    // =========================================================================
+    // CHARGEMENT DES DONNÉES DE RÉFÉRENCE
+    // =========================================================================
+
+    async function loadTypesChambres() {
+        try {
+            const r = await fetch('/api/get_types_chambres');
+            typesChambres = await r.json();
+            const std = typesChambres.find(c => c.est_standard === 1);
+            if (std) prixChambreStandard = parseFloat(std.prix_unitaire);
+        } catch (e) {
+            console.error('loadTypesChambres:', e);
+        }
+    }
+
+    async function loadActesAnesthesie() {
+        try {
+            const response = await fetch('/api/anesthesie/types_actes');
+            actesAnesthesieDisponibles = await response.json();
+            populateActesSelect();
+        } catch (e) {
+            console.error('Erreur chargement actes anesthésie:', e);
+        }
+    }
+
+    async function loadPersonnelAnesthesie() {
+        try {
+            const response = await fetch('/api/anesthesie/personnel');
+            personnelAnesthesieDisponible = await response.json();
+            populateIntervenantsSelects();
+        } catch (e) {
+            console.error('Erreur chargement personnel anesthésie:', e);
+        }
+    }
+
+    function populateActesSelect() {
+        const select = document.getElementById('acteAnesthId');
+        if (!select) return;
+
+        actesAnesthesieDisponibles.forEach(acte => {
+            const option = document.createElement('option');
+            option.value = acte.id_acte_anesthesie;
+            option.textContent = `${acte.nom_acte} (${acte.tarif_forfaitaire} DA)`;
+            select.appendChild(option);
+        });
+    }
+
+    function populateIntervenantsSelects() {
+        const select1 = document.getElementById('intervenant1Id');
+        const select2 = document.getElementById('intervenant2Id');
+        if (!select1 || !select2) return;
+
+        const reanimateurs = personnelAnesthesieDisponible.filter(p =>
+            p.nom_type.toLowerCase().includes('réanimateur') ||
+            p.nom_type.toLowerCase().includes('reanimateur')
+        );
+
+        const techniciens = personnelAnesthesieDisponible.filter(p =>
+            p.nom_type.toLowerCase().includes('tech')
+        );
+
+        reanimateurs.forEach(p => {
+            const option = document.createElement('option');
+            option.value = p.id_personnel_anesthesie;
+            option.textContent = `${p.nom_complet} (${p.nom_type})`;
+            select1.appendChild(option);
+        });
+
+        techniciens.forEach(p => {
+            const option = document.createElement('option');
+            option.value = p.id_personnel_anesthesie;
+            option.textContent = `${p.nom_complet} (${p.nom_type})`;
+            select2.appendChild(option);
+        });
+    }
+
+    async function chargerTarifsPersonnalises(doctorId) {
+        try {
+            const forfaitsResponse = await fetch(`/api/get_forfaits_medecin/${doctorId}`);
+            forfaitsMedecin = await forfaitsResponse.json();
+
+            const chambresResponse = await fetch(`/api/get_prix_chambres_medecin/${doctorId}`);
+            chambresMedecin = await chambresResponse.json();
+
+            const nuiteesResponse = await fetch(`/api/get_nuitees_preop_autorisees/${doctorId}`);
+            const nuiteesData = await nuiteesResponse.json();
+            nuiteesPreopAutorisees = nuiteesData.nuitees_preop_autorisees || 0;
+
+            const stdResponse = await fetch(`/api/get_prix_chambre_standard_medecin/${doctorId}`);
+            const stdData = await stdResponse.json();
+            prixChambreStandard = parseFloat(stdData.prix_unitaire);
+
+            calculateAllNuitees();
+            calculateTotal();
+        } catch (error) {
+            console.error('Erreur chargement tarifs personnalisés:', error);
+        }
+    }
+
+    async function loadForfaitInfo(forfaitId) {
+        const r = await fetch(`/api/get_forfait_info/${forfaitId}`);
+        const data = await r.json();
+        forfaitNuitees = data.nbr_nuit || 0;
+        calculateAllNuitees();
+    }
+
+    async function loadBlocProduits(blocId) {
+        const r = await fetch(`/api/get_bloc_produits/${blocId}`);
+        produitsInclusData = await r.json();
+        displayProduitsInclus(produitsInclusData, 'BLOC');
+    }
+
+    async function loadForfaitProduits(forfaitId) {
+        const r = await fetch(`/api/get_forfait_produits/${forfaitId}`);
+        produitsInclusData = await r.json();
+        displayProduitsInclus(produitsInclusData, 'FORFAIT');
+    }
+
+    async function loadForfaitActes(forfaitId) {
+        const r = await fetch(`/api/get_forfait_actes/${forfaitId}`);
+        actesInclusData = await r.json();
+        displayActesInclus(actesInclusData);
+    }
+
+    // =========================================================================
+    // CHARGEMENT DES DONNÉES EXISTANTES
+    // =========================================================================
+
+    function loadExistingProduitsSupp() {
+        existingData.produits_supp.forEach(prod => {
+            addProduitSupp(prod.id_produit, prod.qte_utilisee);
+        });
+    }
+
+    function loadExistingActesSupp() {
+        existingData.actes_supp.forEach(acte => {
+            addActeSupp(acte.id_acte, acte.qte_utilisee);
+        });
+    }
+
+    function loadExistingHospitalisations() {
+        if (!existingData.nuitees || existingData.nuitees.length === 0) return;
+
+        existingData.nuitees.forEach(n => {
+            hospitalisationCounter++;
+            addHospitalisationWithData(
+                n.id_type_chambre,
+                n.date_entree,
+                n.date_sortie,
+                n.nuit_pre_op_gratuite || false
+            );
+        });
+
+        calculateAllNuitees();
+    }
+
+    function loadExistingExplorations() {
+        existingData.explorations.forEach(exp => {
+            explorationCounter++;
+            addExplorationWithData(
+                exp.type_exploration,
+                exp.nom_exploration,
+                exp.date_exploration,
+                exp.prix,
+                exp.observations
+            );
+        });
+        calculateTotalExplorations();
+    }
+
+    // Données d'anesthésie existantes (à récupérer du backend)
+    const existingAnesthesie = {
+        acte_id: {% if acte_anesth_id %}{{ acte_anesth_id }}{% else %} null{% endif %},
+    intervenant1_id: {% if intervenant1_id %} {{ intervenant1_id }} {% else %} null{% endif %},
+    intervenant2_id: {% if intervenant2_id %} {{ intervenant2_id }} {% else %} null{% endif %}
+        };
+
+    console.log('🩺 Données anesthésie existantes:', existingAnesthesie); // Debug
+
+    // Fonction pour charger les données d'anesthésie existantes
+    async function loadExistingAnesthesie() {
+        console.log('🔄 Début chargement anesthésie existante...');
+
+        // ✅ Attendre que TOUTES les données soient chargées
+        let maxAttempts = 20; // 20 x 100ms = 2 secondes max
+        let attempts = 0;
+
+        while (attempts < maxAttempts) {
+            const acteSelect = document.getElementById('acteAnesthId');
+            const int1Select = document.getElementById('intervenant1Id');
+            const int2Select = document.getElementById('intervenant2Id');
+
+            // Vérifier que les selects sont peuplés
+            if (acteSelect && acteSelect.options.length > 1 &&
+                int1Select && int1Select.options.length > 1 &&
+                int2Select && int2Select.options.length > 1) {
+                console.log('✅ Selects peuplés, chargement des valeurs...');
+                break;
+            }
+
+            await new Promise(resolve => setTimeout(resolve, 100));
+            attempts++;
+        }
+
+        if (attempts >= maxAttempts) {
+            console.warn('⚠️ Timeout lors du chargement des selects d\'anesthésie');
+            return;
+        }
+
+        // Charger l'acte
+        if (existingAnesthesie.acte_id) {
+            const acteSelect = document.getElementById('acteAnesthId');
+            if (acteSelect) {
+                acteSelect.value = existingAnesthesie.acte_id;
+                console.log(`✅ Acte anesthésie sélectionné: ${existingAnesthesie.acte_id}`);
+            }
+        }
+
+        // Charger intervenant 1
+        if (existingAnesthesie.intervenant1_id) {
+            const int1Select = document.getElementById('intervenant1Id');
+            if (int1Select) {
+                int1Select.value = existingAnesthesie.intervenant1_id;
+                console.log(`✅ Intervenant 1 sélectionné: ${existingAnesthesie.intervenant1_id}`);
+            }
+        }
+
+        // Charger intervenant 2
+        if (existingAnesthesie.intervenant2_id) {
+            const int2Select = document.getElementById('intervenant2Id');
+            if (int2Select) {
+                int2Select.value = existingAnesthesie.intervenant2_id;
+                console.log(`✅ Intervenant 2 sélectionné: ${existingAnesthesie.intervenant2_id}`);
+            }
+        }
+
+        // ✅ Calculer le tarif APRÈS avoir chargé toutes les valeurs
+        if (existingAnesthesie.acte_id && existingAnesthesie.intervenant1_id && existingAnesthesie.intervenant2_id) {
+            console.log('💰 Calcul du tarif anesthésie...');
+            await updateTarifAnesthesie();
+            console.log('✅ Tarif anesthésie calculé');
+
+        }
+    }
+
+    // =========================================================================
+    // AFFICHAGE DES PRODUITS/ACTES INCLUS
+    // =========================================================================
+
+    function displayProduitsInclus(produits, source) {
+        const cont = document.getElementById('produitsInclus');
+        if (!produits || produits.length === 0) {
+            cont.innerHTML = '<p class="text-muted text-center py-4">Aucun produit inclus</p>';
+            return;
+        }
+
+        let html = `<table class="modern-table"><thead><tr>
+    <th>Produit</th><th class="text-center">Qté incl.</th>
+    <th class="text-center">Qté utl.</th><th class="text-end">Prix uni.</th>
+  </tr></thead><tbody>`;
+
+        produits.forEach(p => {
+            // Chercher la quantité existante
+            const existing = existingData.produits_inclus.find(ep => ep.id_produit === p.id_produit);
+            const qteUtilisee = existing ? existing.qte_utilisee : p.quantite_incluse;
+
+            html += `<tr>
+      <td><strong>${p.nom}</strong></td>
+      <td class="text-center"><span class="badge badge-info">${p.quantite_incluse}</span></td>
+      <td class="text-center">
+        <input type="number" name="produit_inclus_${p.id_produit}"
+          class="form-control form-control-sm produit-inclus-qte text-center"
+          value="${qteUtilisee}" min="0" step="0.1"
+          data-inclus="${p.quantite_incluse}" data-prix="${p.prix_unitaire}"
+          style="max-width:100px;">
+      </td>
+      <td class="text-end"><strong>${parseFloat(p.prix_unitaire).toFixed(2)} DA</strong></td>
+    </tr>`;
+        });
+
+        html += `</tbody></table>`;
+        cont.innerHTML = html;
+
+        document.querySelectorAll('.produit-inclus-qte')
+            .forEach(i => i.addEventListener('input', calculateTotal));
+    }
+
+    function displayActesInclus(actes) {
+        const cont = document.getElementById('actesInclus');
+        if (!actes || actes.length === 0) {
+            cont.innerHTML = '<p class="text-muted text-center py-4">Aucun acte inclus</p>';
+            return;
+        }
+
+        let html = `<table class="modern-table"><thead><tr>
+    <th>Acte</th><th class="text-center">Qté incl.</th>
+    <th class="text-center">Qté utl.</th><th class="text-end">Prix uni.</th>
+  </tr></thead><tbody>`;
+
+        actes.forEach(a => {
+            // Chercher la quantité existante
+            const existing = existingData.actes_inclus.find(ea => ea.id_acte === a.id_acte);
+            const qteUtilisee = existing ? existing.qte_utilisee : 1;
+
+            html += `<tr>
+      <td><strong>${a.nom}</strong></td>
+      <td class="text-center"><span class="badge badge-success">1</span></td>
+      <td class="text-center">
+        <input type="number" name="acte_inclus_${a.id_acte}"
+          class="form-control form-control-sm acte-inclus-qte text-center"
+          value="${qteUtilisee}" min="0" step="1"
+          data-inclus="1" data-prix="${a.prix_unitaire}"
+          style="max-width:100px;">
+      </td>
+      <td class="text-end"><strong>${parseFloat(a.prix_unitaire).toFixed(2)} DA</strong></td>
+    </tr>`;
+        });
+
+        html += `</tbody></table>`;
+        cont.innerHTML = html;
+
+        document.querySelectorAll('.acte-inclus-qte')
+            .forEach(i => i.addEventListener('input', calculateTotal));
+    }
+
+    // =========================================================================
+    // GESTION DES PRODUITS/ACTES SUPPLÉMENTAIRES
+    // =========================================================================
+
+    function addProduitSupp(produitId = null, qte = 1) {
+        const cont = document.getElementById('produitsSuppContainer');
+        const html = `
+    <div class="product-row produit-supp-row mb-3">
+      <div class="row align-items-center">
+        <div class="col-md-6">
+          <select name="produit_supp_id[]" class="form-select form-select-sm produit-supp-select">
+            <option value="">-- Sélectionner --</option>
+            ${produitsDisponibles.map(p => `
+              <option value="${p.id_produit}" data-prix="${p.prix}"
+                      ${produitId == p.id_produit ? 'selected' : ''}>
+                ${p.description} (${p.prix} DA)
+              </option>`).join('')}
+          </select>
+        </div>
+        <div class="col-md-3">
+          <input type="number" name="produit_supp_qte[]"
+                 class="form-control form-control-sm produit-supp-qte"
+                 value="${qte}" min="0.1" step="0.1">
+        </div>
+        <div class="col-md-3">
+          <button type="button" class="btn btn-sm btn-danger w-100"
+                  onclick="this.closest('.produit-supp-row').remove(); calculateTotal();">
+            <i class="fas fa-trash"></i> Retirer
+          </button>
+        </div>
+      </div>
+    </div>`;
+        cont.insertAdjacentHTML('beforeend', html);
+
+        const row = cont.lastElementChild;
+        row.querySelector('.produit-supp-qte').addEventListener('input', calculateTotal);
+        row.querySelector('.produit-supp-select').addEventListener('change', calculateTotal);
+        calculateTotal();
+    }
+
+    function addActeSupp(acteId = null, qte = 1) {
+        const cont = document.getElementById('actesSuppContainer');
+        const html = `
+    <div class="act-row acte-supp-row mb-3">
+      <div class="row align-items-center">
+        <div class="col-md-6">
+          <select name="acte_supp_id[]" class="form-select form-select-sm acte-supp-select">
+            <option value="">-- Sélectionner --</option>
+            ${actesDisponibles.map(a => `
+              <option value="${a.id_acte}" data-prix="${a.prix}"
+                      ${acteId == a.id_acte ? 'selected' : ''}>
+                ${a.nom_acte} (${a.prix} DA)
+              </option>`).join('')}
+          </select>
+        </div>
+        <div class="col-md-3">
+          <input type="number" name="acte_supp_qte[]"
+                 class="form-control form-control-sm acte-supp-qte"
+                 value="${qte}" min="1" step="1">
+        </div>
+        <div class="col-md-3">
+          <button type="button" class="btn btn-sm btn-danger w-100"
+                  onclick="this.closest('.acte-supp-row').remove(); calculateTotal();">
+            <i class="fas fa-trash"></i> Retirer
+          </button>
+        </div>
+      </div>
+    </div>`;
+        cont.insertAdjacentHTML('beforeend', html);
+
+        const row = cont.lastElementChild;
+        row.querySelector('.acte-supp-qte').addEventListener('input', calculateTotal);
+        row.querySelector('.acte-supp-select').addEventListener('change', calculateTotal);
+        calculateTotal();
+    }
+
+    // =========================================================================
+    // GESTION DES HOSPITALISATIONS
+    // =========================================================================
+
+    function addHospitalisation() {
+        hospitalisationCounter++;
+        addHospitalisationWithData(null, null, null, false);
+    }
+
+    function addHospitalisationWithData(typeChId = null, dateE = null, dateS = null, preOp = false) {
+        hospitalisationCounter++;
+        const hospId = hospitalisationCounter;
+        const cont = document.getElementById('hospitalisationsContainer');
+
+        const chambresAUtiliser = chambresMedecin.length > 0 ? chambresMedecin : typesChambres;
+        const chambreOptions = chambresAUtiliser.map(c => `
+    <option value="${c.id_type_chambre}"
+            data-prix="${c.prix_unitaire}"
+            data-standard="${c.est_standard || 0}"
+            ${typeChId == c.id_type_chambre ? 'selected' : ''}>
+      ${c.nom_type} - ${parseFloat(c.prix_unitaire).toFixed(2)} DA
+    </option>`).join('');
+
+        const preopDisabled = nuiteesPreopAutorisees === 0;
+        const preopChecked = preOp && !preopDisabled ? 'checked' : '';
+
+        // ✅ AMÉLIORATION : Conversion robuste des dates
+        let dateEntreeStr = '';
+        let dateSortieStr = '';
+
+        if (dateE) {
+            // Gérer différents formats de date
+            if (typeof dateE === 'string') {
+                // Extraire seulement YYYY-MM-DD
+                dateEntreeStr = dateE.split('T')[0].split(' ')[0];
+            } else if (dateE instanceof Date) {
+                dateEntreeStr = dateE.toISOString().split('T')[0];
+            }
+        }
+
+        if (dateS) {
+            if (typeof dateS === 'string') {
+                dateSortieStr = dateS.split('T')[0].split(' ')[0];
+            } else if (dateS instanceof Date) {
+                dateSortieStr = dateS.toISOString().split('T')[0];
+            }
+        }
+
+        console.log(`🏥 Hospitalisation ${hospId}: ${dateEntreeStr} → ${dateSortieStr}`); // Debug
+
+        const html = `
+    <div class="hospitalisation-item" id="hosp-${hospId}">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h6 class="mb-0"><i class="fas fa-building"></i> Hospitalisation #${hospId}</h6>
+        <button type="button" class="btn btn-sm btn-danger"
+                onclick="removeHospitalisation(${hospId})">
+          <i class="fas fa-trash"></i>
+        </button>
+      </div>
+      <div class="row mb-3">
+        <div class="col-md-6">
+          <label class="form-label">Type de chambre *</label>
+          <select name="id_type_chambre[]" class="form-select type-chambre-select"
+                  data-hosp-id="${hospId}" onchange="updateChambrePrix(${hospId})" required>
+            <option value="">-- Sélectionner --</option>
+            ${chambreOptions}
+          </select>
+        </div>
+        <div class="col-md-6">
+          <div class="form-check mt-4 pt-2">
+            <input type="hidden" name="nuit_pre_op_gratuite[]" value="0" id="hiddenPreOp${hospId}">
+            <input type="checkbox" id="nuitPreOp${hospId}"
+                   class="form-check-input nuit-preop-check"
+                   data-hosp-id="${hospId}" ${preopChecked}
+                   ${preopDisabled ? 'disabled' : ''}
+                   onchange="toggleNuitPreOp(${hospId})">
+            <label class="form-check-label" for="nuitPreOp${hospId}">
+              <i class="fas fa-gift"></i> Nuit pré-opératoire gratuite
+              <span class="badge badge-info ms-2">Max ${nuiteesPreopAutorisees}</span>
+            </label>
+          </div>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-md-4">
+          <label class="form-label">Date d'entrée *</label>
+          <input type="date" name="date_entree_hospitalisation[]"
+                 class="form-control hosp-date-entree" data-hosp-id="${hospId}"
+                 value="${dateEntreeStr}" onchange="calculateHospNuitees(${hospId})" required>
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">Date de sortie *</label>
+          <input type="date" name="date_sortie_hospitalisation[]"
+                 class="form-control hosp-date-sortie" data-hosp-id="${hospId}"
+                 value="${dateSortieStr}" onchange="calculateHospNuitees(${hospId})" required>
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">Nuitées</label>
+          <input type="number" class="form-control hosp-nuitees" id="nuitees-${hospId}"
+                 readonly style="background:#f8f9fa;font-weight:bold;">
+        </div>
+      </div>
+      <div class="alert alert-light mt-3" id="hosp-summary-${hospId}" style="display:none;">
+        <div class="d-flex justify-content-between">
+          <span>Prix unitaire : <strong id="hosp-prix-unit-${hospId}">0</strong> DA</span>
+          <span>Prix : <strong class="text-primary" id="hosp-prix-${hospId}">0.00</strong> DA</span>
+        </div>
+      </div>
+    </div>`;
+
+        cont.insertAdjacentHTML('beforeend', html);
+
+        // Si pré-op cochée, mettre le hidden à 1
+        if (preOp && !preopDisabled) {
+            document.getElementById(`hiddenPreOp${hospId}`).value = '1';
+        }
+
+        // ✅ CALCULER IMMÉDIATEMENT si toutes les données sont présentes
+        if (dateEntreeStr && dateSortieStr && typeChId) {
+            // Attendre que le DOM soit mis à jour
+            setTimeout(() => {
+                updatePreOpEligibility(hospId);
+                calculateHospNuitees(hospId);
+                console.log(`✅ Nuitées calculées pour hosp ${hospId}`);
+            }, 100);
+        }
+    }
+
+    function removeHospitalisation(id) {
+        document.getElementById(`hosp-${id}`)?.remove();
+        calculateAllNuitees();
+    }
+
+    function updateChambrePrix(hospId) {
+        const select = document.querySelector(`select[data-hosp-id="${hospId}"]`);
+        const checkbox = document.getElementById(`nuitPreOp${hospId}`);
+
+        if (!select || !checkbox) return;
+
+        const opt = select.options[select.selectedIndex];
+        const estStandard = opt && opt.dataset.standard === '1';
+
+        if (!estStandard) {
+            if (checkbox.checked) {
+                checkbox.checked = false;
+                document.getElementById(`hiddenPreOp${hospId}`).value = '0';
+            }
+            checkbox.disabled = true;
+        } else {
+            checkbox.disabled = false;
+        }
+
+        updatePreOpEligibility(hospId);
+        calculateHospNuitees(hospId);
+    }
+
+    function toggleNuitPreOp(hospId) {
+        const checkbox = document.getElementById(`nuitPreOp${hospId}`);
+        const hidden = document.getElementById(`hiddenPreOp${hospId}`);
+
+        if (!checkbox || !hidden) return;
+
+        if (checkbox.checked) {
+            hidden.value = '1';
+            // Décocher les autres
+            document.querySelectorAll('.nuit-preop-check').forEach(cb => {
+                const otherId = cb.dataset.hospId;
+                if (otherId && parseInt(otherId) !== hospId) {
+                    cb.checked = false;
+                    document.getElementById(`hiddenPreOp${otherId}`).value = '0';
+                }
+            });
+        } else {
+            hidden.value = '0';
+        }
+        calculateAllNuitees();
+    }
+
+    function updatePreOpEligibility(hospId) {
+        const select = document.querySelector(`select[data-hosp-id="${hospId}"]`);
+        const checkbox = document.getElementById(`nuitPreOp${hospId}`);
+
+        if (!select || !checkbox) return;
+
+        const opt = select.options[select.selectedIndex];
+        const estStandard = opt && opt.dataset.standard === '1';
+
+        if (!estStandard) {
+            if (checkbox.checked) {
+                checkbox.checked = false;
+                document.getElementById(`hiddenPreOp${hospId}`).value = '0';
+            }
+            checkbox.disabled = true;
+            return;
+        }
+
+        const entryInput = document.querySelector(`.hosp-date-entree[data-hosp-id="${hospId}"]`);
+        if (entryInput && operationDate) {
+            const entryDate = new Date(entryInput.value);
+            const opDate = new Date(operationDate);
+            if (entryDate >= opDate) {
+                if (checkbox.checked) {
+                    checkbox.checked = false;
+                    document.getElementById(`hiddenPreOp${hospId}`).value = '0';
+                }
+                checkbox.disabled = true;
+                return;
+            }
+        }
+
+        checkbox.disabled = false;
+    }
+
+    function calculateHospNuitees(hospId) {
+        const entry = document.querySelector(`.hosp-date-entree[data-hosp-id="${hospId}"]`);
+        const sortie = document.querySelector(`.hosp-date-sortie[data-hosp-id="${hospId}"]`);
+        const nuitees = document.getElementById(`nuitees-${hospId}`);
+
+        if (!entry || !sortie) return;
+
+        const eVal = entry.value, sVal = sortie.value;
+        if (!eVal || !sVal) {
+            nuitees.value = 0;
+            calculateAllNuitees();
+            return;
+        }
+
+        const dEntree = new Date(eVal), dSortie = new Date(sVal);
+        const diff = Math.abs(dSortie - dEntree);
+        const nbNuits = Math.ceil(diff / (1000 * 60 * 60 * 24));
+        nuitees.value = nbNuits;
+
+        const select = document.querySelector(`select[data-hosp-id="${hospId}"]`);
+        const prixUnit = select ? parseFloat(select.options[select.selectedIndex].dataset.prix) : 0;
+
+        document.getElementById(`hosp-prix-unit-${hospId}`).textContent = prixUnit.toFixed(2);
+        document.getElementById(`hosp-summary-${hospId}`).style.display = 'block';
+
+        calculateAllNuitees();
+    }
+
+    function calculateAllNuitees() {
+        let totalNuits = 0, gratuitPreop = 0;
+        let forfaitRest = forfaitNuitees;
+        let prixTotalNuites = 0;
+
+        document.querySelectorAll('.hospitalisation-item').forEach(item => {
+            const hospId = item.id.split('-')[1];
+            const nbNuits = parseInt(document.getElementById(`nuitees-${hospId}`)?.value) || 0;
+            const select = document.querySelector(`select[data-hosp-id="${hospId}"]`);
+            const chkPre = document.getElementById(`nuitPreOp${hospId}`);
+
+            if (!select?.value || nbNuits === 0) return;
+
+            totalNuits += nbNuits;
+            const prixU = parseFloat(select.options[select.selectedIndex].dataset.prix) || 0;
+            const estStd = select.options[select.selectedIndex].dataset.standard === '1';
+            const isPreOp = chkPre && chkPre.checked && !chkPre.disabled;
+
+            let prix = 0, restant = nbNuits;
+
+            if (isPreOp && restant > 0) {
+                restant--;
+                gratuitPreop++;
+            }
+
+            if (forfaitRest > 0) {
+                const utilise = Math.min(restant, forfaitRest);
+                if (!estStd) prix += utilise * (prixU - prixChambreStandard);
+                restant -= utilise;
+                forfaitRest -= utilise;
+            }
+
+            if (restant > 0) prix += restant * prixU;
+
+            prixTotalNuites += prix;
+            document.getElementById(`hosp-prix-${hospId}`).textContent = prix.toFixed(2);
+        });
+
+        const nuitesFacturables = totalNuits - gratuitPreop - (forfaitNuitees - forfaitRest);
+
+        document.getElementById('totalNuitees').textContent = totalNuits;
+        document.getElementById('nuiteesGratuitesPreop').textContent = gratuitPreop;
+        document.getElementById('nuiteesInclusesForfait').textContent = forfaitNuitees;
+        document.getElementById('nuiteesFacturables').textContent = Math.max(0, nuitesFacturables);
+        document.getElementById('prixTotalNuitees').textContent = prixTotalNuites.toFixed(2);
+
+        document.getElementById('nuiteesSummary').style.display = totalNuits > 0 ? 'block' : 'none';
+
+        prixData.nuitees = prixTotalNuites;
+        updateTotalDisplay();
+    }
+
+    // =========================================================================
+    // GESTION DES EXPLORATIONS
+    // =========================================================================
+
+    function addExploration() {
+        explorationCounter++;
+        addExplorationWithData('', '', '', 0, '');
+    }
+
+    function addExplorationWithData(type = '', nom = '', date = '', prix = 0, obs = '') {
+        explorationCounter++;
+        const cont = document.getElementById('explorationsContainer');
+
+        const dateStr = date ? (typeof date === 'string' ? date.split(' ')[0] : date) : '';
+
+        const html = `
+    <div class="product-row exploration-row mb-3" id="exploration-${explorationCounter}">
+      <div class="row align-items-center">
+        <div class="col-md-4">
+          <label class="form-label">Type *</label>
+          <select name="exploration_type[]" class="form-select form-select-sm" required>
+            <option value="">-- Type --</option>
+            <option value="IMAGERIE" ${type === 'IMAGERIE' ? 'selected' : ''}>Imagerie</option>
+            <option value="LABORATOIRE" ${type === 'LABORATOIRE' ? 'selected' : ''}>Laboratoire</option>
+            <option value="AUTRE" ${type === 'AUTRE' ? 'selected' : ''}>Autre</option>
+          </select>
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">Nom</label>
+          <input type="text" name="exploration_nom[]" class="form-control form-control-sm"
+                 value="${nom}" placeholder="Ex: Radio thorax">
+        </div>
+        <div class="col-md-2">
+          <label class="form-label">Date</label>
+          <input type="date" name="exploration_date[]" class="form-control form-control-sm"
+                 value="${dateStr}">
+        </div>
+        <div class="col-md-2">
+          <label class="form-label">Prix (DA) *</label>
+          <input type="number" name="exploration_prix[]"
+                 class="form-control form-control-sm exploration-prix"
+                 step="0.01" min="0" value="${prix}"
+                 onchange="calculateTotalExplorations()" required>
+        </div>
+      </div>
+      <div class="row mt-2">
+        <div class="col-md-10">
+          <textarea name="exploration_obs[]" class="form-control form-control-sm"
+                    rows="1" placeholder="Observations">${obs}</textarea>
+        </div>
+        <div class="col-md-2">
+          <button type="button" class="btn btn-sm btn-danger w-100"
+                  onclick="removeExploration(${explorationCounter})">
+            <i class="fas fa-trash"></i>
+          </button>
+        </div>
+      </div>
+    </div>`;
+        cont.insertAdjacentHTML('beforeend', html);
+    }
+
+    function removeExploration(id) {
+        document.getElementById(`exploration-${id}`)?.remove();
+        calculateTotalExplorations();
+    }
+
+    function calculateTotalExplorations() {
+        let total = 0;
+        document.querySelectorAll('.exploration-prix').forEach(i =>
+            total += parseFloat(i.value) || 0);
+        document.getElementById('prixTotalExplorations').textContent = total.toFixed(2) + ' DA';
+        prixData.explorations = total;
+        updateTotalDisplay();
+    }
+
+    // =========================================================================
+    // CALCUL DES PRIX
+    // =========================================================================
+
+    function calculateTotal() {
+        const duree = parseInt(document.getElementById('dureeReelle').value) || 0;
+        const typeTarif = document.querySelector('[name="type_tarification"]:checked')?.value;
+
+        if (!currentBloc || duree === 0) return;
+
+        fetch('/api/calculer_prix_location_complet', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                type_tarification: typeTarif,
+                id_bloc: currentBloc,
+                id_doctor: currentDoctorId,
+                forfait_id: currentForfait,
+                duree_reelle: duree
+            })
+        })
+            .then(r => r.json())
+            .then(d => {
+                prixData.bloc = d.prix_bloc || 0;
+                prixData.suppDuree = d.prix_supplement_duree || 0;
+                calculateSupplements();
+                updateTotalDisplay();
+            })
+            .catch(e => console.error('Calcul prix:', e));
+    }
+
+    function calculateSupplements() {
+        let supProd = 0, supAct = 0;
+
+        document.querySelectorAll('.produit-inclus-qte').forEach(i => {
+            const qteU = parseFloat(i.value) || 0;
+            const qteI = parseFloat(i.dataset.inclus) || 0;
+            const prix = parseFloat(i.dataset.prix) || 0;
+            const delta = Math.max(0, qteU - qteI);
+            supProd += delta * prix;
+        });
+
+        document.querySelectorAll('.produit-supp-row').forEach(row => {
+            const sel = row.querySelector('.produit-supp-select');
+            const qte = row.querySelector('.produit-supp-qte');
+            if (sel && sel.value) {
+                const prix = parseFloat(sel.options[sel.selectedIndex].dataset.prix) || 0;
+                const qt = parseFloat(qte.value) || 0;
+                supProd += prix * qt;
+            }
+        });
+
+        document.querySelectorAll('.acte-inclus-qte').forEach(i => {
+            const qteU = parseFloat(i.value) || 0;
+            const qteI = parseFloat(i.dataset.inclus) || 0;
+            const prix = parseFloat(i.dataset.prix) || 0;
+            const delta = Math.max(0, qteU - qteI);
+            supAct += delta * prix;
+        });
+
+        document.querySelectorAll('.acte-supp-row').forEach(row => {
+            const sel = row.querySelector('.acte-supp-select');
+            const qte = row.querySelector('.acte-supp-qte');
+            if (sel && sel.value) {
+                const prix = parseFloat(sel.options[sel.selectedIndex].dataset.prix) || 0;
+                const qt = parseFloat(qte.value) || 0;
+                supAct += prix * qt;
+            }
+        });
+
+        prixData.suppProduits = supProd;
+        prixData.suppActes = supAct;
+    }
+
+    function updateTotalDisplay() {
+        const total = prixData.bloc + prixData.suppDuree + prixData.suppProduits +
+            prixData.suppActes + prixData.nuitees + prixData.explorations + prixData.anesthesie;
+
+        // Étape 3
+        document.getElementById('prixBloc').textContent = prixData.bloc.toFixed(2) + ' DA';
+        document.getElementById('prixSuppDuree').textContent = prixData.suppDuree.toFixed(2) + ' DA';
+        document.getElementById('prixTotal').textContent = total.toFixed(2) + ' DA';
+
+        // Étape 4
+        document.getElementById('prixBlocStep4').textContent = prixData.bloc.toFixed(2) + ' DA';
+        document.getElementById('prixSuppDureeStep4').textContent = prixData.suppDuree.toFixed(2) + ' DA';
+        document.getElementById('prixSuppProduits').textContent = prixData.suppProduits.toFixed(2) + ' DA';
+        document.getElementById('prixSuppActes').textContent = prixData.suppActes.toFixed(2) + ' DA';
+        document.getElementById('prixAnesthesie').textContent = prixData.anesthesie.toFixed(2) + ' DA';
+        document.getElementById('prixTotalStep4').textContent = total.toFixed(2) + ' DA';
+
+        // Étape 5
+        document.getElementById('prixNuiteesDisplay').textContent = prixData.nuitees.toFixed(2) + ' DA';
+
+        // Étape 7
+        updateFinalSummary();
+    }
+
+    function updateFinalSummary() {
+        const total = prixData.bloc + prixData.suppDuree + prixData.suppProduits +
+            prixData.suppActes + prixData.nuitees + prixData.explorations + prixData.anesthesie;
+
+        document.getElementById('prixBlocFinal').textContent = prixData.bloc.toFixed(2) + ' DA';
+        document.getElementById('prixSuppDureeFinal').textContent = prixData.suppDuree.toFixed(2) + ' DA';
+        document.getElementById('prixSuppProduitsFinal').textContent = prixData.suppProduits.toFixed(2) + ' DA';
+        document.getElementById('prixSuppActesFinal').textContent = prixData.suppActes.toFixed(2) + ' DA';
+        document.getElementById('prixNuiteesFinal').textContent = prixData.nuitees.toFixed(2) + ' DA';
+        document.getElementById('prixExplorationsFinal').textContent = prixData.explorations.toFixed(2) + ' DA';
+        document.getElementById('prixAnesthesieFinal').textContent = prixData.anesthesie.toFixed(2) + ' DA';
+        document.getElementById('prixTotalFinal').textContent = total.toFixed(2) + ' DA';
+    }
+
+    // =========================================================================
+    // NAVIGATION WIZARD
+    // =========================================================================
+
+    function initClickableSteps() {
+        document.querySelectorAll('.stepper-item').forEach(item => {
+            item.style.cursor = 'pointer';
+            item.addEventListener('click', function () {
+                const targetStep = parseInt(this.dataset.step);
+                if (targetStep < currentStep || validateStep(currentStep)) {
+                    showStep(targetStep);
+                }
+            });
+        });
+    }
+
+    function nextStep(step) {
+        if (validateStep(currentStep)) {
+            if (!completedSteps.includes(currentStep)) {
+                completedSteps.push(currentStep);
+            }
+            showStep(step);
+        }
+    }
+
+    function prevStep(step) {
+        showStep(step);
+    }
+
+    function showStep(step) {
+        document.querySelectorAll('.step-content').forEach(el => el.classList.remove('active'));
+        document.querySelector(`.step-content[data-step="${step}"]`)?.classList.add('active');
+
+        document.querySelectorAll('.stepper-item').forEach((item, i) => {
+            item.classList.remove('active', 'completed');
+            const itemStep = i + 1;
+            if (completedSteps.includes(itemStep) && itemStep < step) {
+                item.classList.add('completed');
+            } else if (itemStep === step) {
+                item.classList.add('active');
+            }
+        });
+
+        currentStep = step;
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        if (step === 7) updateFinalSummary();
+        updateFloatingNav();
+    }
+
+    function validateStep(step) {
+        switch (step) {
+            case 1:
+                const doc = document.querySelector('[name="id_doctor"]').value;
+                const pat = document.querySelector('[name="patient"]').value;
+                const dt = document.querySelector('[name="location_date"]').value;
+                const dur = document.querySelector('[name="duree_reelle"]').value;
+                if (!doc || !pat || !dt || !dur) {
+                    showModal('Champs obligatoires', 'Veuillez remplir tous les champs', 'danger');
+                    return false;
+                }
+                return true;
+
+            case 3:
+                const bloc = document.querySelector('[name="id_bloc"]:checked');
+                if (!bloc) {
+                    showModal('Sélection requise', 'Veuillez sélectionner un bloc', 'warning');
+                    return false;
+                }
+                const tarif = document.querySelector('[name="type_tarification"]:checked').value;
+                if (tarif === 'FORFAIT' && !document.querySelector('[name="forfait_id"]:checked')) {
+                    showModal('Forfait requis', 'Veuillez sélectionner un forfait', 'warning');
+                    return false;
+                }
+                return true;
+
+            default:
+                return true;
+        }
+    }
+
+    function updateFloatingNav() {
+        const floatingPrev = document.querySelector('.btn-prev');
+        const floatingNext = document.querySelector('.btn-next');
+
+        if (!floatingPrev || !floatingNext) return;
+
+        if (currentStep === 1) {
+            floatingPrev.disabled = true;
+            floatingNext.innerHTML = 'Suivant <i class="fas fa-arrow-right"></i>';
+            floatingNext.onclick = () => nextStep(2);
+            floatingNext.className = 'btn btn-primary btn-next';
+        } else if (currentStep === 7) {
+            floatingPrev.disabled = false;
+            floatingPrev.onclick = () => prevStep(6);
+            floatingNext.innerHTML = '<i class="fas fa-save"></i> Enregistrer';
+            floatingNext.onclick = () => document.getElementById('locationForm').submit();
+            floatingNext.className = 'btn btn-warning btn-next';
+        } else {
+            floatingPrev.disabled = false;
+            floatingPrev.onclick = () => prevStep(currentStep - 1);
+            floatingNext.innerHTML = 'Suivant <i class="fas fa-arrow-right"></i>';
+            floatingNext.onclick = () => nextStep(currentStep + 1);
+            floatingNext.className = 'btn btn-primary btn-next';
+        }
+    }
+
+    // =========================================================================
+    // SÉLECTION TARIFICATION/BLOC/FORFAIT
+    // =========================================================================
+
+    function selectTarif(type) {
+        document.getElementById('tarif_' + type.toLowerCase()).checked = true;
+        document.querySelectorAll('.selection-card').forEach(c => {
+            if (c.querySelector('[name="type_tarification"]')) c.classList.remove('selected');
+        });
+        document.getElementById('tarif_' + type.toLowerCase()).closest('.selection-card').classList.add('selected');
+
+        if (type === 'FORFAIT') {
+            document.getElementById('forfaitSection').style.display = 'block';
+        } else {
+            document.getElementById('forfaitSection').style.display = 'none';
+            currentForfait = null;
+            forfaitNuitees = 0;
+        }
+
+        updateProduitsInclus();
+        calculateTotal();
+    }
+
+    function selectBloc(blocId) {
+        currentBloc = blocId;
+        document.querySelectorAll('[name="id_bloc"]').forEach(r => {
+            const card = r.closest('.selection-card');
+            if (parseInt(r.value) === blocId) {
+                r.checked = true;
+                card.classList.add('selected');
+            } else {
+                card.classList.remove('selected');
+            }
+        });
+
+        const typeTarif = document.querySelector('[name="type_tarification"]:checked')?.value;
+        if (typeTarif === 'DUREE') loadBlocProduits(blocId);
+        calculateTotal();
+    }
+
+    function selectForfait(forfaitId) {
+        currentForfait = forfaitId;
+        document.querySelectorAll('[name="forfait_id"]').forEach(r => {
+            const card = r.closest('.selection-card');
+            if (parseInt(r.value) === forfaitId) {
+                r.checked = true;
+                card.classList.add('selected');
+            } else {
+                card.classList.remove('selected');
+            }
+        });
+
+        loadForfaitInfo(forfaitId);
+        loadForfaitProduits(forfaitId);
+        loadForfaitActes(forfaitId);
+        calculateTotal();
+    }
+
+    function updateProduitsInclus() {
+        const tarif = document.querySelector('[name="type_tarification"]:checked')?.value;
+        if (tarif === 'FORFAIT' && currentForfait) {
+            loadForfaitProduits(currentForfait);
+            loadForfaitActes(currentForfait);
+        } else if (currentBloc) {
+            loadBlocProduits(currentBloc);
+            document.getElementById('actesInclus').innerHTML =
+                '<p class="text-muted text-center py-4">Les actes sont inclus uniquement dans les forfaits</p>';
+        }
+    }
+
+    // =========================================================================
+    // ANESTHÉSIE
+    // =========================================================================
+
+    async function updateTarifAnesthesie() {
+        const acteId = document.getElementById('acteAnesthId').value;
+        const intervenant1Id = document.getElementById('intervenant1Id').value;
+        const intervenant2Id = document.getElementById('intervenant2Id').value;
+        const dureeReelle = parseInt(document.getElementById('dureeReelle').value) || 90;
+
+        document.getElementById('tarif1Display').textContent = '0.00 DA';
+        document.getElementById('tarif2Display').textContent = '0.00 DA';
+        document.getElementById('totalAnesthesieDisplay').textContent = '0.00 DA';
+        document.getElementById('tarifAnesthesieTotal').style.display = 'none';
+
+        if (!acteId || !intervenant1Id || !intervenant2Id) {
+            prixData.anesthesie = 0;
+            updateTotalDisplay();
+            return;
+        }
+
+        try {
+            const response = await fetch('/api/anesthesie/calculer_prix_et_honoraires', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    id_acte_anesthesie: acteId,
+                    id_anesthesiste: intervenant1Id,
+                    id_reanimateur: intervenant2Id,
+                    duree_reelle: dureeReelle
+                })
+            });
+
+            const data = await response.json();
+
+            if (data.error) {
+                console.error('Erreur API:', data.error);
+                prixData.anesthesie = 0;
+                updateTotalDisplay();
+                return;
+            }
+
+            const prixDossier = data.prix_anesthesie_dossier || 0;
+
+            if (data.details && data.details.length >= 2) {
+                document.getElementById('tarif1Display').textContent =
+                    data.details[0].honoraires.toFixed(2) + ' DA (honoraires)';
+                document.getElementById('tarif2Display').textContent =
+                    data.details[1].honoraires.toFixed(2) + ' DA (honoraires)';
+            }
+
+            document.getElementById('totalAnesthesieDisplay').textContent = prixDossier.toFixed(2) + ' DA';
+            document.getElementById('tarifAnesthesieTotal').style.display = 'block';
+
+            prixData.anesthesie = prixDossier;
+            updateTotalDisplay();
+
+        } catch (e) {
+            console.error('Erreur calcul tarifs anesthésie:', e);
+            prixData.anesthesie = 0;
+            updateTotalDisplay();
+        }
+    }
+
+
+</script>
+
+<!-- SCRIPT CALCUL DURÉE -->
+<script>
+    const modal = document.getElementById("dureeModal");
+    const heureDebut = document.getElementById("heureDebut");
+    const heureFin = document.getElementById("heureFin");
+    const dureeMinutes = document.getElementById("dureeMinutes");
+
+    modal.addEventListener("show.bs.modal", () => {
+        heureDebut.value = "";
+        heureFin.value = "";
+        dureeMinutes.value = "";
+    });
+
+    function calculerDureeAuto() {
+        if (!heureDebut.value || !heureFin.value) {
+            dureeMinutes.value = "";
+            return;
+        }
+
+        const [hD, mD] = heureDebut.value.split(":").map(Number);
+        const [hF, mF] = heureFin.value.split(":").map(Number);
+
+        let debut = hD * 60 + mD;
+        let fin = hF * 60 + mF;
+
+        if (fin < debut) {
+            fin += 1440;
+        }
+
+        dureeMinutes.value = fin - debut;
+    }
+
+    heureDebut.addEventListener("input", calculerDureeAuto);
+    heureFin.addEventListener("input", calculerDureeAuto);
+
+    const btnCopier = document.getElementById("btnCopierDuree");
+    const inputDureeReelle = document.getElementById("dureeReelle");
+
+    function activerBoutonCopie() {
+        btnCopier.disabled = !dureeMinutes.value;
+    }
+
+    heureDebut.addEventListener("input", activerBoutonCopie);
+    heureFin.addEventListener("input", activerBoutonCopie);
+
+    btnCopier.addEventListener("click", () => {
+        if (!dureeMinutes.value) return;
+        inputDureeReelle.value = dureeMinutes.value;
+        inputDureeReelle.classList.add("is-valid");
+        setTimeout(() => inputDureeReelle.classList.remove("is-valid"), 2000);
+        calculateTotal();
+        updateTarifAnesthesie();
+    });
+</script>
+
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+<script src="{{ url_for('static', filename='js/select2.min.js') }}"></script>
+<script>
+    /* =========================================================================
+       🔹 SELECT2 - COMPATIBILITÉ ET INITIALISATION
+       ========================================================================= */
+
+    function initDoctorChoice() {
+        const sel = $('#doctorSelect');
+        if (!sel.length) return;
+
+        sel.select2({
+            theme: 'bootstrap-5',
+            placeholder: '-- Sélectionner un médecin --',
+            allowClear: true,
+            width: '100%',
+            language: {
+                noResults: () => "Aucun médecin trouvé"
+            }
+        });
+    }
+
+    function initChoices(selectElement, options = {}) {
+        if (!selectElement) return null;
+        const $el = $(selectElement);
+
+        if ($el.hasClass("select2-hidden-accessible")) {
+            try {
+                $el.select2('destroy');
+            } catch (e) {
+            }
+        }
+
+        const config = {
+            theme: 'bootstrap-5',
+            width: '100%',
+            dropdownParent: $el.closest('.modal').length ? $el.closest('.modal') : null,
+            placeholder: options.searchPlaceholderValue || options.placeholderValue || '-- Sélectionner --',
+            language: {
+                noResults: () => options.noResultsText || "Aucun résultat trouvé"
+            }
+        };
+
+        if (options.searchEnabled === false) {
+            config.minimumResultsForSearch = Infinity;
+        }
+
+        $el.select2(config);
+        return $el;
+    }
+
+    window.cleanupChoicesInstances = function () {
+        $('.select2-hidden-accessible').each(function () {
+            try {
+                $(this).select2('destroy');
+            } catch (e) {
+            }
+        });
+    };
+
+    $(document).ready(function () {
+        initDoctorChoice();
+    });
+</script>
+{% endblock %}

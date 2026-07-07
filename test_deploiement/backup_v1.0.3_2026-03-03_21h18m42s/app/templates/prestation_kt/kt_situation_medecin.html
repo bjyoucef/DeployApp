@@ -1,0 +1,1110 @@
+{% extends 'layout.html' %}
+
+{% block title %}Situation Médecins KT{% endblock %}
+
+{% block style %}
+<style>
+    :root {
+        --brand-color: #450A54;
+        --brand-color-light: #6a1b7c;
+        --brand-gradient: linear-gradient(135deg, #450A54 0%, #7B1FA2 100%);
+        --glass-bg: rgba(255, 255, 255, 0.95);
+        --glass-border: 1px solid rgba(255, 255, 255, 0.2);
+        --glass-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.15);
+        --card-radius: 16px;
+    }
+
+    [data-theme="dark"] {
+        --glass-bg: rgba(30, 30, 30, 0.95);
+        --glass-border: 1px solid rgba(255, 255, 255, 0.05);
+        --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+    }
+
+    /* Global Layout Overrides */
+    .container-fluid {
+        max-width: 1600px;
+    }
+
+    /* Page Header & Stats */
+    .page-header-card {
+        background: var(--brand-gradient);
+        border-radius: var(--card-radius);
+        padding: 2rem;
+        color: white;
+        margin-bottom: 2rem;
+        box-shadow: 0 10px 20px rgba(69, 10, 84, 0.2);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .page-header-card::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -10%;
+        width: 300px;
+        height: 300px;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 50%;
+        pointer-events: none;
+    }
+
+    .header-content h1 {
+        font-weight: 700;
+        font-size: 1.8rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .header-content p {
+        opacity: 0.9;
+        font-size: 0.95rem;
+    }
+
+    .stat-badge {
+        background: rgba(255, 255, 255, 0.2);
+        backdrop-filter: blur(4px);
+        padding: 0.75rem 1.5rem;
+        border-radius: 12px;
+        display: inline-flex;
+        align-items: center;
+        gap: 1rem;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .stat-value {
+        font-size: 1.25rem;
+        font-weight: 700;
+        display: block;
+    }
+
+    .stat-label {
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        opacity: 0.9;
+    }
+
+    /* Navigation Quick Links */
+    .quick-actions {
+        display: flex;
+        gap: 1rem;
+        flex-wrap: wrap;
+    }
+
+    .btn-glass {
+        background: rgba(255, 255, 255, 0.15);
+        color: white;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        backdrop-filter: blur(4px);
+        transition: all 0.3s ease;
+        padding: 0.6rem 1.2rem;
+        border-radius: 10px;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        text-decoration: none;
+        font-weight: 500;
+    }
+
+    .btn-glass:hover {
+        background: rgba(255, 255, 255, 0.25);
+        color: white;
+        transform: translateY(-2px);
+    }
+
+    /* Filter Bar */
+    .filter-bar {
+        background: var(--glass-bg);
+        border: var(--glass-border);
+        box-shadow: var(--glass-shadow);
+        border-radius: var(--card-radius);
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+    }
+
+    .search-input-group {
+        position: relative;
+    }
+
+    .search-input-group i {
+        position: absolute;
+        left: 1rem;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #aaa;
+        z-index: 10;
+        pointer-events: none;
+    }
+
+    .search-input-group .form-control {
+        padding-left: 3rem !important;
+        border-radius: 10px;
+        border: 1px solid rgba(0, 0, 0, 0.1);
+        height: 45px;
+        transition: all 0.2s;
+    }
+
+    .search-input-group .form-control:focus {
+        border-color: var(--brand-color);
+        box-shadow: 0 0 0 3px rgba(69, 10, 84, 0.1);
+    }
+
+    [data-theme="dark"] .search-input-group .form-control {
+        background: #2d2d2d;
+        border-color: #444;
+        color: white;
+    }
+
+    /* Custom Radio Toggle */
+    .toggle-container {
+        display: flex;
+        background: #f1f3f5;
+        padding: 4px;
+        border-radius: 10px;
+        position: relative;
+        height: 45px;
+        border: 1px solid rgba(0, 0, 0, 0.05);
+    }
+
+    [data-theme="dark"] .toggle-container {
+        background: #2d2d2d;
+        border-color: #444;
+    }
+
+    .toggle-radio {
+        display: none;
+    }
+
+    .toggle-label {
+        flex: 1;
+        text-align: center;
+        cursor: pointer;
+        z-index: 2;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 500;
+        font-size: 0.9rem;
+        color: #666;
+        transition: color 0.3s;
+        border-radius: 8px;
+    }
+
+    [data-theme="dark"] .toggle-label {
+        color: #aaa;
+    }
+
+    .toggle-radio:checked+.toggle-label {
+        color: white;
+        background: var(--brand-color);
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    }
+
+    /* Table Styling */
+    .table-card {
+        background: var(--glass-bg);
+        border: var(--glass-border);
+        box-shadow: var(--glass-shadow);
+        border-radius: var(--card-radius);
+        overflow: hidden;
+    }
+
+    .custom-table {
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0;
+    }
+
+    .custom-table thead th {
+        background: rgba(69, 10, 84, 0.03);
+        padding: 1.2rem 1.5rem;
+        font-weight: 600;
+        font-size: 0.8rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        color: var(--brand-color);
+        border-bottom: 2px solid rgba(69, 10, 84, 0.05);
+    }
+
+    [data-theme="dark"] .custom-table thead th {
+        background: rgba(255, 255, 255, 0.02);
+        color: #b39ddb;
+        border-bottom-color: rgba(255, 255, 255, 0.1);
+    }
+
+    .custom-table tbody tr {
+        transition: all 0.2s ease;
+    }
+
+    .custom-table tbody tr:hover {
+        background: rgba(69, 10, 84, 0.02);
+        transform: scale(1.002);
+    }
+
+    [data-theme="dark"] .custom-table tbody tr:hover {
+        background: rgba(255, 255, 255, 0.02);
+    }
+
+    .custom-table td {
+        padding: 1.2rem 1.5rem;
+        border-bottom: 1px solid rgba(0, 0, 0, 0.03);
+        vertical-align: middle;
+    }
+
+    [data-theme="dark"] .custom-table td {
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .doctor-avatar-col {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+
+    .avatar-circle {
+        width: 45px;
+        height: 45px;
+        border-radius: 50%;
+        background: var(--brand-gradient);
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        font-size: 1.1rem;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    /* Badges */
+    .badge-soft-success {
+        background: rgba(40, 167, 69, 0.1);
+        color: #28a745;
+        padding: 0.4rem 0.8rem;
+        border-radius: 8px;
+        font-size: 0.85rem;
+        font-weight: 600;
+    }
+
+    .badge-soft-warning {
+        background: rgba(255, 193, 7, 0.1);
+        color: #ffc107;
+        padding: 0.4rem 0.8rem;
+        border-radius: 8px;
+        font-size: 0.85rem;
+        font-weight: 600;
+    }
+
+    [data-theme="dark"] .badge-soft-success {
+        background: rgba(40, 167, 69, 0.2);
+        color: #4caf50;
+    }
+
+    [data-theme="dark"] .badge-soft-warning {
+        background: rgba(255, 193, 7, 0.2);
+        color: #ffca28;
+    }
+
+    .solde-amount {
+        font-size: 1.1rem;
+        font-weight: 700;
+        color: var(--brand-color);
+    }
+
+    [data-theme="dark"] .solde-amount {
+        color: #d1c4e9;
+    }
+
+    .quick-folder-link {
+        color: #6c757d;
+        font-size: 0.85rem;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.3rem;
+        margin-top: 0.2rem;
+        transition: color 0.2s;
+    }
+
+    .quick-folder-link:hover {
+        color: var(--brand-color);
+    }
+
+    /* Modal Styling */
+    .modal-content {
+        border: none;
+        border-radius: 20px;
+        overflow: hidden;
+        box-shadow: 0 15px 40px rgba(0, 0, 0, 0.2);
+    }
+
+    .modal-header {
+        background: var(--brand-gradient);
+        color: white;
+        padding: 1.5rem 2rem;
+        border: none;
+    }
+
+    .modal-header .btn-close {
+        filter: invert(1) brightness(200%);
+    }
+
+    .modal-body {
+        padding: 2rem;
+        background: var(--bg-body);
+    }
+
+    /* Skeleton Loader */
+    .skeleton-loader {
+        height: 20px;
+        margin-bottom: 10px;
+        border-radius: 5px;
+        background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+        background-size: 200% 100%;
+        animation: loading 1.5s infinite;
+    }
+
+    [data-theme="dark"] .skeleton-loader {
+        background: linear-gradient(90deg, #2d2d2d 25%, #3d3d3d 50%, #2d2d2d 75%);
+    }
+
+    @keyframes loading {
+        0% {
+            background-position: 200% 0;
+        }
+
+        100% {
+            background-position: -200% 0;
+        }
+    }
+
+    /* Sticky Modal Table Header */
+    /* Ensure table-responsive doesn't block vertical sticky behavior */
+    .modal-dialog-scrollable .modal-body .table-responsive {
+        overflow: visible;
+    }
+
+    /* Sticky Header for Detail Modal Table */
+    .modal-dialog-scrollable .modal-body thead th {
+        position: sticky;
+        top: 0;
+        z-index: 10;
+        background-color: #f8f9fa;
+        /* Matches .table-light */
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    }
+
+    [data-theme="dark"] .modal-dialog-scrollable .modal-body thead th {
+        background-color: #2c2c2c;
+        color: #e0e0e0;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+
+    <!-- Hero Header -->
+    <div class="page-header-card">
+        <div class="row align-items-center">
+            <div class="col-lg-6 mb-3 mb-lg-0">
+                <div class="header-content">
+                    <h1><i class="fas fa-user-md me-2"></i> Situation Médecins KT</h1>
+                    <p class="mb-0">Vue d'ensemble et gestion des honoraires médicaux</p>
+                </div>
+            </div>
+
+            <div class="col-lg-6">
+                <div class="d-flex justify-content-lg-end gap-3 flex-wrap">
+                    <div class="stat-badge">
+                        <div>
+                            <span class="stat-label">Total à Payer</span>
+                            <span class="stat-value" id="headerTotalSolde">{{ total_solde_all_doctors|format_price }}
+                                DA</span>
+                        </div>
+                        <i class="fas fa-coins fa-2x opacity-50"></i>
+                    </div>
+
+                    <div class="quick-actions w-100 justify-content-lg-end mt-3">
+                        <a href="{{ url_for('kt_dossier_patient') }}" class="btn-glass">
+                            <i class="fas fa-folder-open"></i> Dossiers Patients
+                        </a>
+                        <a href="{{ url_for('kt_decharges') }}" class="btn-glass">
+                            <i class="fas fa-file-invoice-dollar"></i> Historique Décharges
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="filter-bar">
+        <div class="row g-3 align-items-center">
+            <div class="col-md-5">
+                <div class="search-input-group">
+                    <i class="fas fa-search"></i>
+                    <input type="text" id="searchInput" class="form-control" placeholder="Rechercher un médecin...">
+                </div>
+            </div>
+
+            <div class="col-md-4">
+                <select id="specialtyFilter" class="form-select" style="height: 45px; border-radius: 10px;">
+                    <option value="all">Toutes les spécialités</option>
+                    {% for specialty in specialties %}
+                    <option value="{{ specialty.id_specialty }}">{{ specialty.name_specialty }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="col-md-3">
+                <div class="toggle-container">
+                    <input type="radio" class="toggle-radio" name="balanceFilter" id="payDoctorFilter" checked>
+                    <label for="payDoctorFilter" class="toggle-label">Solde > 0</label>
+
+                    <input type="radio" class="toggle-radio" name="balanceFilter" id="noPaymentFilter">
+                    <label for="noPaymentFilter" class="toggle-label">Solde = 0</label>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Data Table -->
+    <div class="table-card">
+        <div class="table-responsive">
+            <table class="table custom-table mb-0" id="myTableS">
+                <thead>
+                    <tr>
+                        <th style="padding-left: 2rem;">Médecin</th>
+                        <th>Spécialité</th>
+                        <th class="text-center">Dossiers Actifs</th>
+                        <th>Solde à Payer</th>
+                        <th class="text-end" style="padding-right: 2rem;">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for doctor in doctors %}
+                    <tr class="doctor-row" data-payment="{{ doctor.total_solde }}"
+                        data-specialty="{{ doctor.id_specialty }}">
+                        <td style="padding-left: 2rem;">
+                            <div class="doctor-avatar-col">
+                                <div class="avatar-circle">
+                                    {{ doctor.first_name[0] }}{{ doctor.last_name[0] }}
+                                </div>
+                                <div>
+                                    <div class="fw-bold text-dark">
+                                        {{ doctor.first_name }} {{ doctor.last_name }}
+                                        {% if doctor.has_unpaid_decharge %}
+                                        <span class="badge bg-danger rounded-pill ms-2" title="Décharge non réglée" style="font-size: 0.7rem;"><i class="fas fa-exclamation-circle"></i> Impayé</span>
+                                        {% endif %}
+                                    </div>
+                                    <a href="{{ url_for('kt_dossier_patient') }}?doctor={{ doctor.id }}"
+                                        class="quick-folder-link" title="Voir les dossiers">
+                                        <i class="fas fa-folder me-1"></i> Dossiers
+                                    </a>
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            <span class="badge bg-light text-dark border">{{ doctor.name_specialty or '-' }}</span>
+                        </td>
+                        <td class="text-center">
+                            <span class="badge bg-secondary rounded-pill px-3">{{ doctor.nb_dossiers }}</span>
+                        </td>
+                        <td>
+                            {% if doctor.total_solde > 0 %}
+                            <div class="d-flex flex-column">
+                                <span class="solde-amount text-success">{{ doctor.total_solde|format_price }} DA</span>
+
+                                {% if doctor.total_up_medecin > 0 or doctor.total_up_clinique > 0 %}
+                                <div class="mt-1 small text-muted">
+                                    {% if doctor.total_up_medecin > 0 %}
+                                    <span title="UP Médecin"><i class="fas fa-user-md me-1"></i>{{
+                                        doctor.total_up_medecin|format_price }}</span>
+                                    {% endif %}
+                                    {% if doctor.total_up_clinique > 0 %}
+                                    <span class="ms-2" title="UP Clinique"><i class="fas fa-hospital me-1"></i>{{
+                                        doctor.total_up_clinique|format_price }}</span>
+                                    {% endif %}
+                                </div>
+                                {% endif %}
+                            </div>
+                            {% else %}
+                            <span class="badge-soft-success"><i class="fas fa-check me-1"></i> À jour</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-end" style="padding-right: 2rem;">
+                            <div class="d-flex justify-content-end gap-2">
+                                <button class="btn btn-sm btn-outline-primary load-details-btn"
+                                    data-doctor-id="{{ doctor.id }}"
+                                    data-doctor-name="{{ doctor.first_name }} {{ doctor.last_name }}"
+                                    data-doctor-solde="{{ doctor.total_solde }}" title="Voir détails">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+
+                                {% if 'CREER_DECHARGE_KT' in session.privileges and doctor.total_solde > 0 %}
+                                <button class="btn btn-sm btn-danger btn-creer-decharge"
+                                    data-doctor-id="{{ doctor.id }}"
+                                    data-doctor-name="{{ doctor.first_name }} {{ doctor.last_name }}"
+                                    data-doctor-solde="{{ doctor.total_solde }}" title="Créer décharge">
+                                    <i class="fas fa-file-signature"></i> Payer
+                                </button>
+                                {% endif %}
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Empty State (Hidden by default) -->
+        <div id="emptyState" class="text-center py-5 d-none">
+            <i class="fas fa-search fa-3x text-muted mb-3 opacity-50"></i>
+            <h5 class="text-muted">Aucun médecin trouvé</h5>
+            <p class="text-muted small">Essayez de modifier vos filtres de recherche.</p>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Détails -->
+<div class="modal fade" id="detailsModalDynamic" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="detailsModalTitle">Détails Médecin</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="detailsModalBody">
+                <!-- Content loaded via AJAX -->
+            </div>
+            <div class="modal-footer bg-light border-0">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fermer</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Création Décharge -->
+<div class="modal fade" id="creerDechargeModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-file-invoice-dollar me-2"></i> Nouvelle Décharge
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+
+            <form id="formCreerDecharge" method="POST" action="{{ url_for('creer_decharge_kt') }}">
+                <div class="modal-body">
+                    <!-- Résumé Médecin -->
+                    <div class="d-flex align-items-center justify-content-between p-3 mb-4 rounded-3"
+                        style="background: rgba(69, 10, 84, 0.05); border: 1px solid rgba(69, 10, 84, 0.1);">
+                        <div class="d-flex align-items-center">
+                            <div class="avatar-circle me-3" style="width: 50px; height: 50px; font-size: 1.2rem;">
+                                <i class="fas fa-user-md"></i>
+                            </div>
+                            <div>
+                                <h5 class="mb-0 fw-bold" id="decharge_doctor_name">Nom Médecin</h5>
+                                <div class="text-muted small">Praticien</div>
+                            </div>
+                        </div>
+                        <div class="text-end">
+                            <div class="text-uppercase small text-muted fw-bold">Solde Total</div>
+                            <div class="fs-4 fw-bold text-danger" id="decharge_total_solde">0.00 DA</div>
+                        </div>
+                    </div>
+
+                    <input type="hidden" name="id_doctor" id="decharge_id_doctor">
+
+                    <div class="row g-4 mb-4">
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Date de décharge <span
+                                    class="text-danger">*</span></label>
+                            <input type="date" class="form-control form-control-lg" name="date_decharge" required
+                                id="date_decharge_input">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Observations</label>
+                            <textarea class="form-control" name="observations" rows="1"
+                                placeholder="Optionnel..."></textarea>
+                        </div>
+                    </div>
+
+                    <!-- Sélection Dossiers -->
+                    <div class="card border shadow-none">
+                        <div class="card-header bg-light d-flex justify-content-between align-items-center py-3">
+                            <h6 class="mb-0 fw-bold"><i class="fas fa-list-check me-2"></i>Dossiers à régler</h6>
+                            <div class="btn-group">
+                                <button type="button" class="btn btn-sm btn-outline-primary" id="btnSelectAll">
+                                    Tout cocher
+                                </button>
+                                <button type="button" class="btn btn-sm btn-outline-secondary" id="btnDeselectAll">
+                                    Tout décocher
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="card-body p-0" id="dossiers_container" style="max-height: 400px; overflow-y: auto;">
+                            <!-- AJAX Content -->
+                        </div>
+
+                        <div class="card-footer bg-white border-top p-3">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <span class="text-muted me-2">Sélectionnés:</span>
+                                    <span id="count_selected" class="badge bg-dark rounded-pill">0</span>
+                                </div>
+                                <div class="d-flex align-items-center">
+                                    <span class="text-muted me-3">Total à payer:</span>
+                                    <span id="montant_selected" class="fs-4 fw-bold text-success">0.00 DA</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="modal-footer border-0 pt-0 pb-4 pe-4">
+                    <button type="button" class="btn btn-light px-4" data-bs-dismiss="modal">Annuler</button>
+                    <button type="submit" class="btn btn-success px-4" id="btnSubmitDecharge" disabled>
+                        <i class="fas fa-check me-2"></i> Valider la Décharge
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+    let currentDoctorId = null;
+    let dossiersData = [];
+
+    // === FONCTIONS MODALE DECHARGE ===
+    async function loadDossiersNonDecharges(doctorId, doctorName, soldeTotal) {
+        currentDoctorId = doctorId;
+
+        document.getElementById('decharge_doctor_name').textContent = doctorName;
+        document.getElementById('decharge_total_solde').textContent = parseFloat(soldeTotal).toFixed(2) + ' DA';
+        document.getElementById('decharge_id_doctor').value = doctorId;
+
+        const modal = new bootstrap.Modal(document.getElementById('creerDechargeModal'));
+        modal.show();
+
+        // Loader
+        document.getElementById('dossiers_container').innerHTML = `
+            <div class="text-center py-5">
+                <div class="spinner-border text-primary" role="status"></div>
+                <p class="mt-2 text-muted">Chargement des dossiers...</p>
+            </div>
+        `;
+
+        try {
+            const response = await fetch(`/api/kt_dossiers_non_decharges/${doctorId}`);
+            const data = await response.json();
+
+            if (data.success) {
+                dossiersData = data.dossiers;
+                renderDossiers(dossiersData);
+            } else {
+                document.getElementById('dossiers_container').innerHTML = `
+                <div class="alert alert-danger m-3">
+                    <i class="fas fa-exclamation-triangle me-2"></i> ${data.error}
+                </div>
+            `;
+            }
+        } catch (error) {
+            document.getElementById('dossiers_container').innerHTML = `
+            <div class="alert alert-danger m-3">
+                <i class="fas fa-exclamation-triangle me-2"></i> Erreur technique: ${error.message}
+            </div>
+        `;
+        }
+    }
+
+    function renderDossiers(dossiers) {
+        const container = document.getElementById('dossiers_container');
+
+        if (dossiers.length === 0) {
+            container.innerHTML = `
+            <div class="text-center py-5">
+                <i class="fas fa-check-circle fa-3x text-success mb-3 opacity-50"></i>
+                <h5>Tout est en ordre</h5>
+                <p class="text-muted">Aucun dossier en attente de paiement pour ce médecin.</p>
+            </div>
+        `;
+            return;
+        }
+
+        let html = '<div class="list-group list-group-flush">';
+
+        dossiers.forEach(dossier => {
+            html += `
+            <label class="list-group-item list-group-item-action py-3">
+                <div class="d-flex align-items-start gap-3">
+                    <div class="pt-1">
+                        <input type="checkbox" class="form-check-input dossier-checkbox" 
+                               style="width: 1.2em; height: 1.2em;"
+                               name="dossiers[]" value="${dossier.id_dossier}"
+                               data-montant="${dossier.montant_total}">
+                    </div>
+                    <div class="flex-grow-1">
+                        <div class="d-flex justify-content-between">
+                            <h6 class="mb-1 fw-bold text-dark">${dossier.patient}</h6>
+                            <span class="badge bg-success-subtle text-success border border-success-subtle">
+                                ${dossier.montant_total.toFixed(2)} DA
+                            </span>
+                        </div>
+                        <div class="small text-muted mb-1">
+                            <i class="far fa-calendar me-1"></i> ${dossier.acte_date}
+                        </div>
+                        <div class="small text-muted text-truncate" style="max-width: 400px;">
+                            ${dossier.actes || 'Aucun acte spécifié'}
+                        </div>
+                        ${(dossier.part_operateur_up_medecin > 0 || dossier.part_operateur_up_clinique > 0) ? `
+                            <div class="mt-1 d-flex gap-2">
+                                ${dossier.part_operateur_up_medecin > 0 ? `<span class="badge bg-light text-dark border">UP Méd: ${dossier.part_operateur_up_medecin.toFixed(2)}</span>` : ''}
+                                ${dossier.part_operateur_up_clinique > 0 ? `<span class="badge bg-light text-dark border">UP Clin: ${dossier.part_operateur_up_clinique.toFixed(2)}</span>` : ''}
+                            </div>
+                        ` : ''}
+                    </div>
+                </div>
+            </label>
+        `;
+        });
+
+        html += '</div>';
+        container.innerHTML = html;
+
+        document.querySelectorAll('.dossier-checkbox').forEach(checkbox => {
+            checkbox.addEventListener('change', updateSelection);
+        });
+
+        // Initial update
+        updateSelection();
+    }
+
+    function updateSelection() {
+        const checkboxes = document.querySelectorAll('.dossier-checkbox:checked');
+        const count = checkboxes.length;
+
+        let total = 0;
+        checkboxes.forEach(cb => {
+            total += parseFloat(cb.dataset.montant);
+        });
+
+        document.getElementById('count_selected').textContent = count;
+        document.getElementById('montant_selected').textContent = total.toFixed(2) + ' DA';
+        document.getElementById('btnSubmitDecharge').disabled = count === 0;
+    }
+
+    // === FONCTIONS DETAILS MODAL ===
+    document.querySelectorAll('.load-details-btn').forEach(btn => {
+        btn.addEventListener('click', async function () {
+            const doctorId = this.dataset.doctorId;
+            const doctorName = this.dataset.doctorName;
+            const doctorSolde = parseFloat(this.dataset.doctorSolde);
+
+            const modal = new bootstrap.Modal(document.getElementById('detailsModalDynamic'));
+            const titleEl = document.getElementById('detailsModalTitle');
+            const bodyEl = document.getElementById('detailsModalBody');
+
+            const soldeText = doctorSolde > 0
+                ? `<span class="badge bg-warning text-dark ms-2">Reste Total: ${doctorSolde.toLocaleString('fr-FR', { minimumFractionDigits: 2 })} DA</span>`
+                : '<span class="badge bg-success ms-2">À jour</span>';
+
+            titleEl.innerHTML = `<span><i class="fas fa-user-md me-2"></i> ${doctorName}</span> ${soldeText}`;
+            bodyEl.innerHTML = `
+                <div class="p-4 text-center">
+                    <div class="skeleton-loader mb-2 w-75 mx-auto"></div>
+                    <div class="skeleton-loader mb-2 w-100"></div>
+                    <div class="skeleton-loader w-50 mx-auto"></div>
+                    <p class="text-muted mt-3">Chargement des transactions...</p>
+                </div>
+            `;
+            modal.show();
+
+            try {
+                const response = await fetch(`/kt_doctor_details/${doctorId}`);
+                const data = await response.json();
+
+                if (data.success) {
+                    let tableHTML = `
+                    <div class="d-flex flex-wrap gap-2 justify-content-end mb-3">
+                        <span class="badge bg-success-subtle border border-success-subtle text-success-emphasis">
+                            <i class="fas fa-check-circle me-1"></i> Reglé
+                        </span>
+                        <span class="badge bg-warning-subtle border border-warning-subtle text-warning-emphasis">
+                            <i class="fas fa-exclamation-circle me-1"></i> Partiel
+                        </span>
+                        <span class="badge bg-danger-subtle border border-danger-subtle text-danger-emphasis">
+                            <i class="fas fa-times-circle me-1"></i> Non Reglé
+                        </span>
+                    </div>
+
+                    <div class="table-responsive rounded-3 border bg-white">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th class="ps-3">Patient</th>
+                                <th>Part Opérateur</th>
+                                <th>UP</th>
+                                <th>Anesthésie / Réa</th>
+                                <th>Déjà Payé</th>
+                                <th class="text-end pe-3">Reste à Payer</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                `;
+
+                    data.dossiers.forEach(dossier => {
+                        const partOp = parseFloat(dossier.part_operateur) || 0;
+                        const paid = parseFloat(dossier.payment) || 0;
+                        const remaining = partOp - paid;
+
+                        let rowClass = '';
+                        let statusIcon = '';
+
+                        // Threshold for floating point comparison
+                        const epsilon = 0.01;
+
+                        if (remaining <= epsilon) {
+                            // Paid (Reglé) -> Green
+                            rowClass = 'table-success bg-opacity-10';
+                            statusIcon = '<i class="fas fa-check-circle text-success" title="Reglé"></i>';
+                        } else if (paid > epsilon && remaining > epsilon) {
+                            // Partial (Reglé Partiel) -> Yellow
+                            rowClass = 'table-warning bg-opacity-10';
+                            statusIcon = '<i class="fas fa-adjust text-warning" title="Partiel"></i>';
+                        } else {
+                            // Unpaid (Non Reglé) -> Red
+                            rowClass = 'table-danger bg-opacity-10';
+                            statusIcon = '<i class="fas fa-times-circle text-danger" title="Non Reglé"></i>';
+                        }
+
+                        let anesthesieInfo = '';
+                        if (dossier.anesthesiste_name) {
+                            anesthesieInfo += `<div class="small"><i class="fas fa-syringe text-info me-1"></i> ${dossier.anesthesiste_name}</div>`;
+                        }
+                        if (dossier.reanimateur_name) {
+                            anesthesieInfo += `<div class="small"><i class="fas fa-heartbeat text-danger me-1"></i> ${dossier.reanimateur_name}</div>`;
+                        }
+                        if (dossier.duree_operation > 0) {
+                            anesthesieInfo += `<div class="small text-muted"><i class="far fa-clock me-1"></i> ${dossier.duree_operation} min</div>`;
+                        }
+
+                        // UP Block
+                        let upBlock = '';
+                        if (dossier.up_medecin > 0) {
+                            upBlock += `<div class="badge bg-primary-subtle text-primary border border-primary-subtle mb-1">UP Méd: ${dossier.up_medecin.toFixed(2)}</div>`;
+                        }
+                        if (dossier.up_clinique > 0) {
+                            upBlock += `<div class="badge bg-warning-subtle text-dark border border-warning-subtle">UP Clin: ${dossier.up_clinique.toFixed(2)}</div>`;
+                        }
+
+                        tableHTML += `
+                        <tr class="${rowClass}">
+                            <td class="ps-3">
+                                <div class="fw-bold d-flex align-items-center gap-2">
+                                    ${statusIcon}
+                                    ${dossier.patient_name}
+                                </div>
+                                ${dossier.transactions && dossier.transactions.length > 0 ?
+                                `<small class="text-muted"><i class="fas fa-list-ul me-1"></i> ${dossier.transactions.length} acte(s)</small>` : ''}
+                            </td>
+                            <td>${partOp > 0 ? partOp.toFixed(2) + ' DA' : '-'}</td>
+                            <td>${upBlock || '-'}</td>
+                            <td>${anesthesieInfo || '-'}</td>
+                            <td class="text-muted fw-bold">${paid > 0 ? paid.toFixed(2) + ' DA' : '-'}</td>
+                            <td class="text-end pe-3 fw-bold ${remaining > epsilon ? 'text-danger' : 'text-success'}">
+                                ${remaining > epsilon ? remaining.toFixed(2) : '0.00'} DA
+                            </td>
+                        </tr>
+                        `;
+
+                        // Nested transactions row
+                        if (dossier.transactions && dossier.transactions.length > 0) {
+                            tableHTML += `
+                            <tr>
+                                <td colspan="6" class="p-0 border-0">
+                                    <div class="bg-light p-3 ps-5 border-bottom shadow-inner">
+                                        <h6 class="text-muted small fw-bold text-uppercase mb-2">
+                                            <i class="fas fa-file-medical-alt me-1"></i> Détails des actes
+                                        </h6>
+                                        <table class="table table-sm table-borderless mb-0 small bg-white rounded border">
+                                            <thead class="text-muted bg-light border-bottom">
+                                                <tr>
+                                                    <th class="ps-3">Date</th>
+                                                    <th>Code</th>
+                                                    <th>Acte</th>
+                                                    <th class="text-end pe-3">Part Op.</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                            `;
+
+                            dossier.transactions.forEach(trans => {
+                                tableHTML += `
+                                <tr>
+                                    <td class="ps-3 text-secondary">${trans.acte_date}</td>
+                                    <td><span class="badge bg-secondary font-monospace" style="font-size: 0.75rem;">${trans.code_cnas}</span></td>
+                                    <td>
+                                        ${trans.name_acte_kt} 
+                                        ${trans.urgence ? '<i class="fas fa-bolt text-danger ms-1" title="Urgence"></i>' : ''}
+                                    </td>
+                                    <td class="text-end pe-3 fw-bold text-dark">${trans.part_operateur_acte.toFixed(2)}</td>
+                                </tr>
+                                `;
+                            });
+
+                            tableHTML += `
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </td>
+                            </tr>
+                            `;
+                        }
+                    });
+
+                    tableHTML += `
+                        </tbody>
+                    </table>
+                    </div>`;
+
+                    bodyEl.innerHTML = tableHTML;
+                } else {
+                    bodyEl.innerHTML = `<div class="alert alert-danger"><i class="fas fa-exclamation-circle me-2"></i> ${data.error}</div>`;
+                }
+            } catch (error) {
+                bodyEl.innerHTML = `<div class="alert alert-danger"><i class="fas fa-exclamation-circle me-2"></i> Erreur de chargement: ${error.message}</div>`;
+            }
+        });
+    });
+
+
+    // === FILTRES TABLEAU ===
+    function filterTable() {
+        const payDoctorCheckbox = document.getElementById('payDoctorFilter');
+        const noPaymentCheckbox = document.getElementById('noPaymentFilter');
+
+        const showPositiveBalance = payDoctorCheckbox ? payDoctorCheckbox.checked : true;
+        const showZeroBalance = noPaymentCheckbox ? noPaymentCheckbox.checked : true;
+
+        const searchInput = document.getElementById('searchInput');
+        const searchValue = searchInput ? searchInput.value.toLowerCase().trim() : '';
+
+        const specialtySelect = document.getElementById('specialtyFilter');
+        const specialtyValue = specialtySelect ? specialtySelect.value : 'all';
+
+        const rows = document.querySelectorAll('#myTableS tbody tr.doctor-row'); // Added class selector
+        let visibleCount = 0;
+        let totalFilteredSolde = 0;
+
+        rows.forEach(function (row) {
+            const payment = parseFloat(row.dataset.payment);
+            const specialty = row.dataset.specialty;
+
+            // Text content for search
+            const textContent = row.textContent.toLowerCase();
+
+            let showRow = true;
+
+            // 1. Filter by Balance
+            let balanceMatch = false;
+            if (payment > 0 && showPositiveBalance) balanceMatch = true;
+            if (payment === 0 && showZeroBalance) balanceMatch = true;
+            if (payment < 0 && showPositiveBalance) balanceMatch = true;
+
+            if (!balanceMatch) showRow = false;
+
+            // 2. Filter by Search
+            if (searchValue && !textContent.includes(searchValue)) showRow = false;
+
+            // 3. Filter by Specialty
+            if (specialtyValue !== 'all' && specialty !== specialtyValue) showRow = false;
+
+            row.style.display = showRow ? '' : 'none';
+
+            if (showRow) {
+                visibleCount++;
+                if (payment > 0) totalFilteredSolde += payment;
+            }
+        });
+
+        // Update Header Stat based on filter
+        const headerTotalSolde = document.getElementById('headerTotalSolde');
+        if (headerTotalSolde) {
+            headerTotalSolde.textContent = totalFilteredSolde.toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' DA';
+        }
+
+        // Show/Hide Empty State
+        const emptyState = document.getElementById('emptyState');
+        const tableResponsive = document.querySelector('.table-responsive');
+
+        if (visibleCount === 0) {
+            if (emptyState) emptyState.classList.remove('d-none');
+            if (tableResponsive) tableResponsive.classList.add('d-none');
+        } else {
+            if (emptyState) emptyState.classList.add('d-none');
+            if (tableResponsive) tableResponsive.classList.remove('d-none');
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        // Init Date
+        const today = new Date().toISOString().split('T')[0];
+        const dateDechargeInput = document.getElementById('date_decharge_input');
+        if (dateDechargeInput) dateDechargeInput.value = today;
+
+        // Init Discharge Buttons
+        document.querySelectorAll('.btn-creer-decharge').forEach(btn => {
+            btn.addEventListener('click', function () {
+                const doctorId = this.dataset.doctorId;
+                const doctorName = this.dataset.doctorName;
+                const solde = this.dataset.doctorSolde;
+                loadDossiersNonDecharges(doctorId, doctorName, solde);
+            });
+        });
+
+        // Select All / Deselect All
+        const btnSelectAll = document.getElementById('btnSelectAll');
+        if (btnSelectAll) {
+            btnSelectAll.addEventListener('click', () => {
+                document.querySelectorAll('.dossier-checkbox').forEach(cb => {
+                    cb.checked = true;
+                });
+                updateSelection();
+            });
+        }
+
+        const btnDeselectAll = document.getElementById('btnDeselectAll');
+        if (btnDeselectAll) {
+            btnDeselectAll.addEventListener('click', () => {
+                document.querySelectorAll('.dossier-checkbox').forEach(cb => {
+                    cb.checked = false;
+                });
+                updateSelection();
+            });
+        }
+
+        // Filter Listeners
+        const searchInput = document.getElementById('searchInput');
+        if (searchInput) searchInput.addEventListener('input', filterTable);
+
+        const specialtyFilter = document.getElementById('specialtyFilter');
+        if (specialtyFilter) specialtyFilter.addEventListener('change', filterTable);
+
+        const radioButtons = document.querySelectorAll('input[name="balanceFilter"]');
+        radioButtons.forEach(radio => {
+            radio.addEventListener('change', filterTable);
+        });
+
+        // Initial Filter
+        filterTable();
+    });
+</script>
+{% endblock %}

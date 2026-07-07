@@ -1,0 +1,447 @@
+{% extends "admin/admin_layout.html" %}
+
+{% block title %}Configuration Impression Planche{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-10 col-lg-8">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h1 class="h3 text-gray-800">Impression Planche A4</h1>
+            <a href="{{ url_for('search_barcode_history') }}" class="btn btn-outline-secondary btn-sm" id="sheet_setup_a_1">
+                <i class="fas fa-arrow-left me-2"></i>Retour
+            </a>
+        </div>
+
+        <div class="card shadow mb-4" id="sheet_setup_div_2">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Configuration de la planche</h6>
+            </div>
+            <div class="card-body">
+                <form action="{{ url_for('print_sheet', label_id=label.id) }}" method="GET" target="_blank"
+                    id="sheetForm">
+
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <label class="form-label font-weight-bold">Modèle prédéfini</label>
+                            <div class="input-group">
+                                <select class="form-select" id="presetSelect">
+                                    <option value="custom">Personnalisé</option>
+                                    <!-- Options générées par JS -->
+                                </select>
+                                <button class="btn btn-outline-success" type="button" onclick="saveCurrentAsPreset()"
+                                    title="Sauvegarder la configuration actuelle" id="sheet_setup_button_3">
+                                    <i class="fas fa-save"></i>
+                                </button>
+                                <button class="btn btn-outline-danger" type="button" onclick="deleteCurrentPreset()"
+                                    title="Supprimer le modèle sélectionné" id="sheet_setup_button_4">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                            <small class="text-muted">Sélectionnez un modèle standard, ou personnalisez et sauvegardez
+                                vos propres configurations (stockées dans votre navigateur).</small>
+                        </div>
+                    </div>
+
+                    <hr>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="rows" class="form-label">Nombre de Lignes</label>
+                            <input type="number" class="form-control" id="rows" name="rows" value="8" min="1" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="cols" class="form-label">Nombre de Colonnes</label>
+                            <input type="number" class="form-control" id="cols" name="cols" value="3" min="1" required>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="width" class="form-label">Largeur Étiquette (mm)</label>
+                            <input type="number" step="0.01" class="form-control" id="width" name="width" value="70">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="height" class="form-label">Hauteur Étiquette (mm)</label>
+                            <input type="number" step="0.01" class="form-control" id="height" name="height" value="37">
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="gap_x" class="form-label">Espace Horizontal (mm)</label>
+                            <input type="number" step="0.01" class="form-control" id="gap_x" name="gap_x" value="0">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="gap_y" class="form-label">Espace Vertical (mm)</label>
+                            <input type="number" step="0.01" class="form-control" id="gap_y" name="gap_y" value="0">
+                        </div>
+                    </div>
+
+                    <div class="alert alert-secondary mt-3">
+                        <h6 class="alert-heading"><i class="fas fa-calculator me-2"></i>Assistant Calcul</h6>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <p class="mb-1">Largeur Utilisée: <strong id="calcWidth">0</strong> / 210 mm</p>
+                                <div class="progress mb-2" style="height: 5px;">
+                                    <div class="progress-bar" id="barWidth" role="progressbar" style="width: 0%"></div>
+                                </div>
+                                <button type="button" class="btn btn-sm btn-outline-info" onclick="centerH()" id="sheet_setup_button_5">
+                                    <i class="fas fa-arrows-alt-h me-1"></i>Centrer Horizontalement
+                                </button>
+                            </div>
+                            <div class="col-md-6">
+                                <p class="mb-1">Hauteur Utilisée: <strong id="calcHeight">0</strong> / 297 mm</p>
+                                <div class="progress mb-2" style="height: 5px;">
+                                    <div class="progress-bar" id="barHeight" role="progressbar" style="width: 0%"></div>
+                                </div>
+                                <button type="button" class="btn btn-sm btn-outline-info" onclick="centerV()" id="sheet_setup_button_6">
+                                    <i class="fas fa-arrows-alt-v me-1"></i>Centrer Verticalement
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-3 mb-3">
+                            <label for="margin_top" class="form-label">Marge Haut (mm)</label>
+                            <input type="number" step="0.01" class="form-control" id="margin_top" name="margin_top"
+                                value="0">
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <label for="margin_bottom" class="form-label">Marge Bas (mm)</label>
+                            <input type="number" step="0.01" class="form-control" id="margin_bottom"
+                                name="margin_bottom" value="0">
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <label for="margin_left" class="form-label">Marge Gauche (mm)</label>
+                            <input type="number" step="0.01" class="form-control" id="margin_left" name="margin_left"
+                                value="0">
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <label for="margin_right" class="form-label">Marge Droite (mm)</label>
+                            <input type="number" step="0.01" class="form-control" id="margin_right" name="margin_right"
+                                value="0">
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-12 mb-3">
+                            <label for="quantity" class="form-label font-weight-bold">Quantité totale à imprimer</label>
+                            <input type="number" class="form-control form-control-lg" id="quantity" name="quantity"
+                                value="24" min="1">
+                            <small class="text-muted">Par défaut, remplit toute la page. Modifiez si vous voulez moins
+                                d'étiquettes.</small>
+                        </div>
+                    </div>
+
+                    <div class="d-grid gap-2 mt-4">
+                        <button type="submit" class="btn btn-primary btn-lg" id="sheet_setup_button_7">
+                            <i class="fas fa-print me-2"></i>Générer la Planche PDF
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Aperçu des données -->
+        <div class="card shadow mb-4 border-left-info" id="sheet_setup_div_8">
+            <div class="card-body">
+                <h5 class="card-title">Aperçu des données</h5>
+                <p class="card-text">
+                    <strong>Produit:</strong> {{ label.product_name }}<br>
+                    <strong>Lot:</strong> {{ label.lot }}<br>
+                    <strong>SN:</strong> {{ label.sn or 'Aucun' }}<br>
+                    <strong>EXP:</strong> {{ label.exp_date }}
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // 1. Définition des modèles par défaut
+    const defaultPresets = {
+        '21': { rows: 7, cols: 3, width: 63.5, height: 38.1, gap_x: 0, gap_y: 0, margin_top: 0, margin_bottom: 0, margin_left: 0, margin_right: 0 },
+        '24': { rows: 8, cols: 3, width: 70, height: 37, gap_x: 0, gap_y: 0, margin_top: 0, margin_bottom: 0, margin_left: 0, margin_right: 0 },
+        '65': { rows: 13, cols: 5, width: 38.1, height: 21.2, gap_x: 0, gap_y: 0, margin_top: 0, margin_bottom: 0, margin_left: 0, margin_right: 0 },
+        '12': { rows: 6, cols: 2, width: 105, height: 48, gap_x: 0, gap_y: 0, margin_top: 0, margin_bottom: 0, margin_left: 0, margin_right: 0 },
+    };
+
+    let allPresets = { ...defaultPresets };
+
+    // Éléments du DOM
+    const presetSelect = document.getElementById('presetSelect');
+    // Inputs de configuration
+    const rowsInput = document.getElementById('rows');
+    const colsInput = document.getElementById('cols');
+    const widthInput = document.getElementById('width');
+    const heightInput = document.getElementById('height');
+    const quantityInput = document.getElementById('quantity');
+    const gapXInput = document.getElementById('gap_x');
+    const gapYInput = document.getElementById('gap_y');
+    const marginTopInput = document.getElementById('margin_top');
+    const marginBottomInput = document.getElementById('margin_bottom');
+    const marginLeftInput = document.getElementById('margin_left');
+    const marginRightInput = document.getElementById('margin_right');
+
+    // Éléments Calcul
+    const calcWidthEl = document.getElementById('calcWidth');
+    const calcHeightEl = document.getElementById('calcHeight');
+    const barWidth = document.getElementById('barWidth');
+    const barHeight = document.getElementById('barHeight');
+
+    // --- Gestion des Presets (LocalStorage) ---
+
+    function loadCustomPresets() {
+        const stored = localStorage.getItem('barcode_presets');
+        if (stored) {
+            try {
+                const customPresets = JSON.parse(stored);
+                // Fusionner avec les défauts
+                allPresets = { ...defaultPresets, ...customPresets };
+            } catch (e) {
+                console.error("Erreur lecture presets", e);
+            }
+        }
+        updateSelectOptions();
+    }
+
+    function updateSelectOptions() {
+        // Sauvegarder la sélection actuelle si possible
+        const currentVal = presetSelect.value;
+
+        // Vider sauf "custom"
+        presetSelect.innerHTML = '<option value="custom">Personnalisé</option>';
+
+        // Ajouter les options
+        for (const [key, val] of Object.entries(allPresets)) {
+            if (key === 'custom') continue; // Skip custom as it's always there
+            const isDefault = defaultPresets.hasOwnProperty(key);
+            const label = isDefault
+                ? `${key} par page (${val.rows}x${val.cols}) - ${val.width}x${val.height}mm`
+                : `${key} (Perso) - ${val.width}x${val.height}mm`;
+
+            const option = document.createElement('option');
+            option.value = key;
+            option.textContent = label;
+            presetSelect.appendChild(option);
+        }
+
+        // Restaurer sélection ou mettre custom
+        if (allPresets[currentVal]) {
+            presetSelect.value = currentVal;
+        } else {
+            presetSelect.value = 'custom';
+        }
+    }
+
+    function saveCurrentAsPreset() {
+        const name = prompt("Nom de votre configuration (ex: 'Mes Etiquettes A4'):");
+        if (!name) return;
+
+        // Nettoyage du nom pour en faire une clé unique simple si besoin, ou utiliser tel quel
+        // On utilise le nom tel quel pour l'affichage, et comme clé
+        if (defaultPresets[name]) {
+            alert("Impossible d'écraser un modèle par défaut. Choisissez un autre nom.");
+            return;
+        }
+
+        const newPreset = {
+            rows: parseFloat(rowsInput.value) || 0,
+            cols: parseFloat(colsInput.value) || 0,
+            width: parseFloat(widthInput.value) || 0,
+            height: parseFloat(heightInput.value) || 0,
+            gap_x: parseFloat(gapXInput.value) || 0,
+            gap_y: parseFloat(gapYInput.value) || 0,
+            margin_top: parseFloat(marginTopInput.value) || 0,
+            margin_bottom: parseFloat(marginBottomInput.value) || 0,
+            margin_left: parseFloat(marginLeftInput.value) || 0,
+            margin_right: parseFloat(marginRightInput.value) || 0
+        };
+
+        // Charger existants, ajouter, sauvegarder
+        let customPresets = {};
+        const stored = localStorage.getItem('barcode_presets');
+        if (stored) customPresets = JSON.parse(stored);
+
+        customPresets[name] = newPreset;
+        localStorage.setItem('barcode_presets', JSON.stringify(customPresets));
+
+        // Recharger tout
+        loadCustomPresets();
+        presetSelect.value = name; // Sélectionner le nouveau
+        alert("Configuration sauvegardée !");
+    }
+
+    function deleteCurrentPreset() {
+        const val = presetSelect.value;
+        if (val === 'custom') {
+            alert("Impossible de supprimer l'option 'Personnalisé'.");
+            return;
+        }
+        if (defaultPresets[val]) {
+            alert("Impossible de supprimer un modèle par défaut.");
+            return;
+        }
+
+        if (!confirm(`Supprimer le modèle "${val}" ?`)) return;
+
+        let customPresets = {};
+        const stored = localStorage.getItem('barcode_presets');
+        if (stored) customPresets = JSON.parse(stored);
+
+        delete customPresets[val];
+        localStorage.setItem('barcode_presets', JSON.stringify(customPresets));
+
+        loadCustomPresets();
+        applyPreset(); // Reviendra à custom probablement ou valeurs par défaut
+    }
+
+
+    // --- Logique Appliquée ---
+
+    function applyPreset() {
+        const val = presetSelect.value;
+        if (val !== 'custom' && allPresets[val]) {
+            const p = allPresets[val];
+            rowsInput.value = p.rows;
+            colsInput.value = p.cols;
+            widthInput.value = p.width;
+            heightInput.value = p.height;
+            // Appliquer aussi les marges/gaps s'ils existent dans le preset (rétrocompatibilité)
+            gapXInput.value = p.gap_x !== undefined ? p.gap_x : 0;
+            gapYInput.value = p.gap_y !== undefined ? p.gap_y : 0;
+            marginTopInput.value = p.margin_top !== undefined ? p.margin_top : 0;
+            marginBottomInput.value = p.margin_bottom !== undefined ? p.margin_bottom : 0;
+            marginLeftInput.value = p.margin_left !== undefined ? p.margin_left : 0;
+            marginRightInput.value = p.margin_right !== undefined ? p.margin_right : 0;
+
+            quantityInput.value = p.rows * p.cols;
+            calculateUsage();
+        } else if (val === 'custom') {
+            // If 'custom' is selected, don't change values, just recalculate
+            calculateUsage();
+        }
+    }
+
+    presetSelect.addEventListener('change', applyPreset);
+
+    // Auto-update quantity when rows/cols change (if custom)
+    [rowsInput, colsInput].forEach(input => {
+        input.addEventListener('change', () => {
+            if (presetSelect.value === 'custom') {
+                quantityInput.value = rowsInput.value * colsInput.value;
+            }
+        });
+    });
+
+    // --- Calcule et UI ---
+
+    function calculateUsage() {
+        const rows = parseFloat(rowsInput.value) || 0;
+        const cols = parseFloat(colsInput.value) || 0;
+        const w = parseFloat(widthInput.value) || 0;
+        const h = parseFloat(heightInput.value) || 0;
+        const gx = parseFloat(gapXInput.value) || 0;
+        const gy = parseFloat(gapYInput.value) || 0;
+        const mt = parseFloat(marginTopInput.value) || 0;
+        const mb = parseFloat(marginBottomInput.value) || 0;
+        const ml = parseFloat(marginLeftInput.value) || 0;
+        const mr = parseFloat(marginRightInput.value) || 0;
+
+        // Largeur Utilisée = MargeG + (Cols * W) + ((Cols-1) * GapX) + MargeD
+        const contentW = (cols * w) + ((cols - 1 > 0 ? cols - 1 : 0) * gx);
+        const totalW = ml + contentW + mr;
+
+        // Hauteur Utilisée = MargeH + (Rows * H) + ((Rows-1) * GapY) + MargeB
+        const contentH = (rows * h) + ((rows - 1 > 0 ? rows - 1 : 0) * gy);
+        const totalH = mt + contentH + mb;
+
+        calcWidthEl.textContent = totalW.toFixed(1);
+        calcHeightEl.textContent = totalH.toFixed(1);
+
+        // Update Bars
+        const pctW = (totalW / 210) * 100;
+        barWidth.style.width = pctW + '%';
+        barWidth.className = 'progress-bar ' + (totalW > 210 ? 'bg-danger' : 'bg-success');
+
+        const pctH = (totalH / 297) * 100;
+        barHeight.style.width = pctH + '%';
+        barHeight.className = 'progress-bar ' + (totalH > 297 ? 'bg-danger' : 'bg-success');
+    }
+
+    // Auto Center functions (Equal spacing)
+    window.centerH = function () {
+        const cols = parseFloat(colsInput.value) || 0;
+        const w = parseFloat(widthInput.value) || 0;
+
+        const totalContentWidth = cols * w;
+        const availableSpace = 210 - totalContentWidth;
+
+        if (availableSpace >= 0) {
+            const spacing = availableSpace / (cols + 1);
+
+            marginLeftInput.value = spacing.toFixed(2);
+            marginRightInput.value = spacing.toFixed(2);
+            gapXInput.value = spacing.toFixed(2);
+
+            calculateUsage();
+            presetSelect.value = 'custom';
+        } else {
+            alert("Impossible de centrer: La largeur des étiquettes dépasse 210mm");
+        }
+    };
+
+    window.centerV = function () {
+        const rows = parseFloat(rowsInput.value) || 0;
+        const h = parseFloat(heightInput.value) || 0;
+
+        const totalContentHeight = rows * h;
+        const availableSpace = 297 - totalContentHeight;
+
+        if (availableSpace >= 0) {
+            const spacing = availableSpace / (rows + 1);
+
+            marginTopInput.value = spacing.toFixed(2);
+            marginBottomInput.value = spacing.toFixed(2);
+            gapYInput.value = spacing.toFixed(2);
+
+            calculateUsage();
+            presetSelect.value = 'custom';
+        } else {
+            alert("Impossible de centrer: La hauteur des étiquettes dépasse 297mm");
+        }
+    };
+
+    // Listeners
+    const allInputs = [rowsInput, colsInput, widthInput, heightInput, gapXInput, gapYInput, marginTopInput, marginBottomInput, marginLeftInput, marginRightInput];
+    allInputs.forEach(inp => {
+        inp.addEventListener('input', calculateUsage);
+        inp.addEventListener('change', calculateUsage);
+    });
+
+    // Switch to custom if manual edit
+    allInputs.forEach(input => {
+        input.addEventListener('input', () => {
+            // Si on modifie manuellement, on passe en custom, sauf si on vient juste d'appliquer un preset
+            // (Le change event de applyPreset est géré ailleurs, ici c'est user input)
+            // Pour faire simple : toute input modifie en custom
+            presetSelect.value = 'custom';
+        });
+    });
+
+    // Init
+    loadCustomPresets(); // Charge et peuple le select
+    // Si '24' était selected par défaut dans le HTML, loadCustomPresets le gère via defaultPresets
+    // On force l'application des valeurs par défaut au chargement
+    if (presetSelect.value !== 'custom') {
+        applyPreset();
+    } else {
+        // If no preset is selected (e.g., first load or custom was default), ensure calculation runs
+        calculateUsage();
+    }
+
+</script>
+{% endblock %}

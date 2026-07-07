@@ -1,0 +1,313 @@
+{% extends 'admin/admin_layout.html' %}
+{% block content %}
+{% if 'ADD_ACTES_KT' in session.privileges %}
+
+<!-- Bouton pour ouvrir le modal d'ajout -->
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#add_acte_ktModal">
+            <i class="fas fa-plus me-2"></i>Ajouter un Acte
+        </button>
+        <a href="{{ url_for('conventions_kt') }}" class="btn btn-outline-secondary ms-2">
+            <i class="fas fa-handshake me-2"></i>Gérer les Conventions
+        </a>
+    </div>
+</div>
+
+<!-- Modal d'ajout -->
+<div class="modal fade" id="add_acte_ktModal" tabindex="-1" aria-labelledby="addForfaitModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addForfaitModalLabel">Ajouter un Acte</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
+            </div>
+            <form method="POST" action="{{ url_for('add_acte_kt') }}">
+                <div class="modal-body">
+                    <div class="row">
+                        <!-- Informations de base -->
+                        <div class="col-md-6">
+                            <h6 class="fw-bold text-primary mb-3"><i class="fas fa-info-circle me-2"></i>Informations
+                            </h6>
+                            <div class="mb-3">
+                                <label for="name_acte_kt" class="form-label">Nom de l'Acte</label>
+                                <input type="text" name="name_acte_kt" id="name_acte_kt" class="form-control" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="code_cnas" class="form-label">Code CNAS</label>
+                                <input type="text" name="code_cnas" id="code_cnas" class="form-control" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="nbr_nuit" class="form-label">Nombre de Nuits</label>
+                                <input type="number" name="nbr_nuit" id="nbr_nuit" class="form-control" min="0">
+                            </div>
+                            <div class="mb-3">
+                                <label for="specialty_acte_kt" class="form-label">Spécialité</label>
+                                <select class="form-select" id="specialty_acte_kt" name="id_specialty" required>
+                                    <option value="" selected>Choisir une spécialité</option>
+                                    {% for specialty in specialtys %}
+                                    <option value="{{ specialty.id_specialty }}">{{ specialty.name_specialty }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Prix Standard -->
+                        <div class="col-md-6">
+                            <h6 class="fw-bold text-primary mb-3"><i class="fas fa-money-bill-wave me-2"></i>Prix
+                                Standard (Payante)</h6>
+                            <div class="mb-3">
+                                <label class="form-label">Prix Payant</label>
+                                <input type="number" name="prix_payant" class="form-control" min="0" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Honoraires Payant</label>
+                                <input type="number" name="honoraires_payant" class="form-control" min="0" required>
+                            </div>
+
+                            <h6 class="fw-bold text-danger mb-3 mt-4"><i
+                                    class="fas fa-exclamation-triangle me-2"></i>Prix Urgence</h6>
+                            <div class="mb-3">
+                                <label class="form-label">Prix Urgence</label>
+                                <input type="number" name="prix_urgence" class="form-control" min="0" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Honoraires Urgence</label>
+                                <input type="number" name="honoraires_urgence" class="form-control" min="0" required>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Prix par Convention -->
+                    <hr>
+                    <h6 class="fw-bold text-primary mb-3"><i class="fas fa-handshake me-2"></i>Prix par Convention</h6>
+                    <div class="table-responsive">
+                        <table class="table table-sm table-bordered align-middle">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Convention</th>
+                                    <th>Prix Clinique</th>
+                                    <th>Honoraires Médecin</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for conv in conventions %}
+                                <tr>
+                                    <td>
+                                        {{ conv.nom_convention }}
+                                        <input type="hidden" name="conv_id[]" value="{{ conv.id_convention }}">
+                                    </td>
+                                    <td>
+                                        <input type="number" name="conv_prix[]" class="form-control form-control-sm"
+                                            min="0" value="0">
+                                    </td>
+                                    <td>
+                                        <input type="number" name="conv_honoraires[]"
+                                            class="form-control form-control-sm" min="0" value="0">
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fermer</button>
+                    <button type="submit" class="btn btn-primary">Ajouter</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{% endif %}
+
+<!-- Tableau des actes -->
+<div class="table-responsive">
+    <table id="myTable" class="table table-hover">
+        <thead>
+            <tr>
+                <th>Code CNAS</th>
+                <th>Nom de l'Acte</th>
+                <th>Nuits</th>
+                <th>Prix Payant</th>
+                <th>Honoraires Payant</th>
+                <th>Prix Urgence</th>
+                <th>Honoraires Urgence</th>
+                <th>Conventions</th>
+                <th>Spécialité</th>
+                {% if 'MODIFIER_ACTES_KT' in session.privileges %}
+                <th>Actions</th>
+                {% endif %}
+            </tr>
+        </thead>
+        <tbody>
+            {% for acte_kt in actes_kt %}
+            <tr>
+                <td>{{ acte_kt.code_cnas }}</td>
+                <td>{{ acte_kt.name_acte_kt }}</td>
+                <td>{{ acte_kt.nbr_nuit }}</td>
+                <td>{{ acte_kt.prix_payant | format_price }}</td>
+                <td>{{ acte_kt.honoraires_payant | format_price }}</td>
+                <td>{{ acte_kt.prix_urgence | format_price }}</td>
+                <td>{{ acte_kt.honoraires_urgence | format_price }}</td>
+                <td>
+                    {% if acte_kt.conventions %}
+                    {% for conv in acte_kt.conventions %}
+                    <span class="badge bg-info text-dark mb-1"
+                        title="Prix: {{ conv.prix | format_price }} / Honoraires: {{ conv.part_operateur | format_price }}">
+                        {{ conv.code_convention }}
+                    </span>
+                    {% endfor %}
+                    {% else %}
+                    <span class="text-muted small">Aucune</span>
+                    {% endif %}
+                </td>
+                <td>{{ acte_kt.name_specialty }}</td>
+
+                {% if 'MODIFIER_ACTES_KT' in session.privileges %}
+                <td>
+                    <!-- Bouton Modifier -->
+                    <button class="btn btn-primary btn-sm" data-bs-toggle="modal"
+                        data-bs-target="#editActeModal{{ acte_kt.id_acte }}">Modifier
+                    </button>
+
+                    <!-- Modal Modifier -->
+                    <div class="modal fade" id="editActeModal{{ acte_kt.id_acte }}" tabindex="-1"
+                        aria-labelledby="editActeModalLabel{{ acte_kt.id_acte }}" aria-hidden="true">
+                        <div class="modal-dialog modal-lg">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 class="modal-title" id="editActeModalLabel{{ acte_kt.id_acte }}">Modifier l'Acte
+                                    </h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal"
+                                        aria-label="Fermer"></button>
+                                </div>
+                                <form method="POST" action="{{ url_for('update_acte_kt') }}">
+                                    <div class="modal-body">
+                                        <input type="hidden" name="id_acte" value="{{ acte_kt.id_acte }}">
+
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                                <h6 class="fw-bold text-primary mb-3"><i
+                                                        class="fas fa-info-circle me-2"></i>Informations</h6>
+                                                <div class="mb-3">
+                                                    <label class="form-label">Nom de l'Acte</label>
+                                                    <input type="text" name="name_acte_kt" class="form-control"
+                                                        value="{{ acte_kt.name_acte_kt }}" required>
+                                                </div>
+                                                <div class="mb-3">
+                                                    <label class="form-label">Code CNAS</label>
+                                                    <input type="text" name="code_cnas" class="form-control"
+                                                        value="{{ acte_kt.code_cnas }}" required>
+                                                </div>
+                                                <div class="mb-3">
+                                                    <label class="form-label">Nombre de Nuits</label>
+                                                    <input type="number" name="nbr_nuit" class="form-control"
+                                                        value="{{ acte_kt.nbr_nuit }}" min="0">
+                                                </div>
+                                                <div class="mb-3">
+                                                    <label class="form-label">Spécialité</label>
+                                                    <select class="form-select" name="specialty_acte_kt" required>
+                                                        {% for specialty in specialtys %}
+                                                        <option value="{{ specialty.id_specialty }}" {% if
+                                                            specialty.id_specialty==acte_kt.id_specialty %}selected{%
+                                                            endif %}>
+                                                            {{ specialty.name_specialty }}
+                                                        </option>
+                                                        {% endfor %}
+                                                    </select>
+                                                </div>
+                                            </div>
+
+                                            <div class="col-md-6">
+                                                <h6 class="fw-bold text-primary mb-3"><i
+                                                        class="fas fa-money-bill-wave me-2"></i>Prix Standard (Payante)
+                                                </h6>
+                                                <div class="mb-3">
+                                                    <label class="form-label">Prix Payant</label>
+                                                    <input type="number" name="prix_payant" class="form-control"
+                                                        value="{{ acte_kt.prix_payant }}" min="0" required>
+                                                </div>
+                                                <div class="mb-3">
+                                                    <label class="form-label">Honoraires Payant</label>
+                                                    <input type="number" name="honoraires_payant" class="form-control"
+                                                        value="{{ acte_kt.honoraires_payant }}" min="0" required>
+                                                </div>
+                                                <h6 class="fw-bold text-danger mb-3 mt-4"><i
+                                                        class="fas fa-exclamation-triangle me-2"></i>Prix Urgence</h6>
+                                                <div class="mb-3">
+                                                    <label class="form-label">Prix Urgence</label>
+                                                    <input type="number" name="prix_urgence" class="form-control"
+                                                        value="{{ acte_kt.prix_urgence }}" min="0" required>
+                                                </div>
+                                                <div class="mb-3">
+                                                    <label class="form-label">Honoraires Urgence</label>
+                                                    <input type="number" name="honoraires_urgence" class="form-control"
+                                                        value="{{ acte_kt.honoraires_urgence }}" min="0" required>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <!-- Prix par Convention -->
+                                        <hr>
+                                        <h6 class="fw-bold text-primary mb-3"><i class="fas fa-handshake me-2"></i>Prix
+                                            par Convention</h6>
+                                        <div class="table-responsive">
+                                            <table class="table table-sm table-bordered align-middle">
+                                                <thead class="table-light">
+                                                    <tr>
+                                                        <th>Convention</th>
+                                                        <th>Prix Clinique</th>
+                                                        <th>Honoraires Médecin</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    {% for conv in conventions %}
+                                                    {% set existing = namespace(prix=0, honoraires=0) %}
+                                                    {% for ac in acte_kt.conventions %}
+                                                    {% if ac.id_convention == conv.id_convention %}
+                                                    {% set existing.prix = ac.prix %}
+                                                    {% set existing.honoraires = ac.part_operateur %}
+                                                    {% endif %}
+                                                    {% endfor %}
+                                                    <tr>
+                                                        <td>
+                                                            {{ conv.nom_convention }}
+                                                            <input type="hidden" name="conv_id[]"
+                                                                value="{{ conv.id_convention }}">
+                                                        </td>
+                                                        <td>
+                                                            <input type="number" name="conv_prix[]"
+                                                                class="form-control form-control-sm" min="0"
+                                                                value="{{ existing.prix }}">
+                                                        </td>
+                                                        <td>
+                                                            <input type="number" name="conv_honoraires[]"
+                                                                class="form-control form-control-sm" min="0"
+                                                                value="{{ existing.honoraires }}">
+                                                        </td>
+                                                    </tr>
+                                                    {% endfor %}
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-secondary"
+                                            data-bs-dismiss="modal">Fermer</button>
+                                        <button type="submit" class="btn btn-success">Enregistrer</button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </td>
+                {% endif %}
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+{% endblock %}

@@ -1,0 +1,610 @@
+{% extends "layout.html" %}
+
+{% block style %}
+
+<style>
+    /* Badges pour les types d'actes gynéco */
+    .badge-voie-basse {
+        background: #fce7f3;
+        color: #be185d;
+    }
+
+    .badge-cesarienne {
+        background: #dbeafe;
+        color: #1e40af;
+    }
+
+    .badge-convention {
+        background: #d1fae5;
+        color: #065f46;
+    }
+
+    .badge-payant {
+        background: #fef3c7;
+        color: #92400e;
+    }
+
+    /* Badges pour les spécialités */
+    .badge-ortho {
+        background: #e0e7ff;
+        color: #4338ca;
+    }
+
+    .badge-chirurgie {
+        background: #fce7f3;
+        color: #be185d;
+    }
+
+    :root {
+        --primary: var(--brand-color, #450A54);
+        --primary-dark: #32073d;
+        --primary-light: rgba(69, 10, 84, 0.1);
+        --info: #0ea5e9;
+        --warning: #f59e0b;
+        --dark: #1f2937;
+        --border: #e5e7eb;
+        --radius: 12px;
+        --shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+        --bg-block: rgba(255, 255, 255, 0.9);
+        --text-block: #1f2937;
+        --text-muted: #6b7280;
+        --bg-page-start: #f8f9fa;
+        --bg-page-end: #e9ecef;
+    }
+
+    [data-theme="dark"] {
+        --primary-light: rgba(69, 10, 84, 0.3);
+        --dark: #f9fafb;
+        --border: rgba(255, 255, 255, 0.1);
+        --bg-block: rgba(43, 43, 43, 0.8);
+        --text-block: #f9fafb;
+        --text-muted: #adb5bd;
+        --shadow: 0 8px 15px -1px rgba(0, 0, 0, 0.5);
+        --bg-page-start: #111827;
+        --bg-page-end: #1f2937;
+    }
+
+    .page-header {
+        background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+        color: white;
+        padding: 2rem;
+        border-radius: var(--radius);
+        margin-bottom: 2rem;
+        box-shadow: 0 10px 30px rgba(69, 10, 84, 0.2);
+    }
+
+    .info-card {
+        background: var(--bg-block);
+        backdrop-filter: blur(10px);
+        border-radius: var(--radius);
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+        box-shadow: var(--shadow);
+        border-left: 4px solid var(--primary);
+        color: var(--text-block);
+    }
+
+    .card-title {
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: var(--text-block);
+        margin-bottom: 1.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+
+    .card-title i {
+        width: 36px;
+        height: 36px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+        color: white;
+        border-radius: 8px;
+    }
+
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+        margin-bottom: 2rem;
+    }
+
+    .stat-box {
+        background: var(--bg-block);
+        backdrop-filter: blur(10px);
+        border-radius: var(--radius);
+        padding: 1.25rem;
+        box-shadow: var(--shadow);
+        text-align: center;
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .stat-box:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 8px 25px rgba(69, 10, 84, 0.15);
+    }
+
+    .stat-box.primary {
+        border-top: 4px solid var(--primary);
+    }
+
+    .stat-box.info {
+        border-top: 4px solid var(--info);
+    }
+
+    .stat-box.warning {
+        border-top: 4px solid var(--warning);
+    }
+
+    .stat-box-value {
+        font-size: 2rem;
+        font-weight: 700;
+        color: var(--text-block);
+    }
+
+    .stat-box-label {
+        color: var(--text-muted);
+        font-size: 0.9rem;
+        margin-top: 0.5rem;
+    }
+
+    .table-card {
+        background: var(--bg-block);
+        backdrop-filter: blur(10px);
+        border-radius: var(--radius);
+        box-shadow: var(--shadow);
+        overflow: hidden;
+    }
+
+    .table-modern {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    .table-modern thead {
+        background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+    }
+
+    .table-modern thead th {
+        color: white;
+        font-weight: 600;
+        padding: 1rem;
+        font-size: 0.85rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .table-modern tbody td {
+        padding: 1rem;
+        border-bottom: 1px solid var(--border);
+        color: var(--text-block);
+    }
+
+    .table-modern tbody tr:hover {
+        background: var(--primary-light);
+    }
+
+    .decharge-item {
+        background: rgba(255, 255, 255, 0.5);
+        border-left: 3px solid var(--primary);
+        border-radius: 8px;
+        padding: 1rem;
+        margin-bottom: 0.75rem;
+        transition: all 0.2s;
+    }
+
+    [data-theme="dark"] .decharge-item {
+        background: rgba(0, 0, 0, 0.2);
+    }
+
+    .decharge-item:hover {
+        transform: translateX(4px);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .status-badge {
+        padding: 0.35rem 0.75rem;
+        border-radius: 50px;
+        font-size: 0.8rem;
+        font-weight: 600;
+    }
+
+    .status-BROUILLON {
+        background: #f3f4f6;
+        color: #6b7280;
+    }
+
+    .status-VALIDE {
+        background: #dbeafe;
+        color: #1e40af;
+    }
+
+    .status-PAIEMENT_PARTIEL {
+        background: #fef3c7;
+        color: #92400e;
+    }
+
+    .status-PAYE {
+        background: #d1fae5;
+        color: #065f46;
+    }
+
+    .progress-paiement {
+        height: 30px;
+        border-radius: 15px;
+        overflow: hidden;
+        background: var(--border);
+    }
+
+    .progress-bar-custom {
+        height: 100%;
+        background: linear-gradient(90deg, var(--primary), var(--primary-dark));
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-weight: 600;
+        font-size: 0.9rem;
+    }
+
+    .filter-bar {
+        background: var(--bg-block);
+        backdrop-filter: blur(10px);
+        border-radius: var(--radius);
+        padding: 1rem 1.5rem;
+        margin-bottom: 1.5rem;
+        box-shadow: var(--shadow);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 1rem;
+    }
+
+    .summary-panel {
+        background: var(--bg-block);
+        backdrop-filter: blur(10px);
+        border-radius: var(--radius);
+        padding: 2rem;
+        border: 2px solid var(--primary);
+        box-shadow: var(--shadow);
+    }
+
+    .summary-row {
+        display: flex;
+        justify-content: space-between;
+        padding: 0.75rem 0;
+        border-bottom: 1px dashed var(--border);
+    }
+
+    .summary-row:last-child {
+        border-bottom: none;
+    }
+
+    .summary-total {
+        background: var(--bg-block);
+        padding: 1rem;
+        border-radius: 8px;
+        margin-top: 1rem;
+    }
+
+    [data-theme="dark"] .summary-total {
+        background: rgba(0, 0, 0, 0.2);
+    }
+
+    .summary-total .summary-row {
+        font-size: 1.1rem;
+        font-weight: 700;
+        color: var(--text-block);
+        border: none;
+    }
+
+    /* Style pour les éléments annulés */
+    .table-secondary.opacity-75 {
+        background-color: #f3f4f6 !important;
+        color: #9ca3af !important;
+    }
+
+    .text-decoration-line-through {
+        text-decoration: line-through !important;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Header -->
+    <div class="page-header">
+        <div class="d-flex justify-content-between align-items-start flex-wrap gap-2">
+            <div>
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb mb-2" style="--bs-breadcrumb-divider-color: rgba(255,255,255,0.5);">
+                        <li class="breadcrumb-item">
+                            <a href="{{ url_for(config.list_route) }}" class="text-white-50">Situations</a>
+                        </li>
+                        <li class="breadcrumb-item active text-white">{{ medecin.nom_complet }}</li>
+                    </ol>
+                </nav>
+                <h1>
+                    <i class="fas fa-user-md me-2"></i>
+                    {{ medecin.nom_complet }}
+                </h1>
+                <small class="opacity-75">{{ medecin.specialite }} - {{ config.medecin_type }}{% if medecin.pourcentage
+                    %} ({{ "{:.0f}".format(medecin.pourcentage) }}%){% endif %}</small>
+            </div>
+            <div class="d-flex gap-2">
+                {% if situation_paiements.nb_items_non_payes > 0 %}
+                <a href="{{ url_for(config.create_decharge_route, **{config.doctor_param: medecin.id, 'date_debut': date_debut, 'date_fin': date_fin}) }}"
+                    class="btn btn-success btn-sm">
+                    <i class="fas fa-file-invoice me-1"></i>Créer décharge
+                </a>
+                {% endif %}
+                <a href="{{ url_for(config.pdf_route, **{config.doctor_param: medecin.id, 'date_debut': date_debut, 'date_fin': date_fin}) }}"
+                    class="btn btn-light btn-sm" target="_blank">
+                    <i class="fas fa-file-pdf me-1"></i>Générer PDF
+                </a>
+                <a href="{{ url_for(config.list_route, date_debut=date_debut, date_fin=date_fin) }}"
+                    class="btn btn-outline-light btn-sm">
+                    <i class="fas fa-arrow-left me-1"></i>Retour
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Contenu principal -->
+        <div class="col-lg-8">
+            <!-- Situation des paiements -->
+            <div class="info-card">
+                <h5 class="card-title">
+                    <i class="fas fa-coins"></i>
+                    Situation des Paiements
+                </h5>
+
+                <div class="row g-3 mb-3">
+                    <div class="col-md-4">
+                        <div style="background: var(--bg-page-start); padding: 1rem; border-radius: 8px;">
+                            <div style="font-size: 1.5rem; font-weight: 700; color: var(--text-block);">{{
+                                "{:,.2f}".format(situation_paiements.total_honoraires).replace(",", " ") }} DA</div>
+                            <div style="font-size: 0.85rem; color: var(--text-muted); margin-top: 0.5rem;">Total
+                                Honoraires</div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div style="background: var(--primary-light); padding: 1rem; border-radius: 8px;">
+                            <div style="font-size: 1.5rem; font-weight: 700; color: var(--primary);">{{
+                                "{:,.2f}".format(situation_paiements.montant_paye).replace(",", " ") }} DA</div>
+                            <div style="font-size: 0.85rem; color: var(--text-muted); margin-top: 0.5rem;">Déjà Payé
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div
+                            style="background: {{ '#fef3c7' if situation_paiements.solde_restant > 0 else 'var(--primary-light)' }}; padding: 1rem; border-radius: 8px;">
+                            <div
+                                style="font-size: 1.5rem; font-weight: 700; color: {{ '#f59e0b' if situation_paiements.solde_restant > 0 else 'var(--primary)' }};">
+                                {{ "{:,.2f}".format(situation_paiements.solde_restant).replace(",", " ") }} DA</div>
+                            <div style="font-size: 0.85rem; color: var(--text-muted); margin-top: 0.5rem;">Solde Restant
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Barre de progression -->
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <small class="text-muted">Progression du paiement</small>
+                        <small><strong>{{ "{:.1f}".format(situation_paiements.pourcentage_paye) }}%</strong></small>
+                    </div>
+                    <div class="progress-paiement">
+                        <div class="progress-bar-custom" style="width: {{ "
+                            {:.1f}".format(situation_paiements.pourcentage_paye) }}%">
+                            {{ "{:.1f}".format(situation_paiements.pourcentage_paye) }}%
+                        </div>
+                    </div>
+                </div>
+
+                <div class="text-muted small">
+                    <i class="fas fa-info-circle me-1"></i>
+                    {{ situation_paiements.nb_decharges }} décharge{{ 's' if situation_paiements.nb_decharges > 1 else
+                    '' }} émise{{ 's' if situation_paiements.nb_decharges > 1 else '' }} •
+                    {{ situation_paiements.nb_items_non_payes }} {{ config.item_label if
+                    situation_paiements.nb_items_non_payes == 1 else config.item_label_plural }} non payé{{ 's' if
+                    situation_paiements.nb_items_non_payes > 1 else '' }}
+                </div>
+            </div>
+
+            <!-- Liste des décharges -->
+            {% if decharges %}
+            <div class="info-card">
+                <h5 class="card-title">
+                    <i class="fas fa-receipt"></i>
+                    Décharges de Paiement ({{ decharges|length }})
+                </h5>
+
+                {% for dech in decharges %}
+                <div class="decharge-item">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div class="flex-grow-1">
+                            <div class="d-flex align-items-center mb-2">
+                                <strong style="font-size: 1.1rem;">{{ dech.numero_decharge }}</strong>
+                                <span class="status-badge status-{{ dech.statut }} ms-2">{{ dech.statut }}</span>
+                            </div>
+                            <div class="row g-2 small" style="color: var(--text-muted);">
+                                <div class="col-md-6">
+                                    <i class="fas fa-calendar me-1"></i>{{ dech.date_decharge.strftime('%d/%m/%Y') }}
+                                </div>
+                                <div class="col-md-6">
+                                    <i class="{{ config.item_icon }} me-1"></i>{{ dech.nb_items }} {{ config.item_label
+                                    if dech.nb_items == 1 else config.item_label_plural }}
+                                </div>
+                                <div class="col-md-6">
+                                    <i class="fas fa-coins me-1"></i>{{
+                                    "{:,.2f}".format(dech.montant_total).replace(",", " ") }} DA
+                                </div>
+                                <div class="col-md-6">
+                                    <i class="fas fa-check me-1"></i>Payé: {{ "{:,.2f}".format(dech.montant_paye_total
+                                    or 0).replace(",", " ") }} DA
+                                </div>
+                                {% if dech.nb_tranches and dech.nb_tranches > 0 %}
+                                <div class="col-12">
+                                    <i class="fas fa-layer-group me-1"></i>{{ dech.nb_tranches }} tranche{{ 's' if
+                                    dech.nb_tranches > 1 else '' }} de paiement
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="text-end ms-3">
+                            <a href="{{ url_for(config.decharge_detail_route, id_decharge=dech.id_decharge) }}"
+                                class="btn btn-sm btn-outline-primary">
+                                <i class="fas fa-eye"></i> Voir
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            <!-- Filtres -->
+            <div class="filter-bar">
+                <form method="GET" class="d-flex gap-2 align-items-end flex-wrap flex-grow-1">
+                    <div>
+                        <label class="form-label small text-muted mb-1">Date début</label>
+                        <input type="date" name="date_debut" class="form-control" value="{{ date_debut }}" required>
+                    </div>
+                    <div>
+                        <label class="form-label small text-muted mb-1">Date fin</label>
+                        <input type="date" name="date_fin" class="form-control" value="{{ date_fin }}" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-filter me-1"></i>Filtrer
+                    </button>
+                </form>
+            </div>
+
+            <!-- Statistiques globales -->
+            <div class="stats-grid">
+                <div class="stat-box primary">
+                    <div class="stat-box-value">{{ stats.total_items }}</div>
+                    <div class="stat-box-label"><i class="{{ config.item_icon }} me-1"></i>{{ config.item_label_plural
+                        }}</div>
+                </div>
+                <div class="stat-box info">
+                    <div class="stat-box-value">{{ "{:,.0f}".format(stats.ca_genere).replace(",", " ") }}</div>
+                    <div class="stat-box-label"><i class="fas fa-chart-line me-1"></i>CA Généré (DA)</div>
+                </div>
+                <div class="stat-box warning">
+                    <div class="stat-box-value">{{ "{:,.0f}".format(stats.part_clinique_totale).replace(",", " ") }}
+                    </div>
+                    <div class="stat-box-label"><i class="fas fa-hospital me-1"></i>Part Clinique (DA)</div>
+                </div>
+                {% if config.extra_stats %}
+                {% for extra_stat in config.extra_stats %}
+                <div class="stat-box info">
+                    <div class="stat-box-value">{{ extra_stat.value }}</div>
+                    <div class="stat-box-label"><i class="{{ extra_stat.icon }} me-1"></i>{{ extra_stat.label }}</div>
+                </div>
+                {% endfor %}
+                {% endif %}
+            </div>
+
+            <!-- Répartition détaillée -->
+            <div class="info-card">
+                <h5 class="card-title"><i class="fas fa-chart-pie"></i>Répartition détaillée</h5>
+                {% if repartition %}
+                {% include config.repartition_table_template %}
+                {% else %}
+                <p class="text-muted">Aucune répartition disponible</p>
+                {% endif %}
+            </div>
+
+            <!-- Liste des items (actes ou dossiers) -->
+            <div class="table-card">
+                <div class="p-3 border-bottom">
+                    <h5 class="mb-0"><i class="fas fa-list me-2"></i>Liste des {{ config.item_label_plural }}</h5>
+                </div>
+                {% if items %}
+                {% include config.items_table_template %}
+                {% else %}
+                <div class="empty-state">
+                    <i class="{{ config.item_icon }}"></i>
+                    <h5>Aucun {{ config.item_label }}</h5>
+                    <p class="text-muted">Aucun {{ config.item_label }} sur cette période</p>
+                </div>
+                {% endif %}
+            </div>
+
+            {% if config.info_note %}
+            <div class="info-card mt-3">
+                <h6><i class="fas fa-info-circle text-info me-2"></i>Information</h6>
+                <p class="mb-0 small text-muted">{{ config.info_note }}</p>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Panneau récapitulatif -->
+        <div class="col-lg-4">
+            <div class="summary-panel">
+                <h4 class="mb-3"><i class="fas fa-calculator text-primary me-2"></i>Récapitulatif financier</h4>
+
+                <div class="summary-row">
+                    <span>Total {{ config.item_label_plural }} :</span>
+                    <strong>{{ stats.total_items }}</strong>
+                </div>
+                <div class="summary-row">
+                    <span>CA généré :</span>
+                    <strong>{{ "{:,.2f}".format(stats.ca_genere).replace(",", " ") }} DA</strong>
+                </div>
+                <div class="summary-row">
+                    <span>Part clinique :</span>
+                    <strong>{{ "{:,.2f}".format(stats.part_clinique_totale).replace(",", " ") }} DA</strong>
+                </div>
+
+                <div class="summary-total">
+                    <div class="summary-row">
+                        <span>HONORAIRES :</span>
+                        <span>{{ "{:,.2f}".format(stats.total_honoraires).replace(",", " ") }} DA</span>
+                    </div>
+                </div>
+
+                <hr class="my-3">
+
+                <div
+                    style="background: {{ '#fef3c7' if situation_paiements.solde_restant > 0 else 'var(--primary-light)' }}; padding: 1rem; border-radius: 8px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <span>Reste à payer :</span>
+                        <strong
+                            style="font-size: 1.2rem; color: {{ '#f59e0b' if situation_paiements.solde_restant > 0 else 'var(--primary)' }};">
+                            {{ "{:,.2f}".format(situation_paiements.solde_restant).replace(",", " ") }} DA
+                        </strong>
+                    </div>
+                </div>
+            </div>
+
+            {% if situation_paiements.nb_items_non_payes > 0 %}
+            <div class="alert alert-warning mt-3">
+                <i class="fas fa-exclamation-triangle me-2"></i>
+                <strong>{{ situation_paiements.nb_items_non_payes }} {{ config.item_label if
+                    situation_paiements.nb_items_non_payes == 1 else config.item_label_plural }} en attente de
+                    paiement</strong>
+                <p class="mb-0 small mt-2">
+                    <a href="{{ url_for(config.create_decharge_route, **{config.doctor_param: medecin.id, 'date_debut': date_debut, 'date_fin': date_fin}) }}"
+                        class="alert-link">
+                        Cliquez ici pour créer une décharge
+                    </a>
+                </p>
+            </div>
+            {% else %}
+            <div class="alert alert-success mt-3">
+                <i class="fas fa-check-circle me-2"></i>
+                <strong>Tous les paiements à jour !</strong>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

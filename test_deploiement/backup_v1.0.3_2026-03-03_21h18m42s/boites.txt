@@ -1,0 +1,18 @@
+== BOITES ==
+{'Field': 'id', 'Type': 'int(11)', 'Null': 'NO', 'Key': 'PRI', 'Default': None, 'Extra': 'auto_increment'}
+{'Field': 'id_medecin', 'Type': 'int(11)', 'Null': 'NO', 'Key': 'MUL', 'Default': None, 'Extra': ''}
+{'Field': 'id_type_boite', 'Type': 'int(11)', 'Null': 'NO', 'Key': 'MUL', 'Default': None, 'Extra': ''}
+{'Field': 'numero_archive', 'Type': 'varchar(50)', 'Null': 'YES', 'Key': 'UNI', 'Default': None, 'Extra': ''}
+{'Field': 'epaisseur_actuelle_mm', 'Type': 'int(11)', 'Null': 'YES', 'Key': '', 'Default': '0', 'Extra': ''}
+{'Field': 'est_pleine', 'Type': 'tinyint(1)', 'Null': 'YES', 'Key': '', 'Default': '0', 'Extra': ''}
+{'Field': 'date_creation', 'Type': 'timestamp', 'Null': 'YES', 'Key': '', 'Default': 'current_timestamp()', 'Extra': ''}
+{'Field': 'id_emplacement', 'Type': 'int(11)', 'Null': 'YES', 'Key': 'MUL', 'Default': None, 'Extra': ''}
+== EMPS ==
+{'Field': 'id', 'Type': 'int(11)', 'Null': 'NO', 'Key': 'PRI', 'Default': None, 'Extra': 'auto_increment'}
+{'Field': 'id_rayonnage', 'Type': 'int(11)', 'Null': 'NO', 'Key': 'MUL', 'Default': None, 'Extra': ''}
+{'Field': 'colonne_x', 'Type': 'int(11)', 'Null': 'NO', 'Key': '', 'Default': None, 'Extra': ''}
+{'Field': 'ligne_y', 'Type': 'int(11)', 'Null': 'NO', 'Key': '', 'Default': None, 'Extra': ''}
+{'Field': 'est_occupe', 'Type': 'tinyint(1)', 'Null': 'YES', 'Key': '', 'Default': '0', 'Extra': ''}
+{'Field': 'id_boite_actuelle', 'Type': 'int(11)', 'Null': 'YES', 'Key': '', 'Default': None, 'Extra': ''}
+{'Field': 'id_medecin', 'Type': 'int(11)', 'Null': 'YES', 'Key': 'MUL', 'Default': None, 'Extra': ''}
+{'Field': 'est_partageable', 'Type': 'tinyint(1)', 'Null': 'YES', 'Key': '', 'Default': None, 'Extra': ''}

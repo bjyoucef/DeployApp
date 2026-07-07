@@ -1,0 +1,1448 @@
+{% extends "layout.html" %}
+{% import 'his/macros/his_direct_selector.html' as his_selector %}
+
+{% block content %}
+<style>
+    /* ==================== VARIABLES CSS ==================== */
+    :root {
+        --primary: #6366f1;
+        --primary-dark: #4f46e5;
+        --success: #10b981;
+        --success-dark: #059669;
+        --warning: #f59e0b;
+        --danger: #ef4444;
+        --info: #3b82f6;
+        --light: #f8fafc;
+        --dark: #1e293b;
+        --border: #e2e8f0;
+        --radius: 0.75rem;
+        --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+        --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+
+        --bg-surface: white;
+        --bg-fiscale: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+        --bg-guide-toggle: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+        --text-color: var(--dark);
+    }
+
+    [data-theme="dark"] {
+        --primary: #818cf8;
+        --primary-dark: #6366f1;
+        --success: #34d399;
+        --success-dark: #10b981;
+        --warning: #fbbf24;
+        --danger: #f87171;
+        --info: #60a5fa;
+        --light: #1e293b;
+        --dark: #f8fafc;
+        --border: #334155;
+
+        --bg-surface: #1e293b;
+        --bg-fiscale: linear-gradient(135deg, #1e3a8a 0%, #172554 100%);
+        --bg-guide-toggle: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+        --text-color: #f8fafc;
+
+        --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.5);
+        --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.5);
+        --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.5);
+    }
+
+
+
+    /* ==================== HEADER ==================== */
+    .page-header {
+        background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+        color: white;
+        padding: 2rem;
+        border-radius: var(--radius);
+        margin-bottom: 2rem;
+        box-shadow: var(--shadow-lg);
+    }
+
+    .page-header h1 {
+        font-size: 2rem;
+        font-weight: 700;
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+
+    .page-header .badge {
+        background: rgba(255, 255, 255, 0.2);
+        backdrop-filter: blur(10px);
+        padding: 0.5rem 1rem;
+        font-size: 0.9rem;
+        border: none;
+        box-shadow: inset 0 0 1px rgba(255, 255, 255, 0.15);
+    }
+
+    /* ==================== GUIDE COLLAPSABLE ==================== */
+    .guide-wrapper {
+        margin-bottom: 2rem;
+    }
+
+    .guide-toggle {
+        background: var(--bg-guide-toggle);
+        border: 2px solid var(--border);
+        border-radius: var(--radius);
+        padding: 1.25rem 1.5rem;
+        cursor: pointer;
+        transition: var(--transition);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        box-shadow: var(--shadow-sm);
+    }
+
+
+    .guide-toggle:hover {
+        opacity: 0.9;
+        box-shadow: var(--shadow);
+        transform: translateY(-2px);
+    }
+
+
+    .guide-toggle h5 {
+        margin: 0;
+        font-size: 1.25rem;
+        font-weight: 600;
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: var(--text-color);
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+
+    .guide-toggle-icon {
+        width: 40px;
+        height: 40px;
+        background: var(--bg-surface);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--info);
+        font-size: 1.25rem;
+        transition: var(--transition);
+        box-shadow: var(--shadow-sm);
+    }
+
+    .guide-toggle[aria-expanded="true"] .guide-toggle-icon {
+        transform: rotate(180deg);
+        background: var(--info);
+        color: white;
+    }
+
+    .guide-content {
+        background: var(--bg-surface);
+        border: 2px solid var(--border);
+        border-top: none;
+        border-radius: 0 0 var(--radius) var(--radius);
+        padding: 2rem;
+        margin-top: -0.5rem;
+    }
+
+    /* ==================== CARDS INFO ==================== */
+    .info-card {
+        height: 100%;
+        border: 2px solid var(--border);
+        border-radius: var(--radius);
+        transition: var(--transition);
+        overflow: hidden;
+        transition: var(--transition);
+        overflow: hidden;
+        background: var(--bg-surface);
+    }
+
+
+    .info-card:hover {
+        transform: translateY(-4px);
+        box-shadow: var(--shadow-lg);
+        border-color: var(--primary);
+    }
+
+    .info-card .card-header {
+        font-weight: 600;
+        padding: 1rem 1.25rem;
+        border-bottom: 2px solid var(--border);
+    }
+
+    .info-card.border-primary .card-header {
+        background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+        color: white;
+        border: none;
+    }
+
+    .info-card.border-warning .card-header {
+        background: linear-gradient(135deg, var(--warning) 0%, #d97706 100%);
+        color: white;
+        border: none;
+    }
+
+    .info-card.border-success .card-header,
+    .info-card.border-danger .card-header {
+        background: var(--bg-surface);
+        color: var(--text-color);
+    }
+
+
+    /* ==================== FORMULAIRE ==================== */
+    .form-section {
+        background: var(--bg-surface);
+        border: 2px solid var(--border);
+        border-radius: var(--radius);
+        padding: 2rem;
+        margin-bottom: 1.5rem;
+        transition: var(--transition);
+    }
+
+    .form-section:hover {
+        box-shadow: var(--shadow);
+    }
+
+    .form-section h5 {
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: var(--primary);
+        margin-bottom: 1.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        padding-bottom: 0.75rem;
+        border-bottom: 2px solid var(--border);
+    }
+
+    .section-fiscale {
+        background: var(--bg-fiscale);
+        border-color: var(--info);
+    }
+
+
+    .section-fiscale h5 {
+        color: var(--info);
+    }
+
+    /* ==================== INPUTS AMÉLIORÉS ==================== */
+    .form-control,
+    .form-select {
+        border: 2px solid var(--border);
+        border-radius: 0.5rem;
+        padding: 0.75rem 1rem;
+        font-size: 1rem;
+        transition: var(--transition);
+        background-color: var(--bg-surface);
+        color: var(--text-color);
+    }
+
+
+    .form-control:focus,
+    .form-select:focus {
+        border-color: var(--primary);
+        box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
+        outline: none;
+    }
+
+    .form-control-lg,
+    .form-select-lg {
+        padding: 1rem 1.25rem;
+        font-size: 1.125rem;
+        font-weight: 500;
+    }
+
+    .form-label {
+        font-weight: 600;
+
+        .form-label {
+            font-weight: 600;
+            color: var(--text-color);
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .required-field::after {
+            content: "*";
+            color: var(--danger);
+            margin-left: 0.25rem;
+        }
+
+        /* ==================== SÉLECTEUR PATIENT HIS ==================== */
+        #patientHisSearch+.choices {
+            margin-bottom: 1rem;
+        }
+
+        .choices__inner {
+            min-height: 52px !important;
+            padding: 0.75rem 1rem !important;
+            border: 2px solid var(--border) !important;
+            border-radius: 0.5rem !important;
+            transition: var(--transition) !important;
+        }
+
+        .choices.is-focused .choices__inner {
+            border-color: var(--primary) !important;
+            box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1) !important;
+        }
+
+        .choices__list--dropdown {
+            border: 2px solid var(--primary) !important;
+            border-radius: 0.5rem !important;
+            box-shadow: var(--shadow-lg) !important;
+            margin-top: 0.5rem !important;
+        }
+
+        .choices__item--selectable {
+            padding: 0.75rem 1rem !important;
+            transition: var(--transition) !important;
+        }
+
+        .choices__item--selectable.is-highlighted {
+            background: var(--primary) !important;
+        }
+
+        /* Validation visuelle */
+        .form-control.is-valid {
+            border-color: var(--success) !important;
+            padding-right: calc(1.5em + 0.75rem);
+            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 8 8'%3e%3cpath fill='%2310b981' d='M2.3 6.73L.6 4.53c-.4-1.04.46-1.4 1.1-.8l1.1 1.4 3.4-3.8c.6-.63 1.6-.27 1.2.7l-4 4.6c-.43.5-.8.4-1.1.1z'/%3e%3c/svg%3e");
+            background-repeat: no-repeat;
+            background-position: right calc(0.375em + 0.1875rem) center;
+            background-size: calc(0.75em + 0.375rem) calc(0.75em + 0.375rem);
+        }
+
+        .form-control.is-valid:focus {
+            border-color: var(--success-dark) !important;
+            box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.15) !important;
+        }
+
+        /* Hints */
+        #nomHint,
+        #prenomHint {
+            display: block;
+            margin-top: 0.5rem;
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+
+        /* ==================== BADGE HIS ==================== */
+        .his-badge-container {
+            animation: slideDown 0.3s ease;
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .his-badge-container .alert {
+            background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+            border: 2px solid var(--info);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow-sm);
+        }
+
+        /* ==================== BOUTON HISTORIQUE FLOTTANT ==================== */
+        .btn-floating-history {
+            position: fixed;
+            right: 30px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--info), #2563eb);
+            color: white;
+            border: none;
+            box-shadow: 0 8px 16px rgba(59, 130, 246, 0.3),
+                0 0 0 0 rgba(59, 130, 246, 0.5);
+            cursor: pointer;
+            z-index: 999;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            transition: var(--transition);
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .btn-floating-history:not(:disabled) {
+            opacity: 1;
+            pointer-events: auto;
+            animation: floatPulse 2s ease-in-out infinite;
+        }
+
+        .btn-floating-history i {
+            font-size: 1.5rem;
+            transition: var(--transition);
+        }
+
+        .btn-floating-history .btn-floating-text {
+            font-size: 0.7rem;
+            font-weight: 600;
+            margin-top: 2px;
+            opacity: 0;
+            max-height: 0;
+            transition: var(--transition);
+        }
+
+        .btn-floating-history:hover {
+            width: 70px;
+            height: 70px;
+            box-shadow: 0 12px 24px rgba(59, 130, 246, 0.4),
+                0 0 0 8px rgba(59, 130, 246, 0.2);
+            transform: translateY(-50%) scale(1.05);
+        }
+
+        .btn-floating-history:hover i {
+            transform: scale(1.1) rotate(15deg);
+        }
+
+        .btn-floating-history:hover .btn-floating-text {
+            opacity: 1;
+            max-height: 20px;
+        }
+
+        .btn-floating-history:active {
+            transform: translateY(-50%) scale(0.95);
+        }
+
+        .btn-floating-history:disabled {
+            background: linear-gradient(135deg, #9ca3af, #6b7280);
+            cursor: not-allowed;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        @keyframes floatPulse {
+
+            0%,
+            100% {
+                box-shadow: 0 8px 16px rgba(59, 130, 246, 0.3),
+                    0 0 0 0 rgba(59, 130, 246, 0.5);
+            }
+
+            50% {
+                box-shadow: 0 8px 16px rgba(59, 130, 246, 0.3),
+                    0 0 0 12px rgba(59, 130, 246, 0);
+            }
+        }
+
+        /* ==================== ALERTS ==================== */
+        .alert {
+            border-radius: var(--radius);
+            border: 2px solid;
+            padding: 1rem 1.25rem;
+            margin-bottom: 1rem;
+        }
+
+        .alert-info {
+            background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+            border-color: var(--info);
+            color: #1e40af;
+        }
+
+        .alert-warning {
+            background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+            border-color: var(--warning);
+            color: #92400e;
+        }
+
+        /* ==================== BOUTONS ==================== */
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            font-weight: 600;
+            border: none;
+            transition: var(--transition);
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn-lg {
+            padding: 1rem 2rem;
+            font-size: 1.125rem;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            color: white;
+            box-shadow: var(--shadow);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .btn-secondary {
+            background: linear-gradient(135deg, #64748b 0%, #475569 100%);
+            color: white;
+            box-shadow: var(--shadow);
+        }
+
+        .btn-secondary:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        /* ==================== CHECKBOX ENTREPRISE ==================== */
+        .form-check {
+            padding: 1rem;
+            background: var(--light);
+            border-radius: var(--radius);
+            border: 2px solid var(--border);
+            transition: var(--transition);
+        }
+
+        .form-check:hover {
+            background: #e2e8f0;
+            border-color: var(--primary);
+        }
+
+        .form-check-input {
+            width: 1.5rem;
+            height: 1.5rem;
+            cursor: pointer;
+            border: 2px solid var(--border);
+        }
+
+        .form-check-input:checked {
+            background-color: var(--primary);
+            border-color: var(--primary);
+        }
+
+        .form-check-label {
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        /* ==================== TABLES ==================== */
+        .table {
+            border-radius: var(--radius);
+            overflow: hidden;
+        }
+
+        .table thead th {
+            background: var(--dark);
+            color: var(--bg-surface);
+            font-weight: 600;
+            padding: 0.75rem 1rem;
+            border: none;
+        }
+
+        .table tbody td {
+            padding: 0.75rem 1rem;
+            vertical-align: middle;
+        }
+
+        .table-sm {
+            font-size: 0.875rem;
+        }
+
+        .table-bordered {
+            border: 2px solid var(--border);
+        }
+
+        /* ==================== BADGES ==================== */
+        .badge {
+            padding: 0.375rem 0.75rem;
+            border-radius: 0.375rem;
+            font-weight: 600;
+            font-size: 0.75rem;
+        }
+
+        /* ==================== RESPONSIVE ==================== */
+        @media (max-width: 768px) {
+            .container-fluid {
+                padding: 1rem;
+            }
+
+            .page-header {
+                padding: 1.5rem;
+            }
+
+            .page-header h1 {
+                font-size: 1.5rem;
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 0.5rem;
+            }
+
+            .form-section {
+                padding: 1.25rem;
+            }
+
+            .guide-content {
+                padding: 1.25rem;
+            }
+
+            .btn-floating-history {
+                right: 15px;
+                width: 50px;
+                height: 50px;
+            }
+
+            .btn-floating-history:hover {
+                width: 50px;
+                height: 50px;
+            }
+
+            .btn-floating-history .btn-floating-text {
+                display: none;
+            }
+        }
+
+        /* ==================== ANIMATIONS ==================== */
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .form-section {
+            animation: fadeIn 0.5s ease forwards;
+        }
+
+        .form-section:nth-child(1) {
+            animation-delay: 0.1s;
+        }
+
+        .form-section:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        .form-section:nth-child(3) {
+            animation-delay: 0.3s;
+        }
+
+        .form-section:nth-child(4) {
+            animation-delay: 0.4s;
+        }
+</style>
+
+<div class="container-fluid">
+    <!-- ==================== HEADER ==================== -->
+    <div class="page-header">
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+            <h1>
+                <i class="fas fa-plus-circle"></i>
+                Créer une Nouvelle Facture
+            </h1>
+            <span class="badge">
+                <i class="fas fa-calendar"></i> {{ date_actuelle }}
+            </span>
+        </div>
+    </div>
+
+    <!-- ==================== GUIDE COLLAPSABLE ==================== -->
+    <div class="guide-wrapper">
+        <div class="guide-toggle" data-bs-toggle="collapse" data-bs-target="#guideFacturation" aria-expanded="false"
+            aria-controls="guideFacturation">
+            <h5>
+                <i class="fas fa-book"></i>
+                Guide de Facturation
+                <span class="badge bg-info ms-2">Important</span>
+            </h5>
+            <div class="guide-toggle-icon">
+                <i class="fas fa-chevron-down"></i>
+            </div>
+        </div>
+
+        <div class="collapse" id="guideFacturation">
+            <div class="guide-content">
+                <div class="row g-4">
+                    <!-- Droit de Timbre -->
+                    <div class="col-md-4">
+                        <div class="info-card border-primary">
+                            <div class="card-header">
+                                <i class="fas fa-stamp"></i> Droit de Timbre
+                            </div>
+                            <div class="card-body">
+                                <div class="alert alert-warning mb-3">
+                                    <strong>⚠️ Application</strong><br>
+                                    Uniquement sur les paiements en <strong>espèces</strong>
+                                </div>
+                                <h6 class="text-primary mb-2">💰 Barèmes LF 2025</h6>
+                                <table class="table table-sm table-bordered">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>Montant</th>
+                                            <th>Taux</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td>≤ 300 DA</td>
+                                            <td><span class="badge bg-success">0%</span></td>
+                                        </tr>
+                                        <tr>
+                                            <td>300 - 30k DA</td>
+                                            <td><span class="badge bg-info">1%</span></td>
+                                        </tr>
+                                        <tr>
+                                            <td>30k - 100k DA</td>
+                                            <td><span class="badge bg-warning">1,5%</span></td>
+                                        </tr>
+                                        <tr>
+                                            <td>> 100k DA</td>
+                                            <td><span class="badge bg-danger">2%</span></td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Débours -->
+                    <div class="col-md-4">
+                        <div class="info-card border-warning">
+                            <div class="card-header">
+                                <i class="fas fa-receipt"></i> Débours
+                            </div>
+                            <div class="card-body">
+                                <p class="small mb-2">
+                                    <strong>Définition :</strong> Dépense réglée par la clinique
+                                    <u>pour le compte du patient</u>, puis remboursée par celui-ci.
+                                </p>
+
+                                <div class="alert alert-success mb-3">
+                                    <i class="fas fa-check-circle"></i>
+                                    <strong>Aucune TVA</strong> n'est appliquée sur les débours.
+                                </div>
+
+                                <h6 class="text-warning mb-2">📋 Conditions</h6>
+                                <ul class="small mb-0">
+                                    <li class="mb-1">
+                                        Facture au <strong>nom du patient</strong>
+                                    </li>
+                                    <li class="mb-1">
+                                        <strong>Justificatif</strong> obligatoire
+                                    </li>
+                                    <li>
+                                        <span class="text-danger">⚠️ Si facture au nom de la clinique</span> :
+                                        refacturation avec <strong>TVA obligatoire</strong>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- TVA -->
+                    <div class="col-md-4">
+                        <div class="row g-3">
+                            <div class="col-12">
+                                <div class="info-card border-success">
+                                    <div class="card-header bg-success text-white">
+                                        <i class="fas fa-percentage"></i> TVA à 9%
+                                    </div>
+                                    <div class="card-body">
+                                        <h6 class="text-success mb-2">✅ Applicable aux :</h6>
+                                        <ul class="list-unstyled small mb-0">
+                                            <li class="mb-1"><i class="fas fa-check text-success"></i> Actes médicaux
+                                            </li>
+                                            <li class="mb-1"><i class="fas fa-check text-success"></i> Consultations
+                                            </li>
+                                            <li class="mb-1"><i class="fas fa-check text-success"></i> Examens médicaux
+                                            </li>
+                                            <li class="mb-1"><i class="fas fa-check text-success"></i> Soins infirmiers
+                                            </li>
+                                            <li><i class="fas fa-check text-success"></i> Médicaments</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-12">
+                                <div class="info-card border-danger">
+                                    <div class="card-header bg-danger text-white">
+                                        <i class="fas fa-percentage"></i> TVA à 19%
+                                    </div>
+                                    <div class="card-body">
+                                        <h6 class="text-danger mb-2">⚠️ Applicable aux :</h6>
+                                        <ul class="list-unstyled small mb-0">
+                                            <li class="mb-1"><i class="fas fa-times text-danger"></i> Hospitalisation
+                                            </li>
+                                            <li class="mb-1"><i class="fas fa-times text-danger"></i> Hébergement</li>
+                                            <li class="mb-1"><i class="fas fa-times text-danger"></i> Services hôteliers
+                                            </li>
+                                            <li><i class="fas fa-times text-danger"></i> Prestations annexes</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== FORMULAIRE ==================== -->
+    <form method="POST" action="{{ url_for('nouvelle_facture') }}" id="factureForm">
+        <!-- Type de Document -->
+        <div class="form-section">
+            <h5>
+                <i class="fas fa-file-alt"></i>
+                Type de Document
+            </h5>
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label class="form-label required-field">Type de document</label>
+                    <select name="type_facture" class="form-select form-select-lg" required id="typeFacture">
+                        <option value="facture" selected>📄 Facture Définitive</option>
+                        <option value="proforma">💼 Facture Proforma</option>
+                    </select>
+                    <small class="text-muted mt-2 d-block" id="typeInfo">
+                        <i class="fas fa-info-circle"></i>
+                        <strong>Facture :</strong> Document définitif et comptable
+                    </small>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label required-field">Date de facturation</label>
+                    <input type="date" name="date_facture" class="form-select form-select-lg"
+                        value="{{ date_actuelle }}" required>
+                </div>
+            </div>
+        </div>
+
+        <!-- Informations Patient -->
+        <div class="form-section">
+            <h5>
+                <i class="fas fa-user-injured"></i>
+                Informations du Patient
+            </h5>
+
+            <!-- Checkbox Entreprise -->
+            <div class="form-check mb-3">
+                <input class="form-check-input" type="checkbox" id="estEntreprise">
+                <label class="form-check-label" for="estEntreprise">
+                    <i class="fas fa-building"></i>
+                    Le patient est une entreprise / organisme
+                </label>
+            </div>
+
+            <!-- Raison Sociale -->
+            <div id="raisonSocialeGroup" style="display: none;" class="mb-3">
+                <label class="form-label">Raison sociale</label>
+                <input type="text" name="patient_raison_sociale" id="patient_raison_sociale"
+                    class="form-control form-control-lg" placeholder="Ex: SARL BENALI & CIE">
+            </div>
+
+            <!-- Recherche HIS -->
+            <div class="mb-3">
+                <label class="form-label">
+                    <i class="fas fa-search"></i>
+                    Rechercher dans HIS
+                </label>
+                <select id="patientHisSearch" class="form-select">
+                    <option value="">Rechercher un patient dans HIS...</option>
+                </select>
+                <small class="text-muted mt-2 d-block">
+                    <i class="fas fa-info-circle"></i>
+                    Sélectionnez un patient depuis HIS, puis modifiez les informations si nécessaire
+                </small>
+            </div>
+
+            <!-- Badge HIS -->
+            <div class="his-badge-container mb-3" id="hisBadgeContainer" style="display: none;">
+                <div class="alert alert-info d-flex justify-content-between align-items-center mb-0">
+                    <div>
+                        <i class="fas fa-database"></i>
+                        <strong>Patient HIS sélectionné</strong>
+                        <br>
+                        <small id="hisPatientInfo"></small>
+                    </div>
+                    <button type="button" class="btn btn-sm btn-info"
+                        onclick="showPatientHistoryDirect(document.getElementById('patient_oid_his').value)"
+                        title="Voir l'historique">
+                        <i class="fas fa-history"></i> Historique
+                    </button>
+                </div>
+            </div>
+
+            <!-- Nom/Prénom -->
+            <div class="row g-3 mb-3">
+                <div class="col-md-6">
+                    <label class="form-label required-field" id="labelNom">Nom du patient</label>
+                    <input type="text" name="patient_nom" id="patient_nom" class="form-control form-control-lg"
+                        placeholder="Ex: BENALI" required>
+                    <small class="text-muted" id="nomHint"></small>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label required-field" id="labelPrenom">Prénom du patient</label>
+                    <input type="text" name="patient_prenom" id="patient_prenom" class="form-control form-control-lg"
+                        placeholder="Ex: Mohammed" required>
+                    <small class="text-muted" id="prenomHint"></small>
+                </div>
+            </div>
+
+            <!-- Hidden fields HIS -->
+            <input type="hidden" name="patient_oid_his" id="patient_oid_his">
+            <input type="hidden" name="patient_code_his" id="patient_code_his">
+
+            <!-- Adresse/Téléphone -->
+            <div class="row g-3">
+                <div class="col-md-8">
+                    <label class="form-label">
+                        <i class="fas fa-map-marker-alt"></i>
+                        Adresse complète
+                    </label>
+                    <textarea name="patient_adresse" class="form-control" rows="2"
+                        placeholder="Rue, quartier, ville..."></textarea>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">
+                        <i class="fas fa-phone"></i>
+                        Téléphone
+                    </label>
+                    <input type="tel" name="patient_telephone" class="form-control" placeholder="0XXX XX XX XX">
+                </div>
+            </div>
+        </div>
+
+        <!-- Coordonnées Fiscales -->
+        <div class="form-section section-fiscale" id="coordonneesFiscalesGroup" style="display: none;">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5 class="mb-0">
+                    <i class="fas fa-receipt"></i>
+                    Coordonnées Fiscales de l'Entreprise
+                </h5>
+                <span class="badge bg-warning">Recommandé</span>
+            </div>
+
+            <div class="alert alert-info mb-3">
+                <i class="fas fa-info-circle"></i>
+                Ces informations sont recommandées pour les entreprises et organismes
+            </div>
+
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <label class="form-label" id="labelNif">
+                        <i class="fas fa-id-card"></i>
+                        NIF (Numéro d'Identification Fiscale)
+                    </label>
+                    <input type="text" name="patient_nif" id="patient_nif" class="form-control"
+                        placeholder="Ex: 001916100040926">
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">
+                        <i class="fas fa-file-contract"></i>
+                        RC (Registre de Commerce)
+                    </label>
+                    <input type="text" name="patient_rc" id="patient_rc" class="form-control"
+                        placeholder="Ex: 16/00-1000409 B 19">
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">
+                        <i class="fas fa-hashtag"></i>
+                        N° Article
+                    </label>
+                    <input type="text" name="patient_article" id="patient_article" class="form-control"
+                        placeholder="Ex: 16185014022">
+                </div>
+            </div>
+        </div>
+
+        <!-- Paiement -->
+        <div class="form-section">
+            <h5>
+                <i class="fas fa-credit-card"></i>
+                Informations de Paiement
+            </h5>
+
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label class="form-label required-field">Mode de paiement</label>
+                    <select name="mode_paiement" class="form-select form-select-lg" required id="modePaiement">
+                        <option value="especes">💵 Espèces (avec droit de timbre LF 2025)</option>
+                        <option value="cheque">📝 Chèque</option>
+                        <option value="carte">💳 Carte bancaire</option>
+                        <option value="virement">🏦 Virement bancaire</option>
+                        <option value="autre">➕ Autre</option>
+                    </select>
+                    <div class="alert alert-warning mt-3 mb-0" id="alertTimbre">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <strong>Important :</strong> Le droit de timbre (LF 2025) s'applique
+                        <strong>uniquement</strong> aux paiements en espèces.
+                    </div>
+                </div>
+
+                <div class="col-md-6">
+                    <label class="form-label">
+                        <i class="fas fa-cash-register"></i>
+                        Montant payé en caisse
+                        <small class="text-muted">(optionnel)</small>
+                    </label>
+                    <div class="input-group input-group-lg">
+                        <input type="number" name="montant_paye_caisse" id="montant_paye_caisse" class="form-control"
+                            step="0.01" min="0" placeholder="0.00">
+                        <span class="input-group-text">DA</span>
+                    </div>
+                    <small class="text-muted mt-2 d-block">
+                        Si renseigné, vous pourrez suivre le reste à facturer
+                    </small>
+                </div>
+            </div>
+
+            <!-- Numéro de chèque -->
+            <div class="mt-3" id="numeroChequeGroup" style="display: none;">
+                <label class="form-label">
+                    <i class="fas fa-money-check"></i>
+                    Numéro de chèque
+                </label>
+                <input type="text" name="numero_cheque" id="numero_cheque" class="form-control"
+                    placeholder="Ex: 1234567">
+            </div>
+
+            <!-- Notes -->
+            <div class="mt-3">
+                <label class="form-label">
+                    <i class="fas fa-sticky-note"></i>
+                    Notes internes
+                </label>
+                <textarea name="notes" class="form-control" rows="3"
+                    placeholder="Notes ou informations complémentaires..."></textarea>
+            </div>
+        </div>
+
+        <!-- Info Prochaine étape -->
+        <div class="alert alert-info">
+            <div class="d-flex align-items-start gap-3">
+                <i class="fas fa-lightbulb fa-2x"></i>
+                <div>
+                    <h6 class="alert-heading mb-2">Prochaine étape</h6>
+                    <p class="mb-0">
+                        Après la création, vous pourrez ajouter les lignes de facturation
+                        (actes médicaux, hospitalisation, débours, etc.) sur la page d'édition.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Boutons d'action -->
+        <div class="d-flex justify-content-between gap-3 mt-4">
+            <a href="{{ url_for('facturation') }}" class="btn btn-secondary btn-lg">
+                <i class="fas fa-times"></i>
+                Annuler
+            </a>
+            <button type="submit" class="btn btn-primary btn-lg">
+                <i class="fas fa-check-circle"></i>
+                Créer la facture
+            </button>
+        </div>
+    </form>
+</div>
+
+<!-- Bouton Historique Flottant -->
+<button type="button" class="btn-floating-history" id="btnPatientHistoryDirect" disabled
+    title="Voir l'historique complet du patient HIS">
+    <i class="fas fa-history"></i>
+    <span class="btn-floating-text">Historique</span>
+</button>
+
+<!-- Modal Historique -->
+{{ his_selector.render_modal('modalPatientHistoryDirect') }}
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // ============================================================================
+    // SÉLECTEUR PATIENT HIS
+    // ============================================================================
+    let patientChoices = null;
+    let searchTimeout = null;
+
+    document.addEventListener('DOMContentLoaded', function () {
+        initPatientHisSelector();
+        initFormHandlers();
+        initFieldChangeDetection();
+        initFloatingHistoryButton();
+    });
+
+    function initPatientHisSelector() {
+        const selectElement = document.getElementById('patientHisSearch');
+        if (!selectElement || typeof Choices === 'undefined') return;
+
+        patientChoices = new Choices(selectElement, {
+            searchEnabled: true,
+            searchPlaceholderValue: 'Tapez nom, prénom, code ou carte ID...',
+            noResultsText: 'Aucun patient trouvé',
+            noChoicesText: 'Aucun patient disponible',
+            itemSelectText: 'Cliquer pour sélectionner',
+            loadingText: 'Recherche en cours...',
+            searchResultLimit: 20,
+            shouldSort: false,
+            removeItemButton: true
+        });
+
+        selectElement.addEventListener('search', function (event) {
+            const searchTerm = event.detail.value;
+            if (searchTerm.length < 2) return;
+
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(() => searchPatientsHIS(searchTerm), 300);
+        });
+
+        selectElement.addEventListener('change', function (event) {
+            if (event.detail.value) loadPatientDetails(event.detail.value);
+        });
+
+        selectElement.addEventListener('removeItem', function () {
+            resetPatientSelection();
+        });
+    }
+
+    async function searchPatientsHIS(searchTerm) {
+        try {
+            patientChoices.setChoices(
+                [{ value: '', label: 'Recherche en cours...', disabled: true }],
+                'value', 'label', true
+            );
+
+            const response = await fetch(
+                `/api/his-direct/patients/search?q=${encodeURIComponent(searchTerm)}&limit=20`
+            );
+
+            if (!response.ok) throw new Error('Erreur lors de la recherche');
+
+            const data = await response.json();
+
+            if (!data.success || !data.patients || data.patients.length === 0) {
+                patientChoices.setChoices(
+                    [{ value: '', label: 'Aucun patient trouvé', disabled: true }],
+                    'value', 'label', true
+                );
+                return;
+            }
+
+            const choices = data.patients.map(patient => ({
+                value: patient.oid,
+                label: `${patient.first_name} ${patient.last_name} - ${patient.code}`,
+                customProperties: {
+                    firstName: patient.first_name,
+                    lastName: patient.last_name,
+                    code: patient.code,
+                    birthDate: patient.birth_date ? new Date(patient.birth_date).toLocaleDateString('fr-FR') : 'N/A',
+                    age: patient.age || 'N/A',
+                    idCard: patient.id_card_number || '',
+                    fullName: `${patient.first_name} ${patient.last_name}`
+                }
+            }));
+
+            patientChoices.setChoices(choices, 'value', 'label', true);
+
+        } catch (error) {
+            console.error('Erreur recherche HIS:', error);
+            patientChoices.setChoices(
+                [{ value: '', label: 'Erreur lors de la recherche', disabled: true }],
+                'value', 'label', true
+            );
+            showNotification('error', 'Erreur', 'Impossible de rechercher dans HIS');
+        }
+    }
+
+    async function loadPatientDetails(patientOid) {
+        try {
+            const response = await fetch(`/api/his-direct/patients/${patientOid}`);
+            if (!response.ok) throw new Error('Erreur lors du chargement');
+
+            const data = await response.json();
+            if (!data.success || !data.patient) throw new Error('Patient non trouvé');
+
+            const patient = data.patient;
+
+            // Remplir les champs
+            document.getElementById('patient_nom').value = patient.last_name || '';
+            document.getElementById('patient_nom').classList.add('is-valid');
+            document.getElementById('patient_prenom').value = patient.first_name || '';
+            document.getElementById('patient_prenom').classList.add('is-valid');
+
+            // Hints
+            document.getElementById('nomHint').innerHTML =
+                `<i class="fas fa-database text-info"></i> Depuis HIS: ${patient.last_name || 'N/A'}`;
+            document.getElementById('prenomHint').innerHTML =
+                `<i class="fas fa-database text-info"></i> Depuis HIS: ${patient.first_name || 'N/A'}`;
+
+            // Hidden fields
+            document.getElementById('patient_oid_his').value = patient.oid || '';
+            document.getElementById('patient_code_his').value = patient.code || '';
+
+            // Téléphone
+            if (patient.mobile || patient.telephone) {
+                const telInput = document.querySelector('[name="patient_telephone"]');
+                if (telInput) telInput.value = patient.mobile || patient.telephone || '';
+            }
+
+            // Badge HIS
+            const hisBadge = document.getElementById('hisBadgeContainer');
+            const hisInfo = document.getElementById('hisPatientInfo');
+            if (hisBadge && hisInfo) {
+                hisBadge.style.display = 'block';
+                hisInfo.textContent = `Code HIS: ${patient.code} - ${patient.first_name} ${patient.last_name}`;
+            }
+
+            // Activer bouton historique
+            const btnHistory = document.getElementById('btnPatientHistoryDirect');
+            if (btnHistory) {
+                btnHistory.disabled = false;
+                btnHistory.setAttribute('data-patient-oid', patient.oid);
+                btnHistory.setAttribute('title', `Voir l'historique HIS de ${patient.first_name} ${patient.last_name}`);
+            }
+
+            showNotification('success', 'Patient chargé',
+                `${patient.first_name} ${patient.last_name} - Vous pouvez modifier les informations si nécessaire`);
+            animatePatientLoad();
+
+        } catch (error) {
+            console.error('Erreur chargement patient:', error);
+            showNotification('error', 'Erreur', 'Impossible de charger les détails du patient');
+        }
+    }
+
+    function resetPatientSelection() {
+        // Réinitialiser bouton historique
+        const btnHistory = document.getElementById('btnPatientHistoryDirect');
+        if (btnHistory) {
+            btnHistory.disabled = true;
+            btnHistory.removeAttribute('data-patient-oid');
+            btnHistory.setAttribute('title', 'Sélectionnez d\'abord un patient HIS');
+        }
+
+        // Réinitialiser hints
+        document.getElementById('nomHint').innerHTML = '';
+        document.getElementById('prenomHint').innerHTML = '';
+
+        // Réinitialiser hidden fields
+        document.getElementById('patient_oid_his').value = '';
+        document.getElementById('patient_code_his').value = '';
+
+        // Masquer badge
+        const hisBadge = document.getElementById('hisBadgeContainer');
+        if (hisBadge) hisBadge.style.display = 'none';
+
+        // Retirer validation visuelle
+        document.getElementById('patient_nom').classList.remove('is-valid');
+        document.getElementById('patient_prenom').classList.remove('is-valid');
+    }
+
+    function animatePatientLoad() {
+        const inputs = [
+            document.getElementById('patient_nom'),
+            document.getElementById('patient_prenom')
+        ].filter(Boolean);
+
+        inputs.forEach(input => {
+            input.style.transition = 'all 0.3s ease';
+            input.style.transform = 'scale(1.02)';
+            input.style.boxShadow = '0 0 15px rgba(16, 185, 129, 0.3)';
+
+            setTimeout(() => {
+                input.style.transform = 'scale(1)';
+                input.style.boxShadow = '';
+            }, 300);
+        });
+    }
+
+    function initFieldChangeDetection() {
+        const nomInput = document.getElementById('patient_nom');
+        const prenomInput = document.getElementById('patient_prenom');
+
+        nomInput?.addEventListener('input', function () {
+            const hint = document.getElementById('nomHint');
+            if (hint?.textContent.includes('Depuis HIS')) {
+                hint.innerHTML = `<i class="fas fa-edit text-warning"></i> Modifié manuellement`;
+            }
+        });
+
+        prenomInput?.addEventListener('input', function () {
+            const hint = document.getElementById('prenomHint');
+            if (hint?.textContent.includes('Depuis HIS')) {
+                hint.innerHTML = `<i class="fas fa-edit text-warning"></i> Modifié manuellement`;
+            }
+        });
+    }
+
+    // ============================================================================
+    // GESTION FORMULAIRE
+    // ============================================================================
+    function initFormHandlers() {
+        const typeFacture = document.getElementById('typeFacture');
+        const modePaiement = document.getElementById('modePaiement');
+        const estEntreprise = document.getElementById('estEntreprise');
+
+        typeFacture?.addEventListener('change', function () {
+            const typeInfo = document.getElementById('typeInfo');
+            typeInfo.innerHTML = this.value === 'proforma' ?
+                '<i class="fas fa-info-circle"></i> <strong>Proforma :</strong> Document provisoire, non comptable (devis)' :
+                '<i class="fas fa-info-circle"></i> <strong>Facture :</strong> Document définitif et comptable';
+        });
+
+        modePaiement?.addEventListener('change', function () {
+            const alertTimbre = document.getElementById('alertTimbre');
+            const numeroChequeGroup = document.getElementById('numeroChequeGroup');
+
+            if (this.value === 'especes') {
+                alertTimbre.style.display = 'block';
+                numeroChequeGroup.style.display = 'none';
+            } else if (this.value === 'cheque') {
+                alertTimbre.style.display = 'none';
+                numeroChequeGroup.style.display = 'block';
+            } else {
+                alertTimbre.style.display = 'none';
+                numeroChequeGroup.style.display = 'none';
+            }
+        });
+
+        estEntreprise?.addEventListener('change', function () {
+            const isEntreprise = this.checked;
+            document.getElementById('raisonSocialeGroup').style.display = isEntreprise ? 'block' : 'none';
+            document.getElementById('coordonneesFiscalesGroup').style.display = isEntreprise ? 'block' : 'none';
+
+            const labelNom = document.getElementById('labelNom');
+            const labelPrenom = document.getElementById('labelPrenom');
+            const labelNif = document.getElementById('labelNif');
+            const patientNom = document.getElementById('patient_nom');
+            const patientPrenom = document.getElementById('patient_prenom');
+            const nifInput = document.getElementById('patient_nif');
+
+            if (isEntreprise) {
+                labelNom.innerHTML = '<i class="fas fa-user"></i> Nom du contact <span class="text-muted">(optionnel)</span>';
+                labelPrenom.innerHTML = '<i class="fas fa-user"></i> Prénom du contact <span class="text-muted">(optionnel)</span>';
+                labelNif.innerHTML = '<i class="fas fa-id-card"></i> NIF <span class="text-danger">*</span>';
+                patientNom.required = false;
+                patientPrenom.required = false;
+                nifInput.required = true;
+            } else {
+                labelNom.innerHTML = '<i class="fas fa-user"></i> Nom du patient <span class="text-danger">*</span>';
+                labelPrenom.innerHTML = '<i class="fas fa-user"></i> Prénom du patient <span class="text-danger">*</span>';
+                labelNif.innerHTML = '<i class="fas fa-id-card"></i> NIF';
+                patientNom.required = true;
+                patientPrenom.required = true;
+                nifInput.required = false;
+            }
+        });
+
+        // Validation formulaire
+        document.getElementById('factureForm')?.addEventListener('submit', function (e) {
+            const isEntreprise = estEntreprise.checked;
+            const raisonSociale = document.getElementById('patient_raison_sociale').value.trim();
+            const nom = document.getElementById('patient_nom').value.trim();
+            const prenom = document.getElementById('patient_prenom').value.trim();
+
+            if (isEntreprise && !raisonSociale) {
+                e.preventDefault();
+                showNotification('error', 'Erreur', 'La raison sociale est obligatoire pour une entreprise !');
+                return false;
+            }
+
+            if (!isEntreprise && (!nom || !prenom)) {
+                e.preventDefault();
+                showNotification('error', 'Erreur', 'Le nom et le prénom du patient sont obligatoires !');
+                return false;
+            }
+        });
+    }
+
+    // ============================================================================
+    // BOUTON HISTORIQUE FLOTTANT
+    // ============================================================================
+    function initFloatingHistoryButton() {
+        const btnHistory = document.getElementById('btnPatientHistoryDirect');
+
+        btnHistory?.addEventListener('click', function () {
+            const patientOid = this.getAttribute('data-patient-oid');
+            if (patientOid) {
+                showPatientHistoryDirect(patientOid);
+            } else {
+                showNotification('warning', 'Attention', 'Veuillez d\'abord sélectionner un patient HIS');
+            }
+        });
+    }
+
+    window.showPatientHistoryDirect = function (patientOid) {
+        if (typeof PatientHistoryModal !== 'undefined' && PatientHistoryModal.show) {
+            PatientHistoryModal.show(patientOid);
+        } else {
+            console.error('PatientHistoryModal not loaded');
+            showNotification('error', 'Erreur', 'Le module d\'historique HIS n\'est pas chargé.');
+        }
+    };
+
+    // ============================================================================
+    // NOTIFICATIONS
+    // ============================================================================
+    function showNotification(type, title, message) {
+        const colors = {
+            'success': '#10b981',
+            'error': '#ef4444',
+            'warning': '#f59e0b',
+            'info': '#3b82f6'
+        };
+
+        const icons = {
+            'success': 'fa-check-circle',
+            'error': 'fa-exclamation-circle',
+            'warning': 'fa-exclamation-triangle',
+            'info': 'fa-info-circle'
+        };
+
+        const notification = document.createElement('div');
+        notification.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: white;
+        padding: 1rem 1.5rem;
+        border-radius: 0.75rem;
+        box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+        border-left: 4px solid ${colors[type]};
+        z-index: 9999;
+        max-width: 400px;
+        animation: slideIn 0.3s ease;
+    `;
+
+        notification.innerHTML = `
+        <div style="display: flex; align-items: start; gap: 0.75rem;">
+            <i class="fas ${icons[type]}" style="color: ${colors[type]}; font-size: 1.5rem; margin-top: 2px;"></i>
+            <div style="flex: 1;">
+                <strong style="display: block; margin-bottom: 0.25rem;">${title}</strong>
+                <small style="color: #6b7280;">${message}</small>
+            </div>
+            <button onclick="this.parentElement.parentElement.remove()"
+                    style="background: none; border: none; cursor: pointer; color: #9ca3af; font-size: 1.25rem;">
+                ×
+            </button>
+        </div>
+    `;
+
+        document.body.appendChild(notification);
+
+        setTimeout(() => {
+            notification.style.animation = 'slideOut 0.3s ease';
+            setTimeout(() => notification.remove(), 300);
+        }, 5000);
+    }
+</script>
+{% endblock %}

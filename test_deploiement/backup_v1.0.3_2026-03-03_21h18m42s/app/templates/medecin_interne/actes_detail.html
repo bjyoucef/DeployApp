@@ -1,0 +1,807 @@
+{% extends "layout.html" %}
+
+{% block style %}
+<style>
+    :root {
+        /* Palette de couleurs "Clean Medical" */
+        --primary: #2563eb;
+        --primary-light: #eff6ff;
+        --secondary: #64748b;
+        --success: #10b981;
+        --success-light: #ecfdf5;
+        --warning: #f59e0b;
+        --warning-light: #fffbeb;
+        --danger: #ef4444;
+        --danger-light: #fef2f2;
+        --dark: #1e293b;
+        --gray: #94a3b8;
+        --light: #f8fafc;
+        --border: #e2e8f0;
+
+        --radius-sm: 8px;
+        --radius-md: 12px;
+        --radius-lg: 16px;
+
+        --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.05);
+        --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+        --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -2px rgba(0, 0, 0, 0.025);
+    }
+
+    body {
+        background-color: #f1f5f9;
+        color: var(--dark);
+        font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    }
+
+    .page-container {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 2rem 1rem;
+    }
+
+    /* --- Header Section --- */
+    .page-header {
+        background: white;
+        border-radius: var(--radius-lg);
+        padding: 2rem;
+        margin-bottom: 2rem;
+        box-shadow: var(--shadow-sm);
+        border: 1px solid var(--border);
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        flex-wrap: wrap;
+        gap: 1.5rem;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .page-header::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        bottom: 0;
+        width: 6px;
+        background: var(--primary);
+    }
+
+    .header-title h1 {
+        font-size: 1.75rem;
+        font-weight: 700;
+        margin: 0 0 0.5rem 0;
+        color: var(--dark);
+    }
+
+    .header-meta {
+        display: flex;
+        gap: 1.5rem;
+        color: var(--secondary);
+        font-size: 0.95rem;
+        align-items: center;
+    }
+
+    .header-meta i {
+        color: var(--primary);
+        margin-right: 0.5rem;
+    }
+
+    /* --- Cards & Content --- */
+    .card-section {
+        background: white;
+        border-radius: var(--radius-md);
+        border: 1px solid var(--border);
+        box-shadow: var(--shadow-sm);
+        margin-bottom: 1.5rem;
+        overflow: hidden;
+    }
+
+    .card-header-clean {
+        padding: 1.25rem 1.5rem;
+        border-bottom: 1px solid var(--border);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        background: #fafafa;
+    }
+
+    .card-header-clean h3 {
+        font-size: 1.1rem;
+        font-weight: 600;
+        margin: 0;
+        color: var(--dark);
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+
+    .card-header-clean i {
+        color: var(--secondary);
+    }
+
+    .card-body-clean {
+        padding: 1.5rem;
+    }
+
+    /* --- Info Grid --- */
+    .details-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 1.5rem;
+    }
+
+    .detail-item {
+        display: flex;
+        flex-direction: column;
+        gap: 0.25rem;
+    }
+
+    .detail-label {
+        font-size: 0.8rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        color: var(--gray);
+        font-weight: 600;
+    }
+
+    .detail-value {
+        font-size: 1rem;
+        font-weight: 600;
+        color: var(--dark);
+    }
+
+    /* --- Tables --- */
+    .clean-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    .clean-table th {
+        text-align: left;
+        padding: 1rem 1.5rem;
+        font-size: 0.8rem;
+        text-transform: uppercase;
+        color: var(--secondary);
+        font-weight: 600;
+        background: #f8fafc;
+        border-bottom: 1px solid var(--border);
+    }
+
+    .clean-table td {
+        padding: 1rem 1.5rem;
+        border-bottom: 1px solid var(--border);
+        color: var(--dark);
+    }
+
+    .clean-table tr:last-child td {
+        border-bottom: none;
+    }
+
+    .clean-table .text-end {
+        text-align: right;
+    }
+
+    .clean-table .text-center {
+        text-align: center;
+    }
+
+    .table-total-row {
+        background-color: #f8fafc;
+        font-weight: 700;
+    }
+
+    /* --- Badges --- */
+    .status-badge {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.35rem 0.85rem;
+        border-radius: 9999px;
+        font-size: 0.8rem;
+        font-weight: 600;
+    }
+
+    .badge-primary {
+        background: var(--primary-light);
+        color: var(--primary);
+    }
+
+    .badge-success {
+        background: var(--success-light);
+        color: var(--success);
+    }
+
+    .badge-warning {
+        background: var(--warning-light);
+        color: var(--warning);
+    }
+
+    .badge-danger {
+        background: var(--danger-light);
+        color: var(--danger);
+    }
+
+    .badge-gray {
+        background: #f1f5f9;
+        color: var(--secondary);
+    }
+
+    /* --- Sidebar & Sticky Summary --- */
+    .sticky-sidebar {
+        position: sticky;
+        top: 2rem;
+    }
+
+    .summary-card {
+        background: white;
+        border-radius: var(--radius-lg);
+        box-shadow: var(--shadow-lg);
+        border: 1px solid var(--border);
+        overflow: hidden;
+    }
+
+    .summary-header {
+        background: var(--dark);
+        color: white;
+        padding: 1.5rem;
+        text-align: center;
+    }
+
+    .summary-body {
+        padding: 1.5rem;
+    }
+
+    .bill-row {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 1rem;
+        font-size: 0.95rem;
+        color: var(--secondary);
+    }
+
+    .bill-row.highlight {
+        color: var(--dark);
+        font-weight: 600;
+        border-top: 1px dashed var(--border);
+        padding-top: 1rem;
+        margin-top: 1rem;
+    }
+
+    .bill-total {
+        background: var(--primary-light);
+        padding: 1rem;
+        border-radius: var(--radius-md);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-top: 1.5rem;
+        color: var(--primary);
+        font-weight: 700;
+        font-size: 1.1rem;
+    }
+
+    /* --- Buttons --- */
+    .btn-custom {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        padding: 0.75rem 1.5rem;
+        border-radius: var(--radius-md);
+        font-weight: 600;
+        transition: all 0.2s;
+        border: none;
+        cursor: pointer;
+        width: 100%;
+        text-decoration: none;
+    }
+
+    .btn-custom:hover {
+        transform: translateY(-1px);
+        text-decoration: none;
+    }
+
+    .btn-action-primary {
+        background: var(--primary);
+        color: white;
+    }
+
+    .btn-action-primary:hover {
+        background: #1d4ed8;
+        color: white;
+        box-shadow: var(--shadow-md);
+    }
+
+    .btn-action-outline {
+        background: white;
+        border: 1px solid var(--border);
+        color: var(--secondary);
+    }
+
+    .btn-action-outline:hover {
+        background: #f8fafc;
+        color: var(--dark);
+        border-color: var(--gray);
+    }
+
+    .btn-action-danger {
+        background: white;
+        border: 1px solid var(--danger);
+        color: var(--danger);
+    }
+
+    .btn-action-danger:hover {
+        background: var(--danger-light);
+    }
+
+    /* --- Alerts --- */
+    .alert-banner {
+        padding: 1rem 1.5rem;
+        border-radius: var(--radius-md);
+        margin-bottom: 2rem;
+        display: flex;
+        gap: 1rem;
+        align-items: flex-start;
+    }
+
+    .alert-danger-custom {
+        background: #fef2f2;
+        border: 1px solid #fee2e2;
+        color: #991b1b;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-container">
+
+    <!-- Navigation Back -->
+    <div style="margin-bottom: 1rem;">
+        <a href="{{ url_for('medecin_interne_actes_list') }}" class="btn-custom btn-action-outline"
+            style="width: auto; display: inline-flex; padding: 0.5rem 1rem; font-size: 0.9rem;">
+            <i class="fas fa-arrow-left"></i> Retour à la liste
+        </a>
+    </div>
+
+    <!-- Header Principal -->
+    <div class="page-header">
+        <div class="header-info">
+            <div class="header-title">
+                <h1>{{ acte.nom_acte or 'Acte Médical' }}</h1>
+            </div>
+            <div class="header-meta">
+                <span><i class="fas fa-hashtag"></i> A-{{ "%05d"|format(acte.id_acte) }}</span>
+                <span><i class="far fa-calendar"></i> {{ acte.date_acte.strftime('%d/%m/%Y') }}</span>
+                {% if acte.heure_acte %}
+                <span><i class="far fa-clock"></i> {{ acte.heure_acte }}</span>
+                {% endif %}
+                <span class="status-badge badge-gray">
+                    <i class="fas fa-stethoscope me-1"></i> {{ acte.nom_specialite or 'Général' }}
+                </span>
+            </div>
+        </div>
+
+        <div class="header-actions">
+            <div style="text-align: right;">
+                <div style="font-size: 0.85rem; color: var(--gray); margin-bottom: 0.25rem;">Patient</div>
+                <div style="font-size: 1.25rem; font-weight: 700; color: var(--dark);">
+                    <i class="fas fa-user-circle text-primary me-2"></i>{{ acte.patient }}
+                </div>
+                <div style="margin-top: 0.5rem;">
+                    <span class="status-badge badge-primary">{{ acte.doctor_name }}</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Alerte Annulation -->
+    {% if acte.est_annule %}
+    <div class="alert-banner alert-danger-custom">
+        <div style="font-size: 1.5rem;"><i class="fas fa-ban"></i></div>
+        <div>
+            <h4 style="margin: 0 0 0.5rem 0; font-weight: 700;">Acte Annulé</h4>
+            <p style="margin: 0; font-size: 0.95rem;">
+                Annulé le {{ acte.annule_at.strftime('%d/%m/%Y à %H:%M') if acte.annule_at else '' }}
+                {% if acte.annule_par_name %}par <strong>{{ acte.annule_par_name }}</strong>{% endif %}.
+            </p>
+            {% if acte.motif_annulation %}
+            <div style="margin-top: 0.5rem; font-style: italic;">"{{ acte.motif_annulation }}"</div>
+            {% endif %}
+        </div>
+        {% if not acte.est_annule %}
+        <!-- Logique inversée dans l'original, corrigée ici pour afficher bouton restaurer seulement si annulé -->
+        <button type="button" class="btn-custom btn-action-outline"
+            style="margin-left: auto; width: auto; background: white;" data-bs-toggle="modal"
+            data-bs-target="#modalRestaurerActe">
+            <i class="fas fa-undo"></i> Restaurer
+        </button>
+        {% endif %}
+    </div>
+    {% endif %}
+
+    <div class="row">
+        <!-- Colonne Gauche : Détails -->
+        <div class="col-lg-8">
+
+            <!-- Informations Générales -->
+            <div class="card-section">
+                <div class="card-header-clean">
+                    <h3><i class="fas fa-info-circle"></i> Détails de l'intervention</h3>
+                    <span
+                        class="status-badge {% if acte.mode_calcul == 'PRIX_TOTAL' %}badge-warning{% else %}badge-primary{% endif %}">
+                        {{ 'Prix Total' if acte.mode_calcul == 'PRIX_TOTAL' else 'Prix Base + Suppléments' }}
+                    </span>
+                </div>
+                <div class="card-body-clean">
+                    <div class="details-grid">
+                        <div class="detail-item">
+                            <span class="detail-label">Créé par</span>
+                            <span class="detail-value">{{ acte.created_by_name or 'N/A' }}</span>
+                            <small class="text-muted">{{ acte.date_creation.strftime('%d/%m/%Y') }}</small>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">Pourcentage Médecin</span>
+                            <span class="detail-value text-success">{{ acte.pourcentage_medecin }}%</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">Nuitées incluses</span>
+                            <span class="detail-value">{{ acte.nuitees_incluses_tarif or 0 }}</span>
+                        </div>
+                    </div>
+
+                    {% if acte.observations %}
+                    <div
+                        style="margin-top: 1.5rem; background: var(--warning-light); padding: 1rem; border-radius: var(--radius-sm); border: 1px solid #fde68a;">
+                        <span class="detail-label" style="color: var(--warning);">Observations</span>
+                        <p style="margin: 0.25rem 0 0; color: #92400e;">{{ acte.observations }}</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Consommables -->
+            {% if consommables %}
+            <div class="card-section">
+                <div class="card-header-clean">
+                    <h3><i class="fas fa-syringe"></i> Consommables Spécifiques</h3>
+                    <span class="status-badge badge-gray">{{ consommables|length }}</span>
+                </div>
+                <table class="clean-table">
+                    <thead>
+                        <tr>
+                            <th>Produit</th>
+                            <th class="text-center">Qté</th>
+                            <th class="text-end">P.U</th>
+                            <th class="text-end">Total</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for cons in consommables %}
+                        <tr>
+                            <td>{{ cons.description or cons.produit_nom }}</td>
+                            <td class="text-center"><span class="status-badge badge-gray"
+                                    style="padding: 0.1rem 0.5rem;">{{ cons.quantite }}</span></td>
+                            <td class="text-end">{{ (cons.prix_unitaire or 0)|round(2) }}</td>
+                            <td class="text-end font-weight-bold">{{ (cons.prix_total or 0)|round(2) }} DA</td>
+                        </tr>
+                        {% endfor %}
+                        <tr class="table-total-row">
+                            <td colspan="3" class="text-end">Total Consommables</td>
+                            <td class="text-end">{{ (acte.prix_consommables_specifiques or 0)|round(2) }} DA</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            {% endif %}
+
+            <!-- Hospitalisation -->
+            {% if hospitalisations %}
+            <div class="card-section">
+                <div class="card-header-clean">
+                    <h3><i class="fas fa-bed"></i> Séjour & Hospitalisation</h3>
+                </div>
+                <table class="clean-table">
+                    <thead>
+                        <tr>
+                            <th>Chambre</th>
+                            <th class="text-center">Dates</th>
+                            <th class="text-center">Jours</th>
+                            <th class="text-end">Prix/J</th>
+                            <th class="text-end">Total</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for hosp in hospitalisations %}
+                        <tr>
+                            <td>
+                                {{ hosp.type_chambre_nom }}
+                                {% if hosp.type_hospitalisation == 'REANIMATION' %}
+                                <span class="status-badge badge-danger ms-2" style="font-size: 0.7rem;">Réa</span>
+                                {% endif %}
+                            </td>
+                            <td class="text-center text-muted" style="font-size: 0.85rem;">
+                                {{ hosp.date_entree.strftime('%d/%m') }} <i class="fas fa-arrow-right mx-1"></i> {{
+                                hosp.date_sortie.strftime('%d/%m') }}
+                            </td>
+                            <td class="text-center">
+                                {{ hosp.nombre_nuitees_facturees or hosp.nombre_nuitees }}
+                                {% if hosp.nombre_nuitees != hosp.nombre_nuitees_facturees %}
+                                <i class="fas fa-info-circle text-info"
+                                    title="{{ hosp.nombre_nuitees - (hosp.nombre_nuitees_facturees or 0) }} nuit(s) incluse(s)"></i>
+                                {% endif %}
+                            </td>
+                            <td class="text-end">{{ (hosp.prix_unitaire or 0)|round(2) }}</td>
+                            <td class="text-end font-weight-bold">{{ (hosp.prix_total or 0)|round(2) }} DA</td>
+                        </tr>
+                        {% endfor %}
+                        <tr class="table-total-row">
+                            <td colspan="4" class="text-end">Total Hospitalisation (hors forfait)</td>
+                            <td class="text-end">{{ (acte.prix_hospitalisation_hors_forfait or 0)|round(2) }} DA</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            {% endif %}
+
+            <!-- Suppléments & Actes Annexes (Combined Logic for UI cleanliness) -->
+            {% if supplements or actes_supplementaires %}
+            <div class="card-section">
+                <div class="card-header-clean">
+                    <h3><i class="fas fa-plus-circle"></i> Suppléments & Actes Annexes</h3>
+                </div>
+                <table class="clean-table">
+                    <thead>
+                        <tr>
+                            <th>Désignation</th>
+                            <th>Type</th>
+                            <th class="text-end">Total</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for supp in supplements %}
+                        <tr>
+                            <td>{{ supp.description or 'Supplément' }}</td>
+                            <td><span class="status-badge badge-warning">Supplément</span></td>
+                            <td class="text-end">{{ (supp.prix or 0)|round(2) }} DA</td>
+                        </tr>
+                        {% endfor %}
+                        {% for acte_supp in actes_supplementaires %}
+                        <tr>
+                            <td>
+                                {{ acte_supp.nom_acte }}
+                                {% if acte_supp.quantite > 1 %}x{{ acte_supp.quantite }}{% endif %}
+                            </td>
+                            <td><span class="status-badge badge-success">Acte secondaire</span></td>
+                            <td class="text-end">{{ (acte_supp.prix_total or 0)|round(2) }} DA</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% endif %}
+
+            <!-- Anesthésie -->
+            {% if anesthesie %}
+            <div class="card-section">
+                <div class="card-header-clean">
+                    <h3><i class="fas fa-heartbeat"></i> Anesthésie</h3>
+                </div>
+                <div class="card-body-clean">
+                    {% for anesth in anesthesie %}
+                    <div class="d-flex justify-content-between align-items-center mb-2 pb-2 border-bottom">
+                        <div>
+                            <strong>{{ anesth.nom_personnel }}</strong>
+                            <div class="text-muted small">{{ anesth.nom_acte }} ({{ anesth.duree_reelle or 0 }} min)
+                            </div>
+                        </div>
+                        <span class="status-badge badge-gray">{{ (anesth.honoraires_calcules or 0)|round(2) }} DA</span>
+                    </div>
+                    {% endfor %}
+                    <div class="d-flex justify-content-between mt-3">
+                        <strong>Forfait Anesthésie (Facturé dossier)</strong>
+                        <strong class="text-primary">{{ (acte.prix_anesthesie or 0)|round(2) }} DA</strong>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Consommables Médecin -->
+            {% if consommables_medecin %}
+            <div class="card-section" style="border-left: 4px solid var(--success);">
+                <div class="card-header-clean">
+                    <h3 class="text-success"><i class="fas fa-user-md"></i> Consommables Médecin</h3>
+                </div>
+                <div class="card-body-clean">
+                    <div class="alert alert-success py-2 px-3 small mb-3">
+                        <i class="fas fa-check"></i> Ajouté directement à la part du médecin.
+                    </div>
+                    <table class="clean-table">
+                        {% for cons in consommables_medecin %}
+                        <tr>
+                            <td>{{ cons.description }}</td>
+                            <td class="text-end fw-bold text-success">+ {{ (cons.prix or 0)|round(2) }} DA</td>
+                        </tr>
+                        {% endfor %}
+                    </table>
+                </div>
+            </div>
+            {% endif %}
+
+        </div>
+
+        <!-- Colonne Droite : Sticky Sidebar Financière -->
+        <div class="col-lg-4">
+            <div class="sticky-sidebar">
+
+                <!-- Ticket Récapitulatif -->
+                <div class="summary-card">
+                    <div class="summary-header">
+                        <h4 style="margin: 0;">Récapitulatif Financier</h4>
+                        <div style="font-size: 0.8rem; opacity: 0.8; margin-top: 5px;">{{ acte.statut_paiement }}</div>
+                    </div>
+
+                    <div class="summary-body">
+                        <!-- Calculs -->
+                        <div class="bill-row">
+                            <span>Prix de base</span>
+                            <span>{{ (acte.prix_acte_base or 0)|round(2) }} DA</span>
+                        </div>
+
+                        {% if acte.mode_calcul == 'PRIX_TOTAL' %}
+                        <div class="bill-row">
+                            <span>Déductions</span>
+                            <span class="text-danger">- {{ (acte.total_deductions or 0)|round(2) }} DA</span>
+                        </div>
+                        {% endif %}
+
+                        {% if acte.prix_consommables_medecin %}
+                        <div class="bill-row text-success">
+                            <span><i class="fas fa-plus-circle text-xs"></i> Conso. Médecin</span>
+                            <span>+ {{ (acte.prix_consommables_medecin or 0)|round(2) }} DA</span>
+                        </div>
+                        {% endif %}
+
+                        <div class="bill-row highlight">
+                            <span>Base Calcul %</span>
+                            <span>{{ (acte.base_calcul or 0)|round(2) }} DA</span>
+                        </div>
+
+                        <!-- Résultat Médecin -->
+                        <div class="bill-total">
+                            <span>Part Médecin</span>
+                            <span>{{ (acte.part_medecin or 0)|round(2) }} DA</span>
+                        </div>
+                        <div class="text-center mt-2 small text-muted">
+                            ({{ acte.pourcentage_medecin }}% du montant éligible)
+                        </div>
+
+                        <hr style="margin: 1.5rem 0; border-color: var(--border);">
+
+                        <!-- Logique Reste à Payer -->
+                        {% set total_global = 0 %}
+                        {% if acte.mode_calcul == 'PRIX_BASE' %}
+                        {% set total_global = (acte.prix_acte_base or 0) + (acte.prix_consommables_specifiques or 0) +
+                        (acte.prix_hospitalisation_hors_forfait or 0) + (acte.prix_supplements or 0) +
+                        (acte.prix_actes_supplementaires or 0) + (acte.prix_anesthesie or 0) %}
+                        {% else %}
+                        {% set total_global = (acte.prix_acte_base or 0) %}
+                        {% endif %}
+
+                        {% set reste_a_payer = total_global - (total_deja_paye or 0) %}
+
+                        <div class="d-flex justify-content-between mb-2">
+                            <span class="text-muted">Total Patient</span>
+                            <strong>{{ total_global|round(2) }} DA</strong>
+                        </div>
+                        <div class="d-flex justify-content-between mb-3">
+                            <span class="text-success"><i class="fas fa-check-circle"></i> Déjà payé</span>
+                            <span class="text-success">- {{ (total_deja_paye or 0)|round(2) }} DA</span>
+                        </div>
+
+                        <div class="small text-muted mb-3 text-end" style="font-size: 0.8rem;">
+                            (Total des encaissements effectués dans le dossier)
+                        </div>
+
+                        <div
+                            style="background: #f8fafc; padding: 1rem; border-radius: 8px; text-align: center; border: 1px dashed var(--border);">
+                            <div
+                                style="font-size: 0.8rem; text-transform: uppercase; color: var(--secondary); font-weight: bold;">
+                                Reste à payer</div>
+                            <div
+                                style="font-size: 1.5rem; font-weight: 800; color: {% if reste_a_payer > 1 %}var(--danger){% else %}var(--success){% endif %};">
+                                {{ reste_a_payer|round(2) }} DA
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+                <!-- Actions -->
+                <div style="margin-top: 1.5rem; display: flex; flex-direction: column; gap: 0.75rem;">
+
+                    {% if not acte.est_annule %}
+                    <a href="{{ url_for('medecin_interne_paiements_patients_list', id_acte=acte.id_acte) }}"
+                        class="btn-custom btn-action-primary">
+                        <i class="fas fa-cash-register"></i> Gérer Paiements
+                    </a>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;">
+                        <a href="{{ url_for('medecin_interne_actes_edit', id_acte=acte.id_acte) }}"
+                            class="btn-custom btn-action-outline">
+                            <i class="fas fa-edit"></i> Modifier
+                        </a>
+                        <a href="{{ url_for('medecin_interne_acte_export_pdf', id_acte=acte.id_acte) }}" target="_blank"
+                            class="btn-custom btn-action-outline">
+                            <i class="fas fa-print"></i> PDF
+                        </a>
+                    </div>
+
+                    <button type="button" class="btn-custom btn-action-danger" style="margin-top: 0.5rem;"
+                        data-bs-toggle="modal" data-bs-target="#modalAnnulerActe">
+                        <i class="fas fa-trash-alt"></i> Annuler l'acte
+                    </button>
+                    {% else %}
+                    <button type="button" class="btn-custom btn-success text-white" data-bs-toggle="modal"
+                        data-bs-target="#modalRestaurerActe">
+                        <i class="fas fa-undo"></i> Restaurer l'acte
+                    </button>
+                    {% endif %}
+                </div>
+
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Annulation Redesign -->
+<div class="modal fade" id="modalAnnulerActe" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content" style="border: none; border-radius: var(--radius-lg); box-shadow: var(--shadow-lg);">
+            <div class="modal-header" style="background: var(--danger-light); border-bottom: 1px solid #fee2e2;">
+                <h5 class="modal-title text-danger fw-bold"><i class="fas fa-exclamation-triangle"></i> Annulation</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST" action="{{ url_for('medecin_interne_actes_annuler', id_acte=acte.id_acte) }}">
+                <div class="modal-body p-4">
+                    <p class="text-secondary mb-3">Vous êtes sur le point d'annuler cet acte médical. Cette action
+                        impactera les calculs financiers.</p>
+                    <div class="form-group">
+                        <label class="form-label fw-bold small text-uppercase">Motif obligatoire</label>
+                        <textarea name="motif_annulation" class="form-control" rows="3" required
+                            style="background: #f9fafb;"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer" style="border-top: 1px solid var(--border);">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Retour</button>
+                    <button type="submit" class="btn btn-danger">Confirmer l'annulation</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Restauration -->
+<div class="modal fade" id="modalRestaurerActe" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content" style="border: none; border-radius: var(--radius-lg);">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title"><i class="fas fa-undo"></i> Restaurer</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST" action="{{ url_for('medecin_interne_actes_restaurer', id_acte=acte.id_acte) }}">
+                <div class="modal-body p-4 text-center">
+                    <div style="font-size: 3rem; color: var(--success); margin-bottom: 1rem;">
+                        <i class="far fa-check-circle"></i>
+                    </div>
+                    <p class="fw-bold">Voulez-vous réactiver cet acte ?</p>
+                    <p class="text-muted small">L'acte sera de nouveau comptabilisé dans les recettes.</p>
+                </div>
+                <div class="modal-footer justify-content-center border-0 pb-4">
+                    <button type="button" class="btn btn-light px-4" data-bs-dismiss="modal">Non</button>
+                    <button type="submit" class="btn btn-success px-4">Oui, restaurer</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

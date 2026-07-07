@@ -1,0 +1,14 @@
+{% extends 'layout.html' %}
+{% block content %}
+<div class="container text-center mt-5">
+    <div class="alert alert-danger" role="alert">
+        <h1 class="display-4">Erreur de connexion à la base de données</h1>
+        <p class="lead">Nous rencontrons des difficultés pour accéder à la base de données.</p>
+        <hr class="my-4">
+        <p>Veuillez réessayer plus tard ou contacter l'administrateur si le problème persiste.</p>
+        <a href="/" class="btn btn-primary btn-lg mt-3" role="button">
+            Retour à l'accueil
+        </a>
+    </div>
+</div>
+{% endblock %}

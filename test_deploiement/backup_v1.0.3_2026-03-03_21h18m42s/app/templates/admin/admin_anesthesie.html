@@ -1,0 +1,848 @@
+{% extends "admin/admin_layout.html" %}
+
+{% block style %}
+<style>
+    :root {
+        --primary: #6366f1;
+        --primary-dark: #4f46e5;
+        --success: #10b981;
+        --danger: #ef4444;
+        --warning: #f59e0b;
+        --info: #3b82f6;
+    }
+
+    .nav-tabs .nav-link {
+        color: #6b7280;
+        font-weight: 600;
+        border: none;
+        border-bottom: 3px solid transparent;
+        transition: all 0.3s;
+    }
+
+    .nav-tabs .nav-link:hover {
+        border-color: var(--primary);
+        color: var(--primary);
+    }
+
+    .nav-tabs .nav-link.active {
+        color: var(--primary);
+        border-bottom-color: var(--primary);
+        background: transparent;
+    }
+
+    .table-modern {
+        border-collapse: separate;
+        border-spacing: 0;
+    }
+
+    .table-modern thead th {
+        background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+        color: white;
+        font-weight: 600;
+        padding: 1rem;
+        border: none;
+    }
+
+    .table-modern tbody tr {
+        transition: all 0.3s;
+        border-bottom: 1px solid #e5e7eb;
+    }
+
+    .table-modern tbody tr:hover {
+        background: rgba(99, 102, 241, 0.05);
+        transform: scale(1.01);
+    }
+
+    .table-modern tbody td {
+        padding: 1rem;
+        vertical-align: middle;
+    }
+
+    .badge-status {
+        padding: 0.5rem 1rem;
+        border-radius: 50px;
+        font-weight: 600;
+    }
+
+    .btn-action {
+        width: 36px;
+        height: 36px;
+        padding: 0;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 8px;
+        transition: all 0.3s;
+    }
+
+    .btn-action:hover {
+        transform: scale(1.1);
+    }
+
+    .modal-header {
+        background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+        color: white;
+        border-radius: 12px 12px 0 0;
+    }
+
+    .modal-content {
+        border-radius: 12px;
+        border: none;
+        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+    }
+
+    .form-label {
+        font-weight: 600;
+        color: #374151;
+        margin-bottom: 0.5rem;
+    }
+
+    .form-control:focus,
+    .form-select:focus {
+        border-color: var(--primary);
+        box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
+    }
+
+    .card-stats {
+        border-radius: 12px;
+        border: none;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        transition: all 0.3s;
+    }
+
+    .card-stats:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<div class="container-fluid py-4">
+    <!-- En-tête -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <h2>
+                    <i class="bi bi-gear-fill text-primary"></i>
+                    Configuration Anesthésie
+                </h2>
+                <a href="{{ url_for('anesthesie_honoraires_global') }}" class="btn btn-outline-primary">
+                    <i class="bi bi-currency-dollar"></i> Voir les honoraires
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistiques rapides -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card card-stats bg-primary text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="mb-0">Actes</h6>
+                            <h3 class="mb-0">{{ actes|length }}</h3>
+                        </div>
+                        <i class="bi bi-clipboard-pulse" style="font-size: 2.5rem; opacity: 0.8;"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card card-stats bg-success text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="mb-0">Personnel</h6>
+                            <h3 class="mb-0">{{ personnel|length }}</h3>
+                        </div>
+                        <i class="bi bi-people-fill" style="font-size: 2.5rem; opacity: 0.8;"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card card-stats bg-info text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="mb-0">Tarifs intervenants</h6>
+                            <h3 class="mb-0">{{ tarifs|length }}</h3>
+                        </div>
+                        <i class="bi bi-cash-stack" style="font-size: 2.5rem; opacity: 0.8;"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card card-stats bg-warning text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="mb-0">Types d'intervenants</h6>
+                            <h3 class="mb-0">{{ types_intervenants|length }}</h3>
+                        </div>
+                        <i class="bi bi-person-badge" style="font-size: 2.5rem; opacity: 0.8;"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Onglets -->
+    <div class="card">
+        <div class="card-body">
+            <ul class="nav nav-tabs mb-4" id="configTabs" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active" id="actes-tab" data-bs-toggle="tab" data-bs-target="#actes"
+                        type="button">
+                        <i class="bi bi-clipboard-pulse"></i> Actes d'anesthésie
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="personnel-tab" data-bs-toggle="tab" data-bs-target="#personnel"
+                        type="button">
+                        <i class="bi bi-people"></i> Personnel
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="tarifs-tab" data-bs-toggle="tab" data-bs-target="#tarifs"
+                        type="button">
+                        <i class="bi bi-cash-stack"></i> Honoraires intervenants
+                    </button>
+                </li>
+            </ul>
+
+            <div class="tab-content" id="configTabsContent">
+                <!-- ONGLET ACTES -->
+                <div class="tab-pane fade show active" id="actes" role="tabpanel">
+                    <div class="mb-3">
+                        <button class="btn btn-primary" onclick="showActeModal()">
+                            <i class="bi bi-plus-lg"></i> Nouvel acte
+                        </button>
+                    </div>
+
+                    <div class="table-responsive">
+                        <table class="table table-modern">
+                            <thead>
+                                <tr>
+                                    <th>Nom de l'acte</th>
+                                    <th>Description</th>
+                                    <th class="text-end">Tarif forfaitaire</th>
+                                    <th class="text-center">Statut</th>
+                                    <th class="text-center">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for acte in actes %}
+                                <tr>
+                                    <td><strong>{{ acte.nom_acte }}</strong></td>
+                                    <td>{{ acte.description or '-' }}</td>
+                                    <td class="text-end">
+                                        <strong class="text-primary">
+                                            {{ "%.2f"|format(acte.tarif_forfaitaire) if acte.tarif_forfaitaire else '-'
+                                            }} DA
+                                        </strong>
+                                    </td>
+                                    <td class="text-center">
+                                        {% if acte.est_actif %}
+                                        <span class="badge badge-status bg-success">Actif</span>
+                                        {% else %}
+                                        <span class="badge badge-status bg-secondary">Inactif</span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="text-center">
+                                        <button class="btn btn-sm btn-primary btn-action"
+                                            onclick="editActe({{ acte.id_acte_anesthesie }})" title="Modifier">
+                                            <i class="bi bi-pencil"></i>
+                                        </button>
+                                        <button class="btn btn-sm btn-warning btn-action"
+                                            onclick="toggleActe({{ acte.id_acte_anesthesie }})"
+                                            title="Activer/Désactiver">
+                                            <i class="bi bi-toggle-on"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- ONGLET PERSONNEL -->
+                <div class="tab-pane fade" id="personnel" role="tabpanel">
+                    <div class="mb-3">
+                        <button class="btn btn-success" onclick="showPersonnelModal()">
+                            <i class="bi bi-plus-lg"></i> Nouveau personnel
+                        </button>
+                    </div>
+
+                    <div class="table-responsive">
+                        <table class="table table-modern">
+                            <thead>
+                                <tr>
+                                    <th>Nom complet</th>
+                                    <th>Type</th>
+                                    <th class="text-center">Statut</th>
+                                    <th class="text-center">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for p in personnel %}
+                                <tr>
+                                    <td><strong>{{ p.nom_complet }}</strong></td>
+                                    <td>
+                                        <span class="badge 
+                                            {% if p.nom_type == 'REANIMATEUR' %}bg-success
+                                            {% elif p.nom_type == 'TECH_ANESTHESISTE' %}bg-info
+                                            {% else %}bg-warning{% endif %}">
+                                            {{ p.nom_type }}
+                                        </span>
+                                    </td>
+                                    <td class="text-center">
+                                        {% if p.est_actif %}
+                                        <span class="badge badge-status bg-success">Actif</span>
+                                        {% else %}
+                                        <span class="badge badge-status bg-secondary">Inactif</span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="text-center">
+                                        <button class="btn btn-sm btn-primary btn-action"
+                                            onclick="editPersonnel({{ p.id_personnel_anesthesie }})" title="Modifier">
+                                            <i class="bi bi-pencil"></i>
+                                        </button>
+                                        <button class="btn btn-sm btn-warning btn-action"
+                                            onclick="togglePersonnel({{ p.id_personnel_anesthesie }})"
+                                            title="Activer/Désactiver">
+                                            <i class="bi bi-toggle-on"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- ONGLET TARIFS (HONORAIRES INTERVENANTS) -->
+                <div class="tab-pane fade" id="tarifs" role="tabpanel">
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle"></i>
+                        <strong>Note :</strong> Ces tarifs représentent les honoraires des intervenants.
+                        Le tarif forfaitaire de l'acte lui-même est défini dans l'onglet "Actes d'anesthésie".
+                    </div>
+
+                    <div class="mb-3">
+                        <button class="btn btn-info" onclick="showTarifModal()">
+                            <i class="bi bi-plus-lg"></i> Nouveau tarif intervenant
+                        </button>
+                    </div>
+
+                    <div class="table-responsive">
+                        <table class="table table-modern">
+                            <thead>
+                                <tr>
+                                    <th>Acte</th>
+                                    <th>Type intervenant</th>
+                                    <th class="text-end">Honoraires base</th>
+                                    <th class="text-end">Suppl. 30min</th>
+                                    <th class="text-center">Durée avant suppl.</th>
+                                    <th class="text-center">Statut</th>
+                                    <th class="text-center">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for t in tarifs %}
+                                <tr>
+                                    <td><strong>{{ t.nom_acte }}</strong></td>
+                                    <td>
+                                        <span class="badge 
+                                            {% if t.nom_type == 'REANIMATEUR' %}bg-success
+                                            {% elif t.nom_type == 'TECH_ANESTHESISTE' %}bg-info
+                                            {% else %}bg-warning{% endif %}">
+                                            {{ t.nom_type }}
+                                        </span>
+                                    </td>
+                                    <td class="text-end">{{ "%.2f"|format(t.honoraires_base) }} DA</td>
+                                    <td class="text-end">
+                                        {{ "%.2f"|format(t.supplement_30min) if t.supplement_30min else '-' }}
+                                    </td>
+                                    <td class="text-center">{{ t.duree_avant_supplement or '-' }}</td>
+                                    <td class="text-center">
+                                        {% if t.est_actif %}
+                                        <span class="badge badge-status bg-success">Actif</span>
+                                        {% else %}
+                                        <span class="badge badge-status bg-secondary">Inactif</span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="text-center">
+                                        <button class="btn btn-sm btn-primary btn-action"
+                                            onclick="editTarif({{ t.id_tarif }})" title="Modifier">
+                                            <i class="bi bi-pencil"></i>
+                                        </button>
+                                        <button class="btn btn-sm btn-warning btn-action"
+                                            onclick="toggleTarif({{ t.id_tarif }})" title="Activer/Désactiver">
+                                            <i class="bi bi-toggle-on"></i>
+                                        </button>
+                                        <button class="btn btn-sm btn-danger btn-action"
+                                            onclick="deleteTarif({{ t.id_tarif }})" title="Supprimer">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Acte -->
+<div class="modal fade" id="acteModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="acteModalLabel">
+                    <i class="bi bi-clipboard-pulse"></i> <span id="acteModalTitle">Nouvel acte</span>
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="acteForm">
+                    <input type="hidden" id="acte_id">
+                    <div class="mb-3">
+                        <label class="form-label">Nom de l'acte *</label>
+                        <input type="text" class="form-control" id="acte_nom" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Description</label>
+                        <textarea class="form-control" id="acte_description" rows="2"></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Tarif forfaitaire de l'acte (DA)</label>
+                        <input type="number" class="form-control" id="acte_tarif_forfaitaire" step="0.01" min="0">
+                        <small class="text-muted">Prix de l'acte d'anesthésie lui-même</small>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                <button type="button" class="btn btn-primary" onclick="saveActe()">
+                    <i class="bi bi-check-lg"></i> Enregistrer
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Personnel -->
+<div class="modal fade" id="personnelModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="bi bi-people"></i> <span id="personnelModalTitle">Nouveau personnel</span>
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="personnelForm">
+                    <input type="hidden" id="personnel_id">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Nom *</label>
+                            <input type="text" class="form-control" id="personnel_nom" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Prénom *</label>
+                            <input type="text" class="form-control" id="personnel_prenom" required>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Type d'intervenant *</label>
+                        <select class="form-select" id="personnel_type" required>
+                            <option value="">-- Sélectionner --</option>
+                            {% for type in types_intervenants %}
+                            <option value="{{ type.id_type_intervenant }}">{{ type.nom_type }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                <button type="button" class="btn btn-success" onclick="savePersonnel()">
+                    <i class="bi bi-check-lg"></i> Enregistrer
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Tarif (Honoraires Intervenant) -->
+<div class="modal fade" id="tarifModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="bi bi-cash-stack"></i> <span id="tarifModalTitle">Nouveau tarif intervenant</span>
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-info mb-3">
+                    <i class="bi bi-info-circle"></i>
+                    Ces honoraires concernent la rémunération de l'intervenant,
+                    pas le prix de l'acte qui est défini dans la configuration de l'acte.
+                </div>
+
+                <form id="tarifForm">
+                    <input type="hidden" id="tarif_id">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Acte *</label>
+                            <select class="form-select" id="tarif_acte" required>
+                                <option value="">-- Sélectionner --</option>
+                                {% for acte in actes %}
+                                <option value="{{ acte.id_acte_anesthesie }}">{{ acte.nom_acte }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Type d'intervenant *</label>
+                            <select class="form-select" id="tarif_type" required>
+                                <option value="">-- Sélectionner --</option>
+                                {% for type in types_intervenants %}
+                                <option value="{{ type.id_type_intervenant }}">{{ type.nom_type }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Honoraires de base (DA) *</label>
+                            <input type="number" class="form-control" id="tarif_honoraires_base" step="0.01" min="0"
+                                required>
+                            <small class="text-muted">Rémunération de base de l'intervenant</small>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Supplément 30 min (DA)</label>
+                            <input type="number" class="form-control" id="tarif_supplement" step="0.01" min="0">
+                            <small class="text-muted">Supplément d'honoraires par 30 min</small>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Durée avant supplément (min)</label>
+                        <input type="number" class="form-control" id="tarif_duree_avant_supp" min="0">
+                        <small class="text-muted">Durée avant application des suppléments</small>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                <button type="button" class="btn btn-info" onclick="saveTarif()">
+                    <i class="bi bi-check-lg"></i> Enregistrer
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Données globales
+    const actesData = {{ actes| tojson | safe }};
+    const personnelData = {{ personnel| tojson | safe }};
+    const tarifsData = {{ tarifs| tojson | safe }};
+
+    // ========================================================================
+    // GESTION DES ACTES
+    // ========================================================================
+
+    function showActeModal(id = null) {
+        document.getElementById('acteForm').reset();
+        document.getElementById('acte_id').value = '';
+        document.getElementById('acteModalTitle').textContent = 'Nouvel acte';
+
+        if (id) {
+            const acte = actesData.find(a => a.id_acte_anesthesie === id);
+            if (acte) {
+                document.getElementById('acte_id').value = acte.id_acte_anesthesie;
+                document.getElementById('acte_nom').value = acte.nom_acte;
+                document.getElementById('acte_description').value = acte.description || '';
+                document.getElementById('acte_tarif_forfaitaire').value = acte.tarif_forfaitaire || '';
+                document.getElementById('acteModalTitle').textContent = 'Modifier l\'acte';
+            }
+        }
+
+        new bootstrap.Modal(document.getElementById('acteModal')).show();
+    }
+
+    function editActe(id) {
+        showActeModal(id);
+    }
+
+    async function saveActe() {
+        const id = document.getElementById('acte_id').value;
+        const data = {
+            nom_acte: document.getElementById('acte_nom').value,
+            description: document.getElementById('acte_description').value,
+            tarif_forfaitaire: document.getElementById('acte_tarif_forfaitaire').value ?
+                parseFloat(document.getElementById('acte_tarif_forfaitaire').value) : null
+        };
+
+        try {
+            const url = id ? `/api/anesthesie/actes/${id}` : '/api/anesthesie/actes';
+            const method = id ? 'PUT' : 'POST';
+
+            const response = await fetch(url, {
+                method: method,
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+
+            const result = await response.json();
+
+            if (result.success) {
+                showToast('success', result.message);
+                setTimeout(() => location.reload(), 1000);
+            } else {
+                showToast('danger', result.message);
+            }
+        } catch (e) {
+            showToast('danger', 'Erreur lors de l\'enregistrement');
+        }
+    }
+
+    async function toggleActe(id) {
+        if (!confirm('Voulez-vous changer le statut de cet acte ?')) return;
+
+        try {
+            const response = await fetch(`/api/anesthesie/actes/${id}/toggle`, {
+                method: 'POST'
+            });
+
+            const result = await response.json();
+
+            if (result.success) {
+                showToast('success', result.message);
+                setTimeout(() => location.reload(), 1000);
+            } else {
+                showToast('danger', result.message);
+            }
+        } catch (e) {
+            showToast('danger', 'Erreur lors du changement de statut');
+        }
+    }
+
+    // ========================================================================
+    // GESTION DU PERSONNEL
+    // ========================================================================
+
+    function showPersonnelModal(id = null) {
+        document.getElementById('personnelForm').reset();
+        document.getElementById('personnel_id').value = '';
+        document.getElementById('personnelModalTitle').textContent = 'Nouveau personnel';
+
+        if (id) {
+            const p = personnelData.find(p => p.id_personnel_anesthesie === id);
+            if (p) {
+                document.getElementById('personnel_id').value = p.id_personnel_anesthesie;
+                document.getElementById('personnel_nom').value = p.nom;
+                document.getElementById('personnel_prenom').value = p.prenom;
+                document.getElementById('personnel_type').value = p.id_type_intervenant;
+                document.getElementById('personnelModalTitle').textContent = 'Modifier le personnel';
+            }
+        }
+
+        new bootstrap.Modal(document.getElementById('personnelModal')).show();
+    }
+
+    function editPersonnel(id) {
+        showPersonnelModal(id);
+    }
+
+    async function savePersonnel() {
+        const id = document.getElementById('personnel_id').value;
+        const data = {
+            nom: document.getElementById('personnel_nom').value,
+            prenom: document.getElementById('personnel_prenom').value,
+            id_type_intervenant: parseInt(document.getElementById('personnel_type').value),
+        };
+
+        try {
+            const url = id ? `/api/anesthesie/personnel/${id}` : '/api/anesthesie/personnel';
+            const method = id ? 'PUT' : 'POST';
+
+            const response = await fetch(url, {
+                method: method,
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+
+            const result = await response.json();
+
+            if (result.success) {
+                showToast('success', result.message);
+                setTimeout(() => location.reload(), 1000);
+            } else {
+                showToast('danger', result.message);
+            }
+        } catch (e) {
+            showToast('danger', 'Erreur lors de l\'enregistrement');
+        }
+    }
+
+    async function togglePersonnel(id) {
+        if (!confirm('Voulez-vous changer le statut de ce personnel ?')) return;
+
+        try {
+            const response = await fetch(`/api/anesthesie/personnel/${id}/toggle`, {
+                method: 'POST'
+            });
+
+            const result = await response.json();
+
+            if (result.success) {
+                showToast('success', result.message);
+                setTimeout(() => location.reload(), 1000);
+            } else {
+                showToast('danger', result.message);
+            }
+        } catch (e) {
+            showToast('danger', 'Erreur lors du changement de statut');
+        }
+    }
+
+    // ========================================================================
+    // GESTION DES TARIFS (HONORAIRES INTERVENANTS)
+    // ========================================================================
+
+    function showTarifModal(id = null) {
+        document.getElementById('tarifForm').reset();
+        document.getElementById('tarif_id').value = '';
+        document.getElementById('tarifModalTitle').textContent = 'Nouveau tarif intervenant';
+
+        if (id) {
+            const t = tarifsData.find(t => t.id_tarif === id);
+            if (t) {
+                document.getElementById('tarif_id').value = t.id_tarif;
+                document.getElementById('tarif_acte').value = t.id_acte_anesthesie;
+                document.getElementById('tarif_type').value = t.id_type_intervenant;
+                document.getElementById('tarif_honoraires_base').value = t.honoraires_base;
+                document.getElementById('tarif_supplement').value = t.supplement_30min || '';
+                document.getElementById('tarif_duree_avant_supp').value = t.duree_avant_supplement || '';
+                document.getElementById('tarifModalTitle').textContent = 'Modifier le tarif';
+            }
+        }
+
+        new bootstrap.Modal(document.getElementById('tarifModal')).show();
+    }
+
+    function editTarif(id) {
+        showTarifModal(id);
+    }
+
+    async function saveTarif() {
+        const id = document.getElementById('tarif_id').value;
+        const data = {
+            id_acte_anesthesie: parseInt(document.getElementById('tarif_acte').value),
+            id_type_intervenant: parseInt(document.getElementById('tarif_type').value),
+            honoraires_base: parseFloat(document.getElementById('tarif_honoraires_base').value),
+            supplement_30min: document.getElementById('tarif_supplement').value ?
+                parseFloat(document.getElementById('tarif_supplement').value) : null,
+            duree_avant_supplement: document.getElementById('tarif_duree_avant_supp').value ?
+                parseInt(document.getElementById('tarif_duree_avant_supp').value) : null
+        };
+
+        try {
+            const url = id ? `/api/anesthesie/tarifs/${id}` : '/api/anesthesie/tarifs';
+            const method = id ? 'PUT' : 'POST';
+
+            const response = await fetch(url, {
+                method: method,
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+
+            const result = await response.json();
+
+            if (result.success) {
+                showToast('success', result.message);
+                setTimeout(() => location.reload(), 1000);
+            } else {
+                showToast('danger', result.message);
+            }
+        } catch (e) {
+            showToast('danger', 'Erreur lors de l\'enregistrement');
+        }
+    }
+
+    async function toggleTarif(id) {
+        if (!confirm('Voulez-vous changer le statut de ce tarif ?')) return;
+
+        try {
+            const response = await fetch(`/api/anesthesie/tarifs/${id}/toggle`, {
+                method: 'POST'
+            });
+
+            const result = await response.json();
+
+            if (result.success) {
+                showToast('success', result.message);
+                setTimeout(() => location.reload(), 1000);
+            } else {
+                showToast('danger', result.message);
+            }
+        } catch (e) {
+            showToast('danger', 'Erreur lors du changement de statut');
+        }
+    }
+
+    async function deleteTarif(id) {
+        if (!confirm('Voulez-vous vraiment supprimer ce tarif ? Cette action est irréversible.')) return;
+
+        try {
+            const response = await fetch(`/api/anesthesie/tarifs/${id}`, {
+                method: 'DELETE'
+            });
+
+            const result = await response.json();
+
+            if (result.success) {
+                showToast('success', result.message);
+                setTimeout(() => location.reload(), 1000);
+            } else {
+                showToast('danger', result.message);
+            }
+        } catch (e) {
+            showToast('danger', 'Erreur lors de la suppression');
+        }
+    }
+
+    // ========================================================================
+    // UTILITAIRES
+    // ========================================================================
+
+    function showToast(type, message) {
+        const toast = document.createElement('div');
+        toast.className = `alert alert-${type} alert-dismissible fade show position-fixed top-0 end-0 m-3`;
+        toast.style.zIndex = 9999;
+        toast.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+        document.body.appendChild(toast);
+
+        setTimeout(() => {
+            toast.remove();
+        }, 3000);
+    }
+</script>
+{% endblock %}

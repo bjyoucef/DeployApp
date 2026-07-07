@@ -1,0 +1,489 @@
+{% extends "admin/admin_layout.html" %}
+
+{% block style %}
+<style>
+    .page-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 2rem;
+        border-radius: 12px;
+        margin-bottom: 2rem;
+    }
+
+    .step-card {
+        background: white;
+        border-radius: 12px;
+        padding: 2rem;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        margin-bottom: 1.5rem;
+        border-left: 4px solid #667eea;
+    }
+
+    .step-number {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        font-size: 1.2rem;
+    }
+
+    .bloc-item {
+        padding: 1rem;
+        border: 2px solid #e9ecef;
+        border-radius: 8px;
+        margin-bottom: 0.75rem;
+        transition: all 0.2s;
+        cursor: pointer;
+    }
+
+    .bloc-item:hover {
+        border-color: #667eea;
+        background-color: #f8f9fa;
+    }
+
+    .bloc-item.selected {
+        border-color: #667eea;
+        background-color: #e7f1ff;
+    }
+
+    .bloc-item input[type="checkbox"] {
+        width: 20px;
+        height: 20px;
+        cursor: pointer;
+    }
+
+    .produit-preview {
+        background: #f8f9fa;
+        border-radius: 8px;
+        padding: 1rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .mode-option {
+        padding: 1.5rem;
+        border: 2px solid #e9ecef;
+        border-radius: 10px;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+    .mode-option:hover {
+        border-color: #667eea;
+        background-color: #f8f9fa;
+    }
+
+    .mode-option input[type="radio"]:checked+label {
+        color: #667eea;
+        font-weight: bold;
+    }
+
+    .preview-section {
+        max-height: 400px;
+        overflow-y: auto;
+        background: white;
+        border-radius: 8px;
+        padding: 1rem;
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 3rem;
+        color: #6c757d;
+    }
+
+    .empty-state i {
+        font-size: 4rem;
+        opacity: 0.3;
+        margin-bottom: 1rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- En-tête -->
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item">
+                <a href="{{ url_for('bloc_admin') }}">
+                    <i class="fas fa-hospital me-1"></i>Gestion des Blocs
+                </a>
+            </li>
+            <li class="breadcrumb-item active" aria-current="page">
+                Copier les Produits
+            </li>
+        </ol>
+    </nav>
+
+    <div class="page-header">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h2 class="mb-2">
+                    <i class="fas fa-copy me-2"></i>
+                    Copier les Produits entre Blocs
+                </h2>
+                <p class="mb-0 opacity-75">Dupliquez rapidement la configuration des produits d'un bloc vers d'autres
+                    blocs</p>
+            </div>
+            <a href="{{ url_for('bloc_admin') }}" class="btn btn-light btn-lg">
+                <i class="fas fa-arrow-left me-2"></i>
+                Retour
+            </a>
+        </div>
+    </div>
+
+    <form method="POST" action="{{ url_for('copier_produits') }}" id="copyForm">
+        <div class="row">
+            <!-- Colonne Gauche : Configuration -->
+            <div class="col-lg-7">
+                <!-- Étape 1 : Bloc Source -->
+                <div class="step-card">
+                    <div class="d-flex align-items-start mb-3">
+                        <div class="step-number me-3">1</div>
+                        <div class="flex-grow-1">
+                            <h5 class="mb-2">Sélectionner le Bloc Source</h5>
+                            <p class="text-muted mb-3">Choisissez le bloc dont vous souhaitez copier les produits inclus
+                            </p>
+
+                            <select name="id_bloc_source" id="blocSource" class="form-select form-select-lg" required>
+                                <option value="">-- Sélectionner un bloc source --</option>
+                                {% for bloc in blocs %}
+                                <option value="{{ bloc.id_bloc }}" data-nb-produits="{{ bloc.nb_produits }}" {% if not
+                                    bloc.est_actif %}disabled{% endif %}>
+                                    {{ bloc.name_bloc }}
+                                    ({{ bloc.nb_produits }} produit{{ 's' if bloc.nb_produits > 1 else '' }})
+                                    {% if not bloc.est_actif %} - INACTIF{% endif %}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Étape 2 : Mode de Copie -->
+                <div class="step-card">
+                    <div class="d-flex align-items-start mb-3">
+                        <div class="step-number me-3">2</div>
+                        <div class="flex-grow-1">
+                            <h5 class="mb-2">Mode de Copie</h5>
+                            <p class="text-muted mb-3">Comment gérer les produits déjà existants dans les blocs de
+                                destination ?</p>
+
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <div class="mode-option">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="radio" name="mode_copie"
+                                                id="modeAjouter" value="ajouter" checked>
+                                            <label class="form-check-label w-100" for="modeAjouter">
+                                                <div class="d-flex align-items-center mb-2">
+                                                    <i class="fas fa-plus-circle text-success fs-4 me-2"></i>
+                                                    <strong>Ajouter uniquement</strong>
+                                                </div>
+                                                <small class="text-muted">
+                                                    Ajoute seulement les produits qui n'existent pas déjà dans le bloc
+                                                    de destination
+                                                </small>
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mode-option">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="radio" name="mode_copie"
+                                                id="modeRemplacer" value="remplacer">
+                                            <label class="form-check-label w-100" for="modeRemplacer">
+                                                <div class="d-flex align-items-center mb-2">
+                                                    <i class="fas fa-sync-alt text-warning fs-4 me-2"></i>
+                                                    <strong>Remplacer tout</strong>
+                                                </div>
+                                                <small class="text-muted">
+                                                    Supprime tous les produits existants et copie ceux du bloc source
+                                                </small>
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Étape 3 : Blocs Destination -->
+                <div class="step-card">
+                    <div class="d-flex align-items-start mb-3">
+                        <div class="step-number me-3">3</div>
+                        <div class="flex-grow-1">
+                            <h5 class="mb-2">Sélectionner les Blocs de Destination</h5>
+                            <p class="text-muted mb-3">
+                                Cochez les blocs vers lesquels copier les produits
+                                <span class="badge bg-info ms-2" id="selectedCount">0 sélectionné(s)</span>
+                            </p>
+
+                            <div class="mb-3">
+                                <button type="button" class="btn btn-sm btn-outline-primary" id="selectAll">
+                                    <i class="fas fa-check-double me-1"></i>Tout sélectionner
+                                </button>
+                                <button type="button" class="btn btn-sm btn-outline-secondary" id="deselectAll">
+                                    <i class="fas fa-times me-1"></i>Tout désélectionner
+                                </button>
+                            </div>
+
+                            <div id="blocsDestination" style="max-height: 400px; overflow-y: auto;">
+                                {% for bloc in blocs %}
+                                <div class="bloc-item" data-bloc-id="{{ bloc.id_bloc }}">
+                                    <div class="form-check">
+                                        <input class="form-check-input bloc-checkbox" type="checkbox"
+                                            name="ids_blocs_destination[]" value="{{ bloc.id_bloc }}"
+                                            id="bloc{{ bloc.id_bloc }}" data-bloc-id="{{ bloc.id_bloc }}" {% if not
+                                            bloc.est_actif %}disabled{% endif %}>
+                                        <label class="form-check-label w-100" for="bloc{{ bloc.id_bloc }}">
+                                            <div class="d-flex justify-content-between align-items-center">
+                                                <div>
+                                                    <strong>{{ bloc.name_bloc }}</strong>
+                                                    {% if not bloc.est_actif %}
+                                                    <span class="badge bg-secondary ms-2">Inactif</span>
+                                                    {% endif %}
+                                                </div>
+                                                <span class="badge bg-light text-dark">
+                                                    <i class="fas fa-box me-1"></i>
+                                                    {{ bloc.nb_produits }} produit{{ 's' if bloc.nb_produits > 1 else ''
+                                                    }}
+                                                </span>
+                                            </div>
+                                        </label>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Bouton de soumission -->
+                <div class="d-grid gap-2">
+                    <button type="submit" class="btn btn-primary btn-lg" id="submitBtn" disabled>
+                        <i class="fas fa-copy me-2"></i>
+                        Copier les Produits
+                    </button>
+                </div>
+            </div>
+
+            <!-- Colonne Droite : Aperçu -->
+            <div class="col-lg-5">
+                <div class="card border-0 shadow-sm sticky-top" style="top: 20px;">
+                    <div class="card-header bg-info text-white">
+                        <h5 class="mb-0">
+                            <i class="fas fa-eye me-2"></i>
+                            Aperçu des Produits à Copier
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div id="previewContainer">
+                            <div class="empty-state">
+                                <i class="fas fa-inbox"></i>
+                                <p class="mb-0">Sélectionnez un bloc source pour voir les produits</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+{% block scripts %}
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const blocSourceSelect = document.getElementById('blocSource');
+        const blocsCheckboxes = document.querySelectorAll('.bloc-checkbox');
+        const selectedCountBadge = document.getElementById('selectedCount');
+        const submitBtn = document.getElementById('submitBtn');
+        const previewContainer = document.getElementById('previewContainer');
+        const selectAllBtn = document.getElementById('selectAll');
+        const deselectAllBtn = document.getElementById('deselectAll');
+
+        // Initialize Choices.js
+        const choices = new Choices(blocSourceSelect, {
+            searchEnabled: true,
+            searchPlaceholderValue: 'Rechercher un bloc...',
+            shouldSort: false,
+            position: 'bottom'
+        });
+
+        // Charger l'aperçu des produits
+        blocSourceSelect.addEventListener('change', function () {
+            const blocId = this.value;
+
+            if (!blocId) {
+                previewContainer.innerHTML = `
+                <div class="empty-state">
+                    <i class="fas fa-inbox"></i>
+                    <p class="mb-0">Sélectionnez un bloc source pour voir les produits</p>
+                </div>
+            `;
+                // Désactiver le bloc source dans la liste de destination
+                blocsCheckboxes.forEach(cb => {
+                    cb.disabled = false;
+                    cb.closest('.bloc-item').classList.remove('d-none');
+                });
+                return;
+            }
+
+            // Désactiver le bloc source dans la liste de destination
+            blocsCheckboxes.forEach(cb => {
+                if (cb.dataset.blocId === blocId) {
+                    cb.disabled = true;
+                    cb.checked = false;
+                    cb.closest('.bloc-item').classList.add('d-none');
+                } else if (!cb.closest('.bloc-item').querySelector('input').hasAttribute('disabled')) {
+                    cb.disabled = false;
+                    cb.closest('.bloc-item').classList.remove('d-none');
+                }
+            });
+
+            // Charger les produits via AJAX
+            previewContainer.innerHTML = `
+            <div class="text-center py-4">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Chargement...</span>
+                </div>
+            </div>
+        `;
+
+            fetch(`/bloc/get_produits/${blocId}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success && data.produits.length > 0) {
+                        let html = `
+                        <div class="alert alert-info mb-3">
+                            <i class="fas fa-info-circle me-2"></i>
+                            <strong>${data.produits.length}</strong> produit(s) sera(ont) copié(s)
+                        </div>
+                        <div class="preview-section">
+                    `;
+
+                        data.produits.forEach(produit => {
+                            const prix = parseFloat(produit.prix) || 0;
+                            const qte = parseFloat(produit.qte) || 0;
+
+                            html += `
+                            <div class="produit-preview">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div class="flex-grow-1">
+                                        <div class="fw-bold text-dark">${produit.description}</div>
+                                        <small class="text-muted">
+                                            <i class="fas fa-tag me-1"></i>${prix.toFixed(2)} DA
+                                        </small>
+                                    </div>
+                                    <span class="badge bg-primary">
+                                        Qté: ${qte}
+                                    </span>
+                                </div>
+                            </div>
+                        `;
+                        });
+
+                        html += '</div>';
+                        previewContainer.innerHTML = html;
+                    } else {
+                        previewContainer.innerHTML = `
+                        <div class="empty-state">
+                            <i class="fas fa-box-open"></i>
+                            <p class="mb-0">Ce bloc ne contient aucun produit</p>
+                        </div>
+                    `;
+                    }
+                })
+                .catch(error => {
+                    console.error('Erreur:', error);
+                    previewContainer.innerHTML = `
+                    <div class="alert alert-danger">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        Erreur lors du chargement des produits
+                    </div>
+                `;
+                });
+
+            updateSelectedCount();
+        });
+
+        // Gestion des checkboxes
+        blocsCheckboxes.forEach(checkbox => {
+            checkbox.addEventListener('change', function () {
+                this.closest('.bloc-item').classList.toggle('selected', this.checked);
+                updateSelectedCount();
+            });
+
+            // Clic sur l'item pour cocher/décocher
+            checkbox.closest('.bloc-item').addEventListener('click', function (e) {
+                if (e.target.type !== 'checkbox' && !checkbox.disabled) {
+                    checkbox.checked = !checkbox.checked;
+                    this.classList.toggle('selected', checkbox.checked);
+                    updateSelectedCount();
+                }
+            });
+        });
+
+        // Bouton tout sélectionner
+        selectAllBtn.addEventListener('click', function () {
+            blocsCheckboxes.forEach(cb => {
+                if (!cb.disabled && !cb.closest('.bloc-item').classList.contains('d-none')) {
+                    cb.checked = true;
+                    cb.closest('.bloc-item').classList.add('selected');
+                }
+            });
+            updateSelectedCount();
+        });
+
+        // Bouton tout désélectionner
+        deselectAllBtn.addEventListener('click', function () {
+            blocsCheckboxes.forEach(cb => {
+                cb.checked = false;
+                cb.closest('.bloc-item').classList.remove('selected');
+            });
+            updateSelectedCount();
+        });
+
+        // Mise à jour du compteur et activation du bouton
+        function updateSelectedCount() {
+            const count = Array.from(blocsCheckboxes).filter(cb => cb.checked).length;
+            selectedCountBadge.textContent = `${count} sélectionné(s)`;
+
+            const hasSource = blocSourceSelect.value !== '';
+            const hasDestination = count > 0;
+
+            submitBtn.disabled = !(hasSource && hasDestination);
+        }
+
+        // Validation du formulaire
+        document.getElementById('copyForm').addEventListener('submit', function (e) {
+            const count = Array.from(blocsCheckboxes).filter(cb => cb.checked).length;
+
+            if (count === 0) {
+                e.preventDefault();
+                alert('Veuillez sélectionner au moins un bloc de destination');
+                return false;
+            }
+
+            const mode = document.querySelector('input[name="mode_copie"]:checked').value;
+            const message = mode === 'remplacer'
+                ? `Attention : Cela va SUPPRIMER tous les produits existants dans ${count} bloc(s) et les remplacer. Continuer ?`
+                : `Copier les produits vers ${count} bloc(s) ?`;
+
+            if (!confirm(message)) {
+                e.preventDefault();
+                return false;
+            }
+        });
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,766 @@
+{% extends "layout.html" %}
+
+{% block style %}
+<style>
+    /* Modern Variables */
+    :root {
+        --card-bg: #ffffff;
+        --body-bg: #f8f9fa;
+        --border-color: #e2e8f0;
+        --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+        --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        --text-secondary: #64748b;
+        --radius-md: 16px;
+    }
+
+    [data-theme="dark"] {
+        --card-bg: #1e293b;
+        --body-bg: #0f172a;
+        --border-color: #334155;
+        --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.3);
+        --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.4);
+        --text-secondary: #94a3b8;
+    }
+
+    /* Cards */
+    .glass-card,
+    .stat-card {
+        background: var(--card-bg);
+        border: 1px solid var(--border-color);
+        box-shadow: var(--shadow-sm);
+        border-radius: var(--radius-md);
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+        overflow: hidden;
+        margin-bottom: 1.5rem;
+    }
+
+    .glass-card:hover,
+    .stat-card:hover {
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-md);
+        border-color: #cbd5e1;
+    }
+
+    [data-theme="dark"] .glass-card:hover,
+    [data-theme="dark"] .stat-card:hover {
+        border-color: #475569;
+    }
+
+    /* Stat Cards Specifics */
+    .stat-card {
+        padding: 1.5rem;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+    }
+
+    .stat-card .icon-wrapper {
+        width: 48px;
+        height: 48px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        background: #f1f5f9;
+        color: #764ba2;
+        margin-left: 1rem;
+    }
+
+    [data-theme="dark"] .stat-card .icon-wrapper {
+        background: #334155;
+        color: #a78bfa;
+    }
+
+    /* Page Header */
+    .page-header {
+        background: var(--card-bg);
+        border-radius: var(--radius-md);
+        padding: 1.5rem 2rem;
+        margin-bottom: 2rem;
+        border: 1px solid var(--border-color);
+        box-shadow: var(--shadow-sm);
+    }
+
+    /* Rankings Table */
+    .ranking-table tr td {
+        vertical-align: middle;
+        padding: 1rem 0.75rem;
+    }
+
+    .ranking-badge {
+        width: 30px;
+        height: 30px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+        margin: 0 auto;
+        font-weight: bold;
+    }
+
+    .rank-1 {
+        background: linear-gradient(135deg, #FFD700, #FDB931);
+        color: #fff;
+        box-shadow: 0 4px 10px rgba(255, 215, 0, 0.4);
+    }
+
+    .rank-2 {
+        background: linear-gradient(135deg, #E0E0E0, #BDBDBD);
+        color: #fff;
+        box-shadow: 0 4px 10px rgba(189, 189, 189, 0.4);
+    }
+
+    .rank-3 {
+        background: linear-gradient(135deg, #CD7F32, #A0522D);
+        color: #fff;
+        box-shadow: 0 4px 10px rgba(205, 127, 50, 0.4);
+    }
+
+    .rank-other {
+        background: #f1f5f9;
+        color: var(--text-secondary);
+    }
+
+    /* Chart Container */
+    .chart-box {
+        position: relative;
+        height: 400px;
+        width: 100%;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Header -->
+    <div class="page-header d-flex justify-content-between align-items-center flex-wrap gap-3">
+        <div>
+            <h1 class="h3 fw-bold mb-1" style="color: var(--primary-color);">
+                <i class="fas fa-chart-line me-2"></i>{{ title }}
+            </h1>
+            <small class="text-muted">Analyse comparative des performances</small>
+        </div>
+        <div>
+            <a href="{{ url_for(config.list_route) }}" class="btn btn-outline-secondary btn-sm rounded-pill px-3">
+                <i class="fas fa-arrow-left me-1"></i>Retour
+            </a>
+        </div>
+    </div>
+
+    <!-- Filtres -->
+    <div class="glass-card mb-4">
+        <div class="card-body">
+            <form method="GET" class="row g-3 align-items-end">
+                <div class="col-md-3">
+                    <label class="form-label small text-muted fw-bold text-uppercase">Date début</label>
+                    <input type="date" name="date_debut" class="form-control bg-light" value="{{ date_debut }}"
+                        required>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label small text-muted fw-bold text-uppercase">Date fin</label>
+                    <input type="date" name="date_fin" class="form-control bg-light" value="{{ date_fin }}" required>
+                </div>
+                <div class="col-md-3">
+                    <button type="submit" class="btn btn-primary w-100 rounded-3 text-white">
+                        <i class="fas fa-filter me-1"></i>Filtrer
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Statistiques globales -->
+    <div class="row g-3 mb-4">
+        <div class="col-sm-6 col-lg-3">
+            <div class="stat-card">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <div class="text-uppercase small fw-bold mb-1 text-muted">Total {{ config.item_label_plural }}
+                        </div>
+                        <div class="fs-2 fw-bold text-dark">{{ totaux.total_items }}</div>
+                    </div>
+                    <div class="icon-wrapper">
+                        <i class="{{ config.item_icon }}"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-sm-6 col-lg-3">
+            <div class="stat-card">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <div class="text-uppercase small fw-bold mb-1 text-muted">Honoraires Totaux</div>
+                        <div class="fs-2 fw-bold text-primary">{{ "{:,.0f}".format(totaux.total_honoraires).replace(",",
+                            " ") }}</div>
+                    </div>
+                    <div class="icon-wrapper text-primary bg-primary bg-opacity-10">
+                        <i class="fas fa-coins"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-sm-6 col-lg-3">
+            <div class="stat-card">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <div class="text-uppercase small fw-bold mb-1 text-muted">CA Total Généré</div>
+                        <div class="fs-2 fw-bold text-warning">{{ "{:,.0f}".format(totaux.ca_total).replace(",", " ") }}
+                        </div>
+                    </div>
+                    <div class="icon-wrapper text-warning bg-warning bg-opacity-10">
+                        <i class="fas fa-chart-line"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-sm-6 col-lg-3">
+            <div class="stat-card">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <div class="text-uppercase small fw-bold mb-1 text-muted">Honoraires Moyens</div>
+                        <div class="fs-2 fw-bold text-info">
+                            {{ "{:,.0f}".format(totaux.total_honoraires / totaux.total_items if totaux.total_items > 0
+                            else 0).replace(",", " ") }}
+                        </div>
+                    </div>
+                    <div class="icon-wrapper text-info bg-info bg-opacity-10">
+                        <i class="fas fa-calculator"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <!-- Classement des médecins -->
+        <div class="col-lg-8">
+            <div class="glass-card h-100">
+                <div class="card-header border-bottom bg-transparent py-3">
+                    <h5 class="mb-0 fw-bold text-dark"><i class="fas fa-trophy text-warning me-2"></i>Classement par
+                        Honoraires</h5>
+                </div>
+                <div class="table-responsive">
+                    <table class="table ranking-table table-hover align-middle mb-0">
+                        <thead class="bg-light">
+                            <tr>
+                                <th class="text-center" style="width: 60px;">Rang</th>
+                                <th class="text-secondary text-uppercase small fw-bold">Médecin</th>
+                                {% if config.show_specialite %}
+                                <th class="text-secondary text-uppercase small fw-bold">Spécialité</th>
+                                {% endif %}
+                                <th class="text-center text-secondary text-uppercase small fw-bold">Actes</th>
+                                {% if config.extra_columns %}
+                                {% for col in config.extra_columns %}
+                                <th class="{{ col.class }} text-secondary text-uppercase small fw-bold">{{ col.label }}
+                                </th>
+                                {% endfor %}
+                                {% endif %}
+                                <th class="text-end text-secondary text-uppercase small fw-bold">Honoraires</th>
+                                <th class="text-end d-none d-sm-table-cell text-secondary text-uppercase small fw-bold">
+                                    Moyens</th>
+                                <th class="text-center text-secondary text-uppercase small fw-bold">Perf.</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for stat in stats_medecins %}
+                            <tr>
+                                <td class="text-center">
+                                    {% if loop.index == 1 %}
+                                    <div class="ranking-badge rank-1">1</div>
+                                    {% elif loop.index == 2 %}
+                                    <div class="ranking-badge rank-2">2</div>
+                                    {% elif loop.index == 3 %}
+                                    <div class="ranking-badge rank-3">3</div>
+                                    {% else %}
+                                    <div class="ranking-badge rank-other">{{ loop.index }}</div>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <div class="fw-bold text-dark">{{ stat.medecin }}</div>
+                                </td>
+                                {% if config.show_specialite %}
+                                <td>
+                                    {% if stat.specialite_badge %}
+                                    <span class="badge {{ stat.specialite_badge.class }}">{{ stat.specialite }}</span>
+                                    {% else %}
+                                    <span class="text-muted small">{{ stat.specialite }}</span>
+                                    {% endif %}
+                                </td>
+                                {% endif %}
+                                <td class="text-center">
+                                    <span
+                                        class="badge bg-secondary bg-opacity-10 text-dark border border-secondary border-opacity-25 rounded-pill px-2">{{
+                                        stat.nb_items }}</span>
+                                </td>
+                                {% if config.extra_columns %}
+                                {% for col in config.extra_columns %}
+                                <td class="{{ col.class }} text-dark">{{ stat[col.field] }}</td>
+                                {% endfor %}
+                                {% endif %}
+                                <td class="text-end fw-bold text-primary">
+                                    {{ "{:,.0f}".format(stat.total_honoraires).replace(",", " ") }}
+                                </td>
+                                <td class="text-end d-none d-sm-table-cell text-muted small">
+                                    {{ "{:,.0f}".format(stat.honoraires_moyens).replace(",", " ") }}
+                                </td>
+                                <td class="text-center" style="width: 100px;">
+                                    {% set max_honoraires = stats_medecins[0].total_honoraires if stats_medecins else 1
+                                    %}
+                                    {% set percentage = (stat.total_honoraires / max_honoraires * 100) if max_honoraires
+                                    > 0 else 0 %}
+                                    <div class="progress"
+                                        style="height: 6px; width: 80px; margin: 0 auto; background-color: #e2e8f0;">
+                                        <div class="progress-bar bg-gradient-primary" role="progressbar"
+                                            style="width: {{ '{:.0f}'.format(percentage) }}%; background: var(--primary-gradient);"
+                                            aria-valuenow="{{ percentage }}" aria-valuemin="0" aria-valuemax="100">
+                                        </div>
+                                    </div>
+                                    <div class="small text-muted mt-1" style="font-size: 0.7rem;">{{
+                                        "{:.0f}".format(percentage) }}%</div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Évolution mensuelle -->
+        <div class="col-lg-4">
+            <div class="glass-card h-100">
+                <div class="card-header border-bottom bg-transparent py-3">
+                    <h5 class="mb-0 fw-bold text-dark"><i class="fas fa-calendar-alt text-primary me-2"></i>Évolution
+                        Mensuelle</h5>
+                </div>
+                <div class="card-body p-0">
+                    {% if evolution %}
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead class="bg-light">
+                                <tr>
+                                    <th class="ps-4 text-secondary text-uppercase small fw-bold">Mois</th>
+                                    <th class="text-center text-secondary text-uppercase small fw-bold">Nb</th>
+                                    <th class="text-end pe-4 text-secondary text-uppercase small fw-bold">Honoraires
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for e in evolution %}
+                                <tr>
+                                    <td class="ps-4 fw-semibold text-dark">{{ e.mois }}</td>
+                                    <td class="text-center"><span
+                                            class="badge bg-secondary bg-opacity-10 text-dark rounded-pill">{{
+                                            e.nb_items }}</span></td>
+                                    <td class="text-end pe-4 fw-bold text-primary">
+                                        {{ "{:,.0f}".format(e.honoraires).replace(",", " ") }}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-5 text-muted">
+                        <i class="fas fa-calendar-times mb-2 fa-2x opacity-50"></i>
+                        <p>Aucune donnée disponible</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Graphiques -->
+    <div class="row g-4 mt-2">
+        <div class="col-lg-6">
+            <div class="glass-card">
+                <div class="card-body">
+                    <div class="chart-box">
+                        <canvas id="chartHonoraires"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-6">
+            <div class="glass-card">
+                <div class="card-body">
+                    <div class="chart-box">
+                        <canvas id="chartRepartition"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4 mt-2">
+        <div class="col-12">
+            <div class="glass-card">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+                        <h5 class="mb-0 fw-bold text-dark">Évolution des honoraires</h5>
+                        <div class="btn-group shadow-sm rounded-pill overflow-hidden" role="group">
+                            <button type="button" class="btn btn-sm btn-outline-primary border-0 active"
+                                data-period="day">Jour</button>
+                            <button type="button" class="btn btn-sm btn-outline-primary border-0"
+                                data-period="week">Semaine</button>
+                            <button type="button" class="btn btn-sm btn-outline-primary border-0"
+                                data-period="month">Mois</button>
+                            <button type="button" class="btn btn-sm btn-outline-primary border-0"
+                                data-period="year">Année</button>
+                        </div>
+                    </div>
+                    <div class="chart-box">
+                        <canvas id="chartEvolution"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4 mt-2">
+        <div class="col-12">
+            <div class="glass-card">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+                        <h5 class="mb-0 fw-bold text-dark">Évolution du nombre d'actes</h5>
+                        <div class="btn-group shadow-sm rounded-pill overflow-hidden" role="group">
+                            <button type="button" class="btn btn-sm btn-outline-primary border-0 active"
+                                data-period-acts="day">Jour</button>
+                            <button type="button" class="btn btn-sm btn-outline-primary border-0"
+                                data-period-acts="week">Semaine</button>
+                            <button type="button" class="btn btn-sm btn-outline-primary border-0"
+                                data-period-acts="month">Mois</button>
+                            <button type="button" class="btn btn-sm btn-outline-primary border-0"
+                                data-period-acts="year">Année</button>
+                        </div>
+                    </div>
+                    <div class="chart-box">
+                        <canvas id="chartEvolutionActes"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/chart-4.4.0.umd.min.js') }}"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        // Theme Detection & Colors
+        const getCssVar = (name) => getComputedStyle(document.body).getPropertyValue(name).trim();
+        const isDark = document.body.getAttribute('data-theme') === 'dark'; // Check initial state
+
+        // Standard Colors
+        Chart.defaults.color = getCssVar('--text-secondary') || '#64748b';
+        Chart.defaults.borderColor = getCssVar('--border-color') || '#e2e8f0';
+        Chart.defaults.font.family = "'Inter', sans-serif";
+
+        const primaryColor = '#7a6ad8'; // Matches CSS --primary-color (approx)
+        const primaryGradient = 'rgba(122, 106, 216, 0.2)';
+
+        const debutInput = document.querySelector('input[name="date_debut"]');
+        const finInput = document.querySelector('input[name="date_fin"]');
+
+        const savedDebut = localStorage.getItem('date_debut');
+        const savedFin = localStorage.getItem('date_fin');
+
+        if (savedDebut && savedFin) {
+            debutInput.value = savedDebut;
+            finInput.value = savedFin;
+        } else if (!debutInput.value || !finInput.value) {
+            const today = new Date();
+            const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
+            const lastDay = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+
+            debutInput.value = firstDay.toISOString().split('T')[0];
+            finInput.value = lastDay.toISOString().split('T')[0];
+        }
+
+        const form = debutInput.closest('form');
+        form.addEventListener('submit', function () {
+            localStorage.setItem('date_debut', debutInput.value);
+            localStorage.setItem('date_fin', finInput.value);
+        });
+
+        const apiUrl = "{{ url_for(config.api_chart_data_route) if config.api_chart_data_route else '' }}";
+
+        function formatMoney(value) {
+            return value.toLocaleString('fr-DZ', { minimumFractionDigits: 0 }) + ' DA';
+        }
+
+        function formatPeriodLabel(period, value) {
+            const [year, rest] = value.split(/[-W]/);
+            switch (period) {
+                case 'day': return new Date(value).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' });
+                case 'week': return `Semaine ${parseInt(rest)} ${year}`;
+                case 'month':
+                    const date = new Date(year, rest - 1, 1);
+                    return date.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
+                case 'year': return value;
+            }
+        }
+
+        function groupDataByPeriod(data, period, cumulative = false) {
+            const grouped = {};
+            data.forEach(item => {
+                const date = new Date(item.periode);
+                let key;
+
+                switch (period) {
+                    case 'day': key = date.toISOString().split('T')[0]; break;
+                    case 'week':
+                        const week = getWeekNumber(date);
+                        key = `${date.getFullYear()}-W${week.toString().padStart(2, '0')}`;
+                        break;
+                    case 'month':
+                        key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+                        break;
+                    case 'year':
+                        key = date.getFullYear().toString();
+                        break;
+                }
+                if (!grouped[key]) grouped[key] = { periode: key, honoraires: 0, nb_actes: 0 };
+                grouped[key].honoraires += parseFloat(item.honoraires || 0);
+                grouped[key].nb_actes += parseInt(item.nb || 0);
+            });
+
+            const result = Object.values(grouped).sort((a, b) => a.periode.localeCompare(b.periode));
+            if (cumulative) result.forEach((item, i) => { if (i > 0) item.honoraires += result[i - 1].honoraires; });
+            return result;
+        }
+
+        function getWeekNumber(d) {
+            const date = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+            date.setUTCDate(date.getUTCDate() + 4 - (date.getUTCDay() || 7));
+            const yearStart = new Date(Date.UTC(date.getUTCFullYear(), 0, 1));
+            return Math.ceil((((date - yearStart) / 86400000) + 1) / 7);
+
+        }
+
+        let evolutionChart = null;
+        function updateEvolutionChart(data, period, cumulative = false) {
+            const ctx = document.getElementById('chartEvolution');
+            if (!ctx) return;
+
+            const groupedData = groupDataByPeriod(data, period, cumulative);
+            const labels = groupedData.map(item => formatPeriodLabel(period, item.periode));
+            const values = groupedData.map(item => item.honoraires);
+
+            if (evolutionChart) evolutionChart.destroy();
+
+            evolutionChart = new Chart(ctx.getContext('2d'), {
+                type: 'line',
+                data: {
+                    labels,
+                    datasets: [{
+                        label: `Honoraires (${cumulative ? 'cumulés' : 'par période'})`,
+                        data: values,
+                        backgroundColor: primaryGradient,
+                        borderColor: primaryColor,
+                        borderWidth: 3,
+                        fill: true,
+                        tension: 0.4,
+                        pointRadius: 4,
+                        pointHoverRadius: 7
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: {
+                        mode: 'index',
+                        intersect: false,
+                    },
+                    plugins: {
+                        title: { display: false },
+                        legend: { display: false },
+                        tooltip: {
+                            backgroundColor: 'rgba(0,0,0,0.8)',
+                            padding: 12,
+                            titleFont: { size: 14, weight: 'bold' },
+                            bodyFont: { size: 13 },
+                            cornerRadius: 8,
+                            callbacks: {
+                                label: ctx => formatMoney(ctx.raw)
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: { callback: v => formatMoney(v) },
+                            grid: { color: Chart.defaults.borderColor }
+                        },
+                        x: {
+                            ticks: { maxRotation: 45, minRotation: 45 },
+                            grid: { display: false }
+                        }
+                    }
+                }
+            });
+        }
+
+        let evolutionActesChart = null;
+        function updateEvolutionActesChart(data, period) {
+            const ctx = document.getElementById('chartEvolutionActes');
+            if (!ctx) return;
+
+            const groupedData = groupDataByPeriod(data, period);
+
+            const labels = groupedData.map(item => formatPeriodLabel(period, item.periode));
+            const values = groupedData.map(item => item.nb_actes);
+
+            if (evolutionActesChart) evolutionActesChart.destroy();
+
+            evolutionActesChart = new Chart(ctx.getContext('2d'), {
+                type: 'bar',
+                data: {
+                    labels,
+                    datasets: [{
+                        label: "Nombre d'actes",
+                        data: values,
+                        backgroundColor: 'rgba(16, 185, 129, 0.7)',
+                        borderColor: 'rgba(16, 185, 129, 1)',
+                        borderWidth: 1,
+                        borderRadius: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: {
+                        mode: 'index',
+                        intersect: false,
+                    },
+                    plugins: {
+                        title: { display: false },
+                        legend: { display: false }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: { stepSize: 1 },
+                            grid: { color: Chart.defaults.borderColor }
+                        },
+                        x: {
+                            ticks: { maxRotation: 45, minRotation: 45 },
+                            grid: { display: false }
+                        }
+                    }
+                }
+            });
+        }
+
+        let currentPeriod = 'day';
+        let cumulative = false;
+
+        document.querySelectorAll('[data-period], [data-period-acts]').forEach(btn => {
+            btn.addEventListener('click', function () {
+                const isHonoraires = this.hasAttribute('data-period');
+                const period = isHonoraires ? this.getAttribute('data-period') : this.getAttribute('data-period-acts');
+
+                if (isHonoraires) {
+                    currentPeriod = period;
+                    document.querySelectorAll('[data-period]').forEach(b => b.classList.remove('active'));
+                    this.classList.add('active');
+                    loadEvolutionData(period);
+                } else {
+                    document.querySelectorAll('[data-period-acts]').forEach(b => b.classList.remove('active'));
+                    this.classList.add('active');
+                    loadEvolutionActesData(period);
+                }
+            });
+        });
+
+        document.getElementById('toggle-cumulative')?.addEventListener('click', function () {
+            cumulative = !cumulative;
+            this.classList.toggle('active');
+            loadEvolutionData(currentPeriod);
+        });
+
+        function loadEvolutionData(period = 'day') {
+            if (!apiUrl) return console.error('URL API non définie');
+            fetch(`${apiUrl}?date_debut={{ date_debut }}&date_fin={{ date_fin }}`)
+                .then(r => r.json())
+                .then(data => {
+                    if (data.evolution?.length > 0) {
+                        updateEvolutionChart(data.evolution, period, cumulative);
+                        updateEvolutionActesChart(data.evolution, period);
+                    }
+                })
+                .catch(e => console.error('Erreur API:', e));
+        }
+
+        const medecins = {{ stats_medecins | tojson | safe
+    }};
+    const evolution = {{ evolution | tojson | safe }};
+    const config = {{ config | tojson | safe }};
+
+    const ctx1 = document.getElementById('chartHonoraires');
+    if (ctx1 && medecins.length > 0) {
+        new Chart(ctx1, {
+            type: 'bar',
+            data: {
+                labels: medecins.map(m => m.medecin.split(' ').slice(-1)[0]),
+                datasets: [{
+                    label: 'Honoraires (DA)',
+                    data: medecins.map(m => m.total_honoraires),
+                    backgroundColor: 'rgba(102, 126, 234, 0.8)',
+                    borderColor: 'rgba(102, 126, 234, 1)',
+                    borderWidth: 1,
+                    borderRadius: 6
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    title: { display: false },
+                    legend: { display: false }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: { callback: v => v.toLocaleString() },
+                        grid: { color: Chart.defaults.borderColor }
+                    },
+                    x: { grid: { display: false } }
+                }
+            }
+        });
+    }
+
+    const ctx2 = document.getElementById('chartRepartition');
+    if (ctx2 && config.chart_repartition_data) {
+        new Chart(ctx2, {
+            type: config.chart_repartition_type || 'doughnut',
+            data: config.chart_repartition_data,
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    title: {
+                        display: true,
+                        text: config.chart_repartition_title || 'Répartition',
+                        font: { size: 16, weight: '600' }
+                    },
+                    legend: { position: 'right' }
+                },
+                layout: { padding: 20 }
+            }
+        });
+    }
+
+    if (config.api_chart_data_route) {
+        loadEvolutionData('day');
+    }
+    });
+</script>
+{% endblock %}

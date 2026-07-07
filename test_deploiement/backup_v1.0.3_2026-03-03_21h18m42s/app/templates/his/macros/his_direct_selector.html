@@ -1,0 +1,1762 @@
+{% macro render(field_name='patient_oid', field_id='patientSelectDirect', filter_gender='', min_age=0,
+selected_value=None,
+selected_label=None) %}
+<label class="form-label text-danger">
+    <i class="fas fa-user-injured"></i>
+    Patient *
+    {% if filter_gender == 'F' %}
+    <span class="badge bg-pink">Femmes uniquement</span>
+    {% elif filter_gender == 'M' %}
+    <span class="badge bg-info">Hommes uniquement</span>
+    {% endif %}
+</label>
+<select name="{{ field_name }}" id="{{ field_id }}" class="form-select" data-gender-filter="{{ filter_gender }}"
+    required>
+    <option value="">-- Rechercher un patient --</option>
+    {% if selected_value %}
+    <option value="{{ selected_value }}" selected>{{ selected_label }}</option>
+    {% endif %}
+</select>
+
+<script>
+    (function () {
+        const patientSelector = {
+            fieldId: '{{ field_id }}',
+            genderFilter: '{{ filter_gender }}',
+            minAge: {{ min_age|default (0)
+    }},
+    choicesInstance: null,
+        selectedPatientOid: null,
+            searchTimeout: null
+        };
+
+    function initPatientSelector() {
+        const selectElement = document.getElementById(patientSelector.fieldId);
+        if (!selectElement || selectElement.dataset.initialized) return;
+
+        selectElement.dataset.initialized = 'true';
+
+        try {
+            patientSelector.choicesInstance = new Choices(selectElement, {
+                searchEnabled: true,
+                searchPlaceholderValue: 'Rechercher un patient (nom, prénom, code)...',
+                noResultsText: 'Aucun patient trouvé',
+                itemSelectText: 'Sélectionner',
+                loadingText: 'Recherche en cours...',
+                placeholder: true,
+                placeholderValue: '-- Rechercher un patient --',
+                shouldSort: false
+            });
+
+            selectElement.addEventListener('search', handlePatientSearch);
+            selectElement.addEventListener('change', handlePatientChange);
+        } catch (e) {
+            console.error('Erreur initialisation Choices.js:', e);
+        }
+    }
+
+    async function handlePatientSearch(event) {
+        clearTimeout(patientSelector.searchTimeout);
+        const query = event.detail.value;
+
+        if (query.length < 2) return;
+
+        patientSelector.searchTimeout = setTimeout(async () => {
+            try {
+                // ✅ NOUVEAU : Ajouter le paramètre gender et min_age à l'URL
+                let url = `/api/his-direct/patients/search?q=${encodeURIComponent(query)}&limit=20`;
+
+                if (patientSelector.genderFilter) {
+                    url += `&gender=${encodeURIComponent(patientSelector.genderFilter)}`;
+                }
+
+                if (patientSelector.minAge > 0) {
+                    url += `&min_age=${patientSelector.minAge}`;
+                }
+
+                const response = await fetch(url);
+                const data = await response.json();
+
+                if (data.success && data.patients) {
+                    const choices = data.patients.map(p => ({
+                        value: p.oid,
+                        label: `${p.first_name} ${p.last_name} - ${p.code}${p.age ? ' (' + p.age + ' ans)' : ''}`,
+                        customProperties: p
+                    }));
+
+                    patientSelector.choicesInstance.setChoices(choices, 'value', 'label', true);
+                }
+            } catch (error) {
+                console.error('Erreur recherche patients:', error);
+            }
+        }, 300);
+    }
+
+    function handlePatientChange(event) {
+        const patientOid = event.target.value;
+        patientSelector.selectedPatientOid = patientOid;
+
+        const selectedOption = event.target.options[event.target.selectedIndex];
+        if (selectedOption && patientOid) {
+            const label = selectedOption.text;
+            const patientName = label.split(' - ')[0];
+
+            const hiddenField = document.getElementById('patientNameHidden');
+            if (hiddenField) {
+                hiddenField.value = patientName;
+            }
+
+            // ✅ NOUVEAU : Récupérer l'âge depuis les customProperties
+            const choice = patientSelector.choicesInstance.getValue(true);
+            const allChoices = patientSelector.choicesInstance._store.choices;
+            const selectedChoice = allChoices.find(c => c.value === patientOid);
+            if (selectedChoice && selectedChoice.customProperties) {
+                const age = selectedChoice.customProperties.age;
+                const ageField = document.getElementById('patientAgeHidden');
+                if (ageField) {
+                    ageField.value = age || '';
+                }
+            }
+
+            updateHistoryButton(patientOid, false);
+        } else {
+            updateHistoryButton(null, true);
+            // Reset age field when no patient selected
+            const ageField = document.getElementById('patientAgeHidden');
+            if (ageField) ageField.value = '';
+        }
+    }
+
+    function updateHistoryButton(patientOid, disabled) {
+        const btnHistory = document.getElementById('btnPatientHistoryDirect');
+        if (btnHistory) {
+            btnHistory.disabled = disabled;
+            if (patientOid) {
+                btnHistory.setAttribute('data-patient-oid', patientOid);
+            } else {
+                btnHistory.removeAttribute('data-patient-oid');
+            }
+        }
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initPatientSelector);
+    } else {
+        initPatientSelector();
+    }
+    }) ();
+</script>
+{% endmacro %}
+
+{# Macro pour le modal d'historique patient - VERSION OPTIMISÉE #}
+{% macro render_modal(modal_id='modalPatientHistoryDirect') %}
+<div class="modal fade" id="{{ modal_id }}" tabindex="-1" aria-labelledby="{{ modal_id }}Label">
+    <div class="modal-dialog modal-xl modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title" id="{{ modal_id }}Label">
+                    <i class="fas fa-user-injured"></i>
+                    <span id="{{ modal_id }}-patient-name">Historique Patient</span>
+                    <span class="badge bg-light text-success ms-2">
+                        <i class="fas fa-bolt"></i> Temps réel
+                    </span>
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+
+            <div class="modal-body bg-light"
+                style="background-image: radial-gradient(#450a54 0.5px, transparent 0.5px); background-size: 20px 20px; background-color: #f8f9fa;">
+                <div id="{{ modal_id }}-loading" class="text-center py-5">
+                    <div class="spinner-border text-violet" role="status" style="width: 3rem; height: 3rem;">
+                        <span class="visually-hidden">Chargement...</span>
+                    </div>
+                    <p class="mt-3 text-muted">Connexion au serveur HIS en cours...</p>
+                </div>
+
+                <div id="{{ modal_id }}-content" style="display: none;">
+
+                    <!-- Zone pour afficher les doublons détectés -->
+                    <div id="{{ modal_id }}-duplicates-selector"></div>
+
+                    <!-- Intro Section: Patient & Balance -->
+                    <div class="row mb-4">
+                        <div class="col-lg-8">
+                            <div class="glass-card h-100 p-4">
+                                <h6 class="text-violet mb-3"><i class="fas fa-id-card me-2"></i> Informations Patient
+                                </h6>
+                                <div id="{{ modal_id }}-patient-info"></div>
+                            </div>
+                        </div>
+                        <div class="col-lg-4">
+                            <div class="glass-card h-100 p-4">
+                                <h6 class="text-violet mb-3"><i class="fas fa-wallet me-2"></i> Balance</h6>
+                                <div id="{{ modal_id }}-balance"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Fees Breakdown -->
+                    <div class="glass-card p-4 mb-4">
+                        <h6 class="text-violet mb-3"><i class="fas fa-chart-pie me-2"></i> Résumé des Frais</h6>
+                        <div id="{{ modal_id }}-fees-breakdown"></div>
+                    </div>
+
+                    <!-- Tabs & Content -->
+                    <div class="glass-card p-4">
+                        <ul class="nav nav-tabs mb-4 border-bottom-0" role="tablist">
+                            <li class="nav-item" role="presentation" style="display:none">
+                                <button class="nav-link active" data-bs-toggle="tab"
+                                    data-bs-target="#{{ modal_id }}-hospitalisations">
+                                    <i class="fas fa-hospital me-1"></i> Hospitalisations
+                                    <span class="badge bg-violet-light rounded-pill ms-1"
+                                        id="{{ modal_id }}-hospitalisations-count">0</span>
+                                </button>
+                            </li>
+                            <li class="nav-item" role="presentation" style="display:none">
+                                <button class="nav-link" data-bs-toggle="tab" data-bs-target="#{{ modal_id }}-actes">
+                                    <i class="fas fa-notes-medical me-1"></i> Actes
+                                    <span class="badge bg-violet-light rounded-pill ms-1"
+                                        id="{{ modal_id }}-actes-count">0</span>
+                                </button>
+                            </li>
+                            <li class="nav-item" role="presentation" style="display:none">
+                                <button class="nav-link" data-bs-toggle="tab" data-bs-target="#{{ modal_id }}-examens">
+                                    <i class="fas fa-flask me-1"></i> Examens
+                                    <span class="badge bg-violet-light rounded-pill ms-1"
+                                        id="{{ modal_id }}-examens-count">0</span>
+                                </button>
+                            </li>
+                            <li class="nav-item" role="presentation" style="display:none">
+                                <button class="nav-link" data-bs-toggle="tab" data-bs-target="#{{ modal_id }}-nursings">
+                                    <i class="fas fa-user-nurse me-1"></i> Soins
+                                    <span class="badge bg-violet-light rounded-pill ms-1"
+                                        id="{{ modal_id }}-nursings-count">0</span>
+                                </button>
+                            </li>
+                            <li class="nav-item" role="presentation" style="display:none">
+                                <button class="nav-link" data-bs-toggle="tab"
+                                    data-bs-target="#{{ modal_id }}-paiements">
+                                    <i class="fas fa-money-bill-wave me-1"></i> Paiements
+                                    <span class="badge bg-violet-light rounded-pill ms-1"
+                                        id="{{ modal_id }}-paiements-count">0</span>
+                                </button>
+                            </li>
+                            <li class="nav-item" role="presentation" style="display:none">
+                                <button class="nav-link" data-bs-toggle="tab" data-bs-target="#{{ modal_id }}-cis">
+                                    <i class="fas fa-folder-open me-1"></i> Dossiers CIS
+                                    <span class="badge bg-danger rounded-pill ms-1"
+                                        id="{{ modal_id }}-cis-count">0</span>
+                                </button>
+                            </li>
+                        </ul>
+
+                        <div class="tab-content" style="min-height: 200px;">
+                            <div class="tab-pane fade show active" id="{{ modal_id }}-hospitalisations">
+                                <div id="{{ modal_id }}-hospitalisations-content"></div>
+                            </div>
+                            <div class="tab-pane fade" id="{{ modal_id }}-paiements">
+                                <div id="{{ modal_id }}-paiements-content"></div>
+                            </div>
+                            <div class="tab-pane fade" id="{{ modal_id }}-actes">
+                                <div id="{{ modal_id }}-actes-content"></div>
+                            </div>
+                            <div class="tab-pane fade" id="{{ modal_id }}-examens">
+                                <div id="{{ modal_id }}-examens-content"></div>
+                            </div>
+                            <div class="tab-pane fade" id="{{ modal_id }}-nursings">
+                                <div id="{{ modal_id }}-nursings-content"></div>
+                            </div>
+                            <div class="tab-pane fade" id="{{ modal_id }}-cis">
+                                <div id="{{ modal_id }}-cis-content"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="{{ modal_id }}-error" class="alert alert-danger shadow-sm border-0" style="display: none;">
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-exclamation-circle fa-2x me-3"></i>
+                        <div>
+                            <h5 class="alert-heading mb-1">Erreur de chargement</h5>
+                            <span id="{{ modal_id }}-error-message"></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times"></i> Fermer
+                </button>
+                <button type="button" class="btn btn-success" onclick="PatientHistoryModal.refresh()">
+                    <i class="fas fa-sync-alt"></i> Rafraîchir
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+<style>
+    /* Antigravity UI Styles */
+    :root {
+        --ag-violet: #450A54;
+        --ag-violet-light: #6A1B9A;
+        --ag-violet-gradient: linear-gradient(135deg, #450A54 0%, #2a0535 100%);
+        --ag-glass-bg: rgba(255, 255, 255, 0.95);
+        --ag-glass-border: rgba(255, 255, 255, 0.2);
+        --ag-glass-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.15);
+    }
+
+    [data-theme="dark"] {
+        --ag-glass-bg: rgba(30, 30, 30, 0.6);
+        --ag-glass-border: rgba(255, 255, 255, 0.05);
+    }
+
+    .modal-content {
+        border: none;
+        border-radius: 16px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+    }
+
+    .bg-violet-gradient {
+        background: var(--ag-violet-gradient) !important;
+    }
+
+    .bg-violet {
+        --bs-bg-opacity: 1;
+        background-color: rgba(69, 10, 84, var(--bs-bg-opacity)) !important;
+        color: white;
+    }
+
+    .bg-violet-light {
+        --bs-bg-opacity: 1;
+        background-color: rgba(106, 27, 154, var(--bs-bg-opacity)) !important;
+        color: white;
+    }
+
+    .glass-card {
+        background: var(--ag-glass-bg);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        border: 1px solid var(--ag-glass-border);
+        box-shadow: var(--ag-glass-shadow);
+        border-radius: 16px;
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .glass-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 12px 40px rgba(31, 38, 135, 0.2);
+    }
+
+    .text-violet {
+        color: var(--ag-violet) !important;
+    }
+
+    [data-theme="dark"] .text-violet {
+        color: #ce93d8 !important;
+        /* Lighter violet for dark mode */
+    }
+
+    .btn-violet {
+        background-color: var(--ag-violet);
+        color: white;
+        border: none;
+    }
+
+    .btn-violet:hover {
+        background-color: var(--ag-violet-light);
+        color: white;
+    }
+
+    /* History Item Styling */
+    .history-item {
+        border-left: 4px solid var(--ag-violet);
+        padding: 15px;
+        margin-bottom: 15px;
+        border-radius: 8px;
+        background: rgba(255, 255, 255, 0.5);
+    }
+
+    [data-theme="dark"] .history-item {
+        background: rgba(255, 255, 255, 0.05);
+    }
+
+    .history-item:hover {
+        background-color: rgba(69, 10, 84, 0.05);
+        /* Light violet hover */
+    }
+
+    /* Nav Tabs */
+    .nav-tabs .nav-link {
+        border: none;
+        color: #6c757d;
+        font-weight: 500;
+        border-radius: 50px;
+        padding: 8px 16px;
+        margin-right: 5px;
+        transition: all 0.2s;
+    }
+
+    .nav-tabs .nav-link.active {
+        background-color: var(--ag-violet);
+        color: white;
+    }
+
+    .nav-tabs .nav-link:hover:not(.active) {
+        background-color: rgba(69, 10, 84, 0.1);
+        color: var(--ag-violet);
+    }
+
+    /* Badges */
+    .badge-pill-soft {
+        border-radius: 50px;
+        padding: 0.35em 0.8em;
+    }
+
+    .badge-glass-violet-solid {
+        background: linear-gradient(135deg, rgba(69, 10, 84, 0.9), rgba(42, 5, 53, 0.95));
+        backdrop-filter: blur(5px);
+        -webkit-backdrop-filter: blur(5px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        color: white !important;
+        box-shadow: 0 4px 10px rgba(69, 10, 84, 0.25);
+        padding: 0.5em 1em;
+        font-weight: 600;
+        letter-spacing: 0.5px;
+        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+    }
+
+    .badge-glass-success-solid {
+        background: linear-gradient(135deg, rgba(25, 135, 84, 0.9), rgba(20, 108, 67, 0.95));
+        backdrop-filter: blur(5px);
+        -webkit-backdrop-filter: blur(5px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        color: white !important;
+        box-shadow: 0 4px 10px rgba(25, 135, 84, 0.25);
+        padding: 0.5em 1em;
+        font-weight: 600;
+        letter-spacing: 0.5px;
+        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+    }
+
+    .modal-xl {
+        max-width: 95%;
+    }
+
+    @media (max-width: 768px) {
+        .modal-xl {
+            max-width: 100%;
+        }
+    }
+
+    /* Custom Scrollbar */
+    .tab-pane {
+        max-height: 600px;
+        overflow-y: auto;
+        scrollbar-width: thin;
+    }
+
+    /* Table hover */
+    .table-hover tbody tr:hover {
+        background-color: rgba(69, 10, 84, 0.03);
+    }
+</style>
+<script>
+    // Gestionnaire centralisé pour le modal d'historique patient
+    const PatientHistoryModal = (function () {
+        const config = {
+            modalId: '{{ modal_id }}',
+            currentPatientOid: null,
+            detectedDuplicates: [],
+            currentHistoryData: null
+        };
+
+        // Utilitaires de formatage
+        const formatters = {
+            currency: (value) => new Intl.NumberFormat('fr-DZ', {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            }).format(value || 0) + ' DA',
+
+            date: (dateString) => {
+                if (!dateString) return 'N/A';
+                const date = new Date(dateString);
+                return date.toLocaleDateString('fr-FR', {
+                    day: '2-digit',
+                    month: '2-digit',
+                    year: 'numeric'
+                });
+            },
+
+            fullName: (firstName, lastName) => {
+                return `${firstName || ''} ${lastName || ''}`.trim() || 'Patient inconnu';
+            },
+
+            gender: (genderValue) => {
+                if (genderValue == 1 || genderValue === 'M' || genderValue === 'm') return 'Homme';
+                if (genderValue == 2 || genderValue === 'F' || genderValue === 'f') return 'Femme';
+                return 'Non spécifié';
+            }
+        };
+
+        // Gestion des éléments DOM
+        const elements = {
+            loading: () => document.getElementById(`${config.modalId}-loading`),
+            content: () => document.getElementById(`${config.modalId}-content`),
+            error: () => document.getElementById(`${config.modalId}-error`),
+            errorMessage: () => document.getElementById(`${config.modalId}-error-message`),
+            duplicatesSelector: () => document.getElementById(`${config.modalId}-duplicates-selector`),
+            patientInfo: () => document.getElementById(`${config.modalId}-patient-info`),
+            patientName: () => document.getElementById(`${config.modalId}-patient-name`),
+            balance: () => document.getElementById(`${config.modalId}-balance`),
+            feesBreakdown: () => document.getElementById(`${config.modalId}-fees-breakdown`)
+        };
+
+        // Afficher/masquer les sections
+        function showLoading() {
+            elements.loading().style.display = 'block';
+            elements.content().style.display = 'none';
+            elements.error().style.display = 'none';
+            elements.duplicatesSelector().innerHTML = '';
+
+            // Nettoyer les alertes de mode dégradé existantes
+            const oldAlerts = elements.content().querySelectorAll('.js-his-degraded-alert');
+            oldAlerts.forEach(alert => alert.remove());
+        }
+
+        function showContent() {
+            elements.loading().style.display = 'none';
+            elements.content().style.display = 'block';
+            elements.error().style.display = 'none';
+        }
+
+        function showError(message) {
+            elements.loading().style.display = 'none';
+            elements.content().style.display = 'none';
+            elements.error().style.display = 'block';
+            elements.errorMessage().textContent = message;
+        }
+
+        // Charger l'historique patient
+        async function loadPatientHistory(patientOid, skipDuplicates = false) {
+            config.currentPatientOid = patientOid;
+            config.detectedDuplicates = [];
+
+            const modal = new bootstrap.Modal(document.getElementById(config.modalId));
+            showLoading();
+            modal.show();
+
+            let historyData = null;
+            let hisError = null;
+
+            try {
+                // 1. Détecter les doublons (skipping if requested OR if HIS is known to be down/partial)
+                if (!skipDuplicates) {
+                    try {
+                        const dupResponse = await fetch(`/api/his-direct/patients/${patientOid}/duplicates`);
+                        const dupData = await dupResponse.json();
+
+                        if (dupData.success && dupData.duplicates && dupData.duplicates.length > 0) {
+                            config.detectedDuplicates = dupData.duplicates;
+                            displayDuplicatesSelector(dupData.reference_patient, dupData.duplicates);
+                        }
+                    } catch (e) {
+                        console.warn('Erreur détection doublons:', e);
+                    }
+                }
+
+                // 2. Charger l'historique HIS standard
+                try {
+                    const response = await fetch(`/api/his-direct/patients/${patientOid}/history`);
+                    const data = await response.json();
+                    if (data.success) {
+                        historyData = data.history;
+                    } else {
+                        hisError = data.message;
+                    }
+                } catch (e) {
+                    hisError = e.message || "Erreur de connexion HIS";
+                }
+
+                // 3. Charger l'historique CIS (Toujours essayer, même si HIS échoue)
+                let cisDossiers = [];
+                try {
+                    const cisResponse = await fetch(`/api/his-direct/patients/${patientOid}/cis-history`);
+                    const cisData = await cisResponse.json();
+                    if (cisData.success) {
+                        cisDossiers = cisData.cis_dossiers;
+                    }
+                } catch (cisError) {
+                    console.error('Erreur CIS history:', cisError);
+                }
+
+                // 4. Décision d'affichage
+                if (historyData) {
+                    // Cas nominal : HIS est disponible
+                    config.currentHistoryData = historyData;
+                    config.currentHistoryData.cis_dossiers = cisDossiers;
+                    renderPatientHistory(config.currentHistoryData, false);
+                    showContent();
+                } else if (cisDossiers.length > 0) {
+                    // Cas dégradé : HIS inaccessible mais dossiers CIS trouvés
+                    console.warn("Affichage en mode dégradé (CIS uniquement)");
+                    const dummyDate = new Date().toISOString();
+
+                    config.currentHistoryData = {
+                        patient: {
+                            first_name: 'Patient',
+                            last_name: 'Inconnu (HIS Inaccessible)',
+                            code: 'N/A',
+                            birth_date: null,
+                            gender: 0,
+                            id_card_number: 'N/A'
+                        },
+                        balance: {
+                            total_amount: 0, total_paid: 0, balance: 0,
+                            hospitalization_insurance: 0, medical_acts_insurance: 0,
+                            lab_exams_insurance: 0, nursing_insurance: 0, radio_insurance: 0
+                        },
+                        hospitalizations: { count: 0, data: [] },
+                        medical_acts: { count: 0, data: [] },
+                        lab_exams: { count: 0, data: [] },
+                        radio_requests: { count: 0, data: [] },
+                        nursings: { count: 0, data: [] },
+                        payments: { count: 0, data: [] },
+                        encaissements: { count: 0, data: [] },
+                        decaissements: { count: 0, data: [] },
+                        cis_dossiers: cisDossiers
+                    };
+
+                    renderPatientHistory(config.currentHistoryData, false);
+                    showContent();
+
+                    // Afficher une alerte
+                    const contentDiv = elements.content();
+
+                    // Nettoyer les anciennes alertes d'abord
+                    const oldAlerts = contentDiv.querySelectorAll('.js-his-degraded-alert');
+                    oldAlerts.forEach(alert => alert.remove());
+
+                    const alertHtml = `
+                        <div class="alert alert-warning alert-dismissible fade show m-3 js-his-degraded-alert" role="alert">
+                            <i class="fas fa-exclamation-triangle"></i> 
+                            <strong>Mode Dégradé :</strong> Les données du serveur HIS (PostgreSQL) ne sont pas accessibles (${hisError || 'Patient non trouvé'}). 
+                            Seuls les dossiers locaux (Accouchements, Bloc...) sont affichés.
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    `;
+                    contentDiv.insertAdjacentHTML('afterbegin', alertHtml);
+
+                } else {
+                    // Echec total : ni HIS ni CIS
+                    throw new Error(hisError || 'Impossible de charger les données du patient (Patient introuvable)');
+                }
+
+            } catch (error) {
+                console.error('Erreur historique:', error);
+                showError(error.message);
+            }
+        }
+
+        // Afficher le sélecteur de doublons
+        function displayDuplicatesSelector(mainPatient, duplicates) {
+            const container = elements.duplicatesSelector();
+            const mainPatientName = formatters.fullName(mainPatient.first_name, mainPatient.last_name);
+
+            let html = `
+            <div class="alert alert-warning mb-3" role="alert">
+                <div class="d-flex justify-content-between align-items-start mb-3">
+                    <div>
+                        <h6 class="alert-heading mb-2">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            <strong>${duplicates.length} patient(s) similaire(s) détecté(s)</strong>
+                        </h6>
+                        <p class="mb-0">
+                            <small>Sélectionnez les patients dont vous voulez fusionner l'historique avec
+                            <strong class="text-primary">${mainPatient.code} - ${mainPatientName}</strong></small>
+                        </p>
+                    </div>
+                    <button type="button" class="btn btn-sm btn-success" onclick="PatientHistoryModal.mergeSelected()">
+                        <i class="fas fa-layer-group"></i> Fusionner sélectionnés
+                    </button>
+                </div>
+
+                <div class="table-responsive">
+                    <table class="table table-sm table-hover mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th style="width: 40px;">
+                                    <input type="checkbox" class="form-check-input"
+                                           id="selectAllDuplicates"
+                                           onchange="PatientHistoryModal.toggleAll(this.checked)">
+                                </th>
+                                <th>Code</th>
+                                <th>Nom complet</th>
+                                <th>Date naissance</th>
+                                <th>Âge</th>
+                                <th>N° Carte ID</th>
+                                <th>Correspondance</th>
+                            </tr>
+                        </thead>
+                        <tbody>`;
+
+            duplicates.forEach(dup => {
+                const dupFullName = formatters.fullName(dup.first_name, dup.last_name);
+                const matchScore = dup.match_score || 50;
+                const [matchBadge, matchClass] = getMatchBadge(matchScore);
+
+                html += `
+                <tr class="duplicate-row">
+                    <td>
+                        <input type="checkbox" class="form-check-input duplicate-checkbox"
+                               data-oid="${dup.oid}"
+                               data-code="${dup.code}">
+                    </td>
+                    <td><span class="badge bg-secondary">${dup.code}</span></td>
+                    <td><strong>${dupFullName}</strong></td>
+                    <td>${formatters.date(dup.birth_date)}</td>
+                    <td>${dup.age || 'N/A'} ans</td>
+                    <td>${dup.id_card_number || 'N/A'}</td>
+                    <td>
+                        <span class="badge ${matchClass}">${matchBadge} (${matchScore}%)</span>
+                    </td>
+                </tr>`;
+            });
+
+            html += `
+                        </tbody>
+                    </table>
+                </div>
+            </div>`;
+
+            container.innerHTML = html;
+        }
+
+        function getMatchBadge(score) {
+            if (score >= 90) return ['Très probable', 'bg-danger'];
+            if (score >= 80) return ['Probable', 'bg-warning'];
+            return ['Possible', 'bg-info'];
+        }
+
+        // Fusionner les patients sélectionnés
+        async function mergeSelectedPatients() {
+            const selectedOids = [config.currentPatientOid];
+            const codes = [config.currentHistoryData.patient.code];
+
+            document.querySelectorAll('.duplicate-checkbox:checked').forEach(cb => {
+                selectedOids.push(parseInt(cb.dataset.oid));
+                codes.push(cb.dataset.code);
+            });
+
+            if (selectedOids.length === 1) {
+                showToast('⚠️ Veuillez sélectionner au moins un patient à fusionner', "warning");
+                return;
+            }
+
+            if (!confirm(`🔀 Fusionner l'historique de ${selectedOids.length} patients ?\n\nCodes: ${codes.join(', ')}\n\n⚠️ Cette action combine les données mais ne modifie pas la base de données.`)) {
+                return;
+            }
+
+            showLoading();
+
+            try {
+                const response = await fetch('/api/his-direct/patients/merged-history', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': document.querySelector('meta[name="csrf-token"]')?.content || ''
+                    },
+                    body: JSON.stringify({ patient_oids: selectedOids })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    elements.duplicatesSelector().innerHTML = '';
+                    renderPatientHistory(data.history, true);
+                    showContent();
+                } else {
+                    throw new Error(data.message);
+                }
+            } catch (error) {
+                console.error('Erreur fusion:', error);
+                showToast('❌ Erreur lors de la fusion: ' + error.message, "error");
+                showContent();
+            }
+        }
+
+        // Rendre l'historique patient
+        function renderPatientHistory(history, isMerged = false) {
+            const patient = history.patient;
+            const patientName = formatters.fullName(patient.first_name, patient.last_name);
+            const titleSuffix = isMerged ? ' (Historique Fusionné)' : '';
+
+            elements.patientName().textContent = `Historique - ${patientName}${titleSuffix}`;
+
+            // Informations patient
+            renderPatientInfo(patient, history, isMerged);
+
+            // Balance financière
+            renderBalance(history.balance);
+
+            // Résumé des frais
+            renderFeesBreakdown(history);
+
+            // Onglets
+            updateTabCounts(history);
+            renderHospitalisations(history.hospitalizations.data);
+            renderPaiements(history.encaissements.data, history.decaissements.data);
+            renderActes(history.medical_acts.data);
+            renderExamens(history.lab_exams.data, history.radio_requests.data);
+            renderNursings(history.nursings.data);
+            renderCisHistory(history.cis_dossiers || []);
+        }
+
+        function renderPatientInfo(patient, history, isMerged) {
+            const patientName = formatters.fullName(patient.first_name, patient.last_name);
+            const sexe = formatters.gender(patient.gender);
+
+            let mergedBadge = '';
+            if (isMerged && history.merged_count > 0) {
+                const patientsList = history.all_patients.map(p => {
+                    const pFullName = formatters.fullName(p.first_name, p.last_name);
+                    const isMain = p.oid === patient.oid;
+                    return `
+                    <span class="badge ${isMain ? 'bg-violet-gradient' : 'bg-success'} me-1 mb-1 rounded-pill">
+                        ${isMain ? '★ ' : '✓ '}${p.code} - ${pFullName}
+                    </span>
+                `;
+                }).join('');
+
+                mergedBadge = `
+                <div class="alert alert-success mb-3 border-0 shadow-sm" role="alert">
+                    <h6 class="alert-heading mb-2">
+                        <i class="fas fa-check-circle"></i>
+                        <strong>Historique fusionné de ${history.all_patients.length} patient(s)</strong>
+                    </h6>
+                    <hr>
+                    <div class="d-flex flex-wrap mb-2">${patientsList}</div>
+                    <hr class="mt-2 mb-2">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <small class="text-muted">
+                            <i class="fas fa-info-circle"></i>
+                            Les données ci-dessous combinent l'historique de tous ces patients
+                        </small>
+                        <button type="button" class="btn btn-sm btn-outline-violet"
+                                onclick="PatientHistoryModal.show(${config.currentPatientOid})">
+                            <i class="fas fa-user"></i> Voir uniquement ${patient.code}
+                        </button>
+                    </div>
+                </div>
+            `;
+            }
+
+            const patientInfo = `
+            ${mergedBadge}
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <small class="text-muted d-block text-uppercase fw-bold" style="font-size: 0.75rem;">Patient</small>
+                    <div class="d-flex align-items-center">
+                        <div class="avatar bg-violet-light text-white rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 40px; height: 40px;">
+                            <i class="fas fa-user"></i>
+                        </div>
+                        <div>
+                            <h5 class="mb-0 text-dark">${patientName}</h5>
+                            <span class="badge bg-secondary rounded-pill">${patient.code || 'N/A'}</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <small class="text-muted d-block text-uppercase fw-bold" style="font-size: 0.75rem;">Détails</small>
+                    <div class="row">
+                         <div class="col-6">
+                             <span class="d-block"><i class="fas fa-birthday-cake text-violet me-2"></i> ${formatters.date(patient.birth_date)} (${patient.age || 'N/A'} ans)</span>
+                         </div>
+                         <div class="col-6">
+                             <span class="d-block"><i class="fas fa-venus-mars text-violet me-2"></i> ${sexe}</span>
+                         </div>
+                         <div class="col-12 mt-1">
+                             <span class="d-block"><i class="fas fa-id-card text-violet me-2"></i> ${patient.id_card_number || 'N/A'}</span>
+                         </div>
+                    </div>
+                </div>
+            </div>
+        `;
+
+            elements.patientInfo().innerHTML = patientInfo;
+        }
+
+        function renderBalance(balance) {
+            const totalInsurance = balance.hospitalization_insurance +
+                balance.medical_acts_insurance +
+                balance.lab_exams_insurance +
+                balance.nursing_insurance +
+                balance.radio_insurance;
+
+            const balanceHtml = `
+            <div class="row g-2">
+                <div class="col-6">
+                    <div class="p-3 rounded bg-light border-0 h-100">
+                        <small class="text-muted d-block mb-1">Total Facturé</small>
+                        <h5 class="text-violet fw-bold mb-0">${formatters.currency(balance.total_amount)}</h5>
+                    </div>
+                </div>
+                <div class="col-6">
+                    <div class="p-3 rounded bg-light border-0 h-100">
+                        <small class="text-muted d-block mb-1">Total Payé</small>
+                        <h5 class="text-success fw-bold mb-0">${formatters.currency(balance.total_paid)}</h5>
+                    </div>
+                </div>
+                <div class="col-6 mt-2">
+                    <div class="p-3 rounded border-0 h-100 text-white shadow-sm" style="background: var(--ag-violet-gradient);">
+                        <small class="d-block mb-1 opacity-75">Reste à payer</small>
+                        <h4 class="fw-bold mb-0">
+                            ${formatters.currency(Math.abs(balance.balance))}
+                        </h4>
+                        <small class="opacity-75">${balance.balance > 0 ? 'Impayé' : 'Soldé'}</small>
+                    </div>
+                </div>
+                <div class="col-6 mt-2">
+                    <div class="p-3 rounded bg-info bg-opacity-10 border-0 h-100">
+                        <small class="text-info d-block mb-1">Pris en charge</small>
+                        <h5 class="text-info fw-bold mb-0">${formatters.currency(totalInsurance)}</h5>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-3">
+                <div class="progress" style="height: 10px; border-radius: 5px;">
+                     ${balance.total_amount > 0 ? `
+                        <div class="progress-bar bg-success" role="progressbar"
+                             style="width: ${(balance.total_paid / balance.total_amount * 100).toFixed(1)}%"
+                             title="Payé: ${formatters.currency(balance.total_paid)}"></div>
+                        <div class="progress-bar bg-danger" role="progressbar"
+                             style="width: ${(balance.balance / balance.total_amount * 100).toFixed(1)}%"
+                             title="Reste: ${formatters.currency(balance.balance)}"></div>
+                     ` : '<div class="progress-bar bg-secondary" style="width: 100%"></div>'}
+                </div>
+                 <div class="d-flex justify-content-between mt-1 text-muted" style="font-size: 0.75rem;">
+                    <span>Payé: ${(balance.total_amount > 0 ? (balance.total_paid / balance.total_amount * 100) : 0).toFixed(1)}%</span>
+                    <span>Reste: ${(balance.total_amount > 0 ? (balance.balance / balance.total_amount * 100) : 0).toFixed(1)}%</span>
+                </div>
+            </div>
+        `;
+
+            elements.balance().innerHTML = balanceHtml;
+        }
+
+        function renderFeesBreakdown(history) {
+            const balance = history.balance;
+
+            const renderServiceRow = (serviceName, data, insurance) => {
+                if (!data || data.length === 0) {
+                    return '';
+                }
+
+                const totalAmount = data.reduce((sum, item) => sum + (item.amount || 0), 0);
+                const totalPatientPart = data.reduce((sum, item) => sum + (item.patient_part || 0), 0);
+                const totalPaid = data.reduce((sum, item) => sum + (item.patient_payment || 0), 0);
+                const reste = totalAmount - totalPaid;
+
+                return `
+                <tr>
+                    <td>
+                        <span class="d-flex align-items-center">
+                            <span class="badge bg-violet-light bg-opacity-10 text-violet me-2 rounded-pill">${data.length}</span>
+                            <strong>${serviceName}</strong>
+                        </span>
+                    </td>
+                    <td class="text-end text-muted">${formatters.currency(totalAmount)}</td>
+                    <td class="text-end text-muted">${formatters.currency(totalPatientPart)}</td>
+                    <td class="text-end text-success">${formatters.currency(totalPaid)}</td>
+                    <td class="text-end text-info">${formatters.currency(insurance)}</td>
+                    <td class="text-end ${reste > 0 ? 'text-danger fw-bold' : 'text-success'}">
+                        ${formatters.currency(Math.abs(reste))}
+                    </td>
+                </tr>
+            `;
+            };
+
+            const totalInsurance = balance.hospitalization_insurance +
+                balance.medical_acts_insurance +
+                balance.lab_exams_insurance +
+                balance.nursing_insurance +
+                balance.radio_insurance;
+
+            const html = `
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead class="text-muted text-uppercase" style="font-size: 0.75rem; letter-spacing: 0.05em;">
+                        <tr>
+                            <th class="border-0">Service</th>
+                            <th class="text-end border-0">Total</th>
+                            <th class="text-end border-0">Patient</th>
+                            <th class="text-end border-0">Payé</th>
+                            <th class="text-end border-0">Assurance</th>
+                            <th class="text-end border-0">Reste</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${renderServiceRow('Hospitalisations', history.hospitalizations.data, balance.hospitalization_insurance)}
+                        ${renderServiceRow('Actes Médicaux', history.medical_acts.data, balance.medical_acts_insurance)}
+                        ${renderServiceRow('Examens Laboratoire', history.lab_exams.data, balance.lab_exams_insurance)}
+                        ${renderServiceRow('Soins Infirmiers', history.nursings.data, balance.nursing_insurance)}
+                        ${renderServiceRow('Examens Radiologiques', history.radio_requests.data, balance.radio_insurance)}
+                    </tbody>
+                    <tfoot class="bg-light border-top">
+                        <tr>
+                            <th class="text-uppercase text-violet">Total Général</th>
+                            <th class="text-end fw-bold">${formatters.currency(balance.total_amount)}</th>
+                            <th class="text-end text-muted">-</th>
+                            <th class="text-end text-success fw-bold">${formatters.currency(balance.total_paid)}</th>
+                            <th class="text-end text-info fw-bold">${formatters.currency(totalInsurance)}</th>
+                            <th class="text-end ${balance.balance > 0 ? 'text-danger' : 'text-success'} fw-bold">
+                                ${formatters.currency(Math.abs(balance.balance))}
+                            </th>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        `;
+
+            elements.feesBreakdown().innerHTML = html;
+        }
+
+        function updateTabCounts(history) {
+            const counts = {
+                'hospitalisations': history.hospitalizations.count,
+                'paiements': history.payments.count,
+                'actes': history.medical_acts.count,
+                'examens': history.lab_exams.count + history.radio_requests.count,
+                'nursings': history.nursings.count,
+                'cis': history.cis_dossiers ? history.cis_dossiers.length : 0
+            };
+
+            let firstVisibleTab = null;
+            let activeTabHidden = false;
+
+            for (const [key, count] of Object.entries(counts)) {
+                // Update Badge
+                const badge = document.getElementById(`${config.modalId}-${key}-count`);
+                if (badge) badge.textContent = count;
+
+                // Toggle Tab Visibility
+                const tabBtn = document.querySelector(`button[data-bs-target="#${config.modalId}-${key}"]`);
+                if (tabBtn) {
+                    const navItem = tabBtn.closest('.nav-item');
+                    if (navItem) {
+                        if (count > 0) {
+                            navItem.style.display = 'block';
+                            if (!firstVisibleTab) firstVisibleTab = tabBtn;
+                        } else {
+                            navItem.style.display = 'none';
+                            // Check if this hidden tab was active
+                            if (tabBtn.classList.contains('active')) {
+                                activeTabHidden = true;
+                                tabBtn.classList.remove('active');
+                                const pane = document.querySelector(tabBtn.dataset.bsTarget);
+                                if (pane) pane.classList.remove('show', 'active');
+                            }
+                        }
+                    }
+                }
+            }
+
+            // If the active tab was hidden, or no tab is active, select the first visible one
+            if ((activeTabHidden || !document.querySelector('.nav-link.active')) && firstVisibleTab) {
+                const tab = new bootstrap.Tab(firstVisibleTab);
+                tab.show();
+            } else if (!firstVisibleTab) {
+                // Fallback if all are empty (unlikely but possible)
+                // Maybe show a "No Data" message in tab content area?
+                // For now, let's just show the first tab even if empty so it's not blank
+                const firstTabBtn = document.querySelector(`button[data-bs-target="#${config.modalId}-hospitalisations"]`);
+                if (firstTabBtn) {
+                    firstTabBtn.closest('.nav-item').style.display = 'block';
+                    new bootstrap.Tab(firstTabBtn).show();
+                }
+            }
+        }
+
+        function renderHospitalisations(data) {
+            const container = document.getElementById(`${config.modalId}-hospitalisations-content`);
+
+            if (!data || data.length === 0) {
+                container.innerHTML = '<div class="text-center py-5 text-muted"><i class="fas fa-bed fa-3x mb-3 opacity-25"></i><p>Aucune hospitalisation enregistrée</p></div>';
+                return;
+            }
+
+            const html = data.map(h => {
+                const isActive = !h.end_date || new Date(h.end_date) > new Date();
+                const balance = (h.amount || 0) - (h.patient_payment || 0);
+                const paymentRate = h.amount > 0 ? (h.patient_payment / h.amount * 100) : 0;
+                const patientBadge = h.patient_code ?
+                    `<span class="badge bg-info bg-opacity-10 text-info border border-info border-opacity-25 ms-2"><i class="fas fa-user"></i> ${h.patient_code}</span>` : '';
+
+                return `
+            <div class="history-item ${isActive ? 'border-warning' : ''}">
+                <div class="d-flex justify-content-between align-items-start mb-3">
+                    <div>
+                        <h6 class="mb-1 text-violet fw-bold">
+                            <i class="fas fa-hospital me-2"></i>
+                            ${h.service_label || 'Service inconnu'} <small class="text-muted mx-2">/</small> ${h.room_label || 'Chambre inconnue'}
+                            ${isActive ? '<span class="badge bg-warning text-dark ms-2 rounded-pill"><i class="fas fa-heartbeat"></i> En cours</span>' :
+                        '<span class="badge bg-secondary ms-2 rounded-pill">Terminée</span>'}
+                            ${patientBadge}
+                        </h6>
+                        <small class="text-muted">
+                            <i class="fas fa-user-md me-1"></i>
+                            Dr. ${h.doctor_first_name || ''} ${h.doctor_last_name || ''}
+                        </small>
+                    </div>
+                    <div class="text-end">
+                        <span class="badge bg-violet-light text-white rounded-pill mb-1">
+                            <i class="fas fa-moon me-1"></i> ${h.nights_count || 0} ${(h.nights_count > 1) ? 'nuits' : 'nuit'}
+                        </span>
+                        <div class="text-muted small">Code: ${h.code || 'N/A'}</div>
+                    </div>
+                </div>
+
+                <div class="row g-3 mb-3">
+                    <div class="col-md-6">
+                        <div class="d-flex align-items-center p-2 rounded bg-light">
+                            <i class="fas fa-sign-in-alt text-success me-3 fs-5"></i>
+                            <div>
+                                <small class="text-muted d-block text-uppercase" style="font-size: 0.7rem;">Entrée</small>
+                                <strong class="text-dark">${formatters.date(h.start_date)}</strong>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="d-flex align-items-center p-2 rounded bg-light">
+                            <i class="fas fa-sign-out-alt text-danger me-3 fs-5"></i>
+                            <div>
+                                <small class="text-muted d-block text-uppercase" style="font-size: 0.7rem;">Sortie</small>
+                                <strong class="text-dark">${h.end_date ? formatters.date(h.end_date) : '<span class="text-warning">En cours</span>'}</strong>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row g-2 mb-2">
+                    <div class="col-md-3">
+                        <div class="text-center p-2 rounded bg-light border-0">
+                            <small class="text-muted d-block" style="font-size: 0.7rem;">Montant total</small>
+                            <strong class="text-violet d-block">${formatters.currency(h.amount)}</strong>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="text-center p-2 rounded bg-light border-0">
+                            <small class="text-muted d-block" style="font-size: 0.7rem;">Part patient</small>
+                            <strong class="d-block">${formatters.currency(h.patient_part)}</strong>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="text-center p-2 rounded bg-success bg-opacity-10 border-0">
+                            <small class="text-success d-block" style="font-size: 0.7rem;">Payé</small>
+                            <strong class="text-success d-block">${formatters.currency(h.patient_payment)}</strong>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="text-center p-2 rounded ${balance > 0 ? 'bg-danger' : 'bg-success'} bg-opacity-10 border-0">
+                            <small class="${balance > 0 ? 'text-danger' : 'text-success'} d-block" style="font-size: 0.7rem;">Reste</small>
+                            <strong class="${balance > 0 ? 'text-danger' : 'text-success'} d-block">
+                                ${formatters.currency(Math.abs(balance))}
+                            </strong>
+                        </div>
+                    </div>
+                </div>
+
+                ${h.insurance_payment > 0 ? `
+                <div class="alert alert-info border-0 bg-info bg-opacity-10 text-info mb-2 py-2 d-flex align-items-center">
+                    <i class="fas fa-shield-alt me-2"></i>
+                    <div><strong>Assurance:</strong> ${formatters.currency(h.insurance_payment)} pris en charge</div>
+                </div>
+                ` : ''}
+
+                <div class="d-flex align-items-center mt-2">
+                    <div class="progress flex-grow-1" style="height: 6px;">
+                        <div class="progress-bar ${paymentRate >= 100 ? 'bg-success' : paymentRate >= 50 ? 'bg-warning' : 'bg-danger'}"
+                             role="progressbar"
+                             style="width: ${Math.min(paymentRate, 100)}%">
+                        </div>
+                    </div>
+                    <span class="ms-2 small text-muted">${paymentRate.toFixed(0)}%</span>
+                </div>
+
+                ${h.note ? `
+                <div class="mt-2 p-2 bg-warning bg-opacity-10 rounded text-warning-emphasis">
+                    <small>
+                        <i class="fas fa-sticky-note me-1"></i> <strong>Note:</strong> ${h.note}
+                    </small>
+                </div>
+                ` : ''}
+            </div>`;
+            }).join('');
+
+            container.innerHTML = html;
+        }
+
+        function renderPaiements(encaissements, decaissements) {
+            const container = document.getElementById(`${config.modalId}-paiements-content`);
+            let html = '';
+
+            const renderPaymentsTable = (payments, title, badgeClass, totalClass) => {
+                if (!payments || payments.length === 0) return '';
+
+                const total = payments.reduce((sum, p) => sum + (p.amount || 0), 0);
+                const icon = title.includes('Encaissements') ? 'fa-arrow-down' : 'fa-arrow-up';
+
+                return `
+                <div class="${html ? 'mt-4' : ''}">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h6 class="text-violet fw-bold mb-0">
+                            <i class="fas ${icon} me-2"></i>${title}
+                        </h6>
+                        <span class="badge bg-violet-light rounded-pill">${formatters.currency(total)}</span>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-hover table-borderless align-middle">
+                            <thead class="text-muted text-uppercase" style="font-size: 0.7rem;">
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Code</th>
+                                    <th>Libellé</th>
+                                    <th>Catégorie</th>
+                                    <th class="text-center">Type</th>
+                                    <th class="text-end">Montant</th>
+                                    <th class="text-end">Patient</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${payments.map(p => {
+                    const patientBadge = p.patient_code ?
+                        `<span class="badge bg-light text-dark border">${p.patient_code}</span>` :
+                        '<span class="text-muted">-</span>';
+
+                    return `
+                                        <tr class="border-bottom">
+                                            <td class="text-nowrap"><small>${formatters.date(p.date)}</small></td>
+                                            <td><span class="badge bg-light text-dark">${p.code || 'N/A'}</span></td>
+                                            <td><span class="fw-medium">${p.label || '-'}</span></td>
+                                            <td><span class="text-muted small">${p.category_label || 'N/A'}</span></td>
+                                            <td class="text-center"><span class="badge ${badgeClass} rounded-pill bg-opacity-10 text-${totalClass.replace('text-', '')}">${p.type_label || 'N/A'}</span></td>
+                                            <td class="text-end"><strong class="${totalClass}">${formatters.currency(p.amount)}</strong></td>
+                                            <td class="text-end">${patientBadge}</td>
+                                        </tr>
+                                    `;
+                }).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            `;
+            };
+
+            html += renderPaymentsTable(encaissements, 'Encaissements', 'bg-success', 'text-success');
+            html += renderPaymentsTable(decaissements, 'Décaissements', 'bg-danger', 'text-danger');
+
+            if (!html) {
+                html = '<div class="text-center py-5 text-muted"><i class="fas fa-money-bill-wave fa-3x mb-3 opacity-25"></i><p>Aucun paiement enregistré</p></div>';
+            }
+
+            container.innerHTML = html;
+        }
+
+        function renderActes(data) {
+            const container = document.getElementById(`${config.modalId}-actes-content`);
+
+            if (!data || data.length === 0) {
+                container.innerHTML = '<div class="text-center py-5 text-muted"><i class="fas fa-user-md fa-3x mb-3 opacity-25"></i><p>Aucun acte médical enregistré</p></div>';
+                return;
+            }
+
+            const totalAmount = data.reduce((sum, a) => sum + (a.amount || 0), 0);
+            const totalPaid = data.reduce((sum, a) => sum + (a.patient_payment || 0), 0);
+            const totalInsurance = data.reduce((sum, a) => sum + (a.insurance_payment || 0), 0);
+
+            let html = `
+            <div class="row mb-4 g-3">
+                <div class="col-md-4">
+                    <div class="text-center p-3 rounded bg-violet-light bg-opacity-10 border border-violet border-opacity-10">
+                        <small class="text-violet d-block text-uppercase fw-bold" style="font-size: 0.7rem;">Total Actes</small>
+                        <h4 class="text-violet mb-0">${formatters.currency(totalAmount)}</h4>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="text-center p-3 rounded bg-success bg-opacity-10 border border-success border-opacity-10">
+                        <small class="text-success d-block text-uppercase fw-bold" style="font-size: 0.7rem;">Payé</small>
+                        <h4 class="text-success mb-0">${formatters.currency(totalPaid)}</h4>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="text-center p-3 rounded bg-info bg-opacity-10 border border-info border-opacity-10">
+                        <small class="text-info d-block text-uppercase fw-bold" style="font-size: 0.7rem;">Assurance</small>
+                        <h4 class="text-info mb-0">${formatters.currency(totalInsurance)}</h4>
+                    </div>
+                </div>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-hover table-borderless align-middle">
+                    <thead class="text-muted text-uppercase" style="font-size: 0.7rem;">
+                        <tr>
+                            <th>Date</th>
+                            <th>Type d'acte</th>
+                            <th>Libellé</th>
+                            <th class="text-end">Montant</th>
+                            <th class="text-end">Part Patient</th>
+                            <th class="text-end">Payé</th>
+                            <th class="text-end">Assurance</th>
+                            <th>Patient</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${data.map(a => {
+                const patientBadge = a.patient_code ?
+                    `<span class="badge bg-light text-dark border">${a.patient_code}</span>` :
+                    '<span class="text-muted">-</span>';
+
+                return `
+                                <tr class="border-bottom">
+                                    <td class="text-nowrap"><small>${formatters.date(a.sync_date)}</small></td>
+                                    <td><span class="badge bg-violet-light rounded-pill">${a.type_label || 'N/A'}</span></td>
+                                    <td><span class="fw-medium">${a.label || '-'}</span></td>
+                                    <td class="text-end text-violet">${formatters.currency(a.amount)}</td>
+                                    <td class="text-end text-muted">${formatters.currency(a.patient_part)}</td>
+                                    <td class="text-end text-success">${formatters.currency(a.patient_payment)}</td>
+                                    <td class="text-end text-info">${formatters.currency(a.insurance_payment)}</td>
+                                    <td>${patientBadge}</td>
+                                </tr>
+                            `;
+            }).join('')}
+                    </tbody>
+                </table>
+            </div>
+        `;
+
+            container.innerHTML = html;
+        }
+
+        function renderExamens(labExams, radioRequests) {
+            const container = document.getElementById(`${config.modalId}-examens-content`);
+            let html = '';
+
+            const renderLabExamsTable = (exams) => {
+                if (!exams || exams.length === 0) return '';
+
+                const totalAmount = exams.reduce((sum, e) => sum + (e.amount || 0), 0);
+                const totalPaid = exams.reduce((sum, e) => sum + (e.patient_payment || 0), 0);
+                const totalInsurance = exams.reduce((sum, e) => sum + (e.insurance_payment || 0), 0);
+
+                return `
+            <div>
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h6 class="text-violet fw-bold mb-0">
+                        <i class="fas fa-flask me-2"></i> Examens de laboratoire
+                        <span class="badge bg-violet-light rounded-pill ms-2">${exams.length}</span>
+                    </h6>
+                    <div class="d-flex gap-2">
+                        <span class="badge badge-glass-violet-solid">Total: ${formatters.currency(totalAmount)}</span>
+                        <span class="badge badge-glass-success-solid">Payé: ${formatters.currency(totalPaid)}</span>
+                    </div>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-hover table-borderless align-middle">
+                        <thead class="text-muted text-uppercase" style="font-size: 0.7rem;">
+                            <tr>
+                                <th>Date demande</th>
+                                <th>Code</th>
+                                <th>Libellé</th>
+                                <th>Hospitalisation</th>
+                                <th>Statut</th>
+                                <th>Validation</th>
+                                <th class="text-end">Montant</th>
+                                <th class="text-end">Payé</th>
+                                <th class="text-end">Reste</th>
+                                <th>Patient</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${exams.map(e => {
+                    const reste = (e.amount || 0) - (e.patient_payment || 0);
+                    const patientBadge = e.patient_code ?
+                        `<span class="badge bg-light text-dark border">${e.patient_code}</span>` :
+                        '<span class="text-muted">-</span>';
+
+                    // Badge d'hospitalisation
+                    const hospBadge = e.hospitalization_code ?
+                        `<div class="mb-1">
+                                        <span class="badge bg-warning text-dark border border-warning" title="${e.hospitalization_service || 'Service inconnu'}">
+                                            <i class="fas fa-hospital"></i> ${e.hospitalization_code}
+                                        </span>
+                                    </div>` :
+                        '<span class="text-muted">-</span>';
+
+                    // Badge de statut
+                    let statusBadge = '<span class="badge bg-secondary rounded-pill">En attente</span>';
+                    let rowClass = '';
+
+                    if (e.locked) {
+                        statusBadge = '<span class="badge bg-danger rounded-pill"><i class="fas fa-lock"></i> Verrouillé</span>';
+                        rowClass = 'bg-danger bg-opacity-10'; // Subtle row highlight
+                    } else if (e.validated_on) {
+                        statusBadge = '<span class="badge bg-success rounded-pill"><i class="fas fa-check-circle"></i> Validé</span>';
+                    } else if (e.stage_label) {
+                        statusBadge = `<span class="badge bg-info rounded-pill">${e.stage_label}</span>`;
+                    }
+
+                    if (e.is_urgent) {
+                        statusBadge += ' <span class="badge bg-danger rounded-pill ms-1"><i class="fas fa-exclamation-triangle"></i> URGENT</span>';
+                        rowClass = 'bg-danger bg-opacity-5';
+                    }
+
+                    // Informations de validation
+                    let validationInfo = '<span class="text-muted">-</span>';
+                    if (e.validated_on && e.validated_by_first_name) {
+                        const validatorName = `${e.validated_by_first_name} ${e.validated_by_last_name}`.trim();
+                        validationInfo = `
+                                        <div>
+                                            <small class="text-success fw-bold">
+                                                <i class="fas fa-user-md"></i> Dr. ${validatorName}
+                                            </small>
+                                        </div>
+                                        <small class="text-muted" style="font-size: 0.7rem;">
+                                            ${formatters.date(e.validated_on)}
+                                        </small>
+                                    `;
+                    }
+
+                    return `
+                                    <tr class="border-bottom ${rowClass}">
+                                        <td class="text-nowrap"><small>${formatters.date(e.request_date || e.sync_date)}</small></td>
+                                        <td><span class="badge bg-light text-dark border">${e.code || 'N/A'}</span></td>
+                                        <td><span class="fw-medium">${e.label || '-'}</span></td>
+                                        <td>${hospBadge}</td>
+                                        <td>${statusBadge}</td>
+                                        <td>${validationInfo}</td>
+                                        <td class="text-end text-violet">${formatters.currency(e.amount)}</td>
+                                        <td class="text-end text-success">${formatters.currency(e.patient_payment)}</td>
+                                        <td class="text-end ${reste > 0 ? 'text-danger fw-bold' : 'text-success'}">
+                                            ${formatters.currency(Math.abs(reste))}
+                                        </td>
+                                        <td>${patientBadge}</td>
+                                    </tr>
+                                `;
+                }).join('')}
+                        </tbody>
+                        <tfoot class="bg-light border-top">
+                            <tr>
+                                <th colspan="6" class="text-end text-uppercase text-muted" style="font-size: 0.7rem;">Totaux</th>
+                                <th class="text-end fw-bold text-violet">${formatters.currency(totalAmount)}</th>
+                                <th class="text-end fw-bold text-success">${formatters.currency(totalPaid)}</th>
+                                <th class="text-end fw-bold ${(totalAmount - totalPaid) > 0 ? 'text-danger' : 'text-success'}">
+                                    ${formatters.currency(Math.abs(totalAmount - totalPaid))}
+                                </th>
+                                <th></th>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            </div>
+        `;
+            };
+
+            const renderRadioExamsTable = (exams) => {
+                if (!exams || exams.length === 0) return '';
+
+                const totalAmount = exams.reduce((sum, e) => sum + (e.amount || 0), 0);
+                const totalPaid = exams.reduce((sum, e) => sum + (e.patient_payment || 0), 0);
+                const totalInsurance = exams.reduce((sum, e) => sum + (e.insurance_payment || 0), 0);
+
+                return `
+            <div class="mt-5">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h6 class="text-violet fw-bold mb-0">
+                            <i class="fas fa-x-ray me-2"></i> Examens radiologiques
+                            <span class="badge bg-violet-light rounded-pill ms-2">${exams.length}</span>
+                        </h6>
+                         <div class="d-flex gap-2">
+                            <span class="badge badge-glass-violet-solid">Total: ${formatters.currency(totalAmount)}</span>
+                            <span class="badge badge-glass-success-solid">Payé: ${formatters.currency(totalPaid)}</span>
+                        </div>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-hover table-borderless align-middle">
+                            <thead class="text-muted text-uppercase" style="font-size: 0.7rem;">
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Code</th>
+                                    <th class="text-end">Montant</th>
+                                    <th class="text-end">Part Patient</th>
+                                    <th class="text-end">Payé</th>
+                                    <th class="text-end">Assurance</th>
+                                    <th class="text-end">Reste</th>
+                                    <th>Patient</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${exams.map(e => {
+                    const reste = (e.amount || 0) - (e.patient_payment || 0);
+                    const patientBadge = e.patient_code ?
+                        `<span class="badge bg-light text-dark border">${e.patient_code}</span>` :
+                        '<span class="text-muted">-</span>';
+                    const dateField = e.sync_date || e.date;
+
+                    return `
+                                        <tr class="border-bottom">
+                                            <td class="text-nowrap"><small>${formatters.date(dateField)}</small></td>
+                                            <td><span class="badge bg-light text-dark border">${e.code || 'N/A'}</span></td>
+                                            <td class="text-end text-violet">${formatters.currency(e.amount)}</td>
+                                            <td class="text-end text-muted">${formatters.currency(e.patient_part)}</td>
+                                            <td class="text-end text-success">${formatters.currency(e.patient_payment)}</td>
+                                            <td class="text-end text-info">${formatters.currency(e.insurance_payment)}</td>
+                                            <td class="text-end ${reste > 0 ? 'text-danger fw-bold' : 'text-success'}">
+                                                ${formatters.currency(Math.abs(reste))}
+                                            </td>
+                                            <td>${patientBadge}</td>
+                                        </tr>
+                                    `;
+                }).join('')}
+                            </tbody>
+                            <tfoot class="bg-light border-top">
+                                <tr>
+                                    <th colspan="2" class="text-end text-uppercase text-muted" style="font-size: 0.7rem;">Totaux</th>
+                                    <th class="text-end fw-bold text-violet">${formatters.currency(totalAmount)}</th>
+                                    <th></th>
+                                    <th class="text-end fw-bold text-success">${formatters.currency(totalPaid)}</th>
+                                    <th class="text-end fw-bold text-info">${formatters.currency(totalInsurance)}</th>
+                                    <th class="text-end fw-bold ${(totalAmount - totalPaid) > 0 ? 'text-danger' : 'text-success'}">
+                                        ${formatters.currency(Math.abs(totalAmount - totalPaid))}
+                                    </th>
+                                    <th></th>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                </div>
+            `;
+            };
+
+            html += renderLabExamsTable(labExams);
+            html += renderRadioExamsTable(radioRequests);
+
+            if (!html) {
+                html = '<div class="text-center py-5 text-muted"><i class="fas fa-flask fa-3x mb-3 opacity-50"></i><p>Aucun examen enregistré</p></div>';
+            }
+
+            container.innerHTML = html;
+        }
+        function renderNursings(data) {
+            const container = document.getElementById(`${config.modalId}-nursings-content`);
+
+            if (!data || data.length === 0) {
+                container.innerHTML = '<div class="text-center py-5 text-muted"><i class="fas fa-user-nurse fa-3x mb-3 opacity-25"></i><p>Aucun soin infirmier enregistré</p></div>';
+                return;
+            }
+
+            const totalAmount = data.reduce((sum, n) => sum + (n.amount || 0), 0);
+            const totalPaid = data.reduce((sum, n) => sum + (n.patient_payment || 0), 0);
+            const totalInsurance = data.reduce((sum, n) => sum + (n.insurance_payment || 0), 0);
+
+            let html = `
+        <div class="row mb-4 g-3">
+            <div class="col-md-3">
+                <div class="text-center p-3 rounded bg-violet-light bg-opacity-10 border border-violet border-opacity-10">
+                    <small class="text-violet d-block text-uppercase fw-bold" style="font-size: 0.7rem;">Total Soins</small>
+                    <h4 class="text-violet mb-0">${formatters.currency(totalAmount)}</h4>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="text-center p-3 rounded bg-success bg-opacity-10 border border-success border-opacity-10">
+                    <small class="text-success d-block text-uppercase fw-bold" style="font-size: 0.7rem;">Payé</small>
+                    <h4 class="text-success mb-0">${formatters.currency(totalPaid)}</h4>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="text-center p-3 rounded bg-info bg-opacity-10 border border-info border-opacity-10">
+                    <small class="text-info d-block text-uppercase fw-bold" style="font-size: 0.7rem;">Assurance</small>
+                    <h4 class="text-info mb-0">${formatters.currency(totalInsurance)}</h4>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="text-center p-3 rounded ${(totalAmount - totalPaid) > 0 ? 'bg-danger' : 'bg-success'} bg-opacity-10 border border-opacity-10">
+                    <small class="${(totalAmount - totalPaid) > 0 ? 'text-danger' : 'text-success'} d-block text-uppercase fw-bold" style="font-size: 0.7rem;">Reste</small>
+                    <h4 class="${(totalAmount - totalPaid) > 0 ? 'text-danger' : 'text-success'} mb-0">
+                        ${formatters.currency(Math.abs(totalAmount - totalPaid))}
+                    </h4>
+                </div>
+            </div>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-hover table-borderless align-middle">
+                <thead class="text-muted text-uppercase" style="font-size: 0.7rem;">
+                    <tr>
+                        <th>Date</th>
+                        <th>Code</th>
+                        <th>Acte</th>
+                        <th>Catégorie</th>
+                        <th>Infirmier(ère)</th>
+                        <th>Hospitalisation</th>
+                        <th class="text-end">Montant</th>
+                        <th class="text-end">Part Patient</th>
+                        <th class="text-end">Payé</th>
+                        <th class="text-end">Assurance</th>
+                        <th class="text-end">Reste</th>
+                        <th>Patient</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${data.map(n => {
+                const reste = (n.amount || 0) - (n.patient_payment || 0);
+                const patientBadge = n.patient_code ?
+                    `<span class="badge bg-light text-dark border">${n.patient_code}</span>` :
+                    '<span class="text-muted">-</span>';
+
+                // Badge d'hospitalisation
+                const hospBadge = n.hospitalization_code ?
+                    `<div class="mb-1">
+                                <span class="badge bg-warning text-dark border border-warning" title="${n.hospitalization_service || 'Service inconnu'}">
+                                    <i class="fas fa-hospital"></i> ${n.hospitalization_code}
+                                </span>
+                            </div>
+                            <small class="text-muted">${n.hospitalization_service || ''}</small>` :
+                    '<span class="text-muted">-</span>';
+
+                // Infirmier
+                const nurseName = (n.nurse_first_name || n.nurse_last_name) ?
+                    `<small class="text-muted fw-bold">
+                                <i class="fas fa-user-nurse me-1"></i> ${n.nurse_first_name || ''} ${n.nurse_last_name || ''}
+                            </small>` :
+                    '<span class="text-muted">-</span>';
+
+                // Acte de soin
+                const nursingActInfo = n.nursing_act_label ?
+                    `<div>
+                                <strong class="text-dark">${n.nursing_act_label}</strong>
+                                ${n.nursing_act_code ? `<span class="badge bg-secondary rounded-pill ms-1 text-white" style="font-size: 0.65rem">${n.nursing_act_code}</span>` : ''}
+                            </div>` :
+                    '<span class="text-muted">-</span>';
+
+                return `
+                            <tr class="border-bottom">
+                                <td class="text-nowrap"><small>${formatters.date(n.date)}</small></td>
+                                <td><span class="badge bg-light text-dark border">${n.code || 'N/A'}</span></td>
+                                <td>${nursingActInfo}</td>
+                                <td>${n.nursing_act_category ? `<span class="badge bg-info rounded-pill">${n.nursing_act_category}</span>` : '-'}</td>
+                                <td>${nurseName}</td>
+                                <td>${hospBadge}</td>
+                                <td class="text-end text-violet font-monospace">${formatters.currency(n.amount)}</td>
+                                <td class="text-end text-muted font-monospace">${formatters.currency(n.patient_part)}</td>
+                                <td class="text-end text-success font-monospace">${formatters.currency(n.patient_payment)}</td>
+                                <td class="text-end text-info font-monospace">${formatters.currency(n.insurance_payment)}</td>
+                                <td class="text-end ${reste > 0 ? 'text-danger fw-bold' : 'text-success'} font-monospace">
+                                    ${formatters.currency(Math.abs(reste))}
+                                </td>
+                                <td>${patientBadge}</td>
+                            </tr>
+                            ${n.note ? `
+                            <tr class="bg-light bg-opacity-50 border-bottom">
+                                <td colspan="12" class="py-2 px-3">
+                                    <small class="text-muted">
+                                        <i class="fas fa-sticky-note me-1 text-warning"></i> <strong>Note:</strong> <span class="fst-italic">${n.note}</span>
+                                    </small>
+                                </td>
+                            </tr>
+                            ` : ''}
+                        `;
+            }).join('')}
+                </tbody>
+                <tfoot class="bg-light border-top">
+                    <tr>
+                        <th colspan="6" class="text-end text-uppercase text-muted" style="font-size: 0.7rem;">Totaux</th>
+                        <th class="text-end fw-bold text-violet">${formatters.currency(totalAmount)}</th>
+                        <th></th>
+                        <th class="text-end fw-bold text-success">${formatters.currency(totalPaid)}</th>
+                        <th class="text-end fw-bold text-info">${formatters.currency(totalInsurance)}</th>
+                        <th class="text-end fw-bold ${(totalAmount - totalPaid) > 0 ? 'text-danger' : 'text-success'}">
+                            ${formatters.currency(Math.abs(totalAmount - totalPaid))}
+                        </th>
+                        <th></th>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+    `;
+
+            container.innerHTML = html;
+        }
+
+        function renderCisHistory(dossiers) {
+            const container = document.getElementById(`${config.modalId}-cis-content`);
+            if (!dossiers || dossiers.length === 0) {
+                container.innerHTML = '<div class="alert alert-info text-center"><i class="fas fa-info-circle"></i> Aucun dossier CIS trouvé</div>';
+                return;
+            }
+
+            const html = dossiers.map(d => {
+                let badgeClass = 'bg-secondary';
+                let iconClass = 'fa-folder';
+
+                if (d.type === 'Accouchement') { badgeClass = 'bg-pink text-white'; iconClass = 'fa-baby'; }
+                else if (d.type === 'Médecin Interne') { badgeClass = 'bg-primary'; iconClass = 'fa-user-md'; }
+                else if (d.type === 'Location Bloc') { badgeClass = 'bg-warning text-dark'; iconClass = 'fa-procedures'; }
+                else if (d.type === 'Prestation KT') { badgeClass = 'bg-info'; iconClass = 'fa-syringe'; }
+
+                let statusBadge = `<span class="badge bg-secondary">${d.status}</span>`;
+                if (d.status === 'Payé' || d.status === 'Terminé' || d.status === 'Clôturé') {
+                    statusBadge = `<span class="badge bg-success">${d.status}</span>`;
+                } else if (d.status === 'Non Payé' || d.status === 'En cours') {
+                    statusBadge = `<span class="badge bg-warning text-dark">${d.status}</span>`;
+                }
+
+                return `
+                <div class="history-item mb-3 shadow-sm" style="border-left-color: var(--bs-${badgeClass.includes('warning') ? 'warning' : 'info'});">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <h6 class="mb-0 fw-bold text-dark">
+                            <span class="badge ${badgeClass} me-2 rounded-pill"><i class="fas ${iconClass} me-1"></i> ${d.type}</span>
+                            ${formatters.date(d.date)}
+                        </h6>
+                        ${statusBadge}
+                    </div>
+                    <div class="mb-2 ps-1">
+                         <div class="text-muted small text-uppercase fw-bold mb-1">Description</div>
+                         <div class="fst-italic text-dark">${d.description}</div>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center mt-3 pt-2 border-top border-light">
+                        <small class="text-muted">
+                            <i class="fas fa-user-md me-1"></i> ${d.doctor || 'Médecin inconnu'}
+                        </small>
+                        <a href="${d.link}" target="_blank" class="btn btn-sm btn-outline-violet rounded-pill px-3">
+                            <i class="fas fa-eye me-1"></i> Ouvrir Dossier
+                        </a>
+                    </div>
+                </div>
+                `;
+            }).join('');
+
+            container.innerHTML = html;
+        }
+
+        // API publique
+        return {
+            show: loadPatientHistory,
+            refresh: () => {
+                if (config.currentPatientOid) {
+                    loadPatientHistory(config.currentPatientOid, true);
+                }
+            },
+            mergeSelected: mergeSelectedPatients,
+            toggleAll: (checked) => {
+                document.querySelectorAll('.duplicate-checkbox').forEach(cb => {
+                    cb.checked = checked;
+                });
+            }
+        };
+    })();
+
+    // Fonctions globales pour compatibilité
+    window.showPatientHistoryDirect = PatientHistoryModal.show;
+    window.refreshPatientHistoryDirect = PatientHistoryModal.refresh;
+    window.loadPatientHistoryDirect = PatientHistoryModal.show;
+</script>
+{% endmacro %}

@@ -1,0 +1,2426 @@
+<!-- templates/hospitalisation/floor_plan.html - VERSION BOOTSTRAP 5 OPTIMISÉE -->
+{% extends "layout.html" %}
+{% load static %}
+
+{% block content %}
+<!-- =====================================================
+     STYLES CSS PERSONNALISÉS - RÉFÉRENCE AU FICHIER OPTIMISÉ
+     ===================================================== -->
+<link href="{% static 'css/hostitalisation.css' %}" rel="stylesheet"/>
+
+<!-- =====================================================
+     CONTENEUR PRINCIPAL AVEC CLASSES BOOTSTRAP 5
+     ===================================================== -->
+<div class="container-fluid py-3">
+
+    <!-- =====================================================
+         SECTION MESSAGES - UTILISATION DES ALERTES BS5
+         ===================================================== -->
+    <div id="messages-container" class="position-relative">
+        {% if messages %}
+            {% for message in messages %}
+        <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                    <i class="fas fa-info-circle me-2"></i>{{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Fermer"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+    </div>
+
+    <!-- =====================================================
+         HEADER PRINCIPAL AVEC STATISTIQUES
+         ===================================================== -->
+    <header class="main-header">
+        <div class="d-flex justify-content-between align-items-center flex-wrap">
+            <div>
+                <h1 class="h3 mb-2 fw-bold">
+                    <i class="fas fa-hospital me-2"></i>
+                    Plan d'Hospitalisation - {{ service.name }}
+                </h1>
+                <p class="mb-0 opacity-75">
+                    Gestion des lits et des admissions en temps réel
+                </p>
+            </div>
+            <div class="d-flex gap-2">
+                <button class="btn btn-light btn-sm" data-bs-toggle="modal" data-bs-target="#addAdmissionModal">
+                    <i class="fas fa-plus me-1"></i> Nouvelle demande
+                </button>
+                <button class="btn btn-outline-light btn-sm" onclick="window.location.reload()">
+                    <i class="fas fa-sync-alt me-1"></i> Actualiser
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- =====================================================
+         STATISTIQUES GLOBALES - GRID RESPONSIVE
+         ===================================================== -->
+    <section class="stats-grid" role="region" aria-label="Statistiques du service">
+        <div class="stat-card" role="button" tabindex="0" aria-label="Lits occupés">
+            <div class="stat-number">{{ stats.occupied_beds }}</div>
+            <div class="small">Lits Occupés</div>
+        </div>
+        <div class="stat-card" role="button" tabindex="0" aria-label="Lits disponibles">
+            <div class="stat-number">{{ stats.available_beds }}</div>
+            <div class="small">Lits Disponibles</div>
+        </div>
+        <div class="stat-card" role="button" tabindex="0" aria-label="Patients en attente">
+            <div class="stat-number">{{ waiting_requests.count }}</div>
+            <div class="small">En Attente</div>
+        </div>
+        <div class="stat-card" role="button" tabindex="0" aria-label="Taux d'occupation">
+            <div class="stat-number">{{ stats.occupancy_rate }}%</div>
+            <div class="small">Taux d'Occupation</div>
+        </div>
+        <div class="stat-card" role="button" tabindex="0" aria-label="Total des lits">
+            <div class="stat-number">{{ stats.total_beds }}</div>
+            <div class="small">Total Lits</div>
+        </div>
+    </section>
+
+    <!-- =====================================================
+         LAYOUT PRINCIPAL - GRID RESPONSIVE À 3 COLONNES
+         ===================================================== -->
+    <main class="content-grid">
+
+        <!-- =====================================================
+             COLONNE 1 : PLAN D'ÉTAGE PRINCIPAL
+             ===================================================== -->
+        <section class="floor-plan" role="region" aria-label="Plan d'étage">
+            <header class="d-flex justify-content-between align-items-center mb-4">
+                <h2 class="h5 mb-0 fw-semibold">
+                    <i class="fas fa-th-large me-2 text-primary"></i>
+                    Plan des Chambres
+                </h2>
+                <small class="text-muted">
+                    Glissez-déposez les patients pour les assigner
+                </small>
+            </header>
+
+            <!-- GRILLE DES CHAMBRES - PRÉSERVATION DE LA STRUCTURE ORIGINALE -->
+            <div class="floor-grid" role="grid" aria-label="Grille des chambres">
+
+                {% comment %}
+                ITÉRATION SUR LES CHAMBRES AVEC DONNÉES ENRICHIES
+                Chaque chambre contient ses lits avec leurs états actuels
+                {% endcomment %}
+                {% for room in rooms %}
+                <article class="room room-{{ room.numero_chambre }}
+                              {% if room.capacite_lits == 1 %}single-bed{% elif room.capacite_lits == 3 %}triple-bed{% elif room.capacite_lits == 4 %}quad-bed{% endif %}"
+                         data-room-id="{{ room.id }}"
+                         role="gridcell"
+                         aria-label="Chambre {{ room.numero_chambre }}">
+
+                    <!-- HEADER DE CHAMBRE AVEC BOOTSTRAP FLEX -->
+                    <header class="room-header">
+                        <div class="room-number">
+                            <i class="fas fa-door-open me-1" aria-hidden="true"></i>
+                            {{ room.numero_chambre }}
+                        </div>
+                    </header>
+
+
+
+                    <!-- CONTENEUR DES LITS AVEC GRID CSS -->
+                    <div class="beds-container" role="group" aria-label="Lits de la chambre {{ room.numero_chambre }}">
+
+
+                        {% for bed in room.lits.all %}
+                            {% if bed.est_active %}
+                                {% comment %} LIT ACTIF - VÉRIFIER L'OCCUPATION {% endcomment %}
+                                {% if bed.current_attributions %}
+                                    {% comment %} LIT OCCUPÉ - AFFICHER LE PATIENT {% endcomment %}
+                                    {% for attribution in bed.current_attributions %}
+                                        <div class="bed occupied transition-hospital"
+                                             data-bed-id="{{ bed.id }}"
+                                             data-bed-number="{{ bed.numero_lit }}"
+                                             data-room-number="{{ room.numero_chambre }}"
+                                             data-admission-id="{{ attribution.admission.id }}"
+                                             onclick="handleBedClick(this)"
+                                             draggable="true"
+                                             role="button"
+                                             tabindex="0"
+                                             aria-label="Lit occupé {{ bed.numero_lit }}, Patient: {{ attribution.admission.patient.last_name }} {{ attribution.admission.patient.first_name }}">
+
+                                            <!-- HEADER AVEC ACTIONS -->
+                                            <div class="bed-header">
+                                                <div class="fw-semibold">
+                                                    <i class="fas fa-bed me-1" aria-hidden="true"></i>
+                                                    {{ bed.numero_lit }}
+                                                </div>
+
+                                                <!-- BOUTONS D'ACTION POUR LIT OCCUPÉ -->
+                                                <div class="bed-actions">
+                                                    <button class="btn btn-sm btn-outline-primary bed-transfer-btn"
+                                                            onclick="event.stopPropagation(); showTransferOptions({{ attribution.admission.id }}, '{{ attribution.admission.patient.last_name }} {{ attribution.admission.patient.first_name }}', {{ bed.id }}, '{{ bed.numero_lit }}', '{{ room.numero_chambre }}')"
+                                                            title="Options de transfert"
+                                                            aria-label="Transférer le patient">
+                                                        <i class="fas fa-exchange-alt" aria-hidden="true"></i>
+                                                    </button>
+                                                </div>
+                                            </div>
+
+                                            <!-- NOM DU PATIENT -->
+                                            <div class="patient-name fw-bold small-text">
+                                                {{ attribution.admission.patient.last_name }}
+                                                {{ attribution.admission.patient.first_name }}
+                                            </div>
+                                        </div>
+                                    {% endfor %}
+                                {% else %}
+                                    {% comment %} LIT DISPONIBLE {% endcomment %}
+                                    <div class="bed available transition-hospital"
+                                         data-bed-id="{{ bed.id }}"
+                                         data-bed-number="{{ bed.numero_lit }}"
+                                         data-room-number="{{ room.numero_chambre }}"
+                                         onclick="handleBedClick(this)"
+                                         role="button"
+                                         tabindex="0"
+                                         aria-label="Lit disponible {{ bed.numero_lit }}">
+
+                                        <div class="fw-semibold">
+                                            <i class="fas fa-bed me-1" aria-hidden="true"></i>
+                                            {{ bed.numero_lit }}
+                                        </div>
+                                        <div class="patient-name small">Disponible</div>
+                                    </div>
+                                {% endif %}
+                            {% else %}
+                                {% comment %} LIT DÉSACTIVÉ {% endcomment %}
+                                <div class="bed Désactivé"
+                                     data-bed-id="{{ bed.id }}"
+                                     data-bed-number="{{ bed.numero_lit }}"
+                                     data-room-number="{{ room.numero_chambre }}"
+                                     role="button"
+                                     tabindex="0"
+                                     aria-label="Lit désactivé {{ bed.numero_lit }}">
+
+                                    <div class="fw-semibold">
+                                        <i class="fas fa-bed me-1" aria-hidden="true"></i>
+                                        {{ bed.numero_lit }}
+                                    </div>
+                                    <div class="patient-name text-muted small">
+                                        <i class="fas fa-ban me-1" aria-hidden="true"></i>
+                                        Désactivé
+                                    </div>
+                                </div>
+                            {% endif %}
+                        {% endfor %}
+                    </div>
+                </article>
+                {% endfor %}
+
+                <!-- =====================================================
+                     COULOIR PRINCIPAL - CENTRE DU PLAN
+                     ===================================================== -->
+                <section class="corridor" role="region" aria-label="Couloir principal">
+                    <div class="text-center">
+                        <i class="fas fa-hospital-alt fa-2x mb-2 text-primary" aria-hidden="true"></i>
+                        <h3 class="h5 mb-1 fw-bold">{{ service.name }}</h3>
+                        <p class="small mb-0 opacity-75">Service d'hospitalisation</p>
+                    </div>
+                </section>
+
+                <!-- =====================================================
+                     ZONE DE SORTIE - DRAG & DROP TARGET
+                     ===================================================== -->
+                <section class="exit-zone"
+                         id="exit-zone"
+                         role="button"
+                         tabindex="0"
+                         title="Zone de sortie - Glissez un patient ici"
+                         aria-label="Zone de sortie des patients">
+                    <i class="fas fa-door-open fa-3x mb-2" aria-hidden="true"></i>
+                    <div class="exit-text fw-bold">SORTIE</div>
+                    <small class="small opacity-75">Glissez ici</small>
+                </section>
+            </div>
+
+            <!-- =====================================================
+                 LÉGENDE INTERACTIVE - BOOTSTRAP COMPONENTS
+                 ===================================================== -->
+            <footer class="legend mt-4" role="region" aria-label="Légende du plan">
+                <div class="legend-item">
+                    <div class="legend-color bg-success"></div>
+                    <span class="small">Disponible</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color bg-danger"></div>
+                    <span class="small">Occupé</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color bg-warning"></div>
+                    <span class="small">Désactivé</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: linear-gradient(45deg, #00c9ff, #92fe9d);"></div>
+                    <span class="small">Zone de dépôt active</span>
+                </div>
+            </footer>
+        </section>
+
+        <!-- =====================================================
+             COLONNE 2 : LISTE D'ATTENTE - PANEL RESPONSIVE
+             ===================================================== -->
+        <aside class="waiting-panel" role="complementary" aria-label="Liste d'attente">
+            <header class="mb-3">
+                <h2 class="h5 mb-3 d-flex align-items-center">
+                    <i class="fas fa-user-clock text-primary me-2" aria-hidden="true"></i>
+                    Patients en Attente
+                    <span class="badge bg-primary ms-2">{{ waiting_requests.count }}</span>
+                </h2>
+
+                <!-- BARRE DE RECHERCHE BOOTSTRAP -->
+                <div class="input-group input-group-sm mb-3">
+                    <span class="input-group-text bg-light">
+                        <i class="fas fa-search text-muted" aria-hidden="true"></i>
+                    </span>
+                    <input type="text"
+                           class="form-control"
+                           id="search-patients"
+                           placeholder="Rechercher un patient..."
+                           aria-label="Rechercher un patient">
+                </div>
+            </header>
+
+            <!-- =====================================================
+                 LISTE SCROLLABLE DES PATIENTS EN ATTENTE
+                 ===================================================== -->
+            <div class="waiting-list" role="list" aria-label="Patients en attente d'admission">
+                {% for request in waiting_requests %}
+                    <article class="patient-card transition-hospital"
+                             draggable="true"
+                             data-request-id="{{ request.id }}"
+                             {% if request.admission_source %}
+                                 data-admission-source="{{ request.admission_source.id }}"
+                             {% endif %}
+                             role="listitem"
+                             tabindex="0"
+                             aria-label="Patient en attente: {{ request.patient.last_name }} {{ request.patient.first_name }}">
+
+                        <!-- HEADER PATIENT AVEC INFORMATIONS PRINCIPALES -->
+                        <header class="patient-header">
+                            <div class="patient-name-card fw-semibold">
+                                {{ request.patient.last_name }} {{ request.patient.first_name }}
+                            </div>
+                            <span class="badge bg-secondary patient-age">
+                                {% if request.patient.date_naissance %}
+                                    {{ request.patient.date_naissance|timesince|cut:"," }}
+                                {% else %}
+                                    N/A
+                                {% endif %}
+                            </span>
+                        </header>
+
+                        <!-- INFORMATION DE TRANSFERT SI APPLICABLE -->
+                        {% if request.admission_source %}
+                            <div class="transfer-info mb-2">
+                                <span class="badge bg-warning d-flex align-items-center">
+                                    <i class="fas fa-exchange-alt me-1" aria-hidden="true"></i>
+                                    Transfert - Admission #{{ request.admission_source.id }}
+                                </span>
+                                <small class="text-muted d-block mt-1">
+                                    <i class="fas fa-arrow-right me-1" aria-hidden="true"></i>
+                                    Provient de: {{ request.admission_source.service_actuel.name|default:"Service précédent" }}
+                                </small>
+                            </div>
+                        {% endif %}
+
+                        <!-- MOTIF D'ADMISSION -->
+                        <div class="patient-info text-muted mb-2 small">
+                            <i class="fas fa-stethoscope me-1" aria-hidden="true"></i>
+                            {{ request.motif|truncatechars:45 }}
+                        </div>
+
+                        <!-- FOOTER AVEC ACTIONS -->
+                        <footer class="d-flex justify-content-between align-items-center">
+                            <span class="priority priority-medium badge">
+                                {{ request.get_statut_display }}
+                            </span>
+
+                            <div class="btn-group btn-group-sm" role="group" aria-label="Actions patient">
+                                <!-- HISTORIQUE SI TRANSFERT -->
+                                {% if request.admission_source %}
+                                    <button class="btn btn-outline-info btn-sm"
+                                            onclick="loadPatientDetails({{ request.admission_source.id }})"
+                                            title="Voir l'historique de l'admission"
+                                            aria-label="Voir l'historique">
+                                        <i class="fas fa-history" aria-hidden="true"></i>
+                                    </button>
+                                {% endif %}
+
+                                <!-- ANNULER LA DEMANDE -->
+                                <button class="btn btn-outline-danger btn-sm"
+                                        onclick="cancelAdmissionRequest({{ request.id }})"
+                                        title="Annuler la demande"
+                                        aria-label="Annuler la demande">
+                                    <i class="fas fa-times" aria-hidden="true"></i>
+                                </button>
+                            </div>
+                        </footer>
+                    </article>
+                {% empty %}
+                    <!-- MESSAGE QUAND AUCUNE DEMANDE EN ATTENTE -->
+                    <div class="text-center py-5">
+                        <div class="mb-3">
+                            <i class="fas fa-clipboard-list fa-3x text-muted opacity-50" aria-hidden="true"></i>
+                        </div>
+                        <p class="text-muted mb-3">Aucune demande en attente</p>
+                        <button class="btn btn-primary btn-sm"
+                                data-bs-toggle="modal"
+                                data-bs-target="#addAdmissionModal">
+                            <i class="fas fa-plus me-1" aria-hidden="true"></i>
+                            Nouvelle demande
+                        </button>
+                    </div>
+                {% endfor %}
+            </div>
+        </aside>
+
+
+    </main>
+</div>
+
+<!-- =====================================================
+     OFFCANVAS MODERNE POUR TRANSFERT ENTRE SERVICES
+     ===================================================== -->
+<div class="services-offcanvas" id="servicesOffcanvas" role="dialog" aria-modal="true" aria-labelledby="offcanvas-title">
+    <!-- BACKDROP AVEC BLUR -->
+    <div class="offcanvas-backdrop" id="servicesBackdrop" aria-hidden="true"></div>
+
+    <!-- PANEL PRINCIPAL -->
+    <div class="offcanvas-panel">
+        <!-- HEADER AVEC GRADIENT -->
+        <header class="offcanvas-header">
+            <h3 class="offcanvas-title" id="offcanvas-title">
+                <i class="fas fa-exchange-alt me-2" aria-hidden="true"></i>
+                Transférer vers un service
+            </h3>
+            <button type="button"
+                    class="btn-close-offcanvas"
+                    onclick="hideServicesOffcanvas()"
+                    aria-label="Fermer le panneau de transfert">
+                <i class="fas fa-times" aria-hidden="true"></i>
+            </button>
+        </header>
+
+        <!-- BODY SCROLLABLE -->
+        <div class="offcanvas-body">
+            <!-- INFORMATIONS DU PATIENT À TRANSFÉRER -->
+            <div class="patient-transfer-info alert alert-info"
+                 id="transferPatientInfo"
+                 style="display: none;"
+                 role="status"
+                 aria-live="polite">
+                <i class="fas fa-user-injured me-2" aria-hidden="true"></i>
+                <span id="transferPatientName"></span>
+            </div>
+
+            <!-- GRID DES SERVICES DISPONIBLES -->
+            <div class="services-grid" role="list" aria-label="Services disponibles pour transfert">
+                {% for srv in services %}
+                    <div class="service-item transition-hospital
+                               {% if srv.id == service.id %}current-service{% endif %}"
+                         data-service-id="{{ srv.id }}"
+                         data-service-name="{{ srv.name }}"
+                         title="{% if srv.id == service.id %}Service actuel{% else %}Transférer vers {{ srv.name }}{% endif %}"
+                         role="listitem"
+                         tabindex="0"
+                         aria-label="{% if srv.id == service.id %}Service actuel: {{ srv.name }}{% else %}Transférer vers {{ srv.name }}{% endif %}">
+
+                        <div class="service-icon-wrapper">
+                            <i class="fas fa-hospital-alt" aria-hidden="true"></i>
+                        </div>
+
+                        <div class="service-details">
+                            <h4 class="service-name">{{ srv.name }}</h4>
+                            <small class="service-description text-muted">
+                                {% if srv.id == service.id %}
+                                    Service actuel
+                                {% else %}
+                                    Cliquez pour transférer
+                                {% endif %}
+                            </small>
+                        </div>
+
+                        {% if srv.id != service.id %}
+                            <div class="service-arrow">
+                                <i class="fas fa-arrow-right" aria-hidden="true"></i>
+                            </div>
+                        {% endif %}
+                    </div>
+                {% endfor %}
+            </div>
+
+            <!-- ACTIONS DU TRANSFERT -->
+            <footer class="transfer-actions">
+                <button type="button"
+                        class="btn btn-secondary btn-sm"
+                        onclick="hideServicesOffcanvas()">
+                    <i class="fas fa-times me-1" aria-hidden="true"></i>
+                    Annuler
+                </button>
+            </footer>
+        </div>
+    </div>
+</div>
+
+<!-- =====================================================
+     MODAL: NOUVELLE DEMANDE D'ADMISSION - BOOTSTRAP 5
+     ===================================================== -->
+<div class="modal fade" id="addAdmissionModal" tabindex="-1" aria-labelledby="addAdmissionModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <header class="modal-header">
+                <h4 class="modal-title" id="addAdmissionModalLabel">
+                    <i class="fas fa-plus me-2" aria-hidden="true"></i>
+                    Nouvelle Demande d'Admission
+                </h4>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
+            </header>
+
+            <div class="modal-body">
+                <form id="addAdmissionForm" novalidate>
+                    {% csrf_token %}
+
+                    <div class="row g-3">
+                        <!-- SÉLECTION DU PATIENT -->
+                        <div class="col-md-6">
+                            <label for="patient_id" class="form-label">
+        <i class="fas fa-user me-1 text-primary"></i>
+                                Patient
+                                <span class="text-danger">*</span>
+                            </label>
+    <div class="select-with-add">
+        <select class="form-select" name="patient_id" id="patient_id" required>
+                                <option value="">-- Sélectionner un patient --</option>
+                                {% for patient in patients %}
+                                    <option value="{{ patient.id }}">
+                                        {{ patient.last_name }} {{ patient.first_name }}
+                                        {% if patient.social_security_number %}- {{ patient.social_security_number }}{% endif %}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                                <button type="button" class="btn btn-add-quick"
+                data-bs-toggle="modal"
+                data-bs-target="#newPatientModal">
+            <i class="fas fa-plus"></i>
+        </button>
+    </div>
+                            <div class="form-text" id="patient_id_help">
+                                Sélectionnez le patient à admettre
+                            </div>
+                        </div>
+
+                        <!-- SÉLECTION DU SERVICE -->
+                        <div class="col-md-6">
+                            <label for="service_id" class="form-label">
+                                <i class="fas fa-hospital me-1 text-primary" aria-hidden="true"></i>
+                                Service
+                                <span class="text-danger">*</span>
+                            </label>
+                            <select class="form-select"
+                                    name="service_id"
+                                    id="service_id"
+                                    required>
+                                {% for srv in services %}
+                                    <option value="{{ srv.id }}" {% if srv.id == service.id %}selected{% endif %}>
+                                        {{ srv.name }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <!-- MÉDECIN RÉFÉRENT -->
+                        <div class="col-md-6">
+                            <label for="medecin_referent_id" class="form-label">
+                                <i class="fas fa-user-md me-1 text-info" aria-hidden="true"></i>
+                                Médecin référent
+                            </label>
+                            <select class="form-select" name="medecin_referent_id" id="medecin_referent_id">
+                                <option value="">-- Sélectionner un médecin --</option>
+                                {% for doctor in doctors %}
+                                    <option value="{{ doctor.id }}">Dr. {{ doctor.nom_complet }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <!-- DURÉE ESTIMÉE -->
+                        <div class="col-md-6">
+                            <label for="duree_estimee" class="form-label">
+                                <i class="fas fa-calendar-day me-1 text-warning" aria-hidden="true"></i>
+                                Durée estimée (jours)
+                            </label>
+                            <input type="number"
+                                   class="form-control"
+                                   name="duree_estimee"
+                                   id="duree_estimee"
+                                   min="1"
+                                   max="365"
+                                   placeholder="Ex: 3">
+                        </div>
+
+                        <!-- MOTIF D'ADMISSION -->
+                        <div class="col-12">
+                            <label for="motif" class="form-label">
+                                <i class="fas fa-stethoscope me-1 text-success" aria-hidden="true"></i>
+                                Motif d'admission
+                                <span class="text-danger">*</span>
+                            </label>
+                            <textarea class="form-control"
+                                      name="motif"
+                                      id="motif"
+                                      rows="3"
+                                      required
+                                      placeholder="Décrivez le motif de l'admission..."
+                                      aria-describedby="motif_help"></textarea>
+                            <div class="form-text" id="motif_help">
+                                Décrivez brièvement la raison de l'hospitalisation
+                            </div>
+                        </div>
+
+                        <!-- NOTES COMPLÉMENTAIRES -->
+                        <div class="col-12">
+                            <label for="notes" class="form-label">
+                                <i class="fas fa-notes-medical me-1 text-secondary" aria-hidden="true"></i>
+                                Notes complémentaires
+                            </label>
+                            <textarea class="form-control"
+                                      name="notes"
+                                      id="notes"
+                                      rows="2"
+                                      placeholder="Informations complémentaires (optionnel)..."></textarea>
+                        </div>
+                    </div>
+                </form>
+            </div>
+
+            <footer class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-1" aria-hidden="true"></i>
+                    Annuler
+                </button>
+                <button type="button" class="btn btn-primary" onclick="submitAdmissionRequest()">
+                    <i class="fas fa-check me-1" aria-hidden="true"></i>
+                    Créer la demande
+                </button>
+            </footer>
+        </div>
+    </div>
+</div>
+
+<!-- =====================================================
+     MODAL: DÉTAILS DU PATIENT - RESPONSIVE XL
+     ===================================================== -->
+<div class="modal fade" id="patientDetailModal" tabindex="-1" aria-labelledby="patientDetailModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-scrollable">
+        <div class="modal-content">
+            <header class="modal-header">
+                <h4 class="modal-title" id="patientDetailModalLabel">
+                    <i class="fas fa-user-injured me-2" aria-hidden="true"></i>
+                    Détails du Patient
+                </h4>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
+            </header>
+
+            <div class="modal-body p-0">
+                <div id="patientDetailContent" class="p-4">
+                    <!-- Contenu généré dynamiquement par JavaScript -->
+                    <div class="d-flex justify-content-center py-5">
+                        <div class="spinner-border text-primary" role="status" aria-label="Chargement">
+                            <span class="visually-hidden">Chargement...</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <footer class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-1" aria-hidden="true"></i>
+                    Fermer
+                </button>
+            </footer>
+        </div>
+    </div>
+</div>
+
+<!-- =====================================================
+     MODAL: SORTIE DE PATIENT - FORMULAIRE COMPLET
+     ===================================================== -->
+<div class="modal fade" id="dischargeModal" tabindex="-1" aria-labelledby="dischargeModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <header class="modal-header">
+                <h4 class="modal-title" id="dischargeModalLabel">
+                    <i class="fas fa-sign-out-alt me-2" aria-hidden="true"></i>
+                    Sortie de Patient
+                </h4>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
+            </header>
+
+            <div class="modal-body">
+                <!-- INFORMATIONS DU PATIENT -->
+                <div id="dischargePatientInfo" class="alert alert-info mb-4" role="status">
+                    <!-- Informations générées dynamiquement -->
+                </div>
+
+                <form id="dischargeForm" novalidate>
+                    {% csrf_token %}
+                    <input type="hidden" id="dischargeAdmissionId" name="admission_id">
+
+                    <!-- DESTINATION DE SORTIE -->
+                    <div class="mb-3">
+                        <label for="discharge_destination" class="form-label">
+                            <i class="fas fa-map-marker-alt me-1 text-primary" aria-hidden="true"></i>
+                            Destination
+                            <span class="text-danger">*</span>
+                        </label>
+                        <select class="form-select"
+                                name="discharge_destination"
+                                id="discharge_destination"
+                                required
+                                aria-describedby="destination_help">
+                            <option value="">-- Sélectionner une destination --</option>
+                            <option value="domicile">Domicile</option>
+                            <option value="autre_hopital">Transfert vers autre hôpital</option>
+                            <option value="clinique">Clinique spécialisée</option>
+                            <option value="ehpad">EHPAD / Maison de retraite</option>
+                            <option value="centre_readaptation">Centre de rééducation</option>
+                            <option value="autre">Autre</option>
+                        </select>
+                        <div class="form-text" id="destination_help">
+                            Indiquez où se rend le patient après sa sortie
+                        </div>
+                    </div>
+
+                    <!-- NOTES DE SORTIE -->
+                    <div class="mb-3">
+                        <label for="discharge_notes" class="form-label">
+                            <i class="fas fa-notes-medical me-1 text-success" aria-hidden="true"></i>
+                            Notes de sortie
+                            <span class="text-danger">*</span>
+                        </label>
+                        <textarea class="form-control"
+                                  name="discharge_notes"
+                                  id="discharge_notes"
+                                  rows="4"
+                                  required
+                                  placeholder="État du patient, prescriptions, recommandations..."
+                                  aria-describedby="notes_help"></textarea>
+                        <div class="form-text" id="notes_help">
+                            Décrivez l'état du patient et les recommandations pour la sortie
+                        </div>
+                    </div>
+                </form>
+            </div>
+
+            <footer class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-1" aria-hidden="true"></i>
+                    Annuler
+                </button>
+                <button type="button" class="btn btn-success" onclick="submitDischarge()">
+                    <i class="fas fa-check me-1" aria-hidden="true"></i>
+                    Confirmer la sortie
+                </button>
+            </footer>
+        </div>
+    </div>
+</div>
+<!-- Inclure les modals -->
+{% include 'patient_modal.html' %}
+{% include 'medecin_modal.html' %}
+<script>
+
+    // URLs pour les requêtes AJAX
+    // Generate URLs using Django's url template tag
+    const URLS = {
+        admitPatient: "{% url 'hospitalisation:admit_patient' %}",
+        transferPatient: "{% url 'hospitalisation:transfer_patient' %}",
+        transferPatientToService: "{% url 'hospitalisation:transfer_patient_to_service' %}",
+        addAdmissionRequest: "{% url 'hospitalisation:add_admission_request' %}",
+        dischargePatient: "{% url 'hospitalisation:discharge_patient' 0 %}".replace('/0/', '/'),
+        admissionDetail: "{% url 'hospitalisation:admission_detail_api' 0 %}".replace('/0/', '/'),
+        cancelRequest: "{% url 'hospitalisation:cancel_admission_request' 0 %}".replace('/0/', '/'),
+        availableBeds: "{% url 'hospitalisation:available_beds_api' %}",
+        availableBedsByService: "{% url 'hospitalisation:available_beds_by_service_api' 0 %}".replace('/0/', '/'),
+        checkRequestsStatus: "{% url 'hospitalisation:check_requests_status' %}"
+    };
+
+    // Configuration CSRF
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+    const csrftoken = getCookie('csrftoken');
+
+    // Variables globales
+    let draggedPatient = null;
+    let currentAdmissionId = null;
+    let draggedBed = null;
+    let draggedPatientData = null;
+    let servicesOffcanvasVisible = false;
+    let currentTransferData = null;
+    // ========== FONCTIONS DE GESTION DE L'AFFICHAGE DES SERVICES ==========
+    function showServicesOffcanvas(patientData) {
+        const offcanvas = document.getElementById('servicesOffcanvas');
+        const backdrop = document.getElementById('servicesBackdrop');
+        const patientInfo = document.getElementById('transferPatientInfo');
+        const patientNameSpan = document.getElementById('transferPatientName');
+
+        if (!offcanvas) return;
+
+        // Stocker les données du patient
+        currentTransferData = patientData;
+
+        // Afficher les infos du patient
+        if (patientInfo && patientNameSpan && patientData) {
+            patientNameSpan.textContent = `Patient: ${patientData.patientName}`;
+            patientInfo.style.display = 'block';
+        }
+
+        // Afficher l'offcanvas
+        offcanvas.classList.add('show');
+        document.body.style.overflow = 'hidden';
+        servicesOffcanvasVisible = true;
+
+        // Gérer le clic sur le backdrop
+        if (backdrop) {
+            backdrop.addEventListener('click', hideServicesOffcanvas);
+        }
+
+        // Configurer les événements de drag & drop sur les services
+        setupServicesDragDropEvents();
+
+        console.log('Offcanvas des services affiché pour:', patientData);
+    }
+
+    // Fonction pour masquer l'offcanvas des services
+    function hideServicesOffcanvas() {
+        const offcanvas = document.getElementById('servicesOffcanvas');
+
+        if (!offcanvas) return;
+
+        offcanvas.classList.remove('show');
+        document.body.style.overflow = 'auto';
+        servicesOffcanvasVisible = false;
+
+        // Nettoyer les données de transfert après fermeture
+        currentTransferData = null;
+        draggedBed = null;
+        draggedPatientData = null;
+
+        // Masquer les infos du patient
+        const patientInfo = document.getElementById('transferPatientInfo');
+        if (patientInfo) {
+            patientInfo.style.display = 'none';
+        }
+
+        console.log('Offcanvas des services masqué et variables nettoyées');
+    }
+
+
+// Fonction pour afficher les options de transfert via bouton
+function showTransferOptions(admissionId, patientName, bedId, bedNumber, roomNumber) {
+    const patientData = {
+        type: 'hospitalized_patient',
+        admissionId: admissionId,
+        patientName: patientName,
+        bedId: bedId,
+        bedNumber: bedNumber,
+        roomNumber: roomNumber
+    };
+    
+    // Simuler les données de drag pour réutiliser la logique existante
+    draggedPatientData = patientData;
+    currentTransferData = patientData;
+    
+    // Afficher l'offcanvas
+    showServicesOffcanvas(patientData);
+}
+
+// Fonction handleBedDoubleClick améliorée
+function handleBedDoubleClick(bedElement) {
+    if (bedElement.classList.contains('occupied')) {
+        const admissionId = bedElement.dataset.admissionId;
+        const patientName = bedElement.querySelector('.patient-name').textContent;
+        const bedId = bedElement.dataset.bedId;
+        const bedNumber = bedElement.dataset.bedNumber;
+        const roomNumber = bedElement.dataset.roomNumber;
+        
+        showTransferOptions(admissionId, patientName, bedId, bedNumber, roomNumber);
+    }
+}
+    // Configuration des événements drag & drop pour les services dans l'offcanvas
+    function setupServicesDragDropEvents() {
+        const serviceItems = document.querySelectorAll('.service-item:not(.current-service)');
+
+        serviceItems.forEach(serviceItem => {
+            // Retirer les anciens event listeners
+            serviceItem.replaceWith(serviceItem.cloneNode(true));
+
+            // Récupérer le nouvel élément
+            const newServiceItem = document.querySelector(`[data-service-id="${serviceItem.dataset.serviceId}"]:not(.current-service)`);
+            if (!newServiceItem) return;
+
+            // Ajouter les événements
+            newServiceItem.addEventListener('dragover', handleServiceOffcanvasDragOver);
+            newServiceItem.addEventListener('dragleave', handleServiceOffcanvasDragLeave);
+            newServiceItem.addEventListener('drop', handleServiceOffcanvasDrop);
+            newServiceItem.addEventListener('click', handleServiceOffcanvasClick);
+        });
+    }
+    
+    function handleServiceOffcanvasDragOver(e) {
+        if (currentTransferData && currentTransferData.type === 'hospitalized_patient') {
+            e.preventDefault();
+            e.currentTarget.style.background = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
+            e.currentTarget.style.color = 'white';
+            e.currentTarget.querySelector('.service-name').style.color = 'white';
+            e.currentTarget.querySelector('.service-description').style.color = 'rgba(255,255,255,0.8)';
+            e.dataTransfer.dropEffect = 'move';
+        }
+    }
+
+    function handleServiceOffcanvasDragLeave(e) {
+        e.currentTarget.style.background = '';
+        e.currentTarget.style.color = '';
+        e.currentTarget.querySelector('.service-name').style.color = '';
+        e.currentTarget.querySelector('.service-description').style.color = '';
+    }
+
+    function handleServiceOffcanvasDrop(e) {
+        e.preventDefault();
+        const serviceItem = e.currentTarget;
+        const targetServiceId = serviceItem.dataset.serviceId;
+        const targetServiceName = serviceItem.dataset.serviceName;
+
+        // Réinitialiser le style
+        handleServiceOffcanvasDragLeave(e);
+
+        if (currentTransferData && currentTransferData.type === 'hospitalized_patient') {
+            const admissionId = currentTransferData.admissionId;
+            const patientName = currentTransferData.patientName;
+
+            // Masquer l'offcanvas
+            hideServicesOffcanvas();
+
+            // Confirmer le transfert
+            if (confirm(`Transférer ${patientName} vers le service ${targetServiceName} ?\n\nLe patient sera libéré de son lit actuel et ajouté à la liste d'attente du service de destination.`)) {
+                transferPatientToService(admissionId, targetServiceId, targetServiceName, patientName);
+            }
+        }
+
+        cleanupDrag();
+    }
+
+    function handleServiceOffcanvasClick(e) {
+        // Gérer le clic sur un service (même logique que le drop)
+        if (currentTransferData && currentTransferData.type === 'hospitalized_patient') {
+            const serviceItem = e.currentTarget;
+            const targetServiceId = serviceItem.dataset.serviceId;
+            const targetServiceName = serviceItem.dataset.serviceName;
+
+            const admissionId = currentTransferData.admissionId;
+            const patientName = currentTransferData.patientName;
+
+            // Masquer l'offcanvas
+            hideServicesOffcanvas();
+
+            // Confirmer le transfert
+            if (confirm(`Transférer ${patientName} vers le service ${targetServiceName} ?`)) {
+                transferPatientToService(admissionId, targetServiceId, targetServiceName, patientName);
+            }
+        }
+    }
+
+
+    // Fonction pour afficher des messages
+    function showMessage(message, type) {
+        const messagesContainer = document.getElementById('messages-container');
+        const existingMessages = messagesContainer.querySelectorAll('.alert');
+        existingMessages.forEach(msg => msg.remove());
+
+        const messageDiv = document.createElement('div');
+        messageDiv.className = `alert alert-${type} alert-dismissible fade show`;
+        messageDiv.innerHTML = `
+            <i class="fas fa-${type === 'success' ? 'check-circle' : type === 'danger' ? 'exclamation-circle' : 'info-circle'} me-2"></i>
+            ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        `;
+        messagesContainer.appendChild(messageDiv);
+
+        setTimeout(() => {
+            if (messageDiv.parentNode) {
+                messageDiv.remove();
+            }
+        }, 5000);
+    }
+
+    // Gestion du clic sur les lits
+    function handleBedClick(bedElement) {
+        if (bedElement.classList.contains('occupied')) {
+            const admissionId = bedElement.dataset.admissionId;
+            if (admissionId) {
+                loadPatientDetails(admissionId);
+            }
+        }
+    }
+
+    // Validation du formulaire d'admission
+    function validateAdmissionForm() {
+        const patientId = document.getElementById('patient_id').value;
+        const serviceId = document.getElementById('service_id').value;
+        const motif = document.getElementById('motif').value.trim();
+
+        if (!patientId) {
+            showMessage('Veuillez sélectionner un patient', 'warning');
+            return false;
+        }
+
+        if (!serviceId) {
+            showMessage('Veuillez sélectionner un service', 'warning');
+            return false;
+        }
+
+        if (!motif) {
+            showMessage('Veuillez saisir un motif d\'admission', 'warning');
+            return false;
+        }
+
+        return true;
+    }
+
+    // ========== GESTION DU DRAG AND DROP ==========
+
+    // Drag & Drop des patients en attente
+    function handlePatientDragStart(e) {
+        draggedPatient = e.target;
+        draggedPatientData = {
+            type: 'waiting_patient',
+            requestId: e.target.dataset.requestId,
+            patientName: e.target.querySelector('.patient-name-card').textContent,
+            admissionSourceId: e.target.dataset.admissionSource || null
+        };
+
+        e.target.classList.add('dragging');
+        e.dataTransfer.effectAllowed = 'move';
+        e.dataTransfer.setData('text/plain', 'waiting_patient');
+
+        // Les patients en attente ne peuvent pas être transférés vers d'autres services
+        // Donc on garde les services masqués
+        console.log('Drag started - Waiting patient:', draggedPatientData);
+    }
+
+
+    function handlePatientDragEnd(e) {
+        // Masquer les services à la fin du drag pour les patients en attente
+
+        document.querySelectorAll('.dragging').forEach(el => el.classList.remove('dragging'));
+        document.querySelectorAll('.drag-over').forEach(el => el.classList.remove('drag-over'));
+        draggedPatient = null;
+        draggedPatientData = null;
+    }
+    // Drag & Drop des lits occupés (patients hospitalisés)
+    function handleBedDragStart(e) {
+        if (e.target.classList.contains('occupied')) {
+            draggedBed = e.target;
+            draggedPatientData = {
+                type: 'hospitalized_patient',
+                admissionId: e.target.dataset.admissionId,
+                patientName: e.target.querySelector('.patient-name').textContent,
+                bedId: e.target.dataset.bedId,
+                bedNumber: e.target.dataset.bedNumber,
+                roomNumber: e.target.dataset.roomNumber
+            };
+
+            e.target.classList.add('dragging');
+            e.dataTransfer.effectAllowed = 'move';
+            e.dataTransfer.setData('text/plain', 'hospitalized_patient');
+
+            // NE PAS afficher l'offcanvas automatiquement
+            // L'offcanvas ne s'ouvrira que si le drop échoue ou sur demande explicite
+            console.log('Drag started - Hospitalized patient:', draggedPatientData);
+            e.stopPropagation();
+        }
+    }
+
+    function handleBedDragEnd(e) {
+        document.querySelectorAll('.dragging').forEach(el => el.classList.remove('dragging'));
+        document.querySelectorAll('.drag-over').forEach(el => el.classList.remove('drag-over'));
+
+        // Nettoyer seulement si l'offcanvas n'est pas visible
+        if (!servicesOffcanvasVisible) {
+            draggedBed = null;
+            draggedPatientData = null;
+        }
+    }
+
+    // Gestion du drag over pour les lits disponibles
+    function handleDragOver(e) {
+        if (e.target.classList.contains('bed') && e.target.classList.contains('available')) {
+            e.preventDefault();
+            e.target.classList.add('drag-over');
+            e.dataTransfer.dropEffect = 'move';
+        }
+    }
+
+    function handleDragLeave(e) {
+        if (e.target.classList.contains('bed')) {
+            e.target.classList.remove('drag-over');
+        }
+    }
+
+    // Gestion du drop sur les lits
+    function handleDrop(e) {
+        e.preventDefault();
+        const bed = e.target.closest('.bed');
+
+        if (bed && bed.classList.contains('available')) {
+            const dataType = e.dataTransfer.getData('text/plain');
+
+            if (dataType === 'waiting_patient' && draggedPatient) {
+                // Admission d'un patient en attente
+                const requestId = draggedPatient.dataset.requestId;
+                const bedId = bed.dataset.bedId;
+                admitPatient(requestId, bedId, bed);
+
+            } else if (dataType === 'hospitalized_patient' && draggedBed) {
+                // Transfert intra-service entre lits
+                const admissionId = draggedBed.dataset.admissionId;
+                const newBedId = bed.dataset.bedId;
+
+                // Vérifier si c'est dans le même service (transfert intra-service)
+                const currentRoomService = getCurrentServiceFromBed(draggedBed);
+                const targetRoomService = getCurrentServiceFromBed(bed);
+
+                if (currentRoomService === targetRoomService) {
+                    // Transfert intra-service : pas besoin de l'offcanvas
+                    transferPatientIntraService(admissionId, newBedId);
+                } else {
+                    // Transfert inter-services : afficher l'offcanvas pour confirmation
+                    showServicesOffcanvasForTransfer();
+                    return; // Ne pas nettoyer tout de suite
+                }
+            }
+        } else {
+            // Drop échoué : si c'est un patient hospitalisé, proposer les options de transfert
+            const dataType = e.dataTransfer.getData('text/plain');
+            if (dataType === 'hospitalized_patient' && draggedPatientData) {
+                // Afficher l'offcanvas pour les options de transfert
+                showServicesOffcanvas(draggedPatientData);
+                return; // Ne pas nettoyer tout de suite
+            }
+        }
+
+        // Nettoyer le drag & drop
+        cleanupDrag();
+    }
+
+    function getCurrentServiceFromBed(bedElement) {
+        // Chercher dans la room parent ou utiliser un attribut data si disponible
+        const roomElement = bedElement.closest('.room');
+        if (roomElement && roomElement.dataset.serviceId) {
+            return roomElement.dataset.serviceId;
+        }
+        // Alternative : chercher dans les données du service actuel
+        return '{{ service.id }}'; // Service actuel de la page
+    }
+    function showServicesOffcanvasForTransfer() {
+        if (draggedPatientData && draggedPatientData.type === 'hospitalized_patient') {
+            showServicesOffcanvas(draggedPatientData);
+        }
+    }
+    // ========== GESTION DU DRAG & DROP VERS LES SERVICES ==========
+
+    function setupServiceDragDrop() {
+        const serviceIcons = document.querySelectorAll('.service-icon');
+
+        serviceIcons.forEach(serviceIcon => {
+            serviceIcon.addEventListener('dragover', handleServiceDragOver);
+            serviceIcon.addEventListener('dragleave', handleServiceDragLeave);
+            serviceIcon.addEventListener('drop', handleServiceDrop);
+        });
+    }
+
+    function handleServiceDragOver(e) {
+        // Seuls les patients hospitalisés peuvent être transférés vers d'autres services
+        if (draggedPatientData && draggedPatientData.type === 'hospitalized_patient') {
+            e.preventDefault();
+            e.currentTarget.classList.add('drag-over');
+            e.dataTransfer.dropEffect = 'move';
+        }
+    }
+
+    function handleServiceDragLeave(e) {
+        e.currentTarget.classList.remove('drag-over');
+    }
+
+    function handleServiceDrop(e) {
+        e.preventDefault();
+        const serviceIcon = e.currentTarget;
+        const targetServiceId = serviceIcon.dataset.serviceId;
+        const targetServiceName = serviceIcon.dataset.serviceName;
+
+        serviceIcon.classList.remove('drag-over');
+
+        if (draggedPatientData && draggedPatientData.type === 'hospitalized_patient') {
+            const admissionId = draggedPatientData.admissionId;
+            const patientName = draggedPatientData.patientName;
+
+            // Vérifier qu'on ne transfère pas vers le même service
+            if (serviceIcon.classList.contains('current-service')) {
+                showMessage('Le patient est déjà dans ce service', 'warning');
+                return;
+            }
+
+            // Confirmer le transfert
+            if (confirm(`Transférer ${patientName} vers le service ${targetServiceName} ?\n\nLe patient sera libéré de son lit actuel et ajouté à la liste d'attente du service de destination.`)) {
+                transferPatientToService(admissionId, targetServiceId, targetServiceName, patientName);
+            }
+        }
+
+        // Nettoyer
+        cleanupDrag();
+    }
+
+    // ========== GESTION DU DRAG & DROP VERS LA SORTIE ==========
+
+    function setupExitDragDrop() {
+        const exitZone = document.getElementById('exit-zone');
+
+        exitZone.addEventListener('dragover', handleExitDragOver);
+        exitZone.addEventListener('dragleave', handleExitDragLeave);
+        exitZone.addEventListener('drop', handleExitDrop);
+    }
+
+    function handleExitDragOver(e) {
+        // Seuls les patients hospitalisés peuvent sortir
+        if (draggedPatientData && draggedPatientData.type === 'hospitalized_patient') {
+            e.preventDefault();
+            e.currentTarget.classList.add('drag-over');
+            e.dataTransfer.dropEffect = 'move';
+        }
+    }
+
+    function handleExitDragLeave(e) {
+        e.currentTarget.classList.remove('drag-over');
+    }
+
+    function handleExitDrop(e) {
+        e.preventDefault();
+        const exitZone = e.currentTarget;
+        exitZone.classList.remove('drag-over');
+
+        if (draggedPatientData && draggedPatientData.type === 'hospitalized_patient') {
+            const admissionId = draggedPatientData.admissionId;
+            const patientName = draggedPatientData.patientName;
+
+            // Ouvrir le modal de sortie avec les données du patient
+            showDischargeFormFromDrop(admissionId, patientName);
+        }
+
+        // Nettoyer
+        cleanupDrag();
+    }
+
+    function showDischargeFormFromDrop(admissionId, patientName) {
+        // Charger les détails de l'admission pour le modal
+        loadPatientDetailsForDischarge(admissionId);
+    }
+
+    // Fonction pour nettoyer après le drag
+    function cleanupDrag() {
+        document.querySelectorAll('.dragging').forEach(el => el.classList.remove('dragging'));
+        document.querySelectorAll('.drag-over').forEach(el => el.classList.remove('drag-over'));
+
+        // Ne nettoyer les variables que si l'offcanvas n'est pas actif
+        if (!servicesOffcanvasVisible) {
+            draggedPatient = null;
+            draggedBed = null;
+            draggedPatientData = null;
+            currentTransferData = null;
+        }
+    }
+    // Gestion de la touche Escape pour fermer l'offcanvas
+    document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape' && servicesOffcanvasVisible) {
+            hideServicesOffcanvas();
+        }
+    });
+        // Empêcher la fermeture accidentelle lors du scroll sur mobile
+    document.addEventListener('touchmove', function (e) {
+        if (servicesOffcanvasVisible) {
+            const offcanvasPanel = document.querySelector('.offcanvas-panel');
+            if (offcanvasPanel && !offcanvasPanel.contains(e.target)) {
+                e.preventDefault();
+            }
+        }
+    }, { passive: false });
+
+    console.log('Système d\'offcanvas pour les services de transfert initialisé');
+    // ========== FONCTIONS DE TRANSFERT ET ADMISSION ==========
+
+    // Fonction pour admettre un patient
+// Fonction pour admettre un patient - VERSION CORRIGÉE
+async function admitPatient(requestId, bedId, bedElement) {
+    try {
+        const requestData = {
+            'request_id': requestId,
+            'bed_id': bedId
+        };
+
+        // Récupérer les données de la demande depuis l'élément DOM
+        const patientCard = document.querySelector(`[data-request-id="${requestId}"]`);
+        if (patientCard) {
+            const admissionSourceId = patientCard.dataset.admissionSource;
+            if (admissionSourceId && admissionSourceId !== 'None' && admissionSourceId !== '') {
+                requestData.continue_admission_id = admissionSourceId;
+                console.log('Transfert détecté - admission source:', admissionSourceId);
+            }
+        }
+
+        console.log('Données envoyées pour admission:', requestData);
+
+        const response = await fetch(URLS.admitPatient, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrftoken,
+            },
+            body: JSON.stringify(requestData)
+        });
+
+        const data = await response.json();
+        console.log('Réponse admission:', data);
+
+        if (data.success) {
+            updateBedStatus(bedElement, data.patient_name, data.admission_id);
+
+            // Retirer immédiatement de la liste d'attente
+            removePatientFromWaitingList(requestId);
+
+            if (data.continuation) {
+                showMessage(`${data.patient_name} assigné au nouveau service (admission continue)!`, 'success');
+                showMessage('Le parcours du patient a été mis à jour.', 'info');
+            } else {
+                showMessage('Patient admis avec succès!', 'success');
+            }
+
+            // Recharger après un délai
+            setTimeout(() => {
+                window.location.reload();
+            }, 2000);
+        } else {
+            showMessage(data.error || 'Erreur lors de l\'admission', 'danger');
+        }
+    } catch (error) {
+        console.error('Erreur admission:', error);
+        showMessage('Erreur de communication avec le serveur', 'danger');
+    }
+}
+
+
+    // Fonction pour transfert intra-service via drag & drop
+    async function transferPatientIntraService(admissionId, newBedId) {
+        const reason = "Transfert par glisser-déposer dans le même service";
+
+        try {
+            const response = await fetch(URLS.transferPatient, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrftoken,
+                },
+                body: JSON.stringify({
+                    'admission_id': admissionId,
+                    'new_bed_id': newBedId,
+                    'reason': reason
+                })
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                showMessage('Patient transféré avec succès!', 'success');
+                setTimeout(() => window.location.reload(), 1000);
+            } else {
+                showMessage(data.error || 'Erreur lors du transfert', 'danger');
+            }
+        } catch (error) {
+            console.error('Erreur:', error);
+            showMessage('Erreur de communication avec le serveur', 'danger');
+        }
+    }
+
+    // Fonction pour transfert inter-services via drag & drop
+        async function transferPatientToService(admissionId, targetServiceId, targetServiceName, patientName) {
+            const reason = `Transfert par glisser-déposer vers ${targetServiceName}`;
+
+            try {
+                const response = await fetch(URLS.transferPatientToService, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': csrftoken,
+                    },
+                    body: JSON.stringify({
+                        'admission_id': admissionId,
+                        'new_service_id': targetServiceId,
+                        'reason': reason
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    if (data.transfer_type === 'inter_service_continuous') {
+                        showMessage(`${patientName} transféré vers ${targetServiceName} (admission continue)!`, 'success');
+                        showMessage('Le patient est maintenant en liste d\'attente pour assignation dans le nouveau service.', 'info');
+                    } else {
+                        showMessage(`${patientName} transféré vers ${targetServiceName}!`, 'success');
+                    }
+                    setTimeout(() => window.location.reload(), 2000);
+                } else {
+                    showMessage(data.error || 'Erreur lors du transfert', 'danger');
+                }
+            } catch (error) {
+                console.error('Erreur:', error);
+                showMessage('Erreur de communication avec le serveur', 'danger');
+            }
+        }
+    // Mettre à jour le statut du lit
+    function updateBedStatus(bedElement, patientName, admissionId) {
+        bedElement.classList.remove('available');
+        bedElement.classList.add('occupied');
+        bedElement.setAttribute('data-admission-id', admissionId);
+
+        const bedContent = bedElement.querySelector('div:first-child');
+        if (bedContent) {
+            bedContent.innerHTML = '🛏️ ' + bedElement.dataset.bedNumber;
+        }
+
+        let patientInfo = bedElement.querySelector('.patient-name');
+        if (!patientInfo) {
+            patientInfo = document.createElement('div');
+            patientInfo.className = 'patient-name';
+            bedElement.appendChild(patientInfo);
+        }
+        patientInfo.textContent = patientName;
+    }
+
+    // Retirer le patient de la liste d'attente
+    function removePatientFromWaitingList(requestId) {
+        const patientCard = document.querySelector(`[data-request-id="${requestId}"]`);
+        if (patientCard) {
+            patientCard.style.opacity = '0';
+            patientCard.style.transform = 'translateX(-100%)';
+            setTimeout(() => patientCard.remove(), 300);
+        }
+    }
+
+    // ========== FONCTIONS POUR MODALES ==========
+
+    // Charger les détails d'un patient
+    async function loadPatientDetails(admissionId) {
+        try {
+            const url = `${URLS.admissionDetail}${admissionId}/`;
+            const response = await fetch(url);
+            const data = await response.json();
+
+            if (data.success) {
+                displayPatientDetails(data.admission);
+            } else {
+                showMessage('Erreur lors du chargement des détails', 'danger');
+            }
+        } catch (error) {
+            console.error('Erreur:', error);
+            showMessage('Erreur de communication avec le serveur', 'danger');
+        }
+    }
+
+    // Charger les détails pour le modal de sortie (via drag & drop)
+    async function loadPatientDetailsForDischarge(admissionId) {
+        try {
+            const url = `${URLS.admissionDetail}${admissionId}/`;
+            const response = await fetch(url);
+            const data = await response.json();
+
+            if (data.success) {
+                // Préparer les informations pour le modal de sortie
+                const admission = data.admission;
+                const patientInfo = `
+                    <strong>Patient:</strong> ${admission.patient.last_name} ${admission.patient.first_name}<br>
+                    <strong>Lit actuel:</strong> ${admission.bed ? `Chambre ${admission.bed.room.room_number} - Lit ${admission.bed.bed_number}` : 'Non assigné'}<br>
+                    <strong>Date d'admission:</strong> ${new Date(admission.admission_date).toLocaleDateString('fr-FR')}<br>
+                    <strong>Durée de séjour:</strong> ${admission.length_of_stay} jour(s)
+                `;
+
+                document.getElementById('dischargePatientInfo').innerHTML = patientInfo;
+                document.getElementById('dischargeAdmissionId').value = admission.id;
+
+                const dischargeModal = new bootstrap.Modal(document.getElementById('dischargeModal'));
+                dischargeModal.show();
+            } else {
+                showMessage('Erreur lors du chargement des détails', 'danger');
+            }
+        } catch (error) {
+            console.error('Erreur:', error);
+            showMessage('Erreur de communication avec le serveur', 'danger');
+        }
+    }
+
+    // Afficher les détails du patient
+    function displayPatientDetails(admission) {
+        const formatDate = (dateStr) => {
+            if (!dateStr) return 'N/A';
+            const date = new Date(dateStr);
+            return date.toLocaleDateString('fr-FR', {
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        };
+
+        const formatCurrency = (amount) => {
+            return new Intl.NumberFormat('fr-FR', {
+                style: 'decimal',
+                minimumFractionDigits: 0,
+                maximumFractionDigits: 0
+            }).format(amount) + ' DA';
+        };
+        const formatDuration = (hours) => {
+            const h = Math.floor(hours);
+            const m = Math.floor((hours - h) * 60);
+            if (hours < 1) {
+                return `${Math.round(hours * 60)}min`;
+            } else if (hours < 24) {
+                return m > 0 ? `${h}h${m}min` : `${h}h`;
+            } else {
+                const days = Math.floor(hours / 24);
+                const remainingHours = Math.floor(hours % 24);
+                return remainingHours > 0 ? `${days}j ${remainingHours}h` : `${days}j`;
+            }
+        };
+
+        // Créer une timeline financière avec support des séjours courts
+        function createFinancialTimelineWithShortStays(admission) {
+            let timeline = [];
+            let cumulativeCost = 0;
+
+            // 1. Admission initiale
+            timeline.push({
+                type: 'admission',
+                date: new Date(admission.admission_date),
+                title: 'Admission initiale',
+                details: `Patient admis dans l'hôpital`,
+                icon: 'fas fa-sign-in-alt',
+                color: 'success',
+                cost: 0,
+                cumulative: 0
+            });
+
+            // 2. Parcours détaillé avec coûts
+            if (admission.detailed_journey) {
+                admission.detailed_journey.forEach((etape, index) => {
+                    const stepCost = etape.period_cost || 0;
+                    cumulativeCost = etape.cumulative_cost || (cumulativeCost + stepCost);
+
+                    let titleSuffix = '';
+                    let billingInfo = '';
+
+                    if (etape.is_short_stay) {
+                        titleSuffix = ' (Séjour court)';
+                        billingInfo = `
+                        <div class="short-stay-info mt-2">
+                            <span class="badge bg-warning">
+                                <i class="fas fa-clock me-1"></i>
+                                Séjour court: ${formatDuration(etape.duration_hours)}
+                            </span>
+                            <div class="billing-formula mt-1">
+                                <small class="text-muted">${etape.billing_details?.formule || ''}</small>
+                            </div>
+                        </div>
+                    `;
+                    } else {
+                        billingInfo = `
+                        <div class="normal-stay-info mt-2">
+                            <span class="badge bg-info">
+                                <i class="fas fa-calendar me-1"></i>
+                                Séjour normal: ${etape.days} jour(s)
+                            </span>
+                            <div class="billing-formula mt-1">
+                                <small class="text-muted">${etape.billing_details?.formule || ''}</small>
+                            </div>
+                        </div>
+                    `;
+                    }
+
+                    timeline.push({
+                        type: 'stay_period',
+                        date: new Date(etape.start_date),
+                        title: `Séjour en ${etape.service}${titleSuffix}`,
+                        details: `
+                        <div class="financial-details">
+                            <div><strong>Lit:</strong> ${etape.bed} - Chambre ${etape.room}</div>
+                            <div><strong>Durée:</strong> ${formatDuration(etape.duration_hours)} (${etape.days} jour(s))</div>
+                            <div><strong>Prix/nuit:</strong> ${formatCurrency(etape.night_price)}</div>
+                            ${billingInfo}
+                            <div class="financial-summary mt-2">
+                                <strong>Coût période:</strong> <span class="text-success">${formatCurrency(stepCost)}</span>
+                            </div>
+                        </div>
+                    `,
+                        icon: etape.is_short_stay ? 'fas fa-clock' : 'fas fa-bed',
+                        color: etape.is_current ? 'primary' : (etape.is_short_stay ? 'warning' : 'info'),
+                        cost: stepCost,
+                        cumulative: cumulativeCost,
+                        endDate: etape.end_date ? new Date(etape.end_date) : null,
+                        isCurrent: etape.is_current || false,
+                        isShortStay: etape.is_short_stay
+                    });
+                });
+            }
+
+            // 3. Transferts avec impact financier
+            if (admission.transfers_history) {
+                admission.transfers_history.forEach(transfer => {
+                    const impactDescription = transfer.financial_impact?.impact_description || '';
+                    const priceDiff = transfer.financial_impact?.price_difference || 0;
+
+                    timeline.push({
+                        type: 'transfer',
+                        date: new Date(transfer.date),
+                        title: `Transfert vers ${transfer.to_service || 'service inconnu'}`,
+                        details: `
+                        <div class="transfer-details">
+                            <div><strong>Motif:</strong> ${transfer.reason}</div>
+                            <div><strong>De:</strong> ${transfer.from_service || 'N/A'} → <strong>Vers:</strong> ${transfer.to_service || 'N/A'}</div>
+                            ${impactDescription ? `<div class="financial-impact ${priceDiff > 0 ? 'text-warning' : priceDiff < 0 ? 'text-success' : 'text-muted'}">
+                                <i class="fas fa-chart-line"></i> ${impactDescription}
+                            </div>` : ''}
+                        </div>
+                    `,
+                        icon: 'fas fa-exchange-alt',
+                        color: priceDiff > 0 ? 'warning' : priceDiff < 0 ? 'success' : 'info',
+                        cost: 0,
+                        cumulative: cumulativeCost
+                    });
+                });
+            }
+
+            // 4. Sortie (si applicable)
+            if (admission.discharge_date) {
+                timeline.push({
+                    type: 'discharge',
+                    date: new Date(admission.discharge_date),
+                    title: 'Sortie',
+                    details: `
+                    <div><strong>Statut:</strong> ${admission.status}</div>
+                    <div class="final-cost"><strong>Coût total final:</strong> <span class="text-success fw-bold">${formatCurrency(admission.estimated_cost)}</span></div>
+                `,
+                    icon: 'fas fa-sign-out-alt',
+                    color: 'danger',
+                    cost: 0,
+                    cumulative: admission.estimated_cost
+                });
+            }
+
+            // Trier chronologiquement
+            timeline.sort((a, b) => a.date - b.date);
+            return timeline;
+        }
+
+        const financialTimeline = createFinancialTimelineWithShortStays(admission);
+
+        // Structure simplifiée avec focus sur la facturation
+        const tabsHtml = `
+        <ul class="nav nav-tabs" id="patientTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="info-tab" data-bs-toggle="tab" data-bs-target="#info" type="button" role="tab">
+                    <i class="fas fa-info-circle"></i> Informations générales
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="billing-tab" data-bs-toggle="tab" data-bs-target="#billing" type="button" role="tab">
+                    <i class="fas fa-calculator"></i> Facturation détaillée
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="short-stays-tab" data-bs-toggle="tab" data-bs-target="#short-stays" type="button" role="tab">
+                    <i class="fas fa-clock"></i> Séjours courts 
+                    ${admission.billing_summary?.nombre_sejours_courts > 0 ?
+                `<span class="badge bg-warning ms-1">${admission.billing_summary.nombre_sejours_courts}</span>` : ''}
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="timeline-tab" data-bs-toggle="tab" data-bs-target="#timeline" type="button" role="tab">
+                    <i class="fas fa-route"></i> Parcours complet
+                </button>
+            </li>
+        </ul>
+    `;
+
+        const tabContentHtml = `
+        <div class="tab-content mt-3" id="patientTabContent">
+            <!-- ONGLET 1: INFORMATIONS GÉNÉRALES -->
+            <div class="tab-pane fade show active" id="info" role="tabpanel">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h5>${admission.patient.last_name} ${admission.patient.first_name}</h5>
+                        <p><strong>Date d'admission:</strong> ${formatDate(admission.admission_date)}</p>
+                        <p><strong>Durée du séjour:</strong> ${formatDuration(admission.length_of_stay_hours)} (${admission.length_of_stay_days} jour(s))</p>
+                        <p><strong>Statut:</strong> <span class="badge bg-primary">${admission.status}</span></p>
+                    </div>
+                    <div class="col-md-6">
+                        ${admission.bed ? `
+                            <p><strong>Lit actuel:</strong> ${admission.bed.bed_number} (Chambre ${admission.bed.room.room_number})</p>
+                            <p><strong>Service:</strong> ${admission.bed.room.service}</p>
+                            <p><strong>Prix/nuit actuel:</strong> ${formatCurrency(admission.bed.room.night_price)}</p>
+                        ` : '<p><strong>Lit:</strong> <span class="badge bg-warning">En attente d\'assignation</span></p>'}
+                        
+                        <div class="cost-summary mt-3 p-3 bg-light rounded">
+                            <h6><i class="fas fa-calculator"></i> Résumé financier</h6>
+                            <div class="d-flex justify-content-between">
+                                <span>Coût total estimé:</span>
+                                <strong class="text-success">${formatCurrency(admission.estimated_cost)}</strong>
+                            </div>
+                            <div class="d-flex justify-content-between">
+                                <span>Coût moyen/jour:</span>
+                                <span>${formatCurrency(admission.estimated_cost / Math.max(1, admission.length_of_stay_days))}</span>
+                            </div>
+                            <div class="d-flex justify-content-between">
+                                <span>Coût moyen/heure:</span>
+                                <span>${formatCurrency(admission.estimated_cost / Math.max(1, admission.length_of_stay_hours))}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ONGLET 2: FACTURATION DÉTAILLÉE -->
+            <div class="tab-pane fade" id="billing" role="tabpanel">
+                <div class="financial-breakdown">
+                    <h6 class="mb-3"><i class="fas fa-receipt"></i> Détail de la facturation</h6>
+                    
+                    <!-- Résumé financier avec séjours courts -->
+                    <div class="row mb-4">
+                        <div class="col-md-3">
+                            <div class="financial-card total">
+                                <div class="financial-value">${formatCurrency(admission.estimated_cost)}</div>
+                                <div class="financial-label">Coût Total</div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="financial-card average">
+                                <div class="financial-value">${formatCurrency(admission.estimated_cost / Math.max(1, admission.length_of_stay_hours))}</div>
+                                <div class="financial-label">Coût Moyen/Heure</div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="financial-card duration">
+                                <div class="financial-value">${formatDuration(admission.length_of_stay_hours)}</div>
+                                <div class="financial-label">Durée Totale</div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="financial-card stats">
+                                <div class="financial-value">${(admission.billing_summary?.nombre_sejours_courts || 0) + (admission.billing_summary?.nombre_sejours_normaux || 0)}</div>
+                                <div class="financial-label">Nb Périodes</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Répartition séjours courts vs normaux -->
+                    ${admission.billing_summary ? `
+                        <div class="billing-breakdown mb-4">
+                            <h6>Répartition par type de séjour</h6>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="breakdown-card short-stays">
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <span><i class="fas fa-clock text-warning"></i> Séjours courts (&lt;24h)</span>
+                                            <span class="badge bg-warning">${admission.billing_summary.nombre_sejours_courts}</span>
+                                        </div>
+                                        <div class="breakdown-amount">${formatCurrency(admission.billing_summary.sejours_courts.reduce((sum, s) => sum + s.cout_total, 0))}</div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="breakdown-card normal-stays">
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <span><i class="fas fa-bed text-info"></i> Séjours normaux (≥24h)</span>
+                                            <span class="badge bg-info">${admission.billing_summary.nombre_sejours_normaux}</span>
+                                        </div>
+                                        <div class="breakdown-amount">${formatCurrency(admission.billing_summary.sejours_normaux.reduce((sum, s) => sum + s.cout_total, 0))}</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    ` : ''}
+
+                    <!-- Détail par période -->
+                    <h6 class="mb-3">Facturation par période</h6>
+                    <div class="periods-breakdown">
+                        ${admission.detailed_journey ? admission.detailed_journey.map((period, index) => `
+                            <div class="period-item ${period.is_current ? 'current-period' : ''} ${period.is_short_stay ? 'short-stay-period' : 'normal-stay-period'}">
+                                <div class="period-header">
+                                    <div class="period-title">
+                                        <strong>${period.service}</strong> - Chambre ${period.room}, Lit ${period.bed}
+                                        ${period.is_current ? '<span class="badge bg-success ms-2">EN COURS</span>' : ''}
+                                        ${period.is_short_stay ? '<span class="badge bg-warning ms-2"><i class="fas fa-clock"></i> Court</span>' : '<span class="badge bg-info ms-2"><i class="fas fa-bed"></i> Normal</span>'}
+                                    </div>
+                                    <div class="period-cost">
+                                        <strong>${formatCurrency(period.period_cost || 0)}</strong>
+                                    </div>
+                                </div>
+                                <div class="period-details">
+                                    <div class="row">
+                                        <div class="col-md-8">
+                                            <small class="text-muted">
+                                                Du ${formatDate(period.start_date)} ${period.end_date ? 'au ' + formatDate(period.end_date) : '(en cours)'}
+                                                <br>
+                                                Durée: ${formatDuration(period.duration_hours)} (${period.days} jour(s))
+                                            </small>
+                                        </div>
+                                        <div class="col-md-4 text-end">
+                                            <small>Prix nuit: ${formatCurrency(period.night_price)}</small>
+                                        </div>
+                                    </div>
+                                    ${period.billing_details ? `
+                                        <div class="billing-formula mt-2 p-2 bg-light rounded">
+                                            <strong>Calcul:</strong> <code>${period.billing_details.formule}</code>
+                                            ${period.is_short_stay ? `
+                                                <div class="short-stay-details mt-1">
+                                                    <small class="text-muted">
+                                                        Tarif fixe: ${formatCurrency(period.billing_details.tarif_fixe_service)} + 
+                                                        Tarif variable: ${formatCurrency(period.billing_details.cout_variable || 0)}
+                                                        (${formatCurrency(period.billing_details.tarif_horaire || 0)}/h × ${period.billing_details.duree_heures}h)
+                                                    </small>
+                                                </div>
+                                            ` : ''}
+                                        </div>
+                                    ` : ''}
+                                    <div class="cumulative-cost">
+                                        <small class="text-muted">Coût cumulé: <strong>${formatCurrency(period.cumulative_cost || 0)}</strong></small>
+                                    </div>
+                                </div>
+                            </div>
+                        `).join('') : '<p class="text-muted">Aucun détail de séjour disponible</p>'}
+                    </div>
+                </div>
+                    </div>
+
+            <!-- ONGLET 3: SÉJOURS COURTS -->
+            <div class="tab-pane fade" id="short-stays" role="tabpanel">
+                <div class="short-stays-analysis">
+                    <h6 class="mb-3"><i class="fas fa-clock text-warning"></i> Analyse des séjours courts</h6>
+                    
+                    ${admission.billing_summary && admission.billing_summary.sejours_courts.length > 0 ? `
+                        <div class="alert alert-info mb-3">
+                            <i class="fas fa-info-circle me-2"></i>
+                            Les séjours courts sont facturés avec un tarif fixe + un tarif horaire variable selon la formule de chaque service.
+                        </div>
+                        
+                        <div class="short-stays-list">
+                            ${admission.billing_summary.sejours_courts.map((sejour, index) => `
+                                <div class="short-stay-card mb-3 p-3 border border-warning rounded">
+                                    <div class="d-flex justify-content-between align-items-start mb-2">
+                                        <h6 class="mb-0">
+                                            <i class="fas fa-clock text-warning me-2"></i>
+                                            Séjour court #${index + 1}
+                                        </h6>
+                                        <span class="badge bg-warning">${formatCurrency(sejour.cout_total)}</span>
+                                    </div>
+                                    
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <p class="mb-1"><strong>Durée:</strong> ${formatDuration(sejour.duree_heures)}</p>
+                                            <p class="mb-1"><strong>Service:</strong> ${sejour.service || 'N/A'}</p>
+                                            <p class="mb-1"><strong>Prix chambre:</strong> ${formatCurrency(sejour.prix_nuit_applique)}</p>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <p class="mb-1"><strong>Tarif fixe:</strong> ${formatCurrency(sejour.tarif_fixe_service)}</p>
+                                            <p class="mb-1"><strong>Tarif horaire:</strong> ${formatCurrency(sejour.tarif_horaire)}/h</p>
+                                            <p class="mb-1"><strong>Coût variable:</strong> ${formatCurrency(sejour.cout_variable)}</p>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="formula-display mt-2 p-2 bg-light rounded">
+                                        <strong>Formule appliquée:</strong>
+                                        <code class="d-block">${sejour.formule}</code>
+                                    </div>
+                                    
+                                    <div class="comparison mt-2">
+                                        <small class="text-muted">
+                                            <i class="fas fa-info-circle me-1"></i>
+                                            Si facturé au tarif normal: ${formatCurrency(sejour.prix_nuit_applique)} 
+                                            (économie de ${formatCurrency(sejour.prix_nuit_applique - sejour.cout_total)})
+                                        </small>
+                                    </div>
+                                </div>
+                                    `).join('')}
+                        </div>
+                        
+                        <div class="short-stays-summary mt-4 p-3 bg-warning bg-opacity-10 rounded">
+                            <h6><i class="fas fa-calculator text-warning"></i> Résumé des séjours courts</h6>
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <div class="stat-item">
+                                        <div class="stat-value">${admission.billing_summary.nombre_sejours_courts}</div>
+                                        <div class="stat-label">Nombre de séjours</div>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="stat-item">
+                                        <div class="stat-value">${formatCurrency(admission.billing_summary.sejours_courts.reduce((sum, s) => sum + s.cout_total, 0))}</div>
+                                        <div class="stat-label">Coût total</div>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="stat-item">
+                                        <div class="stat-value">${formatDuration(admission.billing_summary.sejours_courts.reduce((sum, s) => sum + s.duree_heures, 0))}</div>
+                                        <div class="stat-label">Durée totale</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    ` : `
+                        <div class="alert alert-success">
+                            <i class="fas fa-check-circle me-2"></i>
+                            Aucun séjour court détecté. Tous les séjours ont été facturés au tarif normal.
+                        </div>
+                    `}
+                </div>
+            </div>
+
+            <!-- ONGLET 4: TIMELINE COMPLÈTE -->
+            <div class="tab-pane fade" id="timeline" role="tabpanel">
+                <h6 class="mb-3"><i class="fas fa-route"></i> Parcours chronologique avec coûts</h6>
+                <div class="financial-timeline">
+                    ${financialTimeline.map((event, index) => `
+                        <div class="timeline-item ${event.type} ${event.isCurrent ? 'current-event' : ''} ${event.isShortStay ? 'short-stay-event' : ''}">
+                            <div class="timeline-marker ${event.isShortStay ? 'short-stay-marker' : ''}">
+                                <i class="${event.icon} text-${event.color}"></i>
+                            </div>
+                            <div class="timeline-content">
+                                <div class="timeline-header">
+                                    <div class="timeline-date">
+                                        ${event.type === 'stay_period' && event.isCurrent ? 'EN COURS' : formatDate(event.date.toISOString())}
+                                        ${event.endDate ? ' → ' + formatDate(event.endDate.toISOString()) : ''}
+                                    </div>
+                                    <div class="timeline-cost">
+                                        ${event.cost > 0 ? formatCurrency(event.cost) : ''}
+                                        ${event.cumulative > 0 ? `<br><small class="text-muted">Total: ${formatCurrency(event.cumulative)}</small>` : ''}
+                                    </div>
+                                </div>
+                                <div class="timeline-title">${event.title}</div>
+                                <div class="timeline-details">${event.details}</div>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+
+            <!-- ONGLET 4: HISTORIQUE PATIENT -->
+            <div class="tab-pane fade" id="history" role="tabpanel">
+                <h6 class="mb-3"><i class="fas fa-history"></i> Autres admissions du patient</h6>
+                ${admission.patient_admissions_history && admission.patient_admissions_history.length > 0 ? `
+                    ${admission.patient_admissions_history.map(pastAdmission => `
+                        <div class="historical-admission">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div>
+                                    <h6 class="mb-1">Admission du ${formatDate(pastAdmission.admission_date).split(' ')[0]}</h6>
+                                    <p class="mb-1"><strong>Statut:</strong> ${pastAdmission.status}</p>
+                                    <p class="mb-1"><strong>Durée:</strong> ${pastAdmission.length_of_stay} jour(s)</p>
+                                    <p class="mb-1"><strong>Médecin:</strong> ${pastAdmission.attending_doctor}</p>
+                                </div>
+                                <div class="text-end">
+                                    <div class="fw-bold text-success">${formatCurrency(pastAdmission.total_cost)}</div>
+                                    ${pastAdmission.discharge_date ?
+                    `<small class="text-muted">Sorti le ${formatDate(pastAdmission.discharge_date).split(' ')[0]}</small>` :
+                    '<small class="text-warning">En cours</small>'
+                }
+                                </div>
+                            </div>
+                            ${pastAdmission.services_visited && pastAdmission.services_visited.length > 0 ? `
+                                <div class="services-visited mt-2">
+                                    <small class="text-muted me-2">Services visités:</small>
+                                    ${pastAdmission.services_visited.map(service => `
+                                        <span class="service-badge">${service}</span>
+                                    `).join('')}
+                                </div>
+                            ` : ''}
+                            ${pastAdmission.cost_breakdown && pastAdmission.cost_breakdown.length > 0 ? `
+                                <div class="cost-breakdown mt-2">
+                                    <small class="text-muted">Détail des coûts:</small>
+                                    <div class="cost-details">
+                                        ${pastAdmission.cost_breakdown.map(breakdown => `
+                                            <div class="cost-line">
+                                                <span>${breakdown.service}: ${breakdown.days} j. × ${formatCurrency(breakdown.night_price)} = ${formatCurrency(breakdown.period_cost)}</span>
+                                            </div>
+                                        `).join('')}
+                                    </div>
+                                </div>
+                            ` : ''}
+                        </div>
+                    `).join('')}
+                ` : '<p class="text-muted text-center py-4">Aucune autre admission trouvée pour ce patient.</p>'}
+            </div>
+        </div>
+    `;
+
+        // Assembler le contenu complet avec styles CSS
+        const fullContent = `
+        <style>
+            .financial-card {
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                color: white;
+                padding: 20px;
+                border-radius: 10px;
+                text-align: center;
+                margin-bottom: 15px;
+            }
+            .financial-card.total { background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%); }
+            .financial-card.average { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+            .financial-card.duration { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); }
+            
+            .financial-value {
+                font-size: 1.8rem;
+                font-weight: bold;
+                margin-bottom: 5px;
+            }
+            .financial-label {
+                font-size: 0.9rem;
+                opacity: 0.9;
+            }
+
+            .period-item {
+                border: 1px solid #dee2e6;
+                border-radius: 8px;
+                margin-bottom: 15px;
+                padding: 15px;
+                transition: all 0.3s ease;
+            }
+            .period-item:hover {
+                box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+                transform: translateY(-2px);
+            }
+            .period-item.current-period {
+                border-color: #28a745;
+                background-color: #f8fff9;
+            }
+            
+            .period-header {
+                display: flex;
+                justify-content: between;
+                align-items: center;
+                margin-bottom: 10px;
+            }
+            .period-title {
+                flex: 1;
+            }
+            .period-cost {
+                font-size: 1.1rem;
+                color: #28a745;
+            }
+            .period-details {
+                font-size: 0.9rem;
+            }
+            .cumulative-cost {
+                margin-top: 8px;
+                padding-top: 8px;
+                border-top: 1px solid #eee;
+            }
+
+            .financial-timeline {
+                position: relative;
+                padding-left: 30px;
+            }
+            .financial-timeline::before {
+                content: '';
+                position: absolute;
+                left: 15px;
+                top: 0;
+                bottom: 0;
+                width: 2px;
+                background: linear-gradient(to bottom, #667eea, #764ba2);
+            }
+            
+            .timeline-item {
+                position: relative;
+                margin-bottom: 30px;
+                padding-left: 25px;
+            }
+            .timeline-item.current-event {
+                background-color: #fff3cd;
+                padding: 15px;
+                border-radius: 8px;
+                margin-left: -15px;
+            }
+            
+            .timeline-marker {
+                position: absolute;
+                left: -23px;
+                top: 0;
+                width: 30px;
+                height: 30px;
+                border-radius: 50%;
+                background: white;
+                border: 3px solid #667eea;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 0.8rem;
+            }
+            
+            .timeline-header {
+                display: flex;
+                justify-content: space-between;
+                align-items: flex-start;
+                margin-bottom: 8px;
+            }
+            .timeline-date {
+                font-weight: bold;
+                color: #495057;
+            }
+            .timeline-cost {
+                text-align: right;
+                color: #28a745;
+                font-weight: bold;
+            }
+            .timeline-title {
+                font-size: 1.1rem;
+                font-weight: 600;
+                margin-bottom: 8px;
+                color: #2c3e50;
+            }
+            
+            .financial-details, .transfer-details {
+                background: #f8f9fa;
+                padding: 10px;
+                border-radius: 6px;
+                margin-top: 8px;
+            }
+            .financial-summary {
+                margin-top: 8px;
+                padding-top: 8px;
+                border-top: 1px solid #dee2e6;
+            }
+            .financial-impact {
+                font-weight: 600;
+                margin-top: 5px;
+            }
+            
+            .service-badge {
+                display: inline-block;
+                padding: 2px 8px;
+                background: #e9ecef;
+                border-radius: 12px;
+                font-size: 0.8rem;
+                margin-right: 5px;
+                margin-bottom: 3px;
+            }
+            
+            .historical-admission {
+                border: 1px solid #dee2e6;
+                border-radius: 8px;
+                padding: 15px;
+                margin-bottom: 15px;
+            }
+            .cost-breakdown {
+                background: #f8f9fa;
+                padding: 8px;
+                border-radius: 4px;
+                font-size: 0.85rem;
+            }
+            .cost-line {
+                margin-bottom: 2px;
+            }
+        </style>
+        ${tabsHtml}
+        ${tabContentHtml}
+    `;
+
+        document.getElementById('patientDetailContent').innerHTML = fullContent;
+
+        // Afficher le modal
+        const modal = new bootstrap.Modal(document.getElementById('patientDetailModal'));
+        modal.show();
+    }
+
+    // Soumettre la sortie
+    async function submitDischarge() {
+        const form = document.getElementById('dischargeForm');
+        const formData = new FormData(form);
+        const admissionId = formData.get('admission_id');
+
+        if (!formData.get('discharge_destination') || !formData.get('discharge_notes')) {
+            showMessage('Veuillez remplir tous les champs obligatoires', 'warning');
+            return;
+        }
+
+        try {
+            const url = `${URLS.dischargePatient}${admissionId}/`;
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': csrftoken,
+                },
+                body: formData
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                const modal = bootstrap.Modal.getInstance(document.getElementById('dischargeModal'));
+                if (modal) modal.hide();
+
+                showMessage('Sortie enregistrée avec succès!', 'success');
+                setTimeout(() => window.location.reload(), 1000);
+            } else {
+                showMessage(data.error || 'Erreur lors de l\'enregistrement de la sortie', 'danger');
+            }
+        } catch (error) {
+            console.error('Erreur:', error);
+            showMessage('Erreur de communication avec le serveur', 'danger');
+        }
+    }
+
+    // Soumettre une nouvelle demande d'admission
+    async function submitAdmissionRequest() {
+        if (!validateAdmissionForm()) {
+            return;
+        }
+
+        const form = document.getElementById('addAdmissionForm');
+        const formData = new FormData(form);
+
+        try {
+            const response = await fetch(URLS.addAdmissionRequest, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': csrftoken,
+                },
+                body: formData
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                const modal = bootstrap.Modal.getInstance(document.getElementById('addAdmissionModal'));
+                if (modal) modal.hide();
+
+                form.reset();
+
+                showMessage('Demande d\'admission créée avec succès!', 'success');
+                setTimeout(() => window.location.reload(), 1000);
+            } else {
+                showMessage(data.error || 'Erreur lors de la création', 'danger');
+            }
+        } catch (error) {
+            console.error('Erreur:', error);
+            showMessage('Erreur de communication avec le serveur', 'danger');
+        }
+    }
+
+    // Annuler une demande d'admission
+    async function cancelAdmissionRequest(requestId) {
+        if (!confirm('Êtes-vous sûr de vouloir annuler cette demande d\'admission ?')) {
+            return;
+        }
+
+        try {
+            const url = `${URLS.cancelRequest}${requestId}/`;
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': csrftoken,
+                }
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                showMessage('Demande annulée avec succès', 'success');
+                removePatientFromWaitingList(requestId);
+            } else {
+                showMessage(data.error || 'Erreur lors de l\'annulation', 'danger');
+            }
+        } catch (error) {
+            console.error('Erreur:', error);
+            showMessage('Erreur de communication avec le serveur', 'danger');
+        }
+    }
+
+    // Gestion de la recherche
+    function setupSearch() {
+        const searchInput = document.getElementById('search-patients');
+        if (searchInput) {
+            searchInput.addEventListener('input', function(e) {
+                const term = e.target.value.toLowerCase();
+                const patientCards = document.querySelectorAll('.patient-card');
+
+                patientCards.forEach(card => {
+                    const name = card.querySelector('.patient-name-card').textContent.toLowerCase();
+                    const info = card.querySelector('.patient-info').textContent.toLowerCase();
+                    const matches = name.includes(term) || info.includes(term);
+                    card.style.display = matches ? 'block' : 'none';
+                });
+            });
+        }
+    }
+
+        // Fonction pour vérifier et nettoyer les demandes traitées
+        async function checkAndCleanProcessedRequests() {
+            try {
+                // Récupérer toutes les cartes de patients actuellement affichées
+                const patientCards = document.querySelectorAll('.patient-card[data-request-id]');
+                const requestIds = Array.from(patientCards).map(card => card.dataset.requestId);
+
+                if (requestIds.length === 0) return;
+
+                // Vérifier le statut de chaque demande (vous pourriez créer une API pour cela)
+                const response = await fetch(URLS.checkRequestsStatus, {
+
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': csrftoken,
+                    },
+                    body: JSON.stringify({
+                        'request_ids': requestIds
+                    })
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+
+                    // Retirer les demandes qui ne sont plus en attente
+                    if (data.processed_requests) {
+                        data.processed_requests.forEach(requestId => {
+                            const card = document.querySelector(`[data-request-id="${requestId}"]`);
+                            if (card) {
+                                card.style.opacity = '0.5';
+                                card.style.pointerEvents = 'none';
+                                setTimeout(() => {
+                                    if (card.parentNode) {
+                                        card.remove();
+                                    }
+                                }, 1000);
+                            }
+                        });
+                    }
+                }
+            } catch (error) {
+                console.error('Erreur lors de la vérification des demandes:', error);
+            }
+        }
+
+        // Appeler cette fonction périodiquement (optionnel)
+        setInterval(checkAndCleanProcessedRequests, 30000); // Toutes les 30 secondes
+    // ========== INITIALISATION ==========
+
+    // Initialisation
+
+document.addEventListener('DOMContentLoaded', function () {
+        console.log('Initialisation du plan d\'hospitalisation avec gestion améliorée du drag & drop...');
+
+        // Configuration des événements de drag and drop pour les patients en attente
+        document.querySelectorAll('.patient-card').forEach(card => {
+            card.addEventListener('dragstart', handlePatientDragStart);
+            card.addEventListener('dragend', handlePatientDragEnd);
+        });
+
+        // Configuration des événements de drag and drop pour les lits
+        document.querySelectorAll('.bed').forEach(bed => {
+            bed.addEventListener('dragover', handleDragOver);
+            bed.addEventListener('dragleave', handleDragLeave);
+            bed.addEventListener('drop', handleDrop);
+
+            // Ajouter drag pour les lits occupés
+            if (bed.classList.contains('occupied')) {
+                bed.draggable = true;
+                bed.addEventListener('dragstart', handleBedDragStart);
+                bed.addEventListener('dragend', handleBedDragEnd);
+
+                // Ajouter double-click comme alternative
+                bed.addEventListener('dblclick', function (e) {
+                    e.preventDefault();
+                    handleBedDoubleClick(this);
+                });
+            }
+
+            // Gestionnaire de clic simple pour les détails
+            if (!bed.hasAttribute('data-click-listener')) {
+                bed.setAttribute('data-click-listener', 'true');
+                bed.addEventListener('click', function (e) {
+                    // Éviter le conflit avec double-click
+                    setTimeout(() => {
+                        if (e.detail === 1) { // Simple click seulement
+                            handleBedClick(this);
+                        }
+                    }, 200);
+                });
+            }
+        });
+
+        // Configuration du drag & drop vers les services et la zone de sortie
+        setupServiceDragDrop();
+        setupExitDragDrop();
+        setupSearch();
+    });
+    // ========== CSS ANIMATIONS (À AJOUTER DANS VOTRE CSS) ==========
+
+    const additionalCSS = `
+/* Animation pour l'apparition des services */
+@keyframes fadeInServices {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Transition smooth pour le panneau des services */
+.services-panel {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Effet de highlight quand les services sont actifs */
+.services-panel.active {
+    box-shadow: 0 0 0 2px #667eea;
+    border-radius: 12px;
+}
+
+/* Animation subtile pour les icônes de services */
+.service-icon {
+    transition: all 0.2s ease;
+}
+
+.service-icon:hover {
+    transform: translateY(-2px) scale(1.05);
+}
+`;
+
+    // Injecter le CSS additionnel
+    const styleSheet = document.createElement('style');
+    styleSheet.textContent = additionalCSS;
+    document.head.appendChild(styleSheet);
+</script>
+
+{% endblock %}

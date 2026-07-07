@@ -1,0 +1,1159 @@
+{% extends "layout.html" %}
+{% import 'his/macros/his_direct_selector.html' as his_selector %}
+
+{% block style %}
+<style>
+    :root {
+        /* Premium Core Palette */
+        --primary: #450A54;
+        --primary-light: rgba(69, 10, 84, 0.08);
+        --primary-hover: #31073d;
+        --primary-gradient: linear-gradient(135deg, #450A54 0%, #6e1085 100%);
+
+        --secondary: #64748b;
+        --secondary-light: #f1f5f9;
+        
+        --text-dark: #0f172a;
+        --text-muted: #64748b;
+        
+        --surface-bg: #ffffff;
+        --surface-glass: rgba(255, 255, 255, 0.95);
+        --app-bg: #f8fafc;
+        --border-soft: rgba(226, 232, 240, 0.8);
+
+        --success: #059669;
+        --success-bg: #ecfdf5;
+        --warning: #d97706;
+        --warning-bg: #fffbeb;
+        --danger: #dc2626;
+        --danger-bg: #fef2f2;
+        --info: #2563eb;
+        --info-bg: #eff6ff;
+
+        /* Elevated Shadows */
+        --shadow-sm: 0 1px 2px 0 rgb(69 10 84 / 0.05);
+        --shadow-md: 0 4px 6px -1px rgb(69 10 84 / 0.05), 0 2px 4px -2px rgb(69 10 84 / 0.05);
+        --shadow-lg: 0 10px 15px -3px rgb(69 10 84 / 0.05), 0 4px 6px -4px rgb(69 10 84 / 0.05);
+        --shadow-xl: 0 20px 25px -5px rgb(69 10 84 / 0.05), 0 8px 10px -6px rgb(69 10 84 / 0.05);
+        
+        --radius-sm: 0.5rem;
+        --radius-md: 0.75rem;
+        --radius-lg: 1rem;
+        --radius-xl: 1.25rem;
+        
+        --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    body {
+        background-color: var(--app-bg);
+        /* Subtle mesh organic gradient background */
+        background-image: 
+            radial-gradient(at 0% 0%, rgba(69, 10, 84, 0.03) 0px, transparent 50%),
+            radial-gradient(at 100% 0%, rgba(37, 99, 235, 0.03) 0px, transparent 50%),
+            radial-gradient(at 100% 100%, rgba(69, 10, 84, 0.03) 0px, transparent 50%);
+        background-attachment: fixed;
+        color: var(--text-dark);
+        font-family: 'Inter', system-ui, -apple-system, sans-serif;
+        min-height: 100vh;
+        -webkit-font-smoothing: antialiased;
+    }
+
+    .page-container {
+        max-width: 1440px;
+        margin: 0 auto;
+        padding: 2rem 1.5rem;
+        position: relative;
+        z-index: 1;
+    }
+
+    /* --- Premium Glassmorphism Cards --- */
+    .glass-card {
+        background: var(--surface-glass);
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+        border: 1px solid rgba(255, 255, 255, 0.6);
+        box-shadow: var(--shadow-md);
+        border-radius: var(--radius-xl);
+        overflow: hidden;
+        transition: var(--transition);
+        margin-bottom: 1.5rem;
+    }
+
+    /* --- Page Header Layout --- */
+    .page-header {
+        padding: 1.75rem 2.5rem;
+        margin-bottom: 2.5rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 1.5rem;
+        position: relative;
+    }
+
+    .page-header::before {
+        content: '';
+        position: absolute;
+        left: 0;
+        top: 0;
+        bottom: 0;
+        width: 8px;
+        background: var(--primary-gradient);
+    }
+
+    .header-title h1 {
+        font-size: 1.75rem;
+        font-weight: 800;
+        color: var(--text-dark);
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        letter-spacing: -0.025em;
+    }
+
+    .icon-wrapper {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 44px;
+        height: 44px;
+        border-radius: var(--radius-md);
+        background: var(--primary-light);
+        color: var(--primary);
+    }
+
+    .header-meta {
+        color: var(--text-muted);
+        font-size: 0.95rem;
+        margin-top: 0.75rem;
+        display: flex;
+        gap: 1.5rem;
+        align-items: center;
+        font-weight: 500;
+    }
+
+    .header-meta i {
+        color: var(--secondary);
+    }
+
+    /* --- Section Cards Layout --- */
+    .section-card {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .card-header-clean {
+        padding: 1.5rem 1.75rem;
+        background: transparent;
+        border-bottom: 1px solid var(--border-soft);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+    }
+
+    .card-header-clean h3 {
+        font-size: 1.15rem;
+        font-weight: 700;
+        color: var(--text-dark);
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 0.875rem;
+        letter-spacing: -0.015em;
+    }
+
+    .card-header-clean h3 .icon-sm {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 36px;
+        height: 36px;
+        border-radius: 10px;
+        background: var(--primary-light);
+        color: var(--primary);
+        font-size: 1rem;
+    }
+
+    .card-body-clean {
+        padding: 1.75rem;
+        flex-grow: 1;
+    }
+
+    /* --- Intelligent Grid Data Presentation --- */
+    .info-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1.25rem;
+    }
+
+    .data-item {
+        background: var(--surface-bg);
+        padding: 1rem;
+        border-radius: var(--radius-md);
+        border: 1px solid var(--border-soft);
+        transition: var(--transition);
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+    }
+
+    .data-item:hover {
+        border-color: rgba(69, 10, 84, 0.2);
+        box-shadow: var(--shadow-sm);
+        transform: translateY(-1px);
+    }
+
+    .data-label {
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        color: var(--text-muted);
+        letter-spacing: 0.05em;
+        font-weight: 700;
+        margin-bottom: 0.35rem;
+        display: block;
+    }
+
+    .data-value {
+        font-size: 1.05rem;
+        font-weight: 600;
+        color: var(--text-dark);
+    }
+
+    /* --- Modern Tables --- */
+    .modern-table {
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0;
+    }
+
+    .modern-table th {
+        background: rgba(248, 250, 252, 0.8);
+        text-align: left;
+        padding: 0.875rem 1.25rem;
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: var(--text-muted);
+        font-weight: 700;
+        border-top: 1px solid var(--border-soft);
+        border-bottom: 1px solid var(--border-soft);
+    }
+    
+    .modern-table th:first-child {
+        border-top-left-radius: var(--radius-sm);
+        border-bottom-left-radius: var(--radius-sm);
+        border-left: 1px solid var(--border-soft);
+    }
+
+    .modern-table th:last-child {
+        border-top-right-radius: var(--radius-sm);
+        border-bottom-right-radius: var(--radius-sm);
+        border-right: 1px solid var(--border-soft);
+    }
+
+    .modern-table td {
+        padding: 1rem 1.25rem;
+        border-bottom: 1px dashed var(--border-soft);
+        color: var(--text-dark);
+        font-size: 0.95rem;
+        vertical-align: middle;
+        transition: background-color 0.2s;
+    }
+
+    .modern-table tr:hover td {
+        background-color: var(--primary-light);
+    }
+
+    .modern-table tr:last-child td {
+        border-bottom: none;
+    }
+
+    .modern-table .text-end {
+        text-align: right;
+    }
+
+    .modern-table .text-center {
+        text-align: center;
+    }
+
+    /* --- Badges --- */
+    .badge-soft {
+        padding: 0.35rem 0.75rem;
+        border-radius: 50px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+    }
+
+    .badge-primary {
+        background: var(--primary-light);
+        color: var(--primary);
+    }
+
+    .badge-success {
+        background: var(--success-bg);
+        color: var(--success);
+    }
+
+    .badge-warning {
+        background: var(--warning-bg);
+        color: var(--warning);
+    }
+
+    .badge-danger {
+        background: var(--danger-bg);
+        color: var(--danger);
+    }
+
+    .badge-info {
+        background: var(--info-bg);
+        color: var(--info);
+    }
+
+    .badge-gray {
+        background: #f1f5f9;
+        color: var(--secondary);
+    }
+
+    /* --- Financial Sidebar (Premium Ticket) --- */
+    .financial-ticket {
+        border-radius: var(--radius-xl);
+        position: sticky;
+        top: 1.5rem;
+        overflow: hidden;
+        transition: var(--transition);
+        display: flex;
+        flex-direction: column;
+        border: 1px solid rgba(255,255,255,0.8);
+        background: var(--surface-glass);
+        box-shadow: var(--shadow-xl);
+    }
+
+    .ticket-header {
+        background: var(--primary-gradient);
+        color: white;
+        padding: 1.75rem 1.5rem;
+        text-align: center;
+        position: relative;
+    }
+
+    .ticket-header::after {
+        content: '';
+        position: absolute;
+        bottom: -10px;
+        left: 0;
+        right: 0;
+        height: 20px;
+        background: radial-gradient(circle, transparent 10px, var(--surface-glass) 10px) repeat-x;
+        background-size: 20px 20px;
+        z-index: 10;
+    }
+
+    .ticket-body {
+        padding: 2rem 1.5rem;
+        flex-grow: 1;
+        background: var(--surface-glass);
+    }
+
+    .ticket-row {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 0.875rem;
+        font-size: 0.95rem;
+        color: var(--text-muted);
+        align-items: center;
+    }
+
+    .ticket-row.strong {
+        color: var(--text-dark);
+        font-weight: 700;
+        font-size: 1.05rem;
+    }
+
+    .ticket-divider {
+        border-top: 1px dashed var(--border-soft);
+        margin: 1.25rem 0;
+    }
+
+    .ticket-total {
+        background: linear-gradient(135deg, var(--primary) 0%, #aa0f67 100%);
+        color: white;
+        padding: 1.25rem;
+        border-radius: var(--radius-md);
+        display: flex;
+        justify-content: space-between;
+        font-weight: 800;
+        font-size: 1.15rem;
+        margin-top: 1.5rem;
+        box-shadow: 0 4px 14px 0 rgba(170, 15, 103, 0.39);
+    }
+
+    /* --- Premium Action Buttons --- */
+    .btn-custom {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.6rem;
+        padding: 0.75rem 1.25rem;
+        border-radius: var(--radius-sm);
+        font-weight: 600;
+        font-size: 0.95rem;
+        transition: var(--transition);
+        text-decoration: none;
+        border: 1px solid transparent;
+        cursor: pointer;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .btn-custom:active {
+        transform: scale(0.98);
+    }
+
+    .btn-primary-soft {
+        background: var(--primary-light);
+        color: var(--primary);
+        border-color: transparent;
+    }
+
+    .btn-primary-soft:hover {
+        background: rgba(69, 10, 84, 0.12);
+        color: var(--primary-hover);
+        transform: translateY(-2px);
+    }
+
+    .btn-primary-solid {
+        background: var(--primary-gradient);
+        color: white;
+        box-shadow: 0 4px 14px 0 rgba(69, 10, 84, 0.39);
+    }
+
+    .btn-primary-solid:hover {
+        box-shadow: 0 6px 20px rgba(69, 10, 84, 0.23);
+        transform: translateY(-2px);
+        color: white;
+    }
+
+    .btn-outline {
+        background: var(--surface-bg);
+        border-color: var(--border-soft);
+        color: var(--text-dark);
+        box-shadow: var(--shadow-sm);
+    }
+
+    .btn-outline:hover {
+        background: var(--app-bg);
+        border-color: #cbd5e1;
+        transform: translateY(-2px);
+    }
+
+    .btn-danger-outline {
+        color: var(--danger);
+        background: transparent;
+        border: 1px solid var(--danger-bg);
+    }
+
+    .btn-danger-outline:hover {
+        background: var(--danger-bg);
+        border-color: var(--danger);
+    }
+
+    /* --- Document List & Empty State --- */
+    .doc-list-item {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 1.25rem;
+        border-bottom: 1px solid var(--border-soft);
+        transition: background 0.2s;
+    }
+
+    .doc-list-item:hover {
+        background: var(--app-bg);
+    }
+
+    .doc-list-item:last-child {
+        border-bottom: none;
+    }
+
+    .doc-icon {
+        width: 44px;
+        height: 44px;
+        background: var(--info-bg);
+        color: var(--info);
+        border-radius: var(--radius-sm);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.25rem;
+        margin-right: 1.25rem;
+    }
+    
+    .empty-state {
+        padding: 4rem 2rem;
+        text-align: center;
+        background: rgba(248, 250, 252, 0.4);
+        border: 2px dashed var(--border-soft);
+        border-radius: var(--radius-lg);
+        margin: 1.5rem;
+    }
+    
+    .empty-state-icon {
+        font-size: 3.5rem;
+        color: var(--text-muted);
+        opacity: 0.3;
+        margin-bottom: 1rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-container">
+    {% if dossier.est_annule %}
+    <div class="alert alert-danger d-flex align-items-center mb-4 shadow-sm border-danger" role="alert">
+        <i class="fas fa-ban fa-2x me-3"></i>
+        <div>
+            <h4 class="alert-heading h5 mb-1">Dossier Annulé</h4>
+            <p class="mb-0">
+                Ce dossier a été annulé le <strong>{{ dossier.annule_at.strftime('%d/%m/%Y à %H:%M') if
+                    dossier.annule_at else 'Date inconnue' }}</strong>.
+                {% if dossier.motif_annulation %}
+                <br>Motif : <em>{{ dossier.motif_annulation }}</em>
+                {% endif %}
+            </p>
+        </div>
+        <div class="ms-auto">
+            <form action="{{ url_for('accouchement_restaurer', id_dossier=dossier.id_dossier) }}" method="POST"
+                onsubmit="return confirm('Voulez-vous vraiment restaurer ce dossier ?');">
+                <button type="submit" class="btn btn-light text-danger fw-bold">
+                    <i class="fas fa-undo me-2"></i>Restaurer le dossier
+                </button>
+            </form>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Integrated Premium Header -->
+    <div class="page-header d-flex flex-column align-items-stretch">
+        
+        <!-- Top Row: Navigation & Status -->
+        <div class="d-flex justify-content-between align-items-center w-100 mb-2 pb-2" style="border-bottom: 1px solid rgba(0,0,0,0.05);">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb mb-0" style="font-size: 0.9rem;">
+                    <li class="breadcrumb-item"><a href="{{ url_for('accouchement_list') }}" class="text-muted text-decoration-none"><i class="fas fa-home me-1"></i>Accouchements</a></li>
+                    <li class="breadcrumb-item active fw-bold text-dark" aria-current="page">Dossier #{{ dossier.id_dossier }}</li>
+                </ol>
+            </nav>
+            <div class="d-flex align-items-center gap-3">
+                {% if dossier.est_annule %}
+                <span class="badge bg-danger rounded-pill px-3 py-2 shadow-sm"><i class="fas fa-ban me-1"></i> Dossier Annulé</span>
+                {% endif %}
+                <a href="{{ url_for('accouchement_list') }}" class="btn-custom btn-outline btn-sm py-1" style="font-size: 0.85rem;">
+                    <i class="fas fa-arrow-left"></i> Retour
+                </a>
+            </div>
+        </div>
+
+        <!-- Main Header Content -->
+        <div class="d-flex justify-content-between align-items-end w-100 mt-2 flex-wrap gap-3">
+            <div class="header-info">
+                <div class="header-title">
+                    <h1>
+                        <div class="icon-wrapper shadow-sm"><i class="fas fa-baby-carriage"></i></div>
+                        {{ dossier.patiente }}
+                    </h1>
+                    {% if dossier.age_patiente %}
+                    <span class="badge-soft badge-gray">{{ dossier.age_patiente }} ans</span>
+                    {% endif %}
+                </div>
+                
+                <div class="header-meta mt-3">
+                    <span class="d-inline-flex align-items-center"><i class="far fa-calendar-alt text-primary me-2"></i> <strong>{{ dossier.date_accouchement.strftime('%d/%m/%Y') }}</strong></span>
+                    {% if dossier.heure_accouchement %}
+                    <span class="d-inline-flex align-items-center"><i class="far fa-clock text-primary me-2"></i> <strong>{{ dossier.heure_accouchement | format_time }}</strong></span>
+                    {% endif %}
+                    <span class="d-inline-flex align-items-center"><i class="fas fa-user-md text-primary me-2"></i> <strong>{{ dossier.gyneco_name }}</strong></span>
+                </div>
+
+                {% if dossier.patient_oid %}
+                <div class="mt-3">
+                    <button class="btn btn-sm btn-link text-decoration-none p-0 text-info fw-bold"
+                        onclick="showPatientHistoryDirect('{{ dossier.patient_oid }}')">
+                        <i class="fas fa-folder-open me-1"></i> Voir le dossier médical HIS complet
+                    </button>
+                </div>
+                {% endif %}
+            </div>
+            
+            <div class="header-actions d-flex flex-column align-items-end gap-3">
+                <div class="text-end">
+                    <small class="text-muted" style="font-size: 0.8rem;">
+                        <i class="fas fa-history me-1"></i> Créé le {{ dossier.created_at.strftime('%d/%m/%Y') }} par <span class="fw-bold">{{ dossier.cree_par_nom or 'Système' }}</span>
+                    </small>
+                </div>
+                <div class="d-flex gap-2 mt-auto">
+                    <a href="{{ url_for('accouchement_export_pdf', id_dossier=dossier.id_dossier) }}"
+                        class="btn-custom btn-outline" target="_blank">
+                        <i class="fas fa-print text-secondary"></i> Impression PDF
+                    </a>
+                    {% if dossier.montant_paye < dossier.prix_total and not dossier.est_annule %} 
+                    <a href="{{ url_for('creer_bon_paiement', id_dossier=dossier.id_dossier) }}"
+                        class="btn-custom btn-primary-solid shadow-sm">
+                        <i class="fas fa-cash-register"></i> Encaisser
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Main Content -->
+        <div class="col-lg-8">
+
+            <!-- 1. Info Patiente & Gynéco -->
+            <div class="section-card glass-card">
+                <div class="card-header-clean">
+                    <h3><span class="icon-sm"><i class="fas fa-user-injured"></i></span> Informations Médicales</h3>
+                    <div class="d-flex gap-2">
+                        {% if dossier.type_accouchement == 'VOIE_BASSE' %}
+                        <span class="badge-soft badge-primary"><i class="fas fa-check"></i> Voie Basse</span>
+                        {% else %}
+                        <span class="badge-soft badge-info"><i class="fas fa-procedures"></i> Césarienne</span>
+                        {% endif %}
+
+                        {% if dossier.type_tarification == 'CONVENTION' %}
+                        <span class="badge-soft badge-success">Convention</span>
+                        {% else %}
+                        <span class="badge-soft badge-warning">Payant</span>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="card-body-clean">
+                    <div class="info-grid">
+                        <div class="data-item">
+                            <span class="data-label">Époux</span>
+                            <div class="data-value">{{ dossier.nom_epoux or 'Non renseigné' }}</div>
+                        </div>
+                        <div class="data-item">
+                            <span class="data-label">Type Gynéco</span>
+                            <div class="data-value">
+                                {% if dossier.est_gyneco_interne %}
+                                <span class="badge-soft badge-info">Interne</span>
+                                {% else %}
+                                <span class="badge-soft badge-gray">Externe</span>
+                                {% endif %}
+                                <a href="#" class="small text-decoration-none ms-1"><i
+                                        class="fas fa-external-link-alt"></i></a>
+                            </div>
+                        </div>
+                        <div class="data-item">
+                            <span class="data-label">Groupe Sanguin</span>
+                            <div class="data-value">
+                                {% if dossier.groupage_sanguin %}
+                                <span class="badge-soft badge-danger">{{ dossier.groupage_sanguin }} {{ dossier.rhesus
+                                    }}</span>
+                                {% else %}
+                                -
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="data-item">
+                            <span class="data-label">DDR</span>
+                            <div class="data-value">{{ dossier.ddr.strftime('%d/%m/%Y') if dossier.ddr else '-' }}</div>
+                        </div>
+                        <div class="data-item">
+                            <span class="data-label">Parité</span>
+                            <div class="data-value">{{ dossier.parite or '-' }}</div>
+                        </div>
+                        <div class="data-item">
+                            <span class="data-label">Age Gest.</span>
+                            <div class="data-value">{{ dossier.age_gestationnel or '-' }}</div>
+                        </div>
+                    </div>
+
+                    {% if dossier.observations %}
+                    <div class="mt-3 p-3 bg-light rounded border border-light">
+                        <span class="data-label text-warning mb-1"><i class="fas fa-comment-alt"></i>
+                            Observations</span>
+                        <p class="mb-0 small text-secondary">{{ dossier.observations }}</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- 2. Info Bébé -->
+            <div class="section-card glass-card">
+                <div class="card-header-clean">
+                    <h3><span class="icon-sm"><i class="fas fa-baby"></i></span> Le Nouveau-né</h3>
+                    {% if dossier.sexe_bebe %}
+                    {% if dossier.sexe_bebe == 'MASCULIN' %}
+                    <span class="badge-soft badge-info"><i class="fas fa-mars"></i> Garçon</span>
+                    {% else %}
+                    <span class="badge-soft badge-primary"><i class="fas fa-venus"></i> Fille</span>
+                    {% endif %}
+                    {% endif %}
+                </div>
+                <div class="card-body-clean">
+                    <div class="info-grid">
+                        <div class="data-item">
+                            <span class="data-label">Prénom</span>
+                            <div class="data-value fw-bold">{{ dossier.prenom_bebe or 'Non nommé' }}</div>
+                        </div>
+                        <div class="data-item">
+                            <span class="data-label">Poids Naissance</span>
+                            <div class="data-value">
+                                {% if dossier.poids_naissance %}
+                                {{ (dossier.poids_naissance * 1000)|int }} g <small class="text-muted">({{
+                                    "%.2f"|format(dossier.poids_naissance) }} kg)</small>
+                                {% else %} - {% endif %}
+                            </div>
+                        </div>
+                        <div class="data-item">
+                            <span class="data-label">Score APGAR</span>
+                            <div class="data-value">{{ dossier.apgar_score or '-' }}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 3. Documents Administratifs (Nouveau Design) -->
+            <div class="section-card glass-card">
+                <div class="card-header-clean">
+                    <h3 class="text-primary"><span class="icon-sm"><i class="fas fa-file-medical-alt"></i></span> Documents Médicaux</h3>
+                    {% if not dossier.documents_generes %}
+                    <span class="badge-soft badge-warning">En attente de génération</span>
+                    {% else %}
+                    <span class="badge-soft badge-success">Générés le {{
+                        dossier.date_generation_documents.strftime('%d/%m') if dossier.date_generation_documents else ''
+                        }}</span>
+                    {% endif %}
+                </div>
+
+                <div class="card-body-clean p-0">
+                    {% if dossier.documents_generes %}
+                    <!-- Liste des documents -->
+                    <div id="documents-list-container">
+                        <div class="p-5 text-center text-muted"><i class="fas fa-spinner fa-spin fa-2x"></i> <div class="mt-2">Chargement des documents...</div></div>
+                    </div>
+
+                    <!-- Footer avec actions globales -->
+                    <div class="p-4 bg-light border-top d-flex justify-content-end gap-3">
+                        <a href="{{ url_for('accouchement_telecharger_tout_pdf', id_dossier=dossier.id_dossier) }}"
+                            target="_blank" class="btn-custom btn-primary-soft">
+                            <i class="fas fa-layer-group"></i> Tout fusionner (PDF)
+                        </a>
+                        <a href="{{ url_for('accouchement_telecharger_documents', id_dossier=dossier.id_dossier) }}"
+                            class="btn-custom btn-outline">
+                            <i class="fas fa-file-archive"></i> Télécharger ZIP
+                        </a>
+                    </div>
+
+                    {% else %}
+                    <!-- État vide avec bouton d'action -->
+                    <div class="empty-state">
+                        <div class="empty-state-icon"><i class="fas fa-file-signature"></i></div>
+                        <h4 class="mb-2 text-dark font-weight-bold">Aucun document généré</h4>
+                        <p class="text-muted mb-4">Certificat d'accouchement, Congé de maternité, Compte-rendus...</p>
+
+                        <form method="POST"
+                            action="{{ url_for('accouchement_generer_documents', id_dossier=dossier.id_dossier) }}"
+                            id="form-generer-docs">
+                            <button type="button" class="btn-custom btn-primary-solid px-4 py-3"
+                                onclick="confirmerGenerationDocs()">
+                                <i class="fas fa-magic"></i> Générer les documents maintenant
+                            </button>
+                        </form>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- 4. Détails Financiers (Tableaux) -->
+            <div class="section-card glass-card">
+                <div class="card-header-clean">
+                    <h3><span class="icon-sm"><i class="fas fa-clipboard-list"></i></span> Détails de la facturation</h3>
+                </div>
+
+                <!-- Produits -->
+                {% if produits %}
+                <div class="p-3 border-bottom">
+                    <h6 class="text-secondary small fw-bold text-uppercase mb-2">Produits Pharmaceutiques</h6>
+                    <table class="modern-table">
+                        <thead>
+                            <tr>
+                                <th>Désignation</th>
+                                <th class="text-center">Qté</th>
+                                <th class="text-end">Total</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for p in produits %}
+                            <tr>
+                                <td>{{ p.produit_nom }}</td>
+                                <td class="text-center"><span class="badge-soft badge-gray">{{ p.qte_utilisee }}</span>
+                                </td>
+                                <td class="text-end fw-bold">{{ "{:,.2f}".format(p.qte_utilisee *
+                                    p.prix_unitaire).replace(",", " ") }} DA</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% endif %}
+
+                <!-- Actes & Anesthésie -->
+                {% if actes or anesthesie %}
+                <div class="p-3">
+                    <h6 class="text-secondary small fw-bold text-uppercase mb-2">Actes & Honoraires</h6>
+                    <table class="modern-table">
+                        <thead>
+                            <tr>
+                                <th>Acte / Intervenant</th>
+                                <th>Type</th>
+                                <th class="text-end">Montant</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for a in actes %}
+                            <tr>
+                                <td>{{ a.nom_acte }}</td>
+                                <td><span class="badge-soft badge-info">Acte Supp.</span></td>
+                                <td class="text-end fw-bold">{{ "{:,.2f}".format(a.qte_utilisee *
+                                    a.prix_unitaire).replace(",", " ") }} DA</td>
+                            </tr>
+                            {% endfor %}
+                            {% for an in anesthesie %}
+                            <tr>
+                                <td>{{ an.nom_personnel }} <small class="text-muted d-block">{{ an.nom_acte }}</small>
+                                </td>
+                                <td><span class="badge-soft badge-warning">Anesthésie</span></td>
+                                <td class="text-end fw-bold">{{ "{:,.2f}".format(an.honoraires_calcules).replace(",", "
+                                    ") }} DA</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% endif %}
+
+                <!-- Hospitalisation -->
+                {% if nuitees %}
+                <div class="p-3 border-top">
+                    <h6 class="text-secondary small fw-bold text-uppercase mb-2">Hospitalisation</h6>
+                    <table class="modern-table">
+                        <tbody>
+                            {% for n in nuitees %}
+                            <tr>
+                                <td>
+                                    <i class="fas fa-bed text-muted me-2"></i> {{ n.nom_type }}
+                                    <small class="text-muted ms-2">({{ n.date_entree.strftime('%d/%m') }} - {{
+                                        n.date_sortie.strftime('%d/%m') }})</small>
+                                </td>
+                                <td class="text-center"><span class="badge-soft badge-gray">{{ n.nombre_nuitees }}
+                                        nuits</span></td>
+                                <td class="text-end fw-bold">{{ "{:,.2f}".format(n.prix_total).replace(",", " ") }} DA
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Section Césarienne / Post-Op (Repliable ou conditionnelle) -->
+            {% if dossier.type_accouchement == 'CESARIENNE' %}
+            <div class="section-card glass-card" style="border-left: 4px solid var(--info);">
+                <div class="card-header-clean">
+                    <h3 class="text-info"><span class="icon-sm" style="background: var(--info-bg); color: var(--info);"><i class="fas fa-notes-medical"></i></span> Protocole Opératoire</h3>
+                </div>
+                <div class="card-body-clean">
+                    <div class="info-grid">
+                        <div class="data-item">
+                            <span class="data-label">Indication</span>
+                            <div class="data-value">{{ dossier.indication_cesarienne or 'Non renseignée' }}</div>
+                        </div>
+                        <div class="data-item">
+                            <span class="data-label">Gestes</span>
+                            <div class="data-value">{{ dossier.gestes_chirurgicaux or '-' }}</div>
+                        </div>
+                        {% if dossier.ta_postop %}
+                        <div class="data-item">
+                            <span class="data-label">TA Post-Op</span>
+                            <div class="data-value">{{ dossier.ta_postop }}</div>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+        </div>
+
+        <!-- Sidebar -->
+        <div class="col-lg-4">
+            <div class="financial-ticket glass-card">
+                <div class="ticket-header">
+                    <h4 class="m-0"><i class="fas fa-receipt me-2"></i>Synthèse</h4>
+                    <div style="font-size: 0.8rem; opacity: 0.8; margin-top: 5px;">
+                        {% if dossier.statut_paiement == 'SOLDE' %}
+                        <i class="fas fa-check-circle"></i> Dossier Soldé
+                        {% elif dossier.statut_paiement == 'COMPLEMENT_MEDECIN' %}
+                        <i class="fas fa-exclamation-circle"></i> Reste à payer
+                        {% else %}
+                        En cours
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="ticket-body">
+                    <div class="ticket-row strong">
+                        <span>Forfait Base</span>
+                        <span>{{ "{:,.2f}".format(dossier.prix_base or 0).replace(",", " ") }} DA</span>
+                    </div>
+
+                    {% if dossier.supplement_gyneco and dossier.supplement_gyneco > 0 %}
+                    <div class="ticket-row text-primary">
+                        <span><i class="fas fa-plus-circle small"></i> Supp. Gynéco</span>
+                        <span>{{ "{:,.2f}".format(dossier.supplement_gyneco).replace(",", " ") }} DA</span>
+                    </div>
+                    {% endif %}
+
+                    <div class="mt-3 mb-2 small text-uppercase fw-bold text-muted">Détails ajouts</div>
+
+                    <div class="ticket-row">
+                        <span>Produits</span>
+                        <span>{{ "{:,.2f}".format(dossier.prix_produits or 0).replace(",", " ") }} DA</span>
+                    </div>
+                    <div class="ticket-row">
+                        <span>Actes & Soins</span>
+                        <span>{{ "{:,.2f}".format(dossier.prix_actes or 0).replace(",", " ") }} DA</span>
+                    </div>
+                    <div class="ticket-row">
+                        <span>Anesthésie</span>
+                        <span>{{ "{:,.2f}".format(dossier.prix_anesthesie or 0).replace(",", " ") }} DA</span>
+                    </div>
+                    <div class="ticket-row">
+                        <span>Hôtellerie</span>
+                        <span>{{ "{:,.2f}".format(dossier.prix_nuitees or 0).replace(",", " ") }} DA</span>
+                    </div>
+                    <div class="ticket-row">
+                        <span>Explorations</span>
+                        <span>{{ "{:,.2f}".format(dossier.prix_explorations or 0).replace(",", " ") }} DA</span>
+                    </div>
+
+                    <div class="ticket-total">
+                        <span>TOTAL GÉNÉRAL</span>
+                        <span>{{ "{:,.2f}".format(dossier.prix_total or 0).replace(",", " ") }} DA</span>
+                    </div>
+
+                    <div class="ticket-divider"></div>
+
+                    <!-- Breakdown Parts -->
+                    <div class="d-flex justify-content-between small mb-1">
+                        <span class="text-muted">Part Clinique</span>
+                        <span class="fw-bold">{{ "{:,.2f}".format(dossier.part_clinique or 0).replace(",", " ") }}
+                            DA</span>
+                    </div>
+                    <div class="d-flex justify-content-between small mb-3">
+                        <span class="text-muted">Part Médecin</span>
+                        <span class="fw-bold text-primary">{{ "{:,.2f}".format(dossier.part_gyneco or 0).replace(",", "
+                            ") }} DA</span>
+                    </div>
+
+                    <div class="p-3 rounded mb-3" style="background: #f8fafc; border: 1px dashed var(--border);">
+                        <div class="d-flex justify-content-between mb-2">
+                            <span>Déjà payé</span>
+                            <span class="text-success fw-bold">- {{ "{:,.2f}".format(dossier.montant_paye or
+                                0).replace(",", " ") }} DA</span>
+                        </div>
+
+                        {% set reste = (dossier.prix_total or 0) - (dossier.montant_paye or 0) %}
+
+                        <div class="d-flex justify-content-between align-items-center mt-2 pt-2 border-top">
+                            <span class="fw-bold text-uppercase small">Reste à payer</span>
+                            <span class="fs-5 fw-bold {% if reste > 1 %}text-danger{% else %}text-success{% endif %}">
+                                {{ "{:,.2f}".format(reste).replace(",", " ") }} DA
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- Actions Stack -->
+                    <div class="mt-4 pt-4 border-top">
+                        <!-- NOUVEAU PAIEMENT -->
+                        {% if not dossier.est_annule %}
+                        <div class="mb-3">
+                            <a href="{{ url_for('creer_bon_paiement', id_dossier=dossier.id_dossier) }}"
+                                class="btn-custom btn-primary-solid w-100 py-3 text-white">
+                                <i class="fas fa-file-invoice-dollar fs-5"></i> Nouveau Paiement
+                            </a>
+                        </div>
+                        
+                        <!-- LIGNE ACTIONS SECONDAIRES -->
+                        <div class="row g-3">
+                            <div class="col-6">
+                                <a href="{{ url_for('accouchement_edit', id_dossier=dossier.id_dossier) }}"
+                                    class="btn-custom btn-outline w-100">
+                                    <i class="fas fa-edit"></i> Éditer
+                                </a>
+                            </div>
+                            <div class="col-6">
+                                <button type="button"
+                                    class="btn-custom btn-danger-outline w-100"
+                                    data-bs-toggle="modal" data-bs-target="#modalAnnulation">
+                                    <i class="fas fa-ban"></i> Annuler
+                                </button>
+                            </div>
+                        </div>
+                        {% else %}
+                        <div class="text-center p-3 rounded" style="background: rgba(220, 38, 38, 0.05); border: 1px dashed rgba(220, 38, 38, 0.2);">
+                            <div class="text-danger mb-2"><i class="fas fa-lock fs-4"></i></div>
+                            <span class="fw-bold text-danger d-block">Dossier Annulé</span>
+                            <span class="small text-muted">Actions financières bloquées</span>
+                        </div>
+                        {% endif %}
+                    </div>
+
+                </div>
+            </div>
+
+
+        </div>
+    </div>
+</div>
+
+<!-- Modal HIS Integration -->
+{{ his_selector.render_modal('modalPatientHistoryDirect') }}
+
+<!-- Modal Confirmation Génération Documents -->
+<div class="modal fade" id="modalConfirmDocs" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content glass-card">
+            <div class="modal-header border-bottom-0 pb-0">
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body text-center pt-0 pb-4">
+                <div class="mb-4 text-warning" style="font-size: 3.5rem;">
+                    <i class="fas fa-file-signature"></i>
+                </div>
+                <h4 class="mb-3 text-dark">Générer les documents</h4>
+                <p class="text-secondary mb-4">Confirmez-vous la génération des documents officiels (Certificat d'accouchement, Congé maternité, Compte-rendus...) ? Cette action est définitive.</p>
+                <div class="d-flex justify-content-center gap-2">
+                    <button type="button" class="btn-custom btn-outline" data-bs-dismiss="modal">Annuler</button>
+                    <button type="button" class="btn-custom btn-primary-solid px-4" onclick="document.getElementById('form-generer-docs').submit();">
+                        <i class="fas fa-check"></i> Confirmer
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Annulation -->
+<div class="modal fade" id="modalAnnulation" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title"><i class="fas fa-exclamation-triangle me-2"></i>Annuler le dossier</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                    aria-label="Close"></button>
+            </div>
+            <form action="{{ url_for('accouchement_annuler', id_dossier=dossier.id_dossier) }}" method="POST">
+                <div class="modal-body">
+                    <p>Vous êtes sur le point d'annuler le dossier de <strong>{{ dossier.patiente }}</strong>.</p>
+                    <p class="small text-muted">Cette action archivera le dossier mais ne le supprimera pas
+                        définitivement. Vous pourrez le restaurer ultérieurement.</p>
+
+                    <div class="mb-3">
+                        <label for="motif_annulation" class="form-label fw-bold">Motif de l'annulation <span
+                                class="text-danger">*</span></label>
+                        <textarea class="form-control" id="motif_annulation" name="motif_annulation" rows="3" required
+                            placeholder="Indiquez la raison (ex: Erreur de saisie, Doublon...)"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer bg-light">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Fermer</button>
+                    <button type="submit" class="btn btn-danger">Confirmer l'annulation</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Chargement dynamique des documents
+    document.addEventListener('DOMContentLoaded', function () {
+        {% if dossier.documents_generes %}
+        fetch('{{ url_for("accouchement_lister_documents", id_dossier=dossier.id_dossier) }}')
+            .then(r => r.json())
+            .then(data => {
+                const container = document.getElementById('documents-list-container');
+                container.innerHTML = ''; // Clear spinner
+
+                if (data.documents && data.documents.length > 0) {
+                    data.documents.forEach(doc => {
+                        // Mapping des icônes et noms
+                        let iconClass = 'fa-file-alt';
+                        let title = doc.type;
+
+                        if (doc.type.includes('CERTIFICAT')) { iconClass = 'fa-certificate'; title = "Certificat d'Accouchement"; }
+                        else if (doc.type.includes('CONGE')) { iconClass = 'fa-calendar-check'; title = "Congé Maternité"; }
+                        else if (doc.type.includes('OPERATOIRE')) { iconClass = 'fa-procedures'; title = "Compte-rendu Opératoire"; }
+                        else if (doc.type.includes('POST_PARTUM')) { iconClass = 'fa-notes-medical'; title = "CR Post-Partum"; }
+
+                        const html = `
+                                <div class="doc-list-item">
+                                    <div class="d-flex align-items-center">
+                                            <div class="doc-icon"><i class="fas ${iconClass}"></i></div>
+                                        <div>
+                                            <div class="fw-bold text-dark" style="font-size: 1.05rem;">${title}</div>
+                                            <div class="small text-muted mt-1"><i class="fas fa-file-pdf me-1"></i> PDF Document</div>
+                                        </div>
+                                    </div>
+                                    <div class="d-flex gap-2">
+                                        <a href="/accouchement/document/${doc.id}/view" target="_blank" class="btn btn-sm btn-custom btn-primary-soft px-3" title="Voir">
+                                            <i class="fas fa-eye me-1"></i> Voir
+                                        </a>
+                                        <a href="/accouchement/document/${doc.id}/download" class="btn btn-sm btn-custom btn-outline px-3" title="Télécharger">
+                                            <i class="fas fa-download"></i>
+                                        </a>
+                                    </div>
+                                </div>
+                            `;
+                        container.insertAdjacentHTML('beforeend', html);
+                    });
+                } else {
+                    container.innerHTML = '<div class="p-3 text-center text-muted">Aucun fichier trouvé.</div>';
+                }
+            })
+            .catch(err => {
+                console.error('Erreur documents:', err);
+                document.getElementById('documents-list-container').innerHTML = '<div class="alert alert-danger m-3">Erreur de chargement</div>';
+            });
+        {% endif %}
+    });
+
+    // Suppression confirm logic replaced by modal
+    // function confirmerSuppression(idDossier) { ... } REMOVED
+
+    function confirmerGenerationDocs() {
+        // Remplacement du confirm natif par un modal Bootstrap
+        const modal = new bootstrap.Modal(document.getElementById('modalConfirmDocs'));
+        modal.show();
+    }
+
+    window.showPatientHistoryDirect = function (patientOid) {
+        if (typeof PatientHistoryModal !== 'undefined' && PatientHistoryModal.show) {
+            PatientHistoryModal.show(patientOid);
+        }
+    };
+</script>
+{% endblock %}

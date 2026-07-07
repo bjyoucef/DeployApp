@@ -1,0 +1,410 @@
+2025-07-21 2025-07-21
+2025-07-21 2025-07-21
+
+            SELECT
+                d.id_dossier,
+                CONCAT(doc.first_name, ' ', doc.last_name) AS doctor_name, 
+                d.patient AS patient_name, 
+                d.acte_date, 
+                d.urgence, 
+
+                ak.code_cnas, 
+                ak.name_acte_kt, 
+
+                d.nbr_nuite, 
+                d.vip, 
+                d.nbr_nuite_conjoint, 
+                d.prix_hospitalisation, 
+                d.prix_conjoint, 
+                d.extras, 
+                d.prix_dossier_convention, 
+                d.prix_dossier_esp, 
+                d.part_operateur_extrat, 
+                dak.convention,  
+                dak.part_operateur AS part_operateur_acte 
+            FROM kt_dossier_patient d
+            LEFT JOIN kt_dossier_actes dak ON d.id_dossier = dak.id_dossier
+            LEFT JOIN kt_actes ak ON dak.id_acte = ak.id_acte
+            LEFT JOIN kt_doctors doc ON d.id_doctor = doc.id
+            WHERE 1 = 1
+        
+Erreur : 'NoneType' object has no attribute 'replace'
+Erreur : 'NoneType' object has no attribute 'replace'
+Erreur : 'NoneType' object has no attribute 'replace'
+2025-07-21 2025-07-21
+2025-07-21 2025-07-21
+
+            SELECT
+                d.id_dossier,
+                CONCAT(doc.first_name, ' ', doc.last_name) AS doctor_name, 
+                d.patient AS patient_name, 
+                d.acte_date, 
+                d.urgence, 
+
+                ak.code_cnas, 
+                ak.name_acte_kt, 
+
+                d.nbr_nuite, 
+                d.vip, 
+                d.nbr_nuite_conjoint, 
+                d.prix_hospitalisation, 
+                d.prix_conjoint, 
+                d.extras, 
+                d.prix_dossier_convention, 
+                d.prix_dossier_esp, 
+                d.part_operateur_extrat, 
+                dak.convention,  
+                dak.part_operateur AS part_operateur_acte 
+            FROM kt_dossier_patient d
+            LEFT JOIN kt_dossier_actes dak ON d.id_dossier = dak.id_dossier
+            LEFT JOIN kt_actes ak ON dak.id_acte = ak.id_acte
+            LEFT JOIN kt_doctors doc ON d.id_doctor = doc.id
+            WHERE 1 = 1
+        
+Erreur : 'NoneType' object has no attribute 'replace'
+Erreur : 'NoneType' object has no attribute 'replace'
+2025-07-21 2025-07-21
+2025-07-21 2025-07-21
+
+            SELECT
+                d.id_dossier,
+                CONCAT(doc.first_name, ' ', doc.last_name) AS doctor_name, 
+                d.patient AS patient_name, 
+                d.acte_date, 
+                d.urgence, 
+
+                ak.code_cnas, 
+                ak.name_acte_kt, 
+
+                d.nbr_nuite, 
+                d.vip, 
+                d.nbr_nuite_conjoint, 
+                d.prix_hospitalisation, 
+                d.prix_conjoint, 
+                d.extras, 
+                d.prix_dossier_convention, 
+                d.prix_dossier_esp, 
+                d.part_operateur_extrat, 
+                dak.convention,  
+                dak.part_operateur AS part_operateur_acte 
+            FROM kt_dossier_patient d
+            LEFT JOIN kt_dossier_actes dak ON d.id_dossier = dak.id_dossier
+            LEFT JOIN kt_actes ak ON dak.id_acte = ak.id_acte
+            LEFT JOIN kt_doctors doc ON d.id_doctor = doc.id
+            WHERE 1 = 1
+        
+2025-07-21 2025-07-21
+2025-07-21 2025-07-21
+
+            SELECT
+                d.id_dossier,
+                CONCAT(doc.first_name, ' ', doc.last_name) AS doctor_name, 
+                d.patient AS patient_name, 
+                d.acte_date, 
+                d.urgence, 
+
+                ak.code_cnas, 
+                ak.name_acte_kt, 
+
+                d.nbr_nuite, 
+                d.vip, 
+                d.nbr_nuite_conjoint, 
+                d.prix_hospitalisation, 
+                d.prix_conjoint, 
+                d.extras, 
+                d.prix_dossier_convention, 
+                d.prix_dossier_esp, 
+                d.part_operateur_extrat, 
+                dak.convention,  
+                dak.part_operateur AS part_operateur_acte 
+            FROM kt_dossier_patient d
+            LEFT JOIN kt_dossier_actes dak ON d.id_dossier = dak.id_dossier
+            LEFT JOIN kt_actes ak ON dak.id_acte = ak.id_acte
+            LEFT JOIN kt_doctors doc ON d.id_doctor = doc.id
+            WHERE 1 = 1
+        
+Erreur : 'NoneType' object has no attribute 'replace'
+Erreur : 'NoneType' object has no attribute 'replace'
+Erreur : 'NoneType' object has no attribute 'replace'
+Erreur : 'NoneType' object has no attribute 'replace'
+Erreur : 'NoneType' object has no attribute 'replace'
+Erreur : 'NoneType' object has no attribute 'replace'
+Erreur : 'NoneType' object has no attribute 'replace'
+Erreur : 'NoneType' object has no attribute 'replace'
+Erreur : 'NoneType' object has no attribute 'replace'
+Erreur : 'NoneType' object has no attribute 'replace'
+2025-07-22 2025-07-22
+2025-07-22 2025-07-22
+
+            SELECT
+                d.id_dossier,
+                CONCAT(doc.first_name, ' ', doc.last_name) AS doctor_name, 
+                d.patient AS patient_name, 
+                d.acte_date, 
+                d.urgence, 
+
+                ak.code_cnas, 
+                ak.name_acte_kt, 
+
+                d.nbr_nuite, 
+                d.vip, 
+                d.nbr_nuite_conjoint, 
+                d.prix_hospitalisation, 
+                d.prix_conjoint, 
+                d.extras, 
+                d.prix_dossier_convention, 
+                d.prix_dossier_esp, 
+                d.part_operateur_extrat, 
+                dak.convention,  
+                dak.part_operateur AS part_operateur_acte 
+            FROM kt_dossier_patient d
+            LEFT JOIN kt_dossier_actes dak ON d.id_dossier = dak.id_dossier
+            LEFT JOIN kt_actes ak ON dak.id_acte = ak.id_acte
+            LEFT JOIN kt_doctors doc ON d.id_doctor = doc.id
+            WHERE 1 = 1
+        
+Erreur : 'NoneType' object has no attribute 'replace'
+2025-07-22 2025-07-22
+2025-07-22 2025-07-22
+
+            SELECT
+                d.id_dossier,
+                CONCAT(doc.first_name, ' ', doc.last_name) AS doctor_name, 
+                d.patient AS patient_name, 
+                d.acte_date, 
+                d.urgence, 
+
+                ak.code_cnas, 
+                ak.name_acte_kt, 
+
+                d.nbr_nuite, 
+                d.vip, 
+                d.nbr_nuite_conjoint, 
+                d.prix_hospitalisation, 
+                d.prix_conjoint, 
+                d.extras, 
+                d.prix_dossier_convention, 
+                d.prix_dossier_esp, 
+                d.part_operateur_extrat, 
+                dak.convention,  
+                dak.part_operateur AS part_operateur_acte 
+            FROM kt_dossier_patient d
+            LEFT JOIN kt_dossier_actes dak ON d.id_dossier = dak.id_dossier
+            LEFT JOIN kt_actes ak ON dak.id_acte = ak.id_acte
+            LEFT JOIN kt_doctors doc ON d.id_doctor = doc.id
+            WHERE 1 = 1
+        
+2025-07-22 2025-07-22
+2025-07-22 2025-07-22
+
+            SELECT
+                d.id_dossier,
+                CONCAT(doc.first_name, ' ', doc.last_name) AS doctor_name, 
+                d.patient AS patient_name, 
+                d.acte_date, 
+                d.urgence, 
+
+                ak.code_cnas, 
+                ak.name_acte_kt, 
+
+                d.nbr_nuite, 
+                d.vip, 
+                d.nbr_nuite_conjoint, 
+                d.prix_hospitalisation, 
+                d.prix_conjoint, 
+                d.extras, 
+                d.prix_dossier_convention, 
+                d.prix_dossier_esp, 
+                d.part_operateur_extrat, 
+                dak.convention,  
+                dak.part_operateur AS part_operateur_acte 
+            FROM kt_dossier_patient d
+            LEFT JOIN kt_dossier_actes dak ON d.id_dossier = dak.id_dossier
+            LEFT JOIN kt_actes ak ON dak.id_acte = ak.id_acte
+            LEFT JOIN kt_doctors doc ON d.id_doctor = doc.id
+            WHERE 1 = 1
+        
+2025-07-22 2025-07-22
+2025-07-22 2025-07-22
+
+            SELECT
+                d.id_dossier,
+                CONCAT(doc.first_name, ' ', doc.last_name) AS doctor_name, 
+                d.patient AS patient_name, 
+                d.acte_date, 
+                d.urgence, 
+
+                ak.code_cnas, 
+                ak.name_acte_kt, 
+
+                d.nbr_nuite, 
+                d.vip, 
+                d.nbr_nuite_conjoint, 
+                d.prix_hospitalisation, 
+                d.prix_conjoint, 
+                d.extras, 
+                d.prix_dossier_convention, 
+                d.prix_dossier_esp, 
+                d.part_operateur_extrat, 
+                dak.convention,  
+                dak.part_operateur AS part_operateur_acte 
+            FROM kt_dossier_patient d
+            LEFT JOIN kt_dossier_actes dak ON d.id_dossier = dak.id_dossier
+            LEFT JOIN kt_actes ak ON dak.id_acte = ak.id_acte
+            LEFT JOIN kt_doctors doc ON d.id_doctor = doc.id
+            WHERE 1 = 1
+        
+2025-07-01 2025-07-22
+2025-07-01 2025-07-22
+
+            SELECT
+                d.id_dossier,
+                CONCAT(doc.first_name, ' ', doc.last_name) AS doctor_name, 
+                d.patient AS patient_name, 
+                d.acte_date, 
+                d.urgence, 
+
+                ak.code_cnas, 
+                ak.name_acte_kt, 
+
+                d.nbr_nuite, 
+                d.vip, 
+                d.nbr_nuite_conjoint, 
+                d.prix_hospitalisation, 
+                d.prix_conjoint, 
+                d.extras, 
+                d.prix_dossier_convention, 
+                d.prix_dossier_esp, 
+                d.part_operateur_extrat, 
+                dak.convention,  
+                dak.part_operateur AS part_operateur_acte 
+            FROM kt_dossier_patient d
+            LEFT JOIN kt_dossier_actes dak ON d.id_dossier = dak.id_dossier
+            LEFT JOIN kt_actes ak ON dak.id_acte = ak.id_acte
+            LEFT JOIN kt_doctors doc ON d.id_doctor = doc.id
+            WHERE 1 = 1
+        
+Erreur : 'NoneType' object has no attribute 'replace'
+2024-09-01 2025-07-22
+2024-09-01 2025-07-22
+
+            SELECT
+                d.id_dossier,
+                CONCAT(doc.first_name, ' ', doc.last_name) AS doctor_name, 
+                d.patient AS patient_name, 
+                d.acte_date, 
+                d.urgence, 
+
+                ak.code_cnas, 
+                ak.name_acte_kt, 
+
+                d.nbr_nuite, 
+                d.vip, 
+                d.nbr_nuite_conjoint, 
+                d.prix_hospitalisation, 
+                d.prix_conjoint, 
+                d.extras, 
+                d.prix_dossier_convention, 
+                d.prix_dossier_esp, 
+                d.part_operateur_extrat, 
+                dak.convention,  
+                dak.part_operateur AS part_operateur_acte 
+            FROM kt_dossier_patient d
+            LEFT JOIN kt_dossier_actes dak ON d.id_dossier = dak.id_dossier
+            LEFT JOIN kt_actes ak ON dak.id_acte = ak.id_acte
+            LEFT JOIN kt_doctors doc ON d.id_doctor = doc.id
+            WHERE 1 = 1
+        
+Erreur : 'NoneType' object has no attribute 'replace'
+2025-07-22 2025-05-31
+2025-07-22 2025-05-31
+
+            SELECT
+                d.id_dossier,
+                CONCAT(doc.first_name, ' ', doc.last_name) AS doctor_name, 
+                d.patient AS patient_name, 
+                d.acte_date, 
+                d.urgence, 
+
+                ak.code_cnas, 
+                ak.name_acte_kt, 
+
+                d.nbr_nuite, 
+                d.vip, 
+                d.nbr_nuite_conjoint, 
+                d.prix_hospitalisation, 
+                d.prix_conjoint, 
+                d.extras, 
+                d.prix_dossier_convention, 
+                d.prix_dossier_esp, 
+                d.part_operateur_extrat, 
+                dak.convention,  
+                dak.part_operateur AS part_operateur_acte 
+            FROM kt_dossier_patient d
+            LEFT JOIN kt_dossier_actes dak ON d.id_dossier = dak.id_dossier
+            LEFT JOIN kt_actes ak ON dak.id_acte = ak.id_acte
+            LEFT JOIN kt_doctors doc ON d.id_doctor = doc.id
+            WHERE 1 = 1
+        
+2025-05-01 2025-05-31
+2025-05-01 2025-05-31
+
+            SELECT
+                d.id_dossier,
+                CONCAT(doc.first_name, ' ', doc.last_name) AS doctor_name, 
+                d.patient AS patient_name, 
+                d.acte_date, 
+                d.urgence, 
+
+                ak.code_cnas, 
+                ak.name_acte_kt, 
+
+                d.nbr_nuite, 
+                d.vip, 
+                d.nbr_nuite_conjoint, 
+                d.prix_hospitalisation, 
+                d.prix_conjoint, 
+                d.extras, 
+                d.prix_dossier_convention, 
+                d.prix_dossier_esp, 
+                d.part_operateur_extrat, 
+                dak.convention,  
+                dak.part_operateur AS part_operateur_acte 
+            FROM kt_dossier_patient d
+            LEFT JOIN kt_dossier_actes dak ON d.id_dossier = dak.id_dossier
+            LEFT JOIN kt_actes ak ON dak.id_acte = ak.id_acte
+            LEFT JOIN kt_doctors doc ON d.id_doctor = doc.id
+            WHERE 1 = 1
+        
+2025-06-01 2025-05-31
+2025-06-01 2025-05-31
+
+            SELECT
+                d.id_dossier,
+                CONCAT(doc.first_name, ' ', doc.last_name) AS doctor_name, 
+                d.patient AS patient_name, 
+                d.acte_date, 
+                d.urgence, 
+
+                ak.code_cnas, 
+                ak.name_acte_kt, 
+
+                d.nbr_nuite, 
+                d.vip, 
+                d.nbr_nuite_conjoint, 
+                d.prix_hospitalisation, 
+                d.prix_conjoint, 
+                d.extras, 
+                d.prix_dossier_convention, 
+                d.prix_dossier_esp, 
+                d.part_operateur_extrat, 
+                dak.convention,  
+                dak.part_operateur AS part_operateur_acte 
+            FROM kt_dossier_patient d
+            LEFT JOIN kt_dossier_actes dak ON d.id_dossier = dak.id_dossier
+            LEFT JOIN kt_actes ak ON dak.id_acte = ak.id_acte
+            LEFT JOIN kt_doctors doc ON d.id_doctor = doc.id
+            WHERE 1 = 1
+        
+2025-06-01 2025-06-30
+2025-06-01 2025-06-30

@@ -1,0 +1,351 @@
+{% extends "layout.html" %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block style %}
+<style>
+    :root {
+        --anes-primary: #450A54;
+        --anes-primary-light: #6d28d9;
+        --anes-gradient: linear-gradient(135deg, #450A54 0%, #6d28d9 100%);
+    }
+
+    /* ─── Hero Banner ─── */
+    .hero-banner {
+        background: var(--anes-gradient);
+        border-radius: 1rem;
+        padding: 2rem 2.5rem;
+        color: white;
+        position: relative;
+        overflow: hidden;
+        margin-bottom: 2rem;
+    }
+
+    .hero-banner::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -10%;
+        width: 300px;
+        height: 300px;
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 50%;
+        pointer-events: none;
+        z-index: 1;
+    }
+
+    .hero-banner>div {
+        position: relative;
+        z-index: 2;
+    }
+
+    .hero-banner h1 {
+        font-weight: 800;
+        font-size: 1.75rem;
+        margin-bottom: 0.25rem;
+    }
+
+    /* ─── Table Card ─── */
+    .table-card {
+        background: white;
+        border-radius: 1rem;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.07);
+        border: none;
+        overflow: hidden;
+    }
+
+    [data-theme="dark"] .table-card {
+        background: var(--bg-card, #1e1e2e);
+    }
+
+    .table-card .card-header-custom {
+        background: var(--anes-gradient);
+        color: white;
+        font-weight: 700;
+        padding: 0.875rem 1.25rem;
+        font-size: 0.95rem;
+    }
+
+    .table-card .table th {
+        background: #f8fafc;
+        font-weight: 700;
+        font-size: 0.78rem;
+        text-transform: uppercase;
+        letter-spacing: 0.3px;
+        color: #64748b;
+        border-bottom: 2px solid #e2e8f0;
+        padding: 0.75rem;
+    }
+
+    [data-theme="dark"] .table-card .table th {
+        background: #1a1a2e;
+        color: #94a3b8;
+        border-color: #2a2a3e;
+    }
+
+    .table-card .table td {
+        padding: 0.7rem 0.75rem;
+        vertical-align: middle;
+        font-size: 0.875rem;
+        border-color: #f1f5f9;
+    }
+
+    [data-theme="dark"] .table-card .table td {
+        border-color: #2a2a3e;
+        color: #e2e8f0;
+    }
+
+    /* ─── Acte Row Selection ─── */
+    .acte-row {
+        cursor: pointer;
+        transition: all 0.15s;
+    }
+
+    .acte-row:hover {
+        background: rgba(109, 40, 217, 0.04) !important;
+    }
+
+    .acte-row.selected {
+        background: rgba(109, 40, 217, 0.06) !important;
+    }
+
+    .acte-row .form-check-input:checked {
+        background-color: var(--anes-primary);
+        border-color: var(--anes-primary);
+    }
+
+    /* ─── Summary Card ─── */
+    .summary-card {
+        background: var(--anes-gradient);
+        color: white;
+        border-radius: 1rem;
+        padding: 1.5rem;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .summary-card::before {
+        content: '';
+        position: absolute;
+        top: -30%;
+        right: -15%;
+        width: 150px;
+        height: 150px;
+        background: rgba(255, 255, 255, 0.04);
+        border-radius: 50%;
+    }
+
+    .summary-card .label {
+        font-size: 0.78rem;
+        opacity: 0.75;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .summary-card .value {
+        font-size: 1.5rem;
+        font-weight: 800;
+    }
+
+    /* ─── Badges ─── */
+    .badge-source {
+        font-size: 0.72rem;
+        padding: 0.35em 0.65em;
+        border-radius: 6px;
+        font-weight: 600;
+    }
+
+    /* ─── Animations ─── */
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .animate-in {
+        animation: fadeInUp 0.4s ease forwards;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Hero Banner -->
+    <div class="hero-banner animate-in">
+        <div class="d-flex justify-content-between align-items-start flex-wrap gap-3">
+            <div>
+                <h1><i class="fas fa-plus-circle me-2"></i>Créer une Décharge</h1>
+                <p class="text-white-50 mb-0">
+                    Pour <strong>{{ personnel.prenom }} {{ personnel.nom }}</strong>
+                    — {{ personnel.nom_type }}
+                </p>
+            </div>
+            <a href="{{ url_for('anesthesie_honoraires_global') }}"
+                class="btn btn-light text-secondary fw-bold btn-sm shadow-sm" style="border-radius:0.5rem;">
+                <i class="fas fa-arrow-left me-1"></i> Retour
+            </a>
+        </div>
+    </div>
+
+    <form method="POST" id="formDecharge">
+        <input type="hidden" name="id_personnel" value="{{ personnel.id_personnel_anesthesie }}">
+        <div class="row mb-4">
+            <!-- Acts Table -->
+            <div class="col-lg-8">
+                <div class="table-card animate-in">
+                    <div class="card-header-custom d-flex justify-content-between align-items-center">
+                        <span><i class="fas fa-list me-2"></i> Actes Impayés ({{ actes|length }})</span>
+                        <div class="form-check mt-1">
+                            <input type="checkbox" class="form-check-input" id="selectAll">
+                            <label class="form-check-label text-white" for="selectAll" style="font-size:0.85rem;">
+                                Tout sélectionner
+                            </label>
+                        </div>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-sm mb-0">
+                            <thead>
+                                <tr>
+                                    <th style="width:40px;"></th>
+                                    <th>Date</th>
+                                    <th>Patient</th>
+                                    <th>Acte</th>
+                                    <th>Source</th>
+                                    <th class="text-end">Honoraires</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for a in actes %}
+                                <tr class="acte-row" onclick="toggleActe(this, event)">
+                                    <td>
+                                        <input type="checkbox" class="form-check-input acte-check" name="actes[]"
+                                            value="{{ a.source }}:{{ a.id_source }}"
+                                            data-montant="{{ a.honoraires_calcules }}">
+                                    </td>
+                                    <td class="fw-semibold">{{ a.date_intervention.strftime('%d/%m/%Y') if
+                                        a.date_intervention else 'N/A' }}</td>
+                                    <td>{{ a.patient }}</td>
+                                    <td><small>{{ a.nom_acte }}</small></td>
+                                    <td>
+                                        {% if a.source == 'BLOC' %}
+                                        <span class="badge badge-source bg-info-subtle text-info">Bloc</span>
+                                        {% elif a.source == 'ACCOUCHEMENT' %}
+                                        <span class="badge badge-source bg-danger-subtle text-danger">Acc.</span>
+                                        {% elif a.source == 'KT' %}
+                                        <span class="badge badge-source bg-warning-subtle text-warning">KT</span>
+                                        {% elif a.source == 'MEDECIN_INTERNE' %}
+                                        <span class="badge badge-source bg-secondary-subtle text-secondary">MI</span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="text-end fw-semibold" style="color: var(--anes-primary);">
+                                        {{ "%.2f"|format(a.honoraires_calcules) }} DA
+                                    </td>
+                                </tr>
+                                {% else %}
+                                <tr>
+                                    <td colspan="6" class="text-center text-muted py-5">
+                                        <i class="fas fa-check-circle fa-3x mb-3 d-block text-success opacity-50"></i>
+                                        <p class="mb-0">Aucun acte impayé pour cet intervenant</p>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Summary Panel -->
+            <div class="col-lg-4">
+                <div class="animate-in" style="position: sticky; top: 1rem;">
+                    <div class="summary-card mb-3">
+                        <div class="text-center">
+                            <div class="label mb-1">Actes Sélectionnés</div>
+                            <div class="value" id="nbSelected">0</div>
+                        </div>
+                        <hr style="border-color:rgba(255,255,255,0.15);">
+                        <div class="text-center">
+                            <div class="label mb-1">Montant Total</div>
+                            <div class="value" id="totalMontant">0.00 DA</div>
+                        </div>
+                    </div>
+
+                    <div class="table-card">
+                        <div class="card-header-custom">
+                            <i class="fas fa-info-circle me-2"></i> Informations
+                        </div>
+                        <div class="p-3">
+                            <div class="mb-3">
+                                <label class="form-label fw-semibold" style="font-size:0.85rem;">Date de la décharge
+                                    *</label>
+                                <input type="date" name="date_decharge" class="form-control" id="dateDecharge" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label fw-semibold" style="font-size:0.85rem;">Observations</label>
+                                <textarea name="observations" class="form-control" rows="3"
+                                    placeholder="Notes optionnelles..."></textarea>
+                            </div>
+                            <button type="submit" id="btnSubmit" class="btn btn-primary w-100 rounded-pill shadow-sm"
+                                disabled style="background: var(--anes-gradient); border: none;">
+                                <i class="fas fa-save me-2"></i> Créer la Décharge
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    function toggleActe(row, e) {
+        if (e.target.tagName === 'INPUT') return;
+        const cb = row.querySelector('.acte-check');
+        cb.checked = !cb.checked;
+        updateSummary();
+    }
+
+    function updateSummary() {
+        const checks = document.querySelectorAll('.acte-check');
+        let count = 0, total = 0;
+        checks.forEach(cb => {
+            const row = cb.closest('tr');
+            if (cb.checked) {
+                count++;
+                total += parseFloat(cb.dataset.montant) || 0;
+                row.classList.add('selected');
+            } else {
+                row.classList.remove('selected');
+            }
+        });
+        document.getElementById('nbSelected').textContent = count;
+        document.getElementById('totalMontant').textContent = total.toFixed(2) + ' DA';
+        document.getElementById('btnSubmit').disabled = count === 0;
+    }
+
+    // Select all
+    document.getElementById('selectAll')?.addEventListener('change', function () {
+        document.querySelectorAll('.acte-check').forEach(cb => cb.checked = this.checked);
+        updateSummary();
+    });
+
+    // Individual checkboxes
+    document.querySelectorAll('.acte-check').forEach(cb => {
+        cb.addEventListener('change', updateSummary);
+    });
+
+    // Set today's date as default
+    const dateInput = document.getElementById('dateDecharge');
+    if (dateInput && !dateInput.value) {
+        dateInput.value = new Date().toISOString().split('T')[0];
+    }
+</script>
+{% endblock %}

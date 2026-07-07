@@ -1,0 +1,684 @@
+{% extends "layout.html" %}
+
+{% block style %}
+<style>
+    :root {
+        --primary: #3b82f6;
+        --danger: #ef4444;
+        --warning: #f59e0b;
+    }
+
+    .page-header {
+        background: linear-gradient(135deg, var(--primary), #2563eb);
+        color: white;
+        padding: 2rem;
+        border-radius: 12px;
+        margin-bottom: 2rem;
+    }
+
+    .info-card {
+        background: white;
+        border-radius: 12px;
+        padding: 1.5rem;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        margin-bottom: 1.5rem;
+    }
+
+    .status-badge {
+        padding: 0.5rem 1rem;
+        border-radius: 50px;
+        font-weight: 600;
+        font-size: 0.9rem;
+    }
+
+    .status-BROUILLON {
+        background: #f3f4f6;
+        color: #6b7280;
+    }
+
+    .status-VALIDE {
+        background: #dbeafe;
+        color: #1e40af;
+    }
+
+    .status-PAIEMENT_PARTIEL {
+        background: #fef3c7;
+        color: #92400e;
+    }
+
+    .status-PAYE {
+        background: #d1fae5;
+        color: #065f46;
+    }
+
+    .status-ANNULE {
+        background: #fee2e2;
+        color: #991b1b;
+    }
+
+    .tranche-item {
+        background: #f9fafb;
+        border-left: 3px solid #3b82f6;
+        border-radius: 8px;
+        padding: 1rem;
+        margin-bottom: 0.75rem;
+    }
+
+    .progress-paiement {
+        height: 30px;
+        border-radius: 15px;
+        overflow: hidden;
+        background: #e5e7eb;
+    }
+
+    .progress-bar-paiement {
+        height: 100%;
+        background: linear-gradient(90deg, #3b82f6, #2563eb);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-weight: 600;
+        font-size: 0.9rem;
+    }
+
+    .action-btn {
+        border-radius: 8px;
+        padding: 0.5rem 1rem;
+        font-weight: 600;
+        transition: all 0.2s;
+    }
+
+    .table-actes {
+        background: white;
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .summary-panel {
+        background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(37, 99, 235, 0.05));
+        border: 2px solid var(--primary);
+        border-radius: 12px;
+        padding: 1.5rem;
+        position: sticky;
+        top: 20px;
+    }
+
+    .summary-value {
+        font-size: 2rem;
+        font-weight: 700;
+        color: var(--primary);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Header -->
+    <div class="page-header">
+        <nav aria-label="breadcrumb" class="mb-2">
+            <ol class="breadcrumb" style="--bs-breadcrumb-divider-color: rgba(255,255,255,0.5);">
+                <li class="breadcrumb-item">
+                    <a href="{{ url_for('medecin_interne_decharges_list') }}" class="text-white-50">Décharges</a>
+                </li>
+                <li class="breadcrumb-item active text-white">{{ decharge.numero_decharge }}</li>
+            </ol>
+        </nav>
+        <div class="d-flex justify-content-between align-items-start flex-wrap gap-2">
+            <div>
+                <h1><i class="fas fa-file-invoice me-2"></i>{{ decharge.numero_decharge }}</h1>
+                <p class="mb-0 opacity-75">{{ decharge.medecin_name }}</p>
+            </div>
+            <div class="d-flex gap-2">
+                <span class="status-badge status-{{ decharge.statut }}">
+                    {{ decharge.statut }}
+                </span>
+
+                {% if decharge.statut == 'BROUILLON' %}
+                <button class="btn btn-success action-btn" onclick="validerDecharge()">
+                    <i class="fas fa-check me-1"></i>Valider
+                </button>
+                {% endif %}
+
+                {% if decharge.statut in ['BROUILLON', 'VALIDE', 'PAIEMENT_PARTIEL'] %}
+                <button class="btn btn-primary action-btn" onclick="ouvrirModalTranche()">
+                    <i class="fas fa-coins me-1"></i>Ajouter paiement
+                </button>
+                <button class="btn btn-success action-btn" onclick="payerTotal()">
+                    <i class="fas fa-check-double me-1"></i>Payer le solde
+                </button>
+                {% endif %}
+
+                {% if decharge.statut != 'PAYE' %}
+                <button class="btn btn-danger action-btn" onclick="annulerDecharge()">
+                    <i class="fas fa-times me-1"></i>Annuler
+                </button>
+                {% endif %}
+
+                <a href="{{ url_for('medecin_interne_decharge_pdf', id_decharge=decharge.id_decharge) }}"
+                    class="btn btn-outline-light action-btn" target="_blank">
+                    <i class="fas fa-file-pdf me-1"></i>PDF
+                </a>
+
+                <a href="{{ url_for('medecin_interne_decharges_list') }}" class="btn btn-outline-light action-btn">
+                    <i class="fas fa-arrow-left me-1"></i>Retour
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Informations principales -->
+        <div class="col-lg-8">
+            <!-- Informations générales -->
+            <div class="info-card">
+                <h5 class="mb-3"><i class="fas fa-info-circle text-primary me-2"></i>Informations générales</h5>
+                <div class="row">
+                    <div class="col-md-6">
+                        <table class="table table-sm table-borderless">
+                            <tr>
+                                <td class="text-muted">Numéro:</td>
+                                <td><strong>{{ decharge.numero_decharge }}</strong></td>
+                            </tr>
+                            <tr>
+                                <td class="text-muted">Médecin:</td>
+                                <td><strong>{{ decharge.medecin_name }}</strong></td>
+                            </tr>
+                            <tr>
+                                <td class="text-muted">Date décharge:</td>
+                                <td>{{ decharge.date_decharge.strftime('%d/%m/%Y') }}</td>
+                            </tr>
+                            <tr>
+                                <td class="text-muted">Période:</td>
+                                <td>
+                                    {{ decharge.periode_debut.strftime('%d/%m/%Y') }} -
+                                    {{ decharge.periode_fin.strftime('%d/%m/%Y') }}
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+                    <div class="col-md-6">
+                        <table class="table table-sm table-borderless">
+                            <tr>
+                                <td class="text-muted">Mode paiement:</td>
+                                <td><strong>{{ decharge.mode_paiement }}</strong></td>
+                            </tr>
+                            {% if decharge.reference_paiement %}
+                            <tr>
+                                <td class="text-muted">Référence:</td>
+                                <td>{{ decharge.reference_paiement }}</td>
+                            </tr>
+                            {% endif %}
+                            <tr>
+                                <td class="text-muted">Créé par:</td>
+                                <td>{{ decharge.created_by_name }}</td>
+                            </tr>
+                            <tr>
+                                <td class="text-muted">Date création:</td>
+                                <td>{{ decharge.created_at.strftime('%d/%m/%Y %H:%M') }}</td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+
+                {% if decharge.observations %}
+                <div class="mt-3 pt-3 border-top">
+                    <strong class="text-muted">Observations:</strong>
+                    <p class="mb-0 mt-1">{{ decharge.observations }}</p>
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Liste des actes -->
+            <div class="table-actes">
+                <div class="p-3 bg-light border-bottom">
+                    <h5 class="mb-0">
+                        <i class="fas fa-list me-2"></i>
+                        Actes inclus ({{ actes|length }})
+                    </h5>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>#</th>
+                                <th>Date</th>
+                                <th>Patient</th>
+                                <th>Acte</th>
+                                <th class="text-end">Honoraires</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for a in actes %}
+                            <tr>
+                                <td><strong>#{{ a.id_acte }}</strong></td>
+                                <td>{{ a.date_acte.strftime('%d/%m/%Y') }}</td>
+                                <td>{{ a.patient }}</td>
+                                <td>
+                                    <span class="badge bg-info">{{ a.nom_acte or 'Acte médical' }}</span>
+                                </td>
+                                <td class="text-end">
+                                    <strong>{{ "{:,.2f}".format(a.montant_honoraires).replace(",", " ") }} DA</strong>
+                                </td>
+                                <td>
+                                    <a href="{{ url_for('medecin_interne_actes_detail', id_acte=a.id_acte) }}"
+                                        class="btn btn-sm btn-outline-primary" title="Voir acte">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                        <tfoot class="table-light">
+                            <tr>
+                                <th colspan="4" class="text-end">TOTAL:</th>
+                                <th class="text-end">
+                                    <span style="font-size: 1.2rem; color: var(--primary);">
+                                        {{ "{:,.2f}".format(decharge.montant_total).replace(",", " ") }} DA
+                                    </span>
+                                </th>
+                                <th></th>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Historique des paiements (tranches) -->
+            {% if decharge.statut in ['PAIEMENT_PARTIEL', 'PAYE'] %}
+            <div class="info-card mt-3">
+                <h5 class="mb-3">
+                    <i class="fas fa-history text-primary me-2"></i>
+                    Historique des paiements
+                    <span class="badge bg-primary ms-2" id="badge-nb-tranches">{{ decharge.nb_tranches or 0 }}</span>
+                </h5>
+                <div id="liste-tranches">
+                    <!-- Chargé dynamiquement -->
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Panneau récapitulatif -->
+        <div class="col-lg-4">
+            <div class="summary-panel">
+                <h5 class="mb-3"><i class="fas fa-calculator me-2"></i>Récapitulatif</h5>
+
+                <div class="mb-3">
+                    <div class="text-muted small">Nombre d'actes</div>
+                    <div class="summary-value">{{ decharge.nb_actes }}</div>
+                </div>
+
+                <div class="mb-3">
+                    <div class="text-muted small">Montant total</div>
+                    <div class="summary-value">
+                        {{ "{:,.2f}".format(decharge.montant_total).replace(",", " ") }}
+                    </div>
+                    <small class="text-muted">DA</small>
+                </div>
+
+                {% if decharge.statut in ['PAIEMENT_PARTIEL', 'PAYE'] %}
+                <hr>
+
+                <!-- Barre de progression -->
+                <div class="mb-3">
+                    <div class="text-muted small mb-2">Progression du paiement</div>
+                    <div class="progress-paiement">
+                        <div class="progress-bar-paiement" id="progressBar"
+                            style="width: {{ ((decharge.montant_paye_total or 0) / decharge.montant_total * 100)|round(1) }}%">
+                            <span id="progressText">{{ ((decharge.montant_paye_total or 0) / decharge.montant_total *
+                                100)|round(1) }}%</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <div class="text-muted small">Montant payé</div>
+                    <div style="font-size: 1.5rem; font-weight: 700; color: #3b82f6;" id="montantPaye">
+                        {{ "{:,.2f}".format(decharge.montant_paye_total or 0).replace(",", " ") }}
+                    </div>
+                    <small class="text-muted">DA</small>
+                </div>
+
+                <div class="mb-3">
+                    <div class="text-muted small">Solde restant</div>
+                    <div style="font-size: 1.5rem; font-weight: 700; color: #f59e0b;" id="soldeRestant">
+                        {{ "{:,.2f}".format(decharge.solde_restant or decharge.montant_total).replace(",", " ") }}
+                    </div>
+                    <small class="text-muted">DA</small>
+                </div>
+
+                <div class="mb-3">
+                    <div class="text-muted small">Nombre de tranches</div>
+                    <div style="font-size: 1.2rem; font-weight: 600;" id="nbTranches">
+                        {{ decharge.nb_tranches or 0 }}
+                    </div>
+                </div>
+                {% endif %}
+
+                <hr>
+
+                <div class="small text-muted">
+                    {% if decharge.statut == 'VALIDE' and decharge.validated_at %}
+                    <div class="mb-2">
+                        <i class="fas fa-check-circle text-success me-1"></i>
+                        Validé le {{ decharge.validated_at.strftime('%d/%m/%Y') }}
+                        par {{ decharge.validated_by_name }}
+                    </div>
+                    {% endif %}
+
+                    {% if decharge.statut == 'PAYE' and decharge.paid_at %}
+                    <div class="mb-2">
+                        <i class="fas fa-coins text-success me-1"></i>
+                        Payé le {{ decharge.paid_at.strftime('%d/%m/%Y') }}
+                        par {{ decharge.paid_by_name }}
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            {% if decharge.statut == 'PAYE' %}
+            <div class="alert alert-success mt-3">
+                <i class="fas fa-check-circle me-2"></i>
+                <strong>Décharge payée</strong>
+                <p class="mb-0 small mt-1">
+                    Cette décharge a été réglée et les actes ont été marqués comme payés.
+                </p>
+            </div>
+            {% elif decharge.statut == 'PAIEMENT_PARTIEL' %}
+            <div class="alert alert-warning mt-3">
+                <i class="fas fa-hourglass-half me-2"></i>
+                <strong>Paiement partiel</strong>
+                <p class="mb-0 small mt-1">
+                    Des paiements ont été enregistrés mais le solde n'est pas encore soldé.
+                </p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Modal pour ajouter une tranche -->
+<div class="modal fade" id="modalTranche" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title"><i class="fas fa-coins me-2"></i>Ajouter un paiement</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="formTranche">
+                    <div class="mb-3">
+                        <label class="form-label">Date de paiement</label>
+                        <input type="date" class="form-control" id="datePaiement" required
+                            value="{{ datetime.now().strftime('%Y-%m-%d') }}">
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Montant payé (DA)</label>
+                        <input type="number" step="0.01" class="form-control" id="montantPayeTranche" required
+                            min="0.01" max="{{ decharge.solde_restant or decharge.montant_total }}">
+                        <small class="text-muted">
+                            Solde restant: <strong id="soldeInfo">{{ "{:,.2f}".format(decharge.solde_restant or
+                                decharge.montant_total).replace(",", " ") }} DA</strong>
+                        </small>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Mode de paiement</label>
+                        <select class="form-select" id="modePaiementTranche" required>
+                            <option value="ESPECES">Espèces</option>
+                            <option value="CHEQUE">Chèque</option>
+                            <option value="VIREMENT">Virement</option>
+                            <option value="AUTRE">Autre</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Référence (optionnel)</label>
+                        <input type="text" class="form-control" id="referencePaiementTranche"
+                            placeholder="N° chèque, référence virement...">
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Observations (optionnel)</label>
+                        <textarea class="form-control" id="observationsTranche" rows="2"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                <button type="button" class="btn btn-primary" onclick="ajouterTranche()">
+                    <i class="fas fa-save me-1"></i>Enregistrer
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    let modal;
+
+    document.addEventListener('DOMContentLoaded', function () {
+        modal = new bootstrap.Modal(document.getElementById('modalTranche'));
+
+        // Charger les tranches si nécessaire
+        {% if decharge.statut in ['PAIEMENT_PARTIEL', 'PAYE'] %}
+        chargerTranches();
+        {% endif %}
+    });
+
+    function ouvrirModalTranche() {
+        document.getElementById('formTranche').reset();
+        document.getElementById('datePaiement').value = new Date().toISOString().split('T')[0];
+        modal.show();
+    }
+
+    function chargerTranches() {
+        fetch('{{ url_for("medecin_interne_decharge_tranches", id_decharge=decharge.id_decharge) }}')
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    afficherTranches(data.tranches);
+                }
+            });
+    }
+
+    function afficherTranches(tranches) {
+        const container = document.getElementById('liste-tranches');
+        if (!container) return;
+
+        if (tranches.length === 0) {
+            container.innerHTML = '<p class="text-muted">Aucun paiement enregistré</p>';
+            return;
+        }
+
+        let html = '';
+        tranches.forEach(t => {
+            const date = new Date(t.date_paiement).toLocaleDateString('fr-FR');
+            const montant = parseFloat(t.montant_paye).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, " ");
+
+            html += `
+            <div class="tranche-item">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <div class="d-flex align-items-center mb-1">
+                            <i class="fas fa-receipt text-primary me-2"></i>
+                            <strong>${t.numero_tranche}</strong>
+                            <span class="badge bg-secondary ms-2">${t.mode_paiement}</span>
+                        </div>
+                        <small class="text-muted">
+                            <i class="fas fa-calendar me-1"></i>${date}
+                            ${t.reference_paiement ? `• Réf: ${t.reference_paiement}` : ''}
+                        </small>
+                        ${t.observations ? `<div class="small text-muted mt-1">${t.observations}</div>` : ''}
+                    </div>
+                    <div class="text-end">
+                        <div style="font-size: 1.3rem; font-weight: 700; color: #3b82f6;">
+                            ${montant} DA
+                        </div>
+                        {% if decharge.statut != 'PAYE' %}
+                        <button class="btn btn-sm btn-outline-danger mt-1" onclick="supprimerTranche(${t.id_tranche})" title="Supprimer">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        `;
+        });
+
+        container.innerHTML = html;
+    }
+
+    function ajouterTranche() {
+        const data = {
+            date_paiement: document.getElementById('datePaiement').value,
+            montant_paye: parseFloat(document.getElementById('montantPayeTranche').value),
+            mode_paiement: document.getElementById('modePaiementTranche').value,
+            reference_paiement: document.getElementById('referencePaiementTranche').value,
+            observations: document.getElementById('observationsTranche').value
+        };
+
+        if (!data.date_paiement || !data.montant_paye || data.montant_paye <= 0) {
+            showToast('Veuillez remplir tous les champs obligatoires', "warning");
+            return;
+        }
+
+        fetch('{{ url_for("medecin_interne_decharge_ajouter_tranche", id_decharge=decharge.id_decharge) }}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(data)
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert(data.message);
+                    modal.hide();
+
+                    // Mettre à jour l'affichage
+                    document.getElementById('montantPaye').textContent =
+                        data.montant_paye_total.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, " ");
+                    document.getElementById('soldeRestant').textContent =
+                        data.solde_restant.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, " ");
+                    document.getElementById('nbTranches').textContent = data.nb_tranches;
+                    document.getElementById('badge-nb-tranches').textContent = data.nb_tranches;
+                    document.getElementById('soldeInfo').textContent =
+                        data.solde_restant.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, " ") + ' DA';
+
+                    // Mettre à jour la barre de progression
+                    const montantTotal = {{ decharge.montant_total }
+                };
+                const pourcentage = (data.montant_paye_total / montantTotal * 100).toFixed(1);
+                document.getElementById('progressBar').style.width = pourcentage + '%';
+                document.getElementById('progressText').textContent = pourcentage + '%';
+
+                // Recharger les tranches
+                chargerTranches();
+
+                // Recharger la page si complètement payé
+                if (data.solde_restant < 0.01) {
+                    setTimeout(() => location.reload(), 1500);
+                }
+            } else {
+                showToast('Erreur: ' + data.error, "error");
+    }
+    });
+}
+
+    function supprimerTranche(idTranche) {
+        if (!confirm('Voulez-vous vraiment supprimer ce paiement ?')) return;
+
+        fetch(`/medecin-interne/decharge/tranche/${idTranche}/supprimer`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showToast(data.message, "success");
+                    location.reload();
+                } else {
+                    showToast('Erreur: ' + data.error, "error");
+                }
+            });
+    }
+
+    function payerTotal() {
+        const solde = {{ decharge.solde_restant or decharge.montant_total }
+    };
+    if (!confirm(`Confirmer le paiement du solde total de ${solde.toFixed(2)} DA ?`)) return;
+
+    const mode = prompt('Mode de paiement (ESPECES/CHEQUE/VIREMENT):', 'ESPECES');
+    if (!mode) return;
+
+    const reference = prompt('Référence paiement (optionnel):', '');
+
+    fetch('{{ url_for("medecin_interne_decharge_payer_total", id_decharge=decharge.id_decharge) }}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            mode_paiement: mode.toUpperCase(),
+            reference_paiement: reference
+        })
+    })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showToast(data.message, "success");
+                location.reload();
+            } else {
+                showToast('Erreur: ' + data.error, "error");
+            }
+        });
+}
+
+    function validerDecharge() {
+        if (!confirm('Voulez-vous vraiment valider cette décharge ?')) return;
+
+        fetch('{{ url_for("medecin_interne_decharge_valider", id_decharge=decharge.id_decharge) }}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showToast(data.message, "success");
+                    location.reload();
+                } else {
+                    showToast('Erreur: ' + data.error, "error");
+                }
+            });
+    }
+
+    function annulerDecharge() {
+        if (!confirm('Voulez-vous vraiment annuler cette décharge ?\n\nLes actes redeviendront non payés.')) return;
+
+        fetch('{{ url_for("medecin_interne_decharge_annuler", id_decharge=decharge.id_decharge) }}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showToast(data.message, "success");
+                    location.reload();
+                } else {
+                    showToast('Erreur: ' + data.error, "error");
+                }
+            });
+    }
+</script>
+{% endblock %}

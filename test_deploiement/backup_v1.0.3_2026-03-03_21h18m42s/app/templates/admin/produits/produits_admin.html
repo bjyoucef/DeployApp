@@ -1,0 +1,751 @@
+{% extends "admin/admin_layout.html" %}
+{% block content %}
+
+<style>
+    .action-buttons {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 20px;
+        flex-wrap: wrap;
+    }
+
+    .stats-card {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 20px;
+        border-radius: 10px;
+        margin-bottom: 20px;
+    }
+
+    .search-box {
+        margin-bottom: 20px;
+    }
+
+    .table-responsive {
+        background: white;
+        padding: 20px;
+        border-radius: 10px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    .btn-action {
+        padding: 5px 10px;
+        margin: 2px;
+    }
+
+    .badge-custom {
+        font-size: 0.85em;
+        padding: 5px 10px;
+    }
+
+    .modal-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+    }
+
+    .modal-header .btn-close {
+        filter: brightness(0) invert(1);
+    }
+
+    .template-info {
+        background: #e3f2fd;
+        padding: 15px;
+        border-radius: 5px;
+        margin-top: 10px;
+    }
+
+    .admin-only {
+        background-color: #fff3cd;
+        border-left: 4px solid #ffc107;
+        padding: 10px;
+        margin: 10px 0;
+    }
+
+    .prix-calcule {
+        color: #28a745;
+        font-weight: bold;
+    }
+
+    .spinner {
+        display: inline-block;
+        width: 16px;
+        height: 16px;
+        border: 3px solid rgba(255, 255, 255, .2);
+        border-radius: 50%;
+        border-top-color: white;
+        animation: spin 0.6s linear infinite;
+        box-shadow: inset 0 0 1px rgba(255, 255, 255, .1);
+    }
+
+    @keyframes spin {
+        to {
+            transform: rotate(360deg);
+        }
+    }
+
+    .pagination {
+        margin-top: 20px;
+    }
+
+    .loading-row td {
+        text-align: center;
+        padding: 20px;
+        color: #999;
+    }
+</style>
+
+<!-- Stats -->
+<div class="stats-card">
+    <h4><i class="fas fa-box"></i> Gestion des Produits</h4>
+    <p class="mb-0">Total: <strong id="totalCount">-</strong> produit(s)</p>
+    {% if 'VOIR_PRIX_VENTE_PRODUIT' not in session.privileges %}
+    <small><i class="fas fa-info-circle"></i> Mode Pharmacien - Prix calculés automatiquement</small>
+    {% endif %}
+</div>
+
+<!-- Actions -->
+<div class="action-buttons">
+    {% if 'AJOUTER_PRODUIT' in session.privileges %}
+    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#editProductModal"
+        onclick="resetForm()">
+        <i class="fas fa-plus"></i> Ajouter un Produit
+    </button>
+    {% endif %}
+
+    {% if 'IMPORTER_PRODUITS' in session.privileges %}
+    <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#importModal">
+        <i class="fas fa-file-excel"></i> Importer Excel
+    </button>
+    {% endif %}
+
+    <button type="button" class="btn btn-info" onclick="exporterTousLesProduitsServeur()">
+        <i class="fas fa-download"></i> Exporter Tout (Serveur)
+    </button>
+
+    <button type="button" class="btn btn-outline-info" onclick="exporterTableauActuel()">
+        <i class="fas fa-download"></i> Exporter Page (Client)
+    </button>
+
+    <button type="button" class="btn btn-secondary" data-bs-toggle="modal" data-bs-target="#templateModal">
+        <i class="fas fa-file-download"></i> Télécharger Modèle
+    </button>
+
+    {% if 'MODIFIER_MARGE_PRODUIT' in session.privileges %}
+    <button type="button" class="btn btn-danger" onclick="recalculerTousLesPrix()">
+        <i class="fas fa-calculator"></i> Recalculer Tous les Prix
+    </button>
+    {% endif %}
+
+    {% if 'SUPPRIMER_PRODUIT' in session.privileges %}
+    <button type="button" class="btn btn-warning" id="btnMerge" onclick="openMergeModal()" style="display: none;">
+        <i class="fas fa-object-group"></i> Fusionner les doublons
+    </button>
+    {% endif %}
+</div>
+
+<!-- Recherche -->
+<div class="search-box">
+    <div class="input-group">
+        <span class="input-group-text"><i class="fas fa-search"></i></span>
+        <input type="text" id="searchInput" class="form-control" placeholder="Rechercher un produit...">
+    </div>
+</div>
+
+<!-- Modal Édition Unique -->
+<div class="modal fade" id="editProductModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-plus-circle"></i> <span id="modalTitle">Ajouter un Produit</span>
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="productForm" onsubmit="handleFormSubmit(event)">
+                <div class="modal-body">
+                    <input type="hidden" id="productId" name="id_produit">
+
+                    <div class="mb-3">
+                        <label for="description" class="form-label"><i class="fas fa-info-circle"></i> Description
+                            *</label>
+                        <textarea class="form-control" name="description" id="description" rows="3" required></textarea>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="prix_achat" class="form-label"><i class="fas fa-shopping-cart"></i> Prix d'Achat
+                            (DA) *</label>
+                        <input type="number" step="0.01" class="form-control" name="prix_achat" id="prix_achat" required
+                            {% if 'MODIFIER_MARGE_PRODUIT' in session.privileges %}oninput="calculerPrixVente()" {%
+                            endif %}>
+                    </div>
+
+                    {% if 'MODIFIER_MARGE_PRODUIT' in session.privileges %}
+                    <div class="admin-only">
+                        <div class="mb-3">
+                            <label for="pourcentage_marge" class="form-label"><i class="fas fa-percent"></i> Pourcentage
+                                de Marge (%) *</label>
+                            <input type="number" step="0.01" class="form-control" name="pourcentage_marge"
+                                id="pourcentage_marge" value="30.00" required oninput="calculerPrixVente()">
+                        </div>
+                        <div class="alert alert-success mb-0">
+                            <strong>Prix de Vente Calculé:</strong>
+                            <span id="prix_vente_calcule" class="prix-calcule">0.00 DA</span>
+                        </div>
+                    </div>
+                    {% else %}
+                    <div class="alert alert-info">
+                        <i class="fas fa-calculator"></i> Le prix de vente sera calculé automatiquement avec une marge
+                        de 30%
+                    </div>
+                    {% endif %}
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times"></i> Annuler
+                    </button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save"></i> <span id="submitText">Enregistrer</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Import -->
+<div class="modal fade" id="importModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form id="importForm" onsubmit="handleImport(event)">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="fas fa-file-upload"></i> Importer des Produits</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle"></i> <strong>Format requis:</strong>
+                        <ul class="mb-0 mt-2">
+                            <li><strong>description</strong> - Description du produit</li>
+                            <li><strong>prix_achat</strong> - Prix d'achat en DA</li>
+                            {% if 'MODIFIER_MARGE_PRODUIT' in session.privileges %}
+                            <li><strong>pourcentage_marge</strong> - Pourcentage de marge (optionnel, défaut: 30%)</li>
+                            {% endif %}
+                        </ul>
+                    </div>
+                    <div class="mb-3">
+                        <label for="file" class="form-label"><i class="fas fa-file-excel"></i> Fichier Excel *</label>
+                        <input type="file" class="form-control" name="file" id="file" accept=".xlsx,.xls" required>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                    <button type="submit" class="btn btn-success"><i class="fas fa-upload"></i> Importer</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Modèle -->
+<div class="modal fade" id="templateModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="fas fa-file-download"></i> Télécharger le Modèle</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Téléchargez le modèle Excel pour faciliter l'importation des produits.</p>
+                <button type="button" class="btn btn-primary w-100" onclick="telechargerModele()">
+                    <i class="fas fa-download"></i> Télécharger modele_produits.xlsx
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Fusion -->
+<div class="modal fade" id="mergeModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="fas fa-object-group"></i> Fusionner les Produits</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-warning">
+                    <i class="fas fa-exclamation-triangle"></i> <strong>Attention :</strong>
+                    Veuillez sélectionner le produit référence (celui qui sera conservé).
+                    <br>Les autres seront <strong>SUPPRIMÉS</strong> et tous leurs liens (stocks, historiques) seront
+                    rattachés au produit référence.
+                </div>
+                <div class="list-group" id="mergeList">
+                    <!-- Rempli par JS -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                <button type="button" class="btn btn-primary" onclick="confirmMerge()">
+                    <i class="fas fa-check"></i> Confirmer la Fusion
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Tableau -->
+<div class="table-responsive">
+    <table id="produitsTable" class="table table-hover table-striped">
+        <thead class="table-dark">
+            <tr>
+                <th style="width: 40px;">
+                    <input type="checkbox" id="selectAll" class="form-check-input" onchange="toggleSelectAll()">
+                </th>
+                <th>ID</th>
+                <th>Description</th>
+                <th>Prix d'Achat (DA)</th>
+                {% if 'VOIR_PRIX_VENTE_PRODUIT' in session.privileges %}
+                <th>Marge (%)</th>
+                <th>Prix de Vente (DA)</th>
+                {% endif %}
+                <th>Créé le</th>
+                <th>Créé par</th>
+                <th>Modifié le</th>
+                <th>Modifié par</th>
+                <th class="text-center">Actions</th>
+            </tr>
+        </thead>
+        <tbody id="tableBody">
+            <tr class="loading-row">
+                <td colspan="9"><span class="spinner"></span> Chargement...</td>
+            </tr>
+        </tbody>
+    </table>
+    <nav id="pagination" class="pagination" style="display: none;"></nav>
+</div>
+
+<script src="{{ url_for('static', filename='js/xlsx.full.min.js') }}"></script>
+<script>
+    const CONFIG = {
+        canEditMargin: {{ 'true' if 'MODIFIER_MARGE_PRODUIT' in session.privileges else 'false' }},
+        canAdd: {{ 'true' if 'AJOUTER_PRODUIT' in session.privileges else 'false' }},
+        canEdit: {{ 'true' if 'MODIFIER_PRODUIT' in session.privileges else 'false' }},
+        canDelete: {{ 'true' if 'SUPPRIMER_PRODUIT' in session.privileges else 'false' }},
+        canImport: {{ 'true' if 'IMPORTER_PRODUITS' in session.privileges else 'false' }},
+        canSeePrices: {{ 'true' if 'VOIR_PRIX_VENTE_PRODUIT' in session.privileges else 'false' }}
+    };
+    
+    let currentPage = 1;
+    let searchTimeout;
+
+    // Initialiser
+    document.addEventListener('DOMContentLoaded', () => {
+        loadProduits();
+        document.getElementById('searchInput').addEventListener('keyup', debounceSearch);
+    });
+
+    // Debounce recherche
+    function debounceSearch(e) {
+        clearTimeout(searchTimeout);
+        currentPage = 1;
+        searchTimeout = setTimeout(() => loadProduits(), 300);
+    }
+
+    // Charger les produits
+    async function loadProduits(page = 1) {
+        const search = document.getElementById('searchInput').value;
+        const tableBody = document.getElementById('tableBody');
+
+        try {
+            const response = await fetch(`/api/produits?page=${page}&search=${encodeURIComponent(search)}`);
+            const data = await response.json();
+
+            if (!data.success) throw new Error('Erreur de chargement');
+
+            currentPage = page;
+            document.getElementById('totalCount').textContent = data.pagination.total;
+
+            renderTable(data.produits);
+            renderPagination(data.pagination);
+
+        } catch (error) {
+            tableBody.innerHTML = `<tr class="loading-row"><td colspan="9"><span class="text-danger">Erreur: ${error.message}</span></td></tr>`;
+        }
+    }
+
+    // Afficher le tableau
+    function renderTable(produits) {
+        const tableBody = document.getElementById('tableBody');
+
+        if (produits.length === 0) {
+            tableBody.innerHTML = '<tr class="loading-row"><td colspan="9">Aucun produit trouvé</td></tr>';
+            return;
+        }
+
+        tableBody.innerHTML = produits.map(p => `
+        <tr>
+            <td>
+                <input type="checkbox" class="form-check-input product-check" 
+                       value="${p.id_produit}" 
+                       data-desc="${p.description.replace(/"/g, '&quot;')}"
+                       data-price="${p.prix_achat}"
+                       onchange="updateMergeButton()">
+            </td>
+            <td><span class="badge badge-custom bg-secondary">${p.id_produit}</span></td>
+            <td>${p.description}</td>
+            <td><strong>${p.prix_achat.toLocaleString('fr-FR', { minimumFractionDigits: 2 })}</strong></td>
+            ${CONFIG.canSeePrices ? `
+                <td><span class="badge bg-warning text-dark">${p.pourcentage_marge.toFixed(2)}%</span></td>
+                <td><strong class="text-success">${p.prix.toLocaleString('fr-FR', { minimumFractionDigits: 2 })}</strong></td>
+            ` : ''}
+            <td>${p.created_at}</td>
+            <td><span class="badge bg-info">${p.created_by_name}</span></td>
+            <td>${p.updated_at}</td>
+            <td><span class="badge bg-warning">${p.updated_by_name}</span></td>
+            <td class="text-center">
+                ${CONFIG.canEdit ? `<button class="btn btn-warning btn-action btn-sm" onclick="editProduit(${p.id_produit})"><i class="fas fa-edit"></i></button>` : ''}
+                ${CONFIG.canDelete ? `<button class="btn btn-danger btn-action btn-sm" onclick="deleteProduit(${p.id_produit}, '${p.description}')"><i class="fas fa-trash"></i></button>` : ''}
+            </td>
+        </tr>
+    `).join('');
+    }
+
+    // Pagination
+    function renderPagination(pagination) {
+        const container = document.getElementById('pagination');
+        if (pagination.pages <= 1) {
+            container.style.display = 'none';
+            return;
+        }
+
+        container.style.display = 'block';
+        let html = `<ul class="pagination justify-content-center">`;
+
+        for (let i = 1; i <= pagination.pages; i++) {
+            html += `<li class="page-item ${i === pagination.page ? 'active' : ''}">
+            <button class="page-link" onclick="loadProduits(${i})">${i}</button>
+        </li>`;
+        }
+
+        html += `</ul>`;
+        container.innerHTML = html;
+    }
+
+    // Éditer produit - VERSION CORRIGÉE
+    async function editProduit(id) {
+        try {
+            const response = await fetch(`/api/produits/${id}`);
+            const data = await response.json();
+
+            if (!data.success) {
+                showMessage('Produit non trouvé', 'danger');
+                return;
+            }
+
+            const produit = data.produit;
+
+            document.getElementById('productId').value = id;
+            document.getElementById('description').value = produit.description;
+            document.getElementById('prix_achat').value = produit.prix_achat;
+            if (CONFIG.canEditMargin) {
+                document.getElementById('pourcentage_marge').value = produit.pourcentage_marge;
+                calculerPrixVente();
+            }
+
+            document.getElementById('modalTitle').textContent = `Modifier le Produit #${id}`;
+            document.getElementById('submitText').textContent = 'Mettre à jour';
+            new bootstrap.Modal(document.getElementById('editProductModal')).show();
+        } catch (error) {
+            showMessage('Erreur lors du chargement du produit', 'danger');
+            console.error(error);
+        }
+    }
+
+    // Soumettre formulaire
+    async function handleFormSubmit(e) {
+        e.preventDefault();
+
+        const formData = new FormData(document.getElementById('productForm'));
+        const productId = document.getElementById('productId').value;
+        const method = productId ? 'PUT' : 'POST';
+        const url = productId ? `/api/produits/${productId}` : '/api/produits/ajouter';
+        const data = Object.fromEntries(formData);
+
+        try {
+            const response = await fetch(url, {
+                method: method,
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+
+            const result = await response.json();
+
+            if (result.success) {
+                showMessage(result.message, 'success');
+                bootstrap.Modal.getInstance(document.getElementById('editProductModal')).hide();
+                loadProduits(currentPage);
+            } else {
+                showMessage(result.message, 'danger');
+            }
+        } catch (error) {
+            showMessage('Erreur: ' + error.message, 'danger');
+        }
+    }
+
+    // Supprimer produit
+    async function deleteProduit(id, description) {
+        if (!confirm(`Êtes-vous sûr de vouloir supprimer "${description}" ?`)) return;
+
+        try {
+            const response = await fetch(`/api/produits/${id}`, { method: 'DELETE' });
+            const result = await response.json();
+
+            if (result.success) {
+                showMessage(result.message, 'success');
+                loadProduits(currentPage);
+            } else {
+                showMessage(result.message, 'warning');
+            }
+        } catch (error) {
+            showMessage('Erreur: ' + error.message, 'danger');
+        }
+    }
+
+    // Importer
+    async function handleImport(e) {
+        e.preventDefault();
+
+        const formData = new FormData(document.getElementById('importForm'));
+
+        try {
+            const response = await fetch('/api/produits/importer', {
+                method: 'POST',
+                body: formData
+            });
+
+            const result = await response.json();
+
+            if (result.success) {
+                showMessage(`${result.success_count} produit(s) importé(s)`, 'success');
+                if (result.errors.length > 0) {
+                    result.errors.forEach(err => showMessage(err, 'warning'));
+                }
+                bootstrap.Modal.getInstance(document.getElementById('importModal')).hide();
+                document.getElementById('importForm').reset();
+                loadProduits(1);
+            } else {
+                showMessage(result.message, 'danger');
+            }
+        } catch (error) {
+            showMessage('Erreur: ' + error.message, 'danger');
+        }
+    }
+
+    // Réinitialiser formulaire
+    function resetForm() {
+        document.getElementById('productForm').reset();
+        document.getElementById('productId').value = '';
+        document.getElementById('modalTitle').textContent = 'Ajouter un Produit';
+        document.getElementById('submitText').textContent = 'Enregistrer';
+        if (CONFIG.canEditMargin) {
+            document.getElementById('pourcentage_marge').value = '30.00';
+            calculerPrixVente();
+        }
+    }
+
+    // Calculer prix vente
+    function calculerPrixVente() {
+        const prixAchat = parseFloat(document.getElementById('prix_achat').value) || 0;
+        const marge = parseFloat(document.getElementById('pourcentage_marge').value) || 30;
+        const prixAvecMarge = prixAchat * (1 + marge / 100);
+        const prixArrondi = Math.ceil(prixAvecMarge / 50) * 50;
+
+        document.getElementById('prix_vente_calcule').textContent =
+            prixArrondi.toLocaleString('fr-FR', { minimumFractionDigits: 2 }) + ' DA';
+    }
+
+    // Exporter
+    function exporterTousLesProduitsServeur() {
+        // Export serveur - TOUS les produits
+        window.location.href = '/api/produits/export-excel';
+    }
+
+    function exporterTableauActuel() {
+        // Export client - seulement la page affichée
+        const table = document.getElementById('produitsTable');
+        const wb = XLSX.utils.table_to_book(table, { sheet: "Produits" });
+        const date = new Date().toISOString().split('T')[0];
+        XLSX.writeFile(wb, `produits_page_${date}.xlsx`);
+    }
+
+    // Télécharger modèle
+    function telechargerModele() {
+        const data = CONFIG.canEditMargin ?
+            [['description', 'prix_achat', 'pourcentage_marge'],
+            ['Exemple Produit 1', 1500.00, 30.00],
+            ['Exemple Produit 2', 2500.50, 25.00]]
+            : [['description', 'prix_achat'],
+            ['Exemple Produit 1', 1500.00],
+            ['Exemple Produit 2', 2500.50]];
+
+        const ws = XLSX.utils.aoa_to_sheet(data);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "Produits");
+        XLSX.writeFile(wb, 'modele_produits.xlsx');
+    }
+
+    // Recalculer tous les prix (admin only)
+    async function recalculerTousLesPrix() {
+        if (!confirm('⚠️ Êtes-vous sûr ? Cela recalculera TOUS les prix de vente en fonction des marges actuelles.')) return;
+
+        try {
+            const response = await fetch('/api/produits/recalculer-prix', { method: 'POST' });
+            const result = await response.json();
+
+            if (result.success) {
+                showMessage(result.message, 'success');
+                loadProduits(currentPage);
+            } else {
+                showMessage(result.message, 'danger');
+            }
+        } catch (error) {
+            showMessage('Erreur: ' + error.message, 'danger');
+        }
+    }
+
+    // Messages flash
+    function showMessage(message, type) {
+        const alertDiv = document.createElement('div');
+        alertDiv.className = `alert alert-${type} alert-dismissible fade show`;
+        alertDiv.innerHTML = `${message}<button type="button" class="btn-close" data-bs-dismiss="alert"></button>`;
+
+        const container = document.querySelector('.stats-card').parentElement;
+        container.insertBefore(alertDiv, container.firstChild);
+
+        setTimeout(() => alertDiv.remove(), 5000);
+    }
+
+    // ==========================================
+    // GESTION DE LA FUSION
+    // ==========================================
+
+    function toggleSelectAll() {
+        const isChecked = document.getElementById('selectAll').checked;
+        document.querySelectorAll('.product-check').forEach(cb => {
+            cb.checked = isChecked;
+        });
+        updateMergeButton();
+    }
+
+    function updateMergeButton() {
+        const selected = document.querySelectorAll('.product-check:checked');
+        const btn = document.getElementById('btnMerge');
+        if (btn) {
+            btn.style.display = selected.length >= 2 ? 'inline-block' : 'none';
+        }
+    }
+
+    function openMergeModal() {
+        const selected = document.querySelectorAll('.product-check:checked');
+        if (selected.length < 2) return;
+
+        const container = document.getElementById('mergeList');
+        container.innerHTML = '';
+
+        selected.forEach((cb, index) => {
+            const id = cb.value;
+            const desc = cb.dataset.desc;
+            const price = parseFloat(cb.dataset.price).toLocaleString('fr-FR', { minimumFractionDigits: 2 });
+
+            const item = document.createElement('label');
+            item.className = 'list-group-item list-group-item-action d-flex align-items-center gap-3 cursor-pointer';
+            item.innerHTML = `
+                <input class="form-check-input flex-shrink-0" type="radio" name="masterProduct" value="${id}" ${index === 0 ? 'checked' : ''}>
+                <div class="d-flex w-100 justify-content-between">
+                    <div>
+                        <h6 class="mb-0">#${id} - ${desc}</h6>
+                        <small class="text-muted">Prix Achat: ${price} DA</small>
+                    </div>
+                    <span class="badge bg-primary rounded-pill">Garder</span>
+                </div>
+            `;
+
+            // Add click listener to the whole row
+            item.addEventListener('click', function (e) {
+                // Determine if we clicked the radio or the div
+                const radio = this.querySelector('input[type="radio"]');
+                if (e.target !== radio) {
+                    radio.checked = true;
+                }
+
+                // Update Badge Visuals
+                document.querySelectorAll('#mergeList .badge').forEach(b => {
+                    b.className = 'badge bg-secondary rounded-pill';
+                    b.textContent = 'Supprimer';
+                });
+                const badge = this.querySelector('.badge');
+                badge.className = 'badge bg-primary rounded-pill';
+                badge.textContent = 'Garder (Maître)';
+            });
+
+            container.appendChild(item);
+        });
+
+        // Initialize badges logic for the first one
+        const firstItem = container.querySelector('.list-group-item');
+        if (firstItem) {
+            const badge = firstItem.querySelector('.badge');
+            badge.className = 'badge bg-primary rounded-pill';
+            badge.textContent = 'Garder (Maître)';
+
+            // Set others to delete
+            Array.from(container.children).slice(1).forEach(item => {
+                const b = item.querySelector('.badge');
+                b.className = 'badge bg-secondary rounded-pill';
+                b.textContent = 'Supprimer';
+            });
+        }
+
+        new bootstrap.Modal(document.getElementById('mergeModal')).show();
+    }
+
+    async function confirmMerge() {
+        const masterRadio = document.querySelector('input[name="masterProduct"]:checked');
+        if (!masterRadio) return;
+
+        const idMaster = masterRadio.value;
+        const selected = document.querySelectorAll('.product-check:checked');
+        const idsDuplicates = Array.from(selected)
+            .map(cb => cb.value)
+            .filter(id => id !== idMaster);
+
+        if (!confirm('Êtes-vous sûr de vouloir effectuer cette fusion ? Cette action est irréversible.')) return;
+
+        try {
+            const response = await fetch('/api/produits/fusionner', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    id_master: idMaster,
+                    ids_duplicates: idsDuplicates
+                })
+            });
+
+            const result = await response.json();
+
+            if (result.success) {
+                showMessage(result.message, 'success');
+                bootstrap.Modal.getInstance(document.getElementById('mergeModal')).hide();
+                loadProduits(currentPage);
+                document.getElementById('selectAll').checked = false;
+                document.getElementById('btnMerge').style.display = 'none';
+            } else {
+                showMessage(result.message, 'danger');
+            }
+        } catch (error) {
+            showMessage('Erreur: ' + error.message, 'danger');
+        }
+    }
+</script>
+
+{% endblock content %}

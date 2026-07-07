@@ -1,0 +1,386 @@
+{% extends "layout.html" %}
+{% block content %}
+<!-- FullCalendar CSS -->
+<link rel="stylesheet" href="{{ url_for('static', filename='css/fullcalendar.css') }}">
+<!-- FullCalendar JS -->
+<script src="{{ url_for('static', filename='js/fullcalendar.js') }}"></script>
+
+<button class="btn btn-primary" type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvasRight"
+        aria-controls="offcanvasRight">
+    Filtres
+</button>
+
+<div class="offcanvas offcanvas-end" tabindex="-1" id="offcanvasRight" aria-labelledby="offcanvasRightLabel"
+     data-bs-backdrop="static">
+    <div class="offcanvas-header">
+        <h5 class="offcanvas-title" id="offcanvasRightLabel">Filtres</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+    </div>
+    <div class="offcanvas-body">
+        <form method="get" action="{{ url_for('kt_programme') }}" id="filterForm">
+            <!-- Filtre doctor -->
+            <div class="mb-3">
+                <label for="doctorFilter" class="form-label">Doctor :</label>
+                <select name="doctor" id="doctorFilter" class="form-select">
+                    <option value="" {% if not selected_doctor %}selected{% endif %}>Tous les médecins</option>
+                    {% for doctor in doctors %}
+                    <option value="{{ doctor['id'] }}"
+                            {% if selected_doctor== doctor[
+                    'id']|string %}selected{% endif %}>
+                    Dr. {{ doctor['first_name'] }} {{ doctor['last_name'] }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <!-- Filtre convention -->
+            <div class="mb-3">
+                <label for="conventionFilter" class="form-label">Convention :</label>
+                <select name="convention" id="conventionFilter" class="form-select">
+                    <option value="all" {% if selected_convention==
+                    'all' %}selected{% endif %}>Toutes les conventions</option>
+                    <option value="cnas" {% if selected_convention==
+                    'cnas' %}selected{% endif %}>CNAS</option>
+                    <option value="casnos" {% if selected_convention==
+                    'casnos' %}selected{% endif %}>CASNOS</option>
+                    <option value="payante" {% if selected_convention==
+                    'payante' %}selected{% endif %}>Payante</option>
+                </select>
+            </div>
+
+            <!-- Filtre date de début -->
+            <div class="mb-3">
+                <label for="startDate" class="form-label">Date de début :</label>
+                <input type="date" name="start_date" id="startDate" class="form-control"
+                       value="{{ selected_start_date if selected_start_date else '' }}">
+            </div>
+
+            <!-- Filtre date de fin -->
+            <div class="mb-3">
+                <label for="endDate" class="form-label">Date de fin :</label>
+                <input type="date" name="end_date" id="endDate" class="form-control"
+                       value="{{ selected_end_date if selected_end_date else '' }}">
+            </div>
+            <!-- Bouton de validation -->
+            <div class="mb-3">
+                <button type="submit" class="btn btn-primary w-100">Sélectionner</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div>
+    <!-- Calendrier -->
+    <div id="calendar" style="margin-top: 20px; padding-bottom: 50px;"></div>
+    <!-- Bloc JSON contenant les événements (générés côté serveur) -->
+    <script type="application/json" id="events-data">
+        {{ events | tojson }}
+    </script>
+</div>
+
+<!-- Modal d'ajout de programme -->
+<div class="modal fade" id="addProgrammeModal" tabindex="-1" aria-labelledby="addProgrammeModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addProgrammeModalLabel">Ajouter un programme</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="addProgrammeForm">
+                <div class="modal-body">
+                    <!-- Sélection du médecin -->
+                    <div class="mb-3">
+                <select name="doctor" id="doctor" class="form-select">
+                            <option value="" {% if not selected_doctor %}selected{% endif %}>Tous les médecins</option>
+                            {% for doc in doctors %}
+                                <option value="{{ doc['id'] }}" {% if selected_doctor == doc['id']|string %}selected{% endif %}>
+                                    Dr. {{ doc['first_name'] }} {{ doc['last_name'] }}
+                    </option>
+                    {% endfor %}
+                </select>
+                    </div>
+
+                    <!-- Nom du patient -->
+                    <div class="mb-3">
+                        <label for="patient_name" class="form-label">Nom du patient :</label>
+                        <input type="text" name="patient_name" id="patient_name" class="form-control" required>
+                    </div>
+
+                    <!-- Acte (si nécessaire) -->
+                                        <div class="mb-3">
+                        <label for="acte" class="form-label">Acte :</label>
+                        <input type="text" name="acte" id="acte" class="form-control" required>
+                    </div>
+
+                    <!-- Sélection de la convention -->
+                                <div class="mb-3">
+                <label for="convention" class="form-label">Convention :</label>
+                <select name="convention" id="convention" class="form-select">
+                            <option value="all" {% if selected_convention == 'all' %}selected{% endif %}>Toutes les conventions</option>
+                            <option value="cnas" {% if selected_convention == 'cnas' %}selected{% endif %}>CNAS</option>
+                            <option value="casnos" {% if selected_convention == 'casnos' %}selected{% endif %}>CASNOS</option>
+                            <option value="payante" {% if selected_convention == 'payante' %}selected{% endif %}>Payante</option>
+                </select>
+            </div>
+
+                    <!-- Date de l'événement (cachée) -->
+                    <input type="hidden" name="event_date" id="event_date">
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                    <button type="submit" class="btn btn-primary">Enregistrer</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{% if 'MODIFIER_PLANNING' in session.privileges %}
+<!-- Formulaire pour la mise à jour d'un événement -->
+<form id="updateEventForm" action="/update-event-kt" method="POST" style="display:none;">
+    <!-- Champs obligatoires pour la mise à jour -->
+    <input type="hidden" id="eventId" name="event_id">
+    <input type="hidden" id="eventStart" name="start">
+
+    <!-- Champs pour les filtres existants -->
+    <input type="hidden" name="service" value="{{ selected_service }}">
+    <input type="hidden" name="employee" value="{{ selected_employee }}">
+    <input type="hidden" name="shift" value="{{ selected_shift }}">
+    <input type="hidden" name="start_date" value="{{ selected_start_date }}">
+    <input type="hidden" name="end_date" value="{{ selected_end_date }}">
+
+    <!-- Bouton de soumission -->
+    <button type="submit">Mise à jour</button>
+</form>
+
+{% endif %}
+{% if 'SUPPRIMER_PLANNING' in session.privileges %}
+
+<!-- Modal de confirmation de suppression -->
+<div class="modal fade" id="deleteEventModal" tabindex="-1" aria-labelledby="deleteEventModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered"> <!-- Ajout de la classe "modal-dialog-centered" ici -->
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteEventModalLabel">Confirmation de suppression</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                Êtes-vous sûr de vouloir supprimer cet événement ?
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                <button type="button" class="btn btn-danger" id="confirmDeleteBtn">Supprimer</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const calendarEl = document.getElementById('calendar');
+        if (!calendarEl) {
+            console.error('Élément avec id="calendar" introuvable.');
+            return;
+        }
+
+        // Récupération sécurisée des événements depuis Flask
+        const eventsData = document.getElementById('events-data');
+        if (!eventsData) {
+            console.error("Aucun événement trouvé dans le HTML");
+            return;
+        }
+        const events = JSON.parse(eventsData.textContent);
+        console.log("Événements chargés :", events);
+
+        const selectedStartDate = "{{ selected_start_date }}";
+
+        // Initialisation du calendrier FullCalendar
+        const calendar = new FullCalendar.Calendar(calendarEl, {
+            initialDate: selectedStartDate || new Date().toISOString().split('T')[0],
+            locale: 'fr',
+            themeSystem: 'bootstrap5',
+            initialView: 'dayGridMonth',
+            nowIndicator: true,
+            editable: true,
+            weekends: true,
+            eventDisplay: 'block',
+            headerToolbar: {
+                left: 'prev,next today',
+                center: 'title',
+                right: 'dayGridMonth,timeGridWeek,timeGridDay,list'
+            },
+            buttonText: {
+                today: "Aujourd'hui",
+                month: "Mois",
+                week: "Semaine",
+                day: "Jour",
+                list: "Liste"
+            },
+            events: events.map(event => ({
+                ...event,
+                color: event.color || '#007bff',
+                textColor: '#ffffff',
+                editable: true,
+                classNames: event.start === event.end ? ['single-day-event'] : ['multi-day-event']
+            })),
+
+
+            dayCellDidMount: function (info) {
+                const day = info.date.getDay();
+                if (day === 5 || day === 6) {
+                    info.el.classList.add('week-end-style');
+                }
+            },
+
+                {% if 'EXPORTER_PLANNING' in session.privileges %}
+
+    // Custom Buttons for downloading the planning
+
+    customButtons: {
+    myCustomButton: {
+    text: 'Télécharger le Planning',
+    click: function () {
+    // Récupérer les valeurs des filtres
+    const filters = ['serviceFilter', 'employeeFilter', 'shiftFilter', 'startDate', 'endDate']
+        .reduce((acc, id) => {
+    const el = document.getElementById(id);
+    acc[id] = el ? el.value : '';
+    return acc;
+    }, {});
+
+    const { serviceFilter, employeeFilter, shiftFilter, startDate, endDate } = filters;
+
+    // Générer l'URL dynamiquement avec les paramètres
+    const url = `{{ url_for('print_planning') }}?service=${serviceFilter}&employee=${employeeFilter}&shift=${shiftFilter}&start_date=${startDate}&end_date=${endDate}`;
+
+    // Redirection vers l'URL pour télécharger le planning
+    window.location.href = url;
+    }
+    }
+    },
+    {% endif %}
+
+
+    // Handling Event Click (Open Modal)
+    eventClick: function (info) {
+    // Ouvrir le modal de confirmation de suppression
+    openDeleteModal(info.event.id); // Passer l'ID de l'événement au modal
+    },
+
+    // Handling Date Clicks
+    dateClick: function (info) {
+    if (selectedService === "all" || selectedShift === "all" || selectedEmployee === "all") {
+    openWarningModal();  // Ouvrir le modal d'avertissement
+    } else {
+    openModal(info.dateStr);  // Ouvrir le modal normal
+    }
+    },
+
+
+    // Handling Event Drag and Drop (Updating Event)
+    eventDrop: function (info) {
+    const eventId = info.event.id;
+    const newDate = info.event.start?.toISOString().slice(0, 10); // Format YYYY-MM-DD
+
+    if (!eventId || !newDate) {
+    console.error("L'ID de l'événement ou la date ne sont pas définis.");
+    return;
+    }
+
+    // Mise à jour des champs du formulaire
+    const updateForm = document.getElementById('updateEventForm');
+    if (updateForm) {
+    updateForm.querySelector('#eventId').value = eventId;
+    updateForm.querySelector('#eventStart').value = newDate;
+    updateForm.submit();
+    } else {
+    console.error('Formulaire de mise à jour introuvable.');
+    }
+    },
+
+            selectable: true,
+            select: function (info) {
+                if (!info.startStr) {
+                    console.error("Date sélectionnée invalide");
+                    return;
+                }
+                document.getElementById('event_date').value = info.startStr;
+                const myModal = new bootstrap.Modal(document.getElementById('addProgrammeModal'));
+                myModal.show();
+            }
+        });
+        calendar.render();
+    // Fonction pour ouvrir le modal de suppression
+    function openDeleteModal(eventId) {
+    const modalEl = document.getElementById('deleteEventModal');
+    if (modalEl) {
+    const modal = new bootstrap.Modal(modalEl);
+    modal.show();
+
+    // Gestion de la suppression au clic sur "Supprimer"
+    const confirmDeleteBtn = document.getElementById('confirmDeleteBtn');
+    confirmDeleteBtn.onclick = function () {
+    // Supprimer l'événement via une requête AJAX
+    fetch(`/delete-event-kt/${eventId}`, {
+    method: 'DELETE',
+    }).then(response => {
+    if (response.ok) {
+    // Fermer le modal
+    modal.hide();
+    // Recharger la page ou mettre à jour l'interface
+    window.location.reload();
+    } else {
+    console.error('Erreur lors de la suppression de l\'événement.');
+    }
+    });
+    };
+    } else {
+    console.error('Modal de suppression introuvable.');
+    }
+    }
+        // Gestion du formulaire d'ajout de programme
+        const addProgrammeForm = document.getElementById('addProgrammeForm');
+        if (addProgrammeForm) {
+            addProgrammeForm.addEventListener('submit', function (event) {
+                event.preventDefault();
+
+                const patientName = document.getElementById('patient_name').value;
+                const eventDate = document.getElementById('event_date').value;
+            const doctor = document.getElementById('doctor').value;
+            const convention = document.getElementById('convention').value;
+            // Vous pouvez récupérer le champ "acte" si nécessaire :
+            // const acte = document.getElementById('acte').value;
+
+                if (patientName.trim() === '') {
+                    alert("Veuillez entrer un nom de patient.");
+                    return;
+                }
+
+                fetch("{{ url_for('save_planning_kt') }}", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/x-www-form-urlencoded",
+                    },
+                    body: new URLSearchParams({
+                    "doctor": doctor,
+                    "convention": convention,
+                        "date": eventDate,
+                        "patient": patientName
+                    // Ajoutez "acte": acte si le traitement le requiert
+                    }),
+                })
+                    .then(response => {
+                    if (response.ok) {
+                        window.location.reload();
+                    } else {
+                        alert("Erreur lors de l'ajout de l'événement.");
+                    }
+                })
+                    .catch(error => console.error("Erreur :", error));
+            });
+        } else {
+            console.warn("Le formulaire d'ajout de programme n'a pas été trouvé.");
+        }
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vérification Décharge KT</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 500px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-size: 24px;
+            margin-bottom: 8px;
+        }
+
+        .header p {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+
+        .card {
+            background: white;
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+
+        .spinner-container {
+            text-align: center;
+            padding: 40px 20px;
+        }
+
+        .spinner {
+            display: inline-block;
+            width: 50px;
+            height: 50px;
+            border: 5px solid #f3f3f3;
+            border-top: 5px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .spinner-text {
+            margin-top: 20px;
+            color: #666;
+            font-size: 14px;
+        }
+
+        .alert {
+            padding: 16px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .alert-success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .alert-error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .alert-warning {
+            background: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeaa7;
+        }
+
+        .alert-icon {
+            font-size: 24px;
+            margin-bottom: 8px;
+            display: block;
+        }
+
+        .result-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            padding-bottom: 16px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+
+        .result-header h2 {
+            font-size: 18px;
+            color: #333;
+        }
+
+        .badge {
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .badge-success {
+            background: #28a745;
+            color: white;
+        }
+
+        .badge-warning {
+            background: #ffc107;
+            color: #333;
+        }
+
+        .badge-danger {
+            background: #dc3545;
+            color: white;
+        }
+
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 12px 0;
+            border-bottom: 1px solid #f5f5f5;
+        }
+
+        .info-row:last-child {
+            border-bottom: none;
+        }
+
+        .info-label {
+            font-weight: 600;
+            color: #666;
+            font-size: 14px;
+        }
+
+        .info-value {
+            color: #333;
+            font-weight: 500;
+            font-size: 14px;
+            text-align: right;
+        }
+
+        .amount {
+            font-size: 16px;
+            font-weight: 700;
+            color: #667eea;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 14px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-top: 16px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-secondary {
+            background: #f5f5f5;
+            color: #666;
+        }
+
+        .verification-status {
+            text-align: center;
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            font-weight: 600;
+        }
+
+        .verification-status.valid {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .verification-status.invalid {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .inconsistencies {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            padding: 16px;
+            border-radius: 8px;
+            margin-top: 16px;
+        }
+
+        .inconsistencies h4 {
+            color: #856404;
+            font-size: 14px;
+            margin-bottom: 12px;
+        }
+
+        .inconsistency-item {
+            background: white;
+            padding: 10px;
+            margin-bottom: 8px;
+            border-radius: 6px;
+            font-size: 12px;
+        }
+
+        .inconsistency-item strong {
+            color: #dc3545;
+        }
+
+        .link-action {
+            display: block;
+            text-align: center;
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 600;
+            padding: 12px;
+            margin-top: 16px;
+            border-radius: 8px;
+            background: #f8f9ff;
+            transition: background 0.3s;
+        }
+
+        .link-action:hover {
+            background: #e8ebff;
+        }
+
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔍 Vérification Décharge</h1>
+            <p>Clinique INAYA - Système KT</p>
+        </div>
+
+        <div class="card">
+            <!-- Spinner de chargement -->
+            <div id="loadingSection" class="spinner-container">
+                <div class="spinner"></div>
+                <div class="spinner-text">Vérification en cours...</div>
+            </div>
+
+            <!-- Section d'alerte -->
+            <div id="alertSection" class="hidden"></div>
+
+            <!-- Section résultat -->
+            <div id="resultSection" class="hidden">
+                <div id="verificationStatus"></div>
+
+                <div class="result-header">
+                    <h2>Détails de la décharge</h2>
+                    <span class="badge" id="validBadge"></span>
+                </div>
+
+                <div id="dechargeInfo"></div>
+
+                <div id="inconsistenciesSection" class="hidden"></div>
+
+                <a href="#" class="link-action" id="viewDetailLink" target="_blank">
+                    📄 Voir tous les détails
+                </a>
+
+                <button class="btn btn-secondary" onclick="window.location.reload()">
+                    ↻ Nouvelle vérification
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Fonction pour obtenir les paramètres de l'URL
+        function getUrlParams() {
+            const params = new URLSearchParams(window.location.search);
+            return {
+                data: params.get('data'),
+                hash: params.get('hash')
+            };
+        }
+
+        // Fonction pour décoder les données base64
+        function decodeData(encodedData) {
+            try {
+                const decoded = atob(encodedData.replace(/-/g, '+').replace(/_/g, '/'));
+                return JSON.parse(decoded);
+            } catch (e) {
+                console.error('Erreur de décodage:', e);
+                return null;
+            }
+        }
+
+        // Fonction d'affichage d'alerte
+        function showAlert(type, message, icon = '') {
+            const alertSection = document.getElementById('alertSection');
+            const iconHtml = icon ? `<span class="alert-icon">${icon}</span>` : '';
+
+            alertSection.className = `alert alert-${type}`;
+            alertSection.innerHTML = `${iconHtml}${message}`;
+            alertSection.classList.remove('hidden');
+        }
+
+        // Fonction d'affichage des résultats
+        function showResults(data, isValid, inconsistencies = null) {
+            document.getElementById('loadingSection').classList.add('hidden');
+            document.getElementById('resultSection').classList.remove('hidden');
+
+            // Statut de vérification
+            const statusDiv = document.getElementById('verificationStatus');
+            if (isValid) {
+                statusDiv.className = 'verification-status valid';
+                statusDiv.innerHTML = '✅ <strong>Décharge Authentique</strong><br>Cette décharge est valide et correspond aux données enregistrées.';
+            } else {
+                statusDiv.className = 'verification-status invalid';
+                statusDiv.innerHTML = '⚠️ <strong>Attention - Incohérence Détectée</strong><br>Les données du QR Code ne correspondent pas à la base de données.';
+            }
+
+            // Badge
+            const badge = document.getElementById('validBadge');
+            badge.className = `badge ${isValid ? 'badge-success' : 'badge-danger'}`;
+            badge.textContent = isValid ? '✓ VALIDE' : '✗ INVALIDE';
+
+            // Informations de la décharge
+            const infoHTML = `
+                <div class="info-row">
+                    <span class="info-label">N° Décharge :</span>
+                    <span class="info-value"><strong>${data.numero}</strong></span>
+                </div>
+                ${data.medecin ? `
+                <div class="info-row">
+                    <span class="info-label">Médecin :</span>
+                    <span class="info-value">Dr. ${data.medecin}</span>
+                </div>` : ''}
+                <div class="info-row">
+                    <span class="info-label">Date :</span>
+                    <span class="info-value">${data.date}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Statut :</span>
+                    <span class="info-value">
+                        <span class="badge ${getStatutBadgeClass(data.statut)}">
+                            ${data.statut}
+                        </span>
+                    </span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Montant Total :</span>
+                    <span class="info-value amount">${formatAmount(data.montant_total)} DA</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Montant Payé :</span>
+                    <span class="info-value amount" style="color: #28a745;">${formatAmount(data.montant_paye)} DA</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Montant Restant :</span>
+                    <span class="info-value amount" style="color: #dc3545;">${formatAmount(data.montant_restant)} DA</span>
+                </div>
+            `;
+
+            document.getElementById('dechargeInfo').innerHTML = infoHTML;
+
+            // Afficher les incohérences si présentes
+            if (inconsistencies && inconsistencies.length > 0) {
+                const inconsDiv = document.getElementById('inconsistenciesSection');
+                let inconsHTML = '<div class="inconsistencies"><h4>⚠️ Incohérences détectées :</h4>';
+
+                inconsistencies.forEach(incons => {
+                    const fieldNames = {
+                        'montant_total': 'Montant Total',
+                        'montant_paye': 'Montant Payé',
+                        'montant_restant': 'Montant Restant',
+                        'statut': 'Statut'
+                    };
+
+                    inconsHTML += `
+                        <div class="inconsistency-item">
+                            <strong>${fieldNames[incons.field] || incons.field}</strong><br>
+                            QR Code: ${incons.qr_value}<br>
+                            Base de données: ${incons.db_value}
+                        </div>
+                    `;
+                });
+
+                inconsHTML += '</div>';
+                inconsDiv.innerHTML = inconsHTML;
+                inconsDiv.classList.remove('hidden');
+            }
+
+            // Lien vers les détails
+            const detailLink = document.getElementById('viewDetailLink');
+            detailLink.href = `/kt_decharge_detail/${data.numero.split('-').pop()}`;
+        }
+
+        // Fonction de formatage des montants
+        function formatAmount(amount) {
+            return new Intl.NumberFormat('fr-FR', {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            }).format(amount);
+        }
+
+        // Fonction pour obtenir la classe CSS du badge de statut
+        function getStatutBadgeClass(statut) {
+            const statutUpper = statut.toUpperCase();
+            if (statutUpper.includes('SOLDÉ') || statutUpper.includes('SOLDE')) {
+                return 'badge-success';
+            } else if (statutUpper.includes('PARTIEL')) {
+                return 'badge-warning';
+            }
+            return 'badge-danger';
+        }
+
+        // Fonction principale de vérification
+        async function verifierDecharge() {
+            const urlParams = getUrlParams();
+
+            // Vérifier si les paramètres sont présents
+            if (!urlParams.data || !urlParams.hash) {
+                document.getElementById('loadingSection').classList.add('hidden');
+                showAlert('error',
+                    '❌ <strong>QR Code invalide</strong><br>Les données de vérification sont manquantes. Veuillez scanner à nouveau le QR Code.',
+                    '⚠️'
+                );
+                return;
+            }
+
+            // Décoder les données
+            const decodedData = decodeData(urlParams.data);
+
+            if (!decodedData) {
+                document.getElementById('loadingSection').classList.add('hidden');
+                showAlert('error',
+                    '❌ <strong>Erreur de décodage</strong><br>Impossible de lire les données du QR Code.',
+                    '⚠️'
+                );
+                return;
+            }
+
+            // Préparer les données pour l'API
+            const apiData = {
+                type: 'DECHARGE_KT',
+                numero: decodedData.n,
+    montant_total: parseFloat(decodedData.t),
+    montant_paye: parseFloat(decodedData.p),
+    montant_restant: parseFloat(decodedData.r),
+                statut: decodedData.s,
+                date: decodedData.d,
+                timestamp: decodedData.ts,
+                hash: urlParams.hash
+            };
+
+            // Appel à l'API
+            try {
+                const response = await fetch('/api/verifier_decharge', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(apiData)
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    showResults(result.decharge, result.valid, result.inconsistencies);
+                } else {
+                    document.getElementById('loadingSection').classList.add('hidden');
+                    showAlert('error',
+                        `❌ <strong>Erreur de vérification</strong><br>${result.error}`,
+                        '⚠️'
+                    );
+                }
+
+            } catch (error) {
+                document.getElementById('loadingSection').classList.add('hidden');
+                showAlert('error',
+                    `❌ <strong>Erreur de connexion</strong><br>Impossible de contacter le serveur: ${error.message}`,
+                    '⚠️'
+                );
+            }
+        }
+
+        // Lancer la vérification au chargement de la page
+        window.addEventListener('DOMContentLoaded', verifierDecharge);
+    </script>
+</body>
+</html>

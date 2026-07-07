@@ -1,0 +1,65 @@
+
+=== anesthesie_decharges ===
+  id_decharge int(11) NO None
+  numero_decharge varchar(30) NO None
+  id_personnel_anesthesie int(11) NO None
+  date_decharge date NO None
+  periode_debut date YES None
+  periode_fin date YES None
+  montant_total decimal(12,2) NO 0.00
+  montant_paye_total decimal(12,2) NO 0.00
+  solde_restant decimal(12,2) NO 0.00
+  nb_actes int(11) NO 0
+  nb_tranches int(11) NO 0
+  mode_paiement varchar(30) YES ESPECES
+  reference_paiement varchar(100) YES None
+  observations text YES None
+  statut enum('BROUILLON','VALIDE','PAIEMENT_PARTIEL','PAYE','ANNULE') YES BROUILLON
+  created_by int(11) YES None
+  created_at timestamp YES current_timestamp()
+  validated_at datetime YES None
+  validated_by int(11) YES None
+  paid_at datetime YES None
+  paid_by int(11) YES None
+  est_annule tinyint(1) YES 0
+  annule_par int(11) YES None
+  annule_le datetime YES None
+  motif_annulation text YES None
+
+=== anesthesie_decharge_actes ===
+  id_decharge int(11) NO None
+  source_acte enum('BLOC','ACCOUCHEMENT','KT','MEDECIN_INTERNE') NO None
+  id_acte_source int(11) NO None
+  montant_honoraires decimal(12,2) NO 0.00
+
+=== anesthesie_decharge_tranches ===
+  id_tranche int(11) NO None
+  id_decharge int(11) NO None
+  numero_tranche varchar(40) NO None
+  date_paiement date NO None
+  montant_paye decimal(12,2) NO 0.00
+  mode_paiement varchar(30) YES ESPECES
+  reference_paiement varchar(100) YES None
+  observations text YES None
+  created_by int(11) YES None
+  created_at timestamp YES current_timestamp()
+  est_annule tinyint(1) YES 0
+  annule_par int(11) YES None
+  annule_le datetime YES None
+  motif_annulation text YES None
+
+=== location_bloc_dossier_anesthesie (new columns) ===
+  honoraires_payes tinyint(1) YES 0
+  id_decharge_anesthesie int(11) YES None
+
+=== accouchement_dossier_anesthesie (new columns) ===
+  honoraires_payes tinyint(1) YES 0
+  id_decharge_anesthesie int(11) YES None
+
+=== kt_dossier_anesthesie (new columns) ===
+  honoraires_payes tinyint(1) YES 0
+  id_decharge_anesthesie int(11) YES None
+
+=== medecin_interne_anesthesie (new columns) ===
+  anesthesiste_paye tinyint(1) YES 0
+  id_decharge_anesthesie int(11) YES None

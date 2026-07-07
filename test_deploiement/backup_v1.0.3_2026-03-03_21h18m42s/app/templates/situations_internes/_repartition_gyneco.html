@@ -1,0 +1,36 @@
+<table class="table table-sm">
+    <thead>
+    <tr>
+        <th>Type</th>
+        <th>Tarification</th>
+        <th class="text-center">Nombre</th>
+        <th class="text-end">Honoraires totaux</th>
+        <th class="text-end">Honoraires moyens</th>
+    </tr>
+    </thead>
+    <tbody>
+    {% for r in repartition %}
+        <tr>
+            <td>
+                {% if r.type_accouchement == 'VOIE_BASSE' %}
+                    <span class="badge badge-voie-basse">Voie Basse</span>
+                {% else %}
+                    <span class="badge badge-cesarienne">Césarienne</span>
+                {% endif %}
+            </td>
+            <td>
+                {% if r.type_tarification == 'CONVENTION' %}
+                    <span class="badge badge-convention">Convention</span>
+                {% else %}
+                    <span class="badge badge-payant">Payant</span>
+                {% endif %}
+            </td>
+            <td class="text-center"><strong>{{ r.nombre }}</strong></td>
+            <td class="text-end">
+                <strong>{{ "{:,.2f}".format(r.honoraires_totaux).replace(",", " ") }} DA</strong>
+            </td>
+            <td class="text-end">{{ "{:,.2f}".format(r.honoraires_moyens).replace(",", " ") }} DA</td>
+        </tr>
+    {% endfor %}
+    </tbody>
+</table>

@@ -1,0 +1,1011 @@
+{% extends "layout.html" %}
+
+{% block title %}Hospitalisation - Services{% endblock %}
+
+{% block style %}
+<style>
+    :root {
+        --hosp-primary: #450A54;
+        --hosp-primary-light: #7B2D8E;
+        --hosp-accent: #00d4aa;
+        --hosp-accent-dim: rgba(0, 212, 170, 0.15);
+        --hosp-gradient: linear-gradient(135deg, #450A54 0%, #7B2D8E 50%, #A855F7 100%);
+        --hosp-success: #22c55e;
+        --hosp-warning: #f59e0b;
+        --hosp-danger: #ef4444;
+    }
+
+    /* Background Effects */
+    .hosp-page-wrapper {
+        position: relative;
+        min-height: calc(100vh - 80px);
+    }
+
+    .hosp-bg-mesh {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        z-index: -1;
+        pointer-events: none;
+        background: 
+            radial-gradient(ellipse 80% 50% at 20% 0%, rgba(69, 10, 84, 0.15) 0%, transparent 50%),
+            radial-gradient(ellipse 60% 40% at 80% 100%, rgba(0, 212, 170, 0.08) 0%, transparent 50%),
+            radial-gradient(ellipse 50% 30% at 50% 50%, rgba(123, 45, 142, 0.06) 0%, transparent 50%);
+    }
+
+    .hosp-bg-grid {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        z-index: -1;
+        pointer-events: none;
+        background-image: 
+            linear-gradient(rgba(69, 10, 84, 0.03) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(69, 10, 84, 0.03) 1px, transparent 1px);
+        background-size: 60px 60px;
+    }
+
+    /* Floating Orbs */
+    .hosp-orb {
+        position: fixed;
+        border-radius: 50%;
+        filter: blur(80px);
+        opacity: 0.4;
+        pointer-events: none;
+        z-index: -1;
+        animation: hospFloat 20s ease-in-out infinite;
+    }
+
+    .hosp-orb-1 {
+        width: 400px;
+        height: 400px;
+        background: var(--hosp-primary);
+        top: -200px;
+        right: -100px;
+    }
+
+    .hosp-orb-2 {
+        width: 300px;
+        height: 300px;
+        background: var(--hosp-accent);
+        bottom: 20%;
+        left: -150px;
+        animation-delay: -7s;
+    }
+
+    @keyframes hospFloat {
+        0%, 100% { transform: translate(0, 0) scale(1); }
+        25% { transform: translate(30px, -30px) scale(1.05); }
+        50% { transform: translate(-20px, 20px) scale(0.95); }
+        75% { transform: translate(20px, 10px) scale(1.02); }
+    }
+
+    /* Hero Section */
+    .hosp-hero {
+        background: linear-gradient(135deg, rgba(69, 10, 84, 0.9) 0%, rgba(123, 45, 142, 0.85) 50%, rgba(168, 85, 247, 0.8) 100%);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        color: white;
+        padding: 2.5rem 3rem;
+        border-radius: 1.5rem;
+        margin-bottom: 2.5rem;
+        box-shadow: 
+            0 8px 32px rgba(69, 10, 84, 0.4),
+            0 0 0 1px rgba(255, 255, 255, 0.1) inset;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .hosp-hero::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 1px;
+        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+    }
+
+    .hosp-hero::after {
+        content: '';
+        position: absolute;
+        bottom: -50%;
+        right: -10%;
+        width: 300px;
+        height: 300px;
+        background: radial-gradient(circle, rgba(0, 212, 170, 0.2) 0%, transparent 70%);
+        pointer-events: none;
+    }
+
+    .hosp-hero h2 {
+        font-weight: 700;
+        margin-bottom: 0.5rem;
+        font-size: 1.75rem;
+        letter-spacing: -0.02em;
+    }
+
+    .hosp-hero p {
+        opacity: 0.85;
+        margin-bottom: 0;
+        font-size: 1rem;
+    }
+
+    .hosp-hero-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.625rem 1.25rem;
+        background: rgba(255, 255, 255, 0.15);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 9999px;
+        font-size: 0.95rem;
+        font-weight: 600;
+        color: white;
+    }
+
+    .hosp-config-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.625rem 1.25rem;
+        background: var(--hosp-accent);
+        color: #0a0f1a;
+        border-radius: 0.75rem;
+        font-weight: 600;
+        font-size: 0.9rem;
+        text-decoration: none;
+        transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        border: none;
+        cursor: pointer;
+    }
+
+    .hosp-config-btn:hover {
+        background: #00eabc;
+        transform: translateY(-2px);
+        box-shadow: 0 8px 24px rgba(0, 212, 170, 0.4);
+        color: #0a0f1a;
+    }
+
+    /* Service Cards */
+    .hosp-service-card {
+        background: var(--bg-card, rgba(255, 255, 255, 0.7));
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+        border-radius: 1.25rem;
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        padding: 1.5rem;
+        transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        cursor: pointer;
+        text-decoration: none;
+        color: inherit;
+        display: block;
+        position: relative;
+        overflow: hidden;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+    }
+
+    .hosp-service-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 5px;
+        height: 100%;
+        border-radius: 1.25rem 0 0 1.25rem;
+        transition: width 0.3s ease;
+    }
+
+    .hosp-service-card::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(135deg, rgba(69, 10, 84, 0.03) 0%, transparent 50%);
+        opacity: 0;
+        transition: opacity 0.3s ease;
+    }
+
+    .hosp-service-card:hover {
+        transform: translateY(-6px);
+        box-shadow: 
+            0 20px 50px rgba(69, 10, 84, 0.15),
+            0 0 0 1px rgba(69, 10, 84, 0.2);
+        border-color: rgba(69, 10, 84, 0.3);
+        color: inherit;
+    }
+
+    .hosp-service-card:hover::before {
+        width: 6px;
+    }
+
+    .hosp-service-card:hover::after {
+        opacity: 1;
+    }
+
+    .hosp-service-card:focus-visible {
+        outline: 2px solid var(--hosp-accent);
+        outline-offset: 2px;
+    }
+
+    .hosp-service-icon {
+        width: 52px;
+        height: 52px;
+        border-radius: 0.875rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.25rem;
+        color: white;
+        flex-shrink: 0;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .hosp-service-icon::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.2) 0%, transparent 50%);
+    }
+
+    .hosp-service-name {
+        font-weight: 600;
+        font-size: 1.1rem;
+        margin-bottom: 0.75rem;
+        color: var(--text-primary, #1a1a2e);
+        position: relative;
+        z-index: 1;
+    }
+
+    /* Metrics */
+    .hosp-metrics {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(70px, 1fr));
+        gap: 0.75rem;
+        margin-top: 0.75rem;
+        position: relative;
+        z-index: 1;
+    }
+
+    .hosp-metric {
+        background: var(--bs-light, rgba(69, 10, 84, 0.05));
+        padding: 0.625rem 0.75rem;
+        border-radius: 0.75rem;
+        text-align: center;
+        transition: all 0.3s ease;
+    }
+
+    .hosp-metric:hover {
+        background: rgba(69, 10, 84, 0.08);
+    }
+
+    .hosp-metric-value {
+        font-weight: 700;
+        font-size: 1.15rem;
+        display: block;
+        line-height: 1.2;
+    }
+
+    .hosp-metric-label {
+        font-size: 0.7rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        opacity: 0.7;
+        margin-top: 0.125rem;
+    }
+
+    .hosp-metric-success .hosp-metric-value { color: var(--hosp-success); }
+    .hosp-metric-danger .hosp-metric-value { color: var(--hosp-danger); }
+    .hosp-metric-warning .hosp-metric-value { color: var(--hosp-warning); }
+
+    /* Progress Bar */
+    .hosp-progress {
+        margin-top: 1rem;
+        position: relative;
+        z-index: 1;
+    }
+
+    .hosp-progress-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 0.5rem;
+    }
+
+    .hosp-progress-label {
+        font-size: 0.75rem;
+        color: var(--text-muted, #6b7280);
+    }
+
+    .hosp-progress-value {
+        font-weight: 600;
+        font-size: 0.85rem;
+    }
+
+    .hosp-progress-bar {
+        height: 6px;
+        border-radius: 9999px;
+        background: rgba(69, 10, 84, 0.1);
+        overflow: hidden;
+    }
+
+    .hosp-progress-fill {
+        height: 100%;
+        border-radius: 9999px;
+        transition: width 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+        position: relative;
+    }
+
+    .hosp-progress-fill::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+        animation: shimmer 2s infinite;
+    }
+
+    @keyframes shimmer {
+        0% { transform: translateX(-100%); }
+        100% { transform: translateX(100%); }
+    }
+
+    /* Chevron Arrow */
+    .hosp-chevron {
+        width: 32px;
+        height: 32px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+        background: rgba(69, 10, 84, 0.08);
+        color: var(--text-muted, #6b7280);
+        transition: all 0.3s ease;
+        flex-shrink: 0;
+    }
+
+    .hosp-service-card:hover .hosp-chevron {
+        background: var(--hosp-primary);
+        color: white;
+        transform: translateX(4px);
+    }
+
+    /* Empty State */
+    .hosp-empty {
+        text-align: center;
+        padding: 4rem 2rem;
+        background: var(--bg-card, rgba(255, 255, 255, 0.5));
+        backdrop-filter: blur(16px);
+        border-radius: 1.5rem;
+        border: 1px dashed rgba(69, 10, 84, 0.2);
+    }
+
+    .hosp-empty-icon {
+        width: 80px;
+        height: 80px;
+        margin: 0 auto 1.5rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: rgba(69, 10, 84, 0.08);
+        border-radius: 50%;
+        font-size: 2rem;
+        color: var(--hosp-primary);
+    }
+
+    .hosp-empty h5 {
+        color: var(--text-muted, #6b7280);
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+    }
+
+    .hosp-empty p {
+        color: var(--text-muted, #9ca3af);
+        max-width: 400px;
+        margin: 0 auto;
+    }
+
+    /* Animations */
+    .hosp-animate-in {
+        animation: hospFadeInUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        opacity: 0;
+    }
+
+    @keyframes hospFadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(30px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .hosp-stagger-1 { animation-delay: 0.1s; }
+    .hosp-stagger-2 { animation-delay: 0.15s; }
+    .hosp-stagger-3 { animation-delay: 0.2s; }
+    .hosp-stagger-4 { animation-delay: 0.25s; }
+    .hosp-stagger-5 { animation-delay: 0.3s; }
+    .hosp-stagger-6 { animation-delay: 0.35s; }
+    .hosp-stagger-7 { animation-delay: 0.4s; }
+    .hosp-stagger-8 { animation-delay: 0.45s; }
+    .hosp-stagger-9 { animation-delay: 0.5s; }
+
+    /* ============================================
+       STATS & FILTERS
+       ============================================ */
+    .hosp-stats-section {
+        padding: 2rem 0;
+        position: relative;
+    }
+
+    .hosp-stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1.5rem;
+    }
+
+    .hosp-stat-card {
+        background: var(--bg-card, rgba(255, 255, 255, 0.7));
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        border-radius: 1.25rem;
+        padding: 1.5rem;
+        text-align: center;
+        transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        position: relative;
+        overflow: hidden;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+    }
+
+    .hosp-stat-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 3px;
+        background: linear-gradient(90deg, var(--hosp-accent), var(--hosp-primary));
+        transform: scaleX(0);
+        transition: transform 0.4s ease;
+    }
+
+    .hosp-stat-card:hover {
+        transform: translateY(-5px);
+        border-color: rgba(69, 10, 84, 0.2);
+        box-shadow: 0 15px 40px rgba(69, 10, 84, 0.1);
+    }
+
+    .hosp-stat-card:hover::before {
+        transform: scaleX(1);
+    }
+
+    .hosp-stat-number {
+        font-size: 2.5rem;
+        font-weight: 700;
+        color: var(--hosp-accent);
+        line-height: 1;
+        margin-bottom: 0.5rem;
+    }
+
+    .hosp-stat-label {
+        color: var(--text-muted, #6b7280);
+        font-size: 0.85rem;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        font-weight: 600;
+    }
+
+    /* Filters */
+    .hosp-filter-tabs {
+        display: flex;
+        justify-content: center;
+        gap: 0.5rem;
+        margin-bottom: 2rem;
+        flex-wrap: wrap;
+    }
+
+    .hosp-filter-tab {
+        padding: 0.6rem 1.25rem;
+        background: transparent;
+        border: 1px solid var(--border-color, rgba(69, 10, 84, 0.2));
+        border-radius: 0.5rem;
+        color: var(--text-muted, #6b7280);
+        font-size: 0.9rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    .hosp-filter-tab:hover {
+        border-color: var(--hosp-accent);
+        color: var(--text-primary, #1a1a2e);
+    }
+
+    .hosp-filter-tab.active {
+        background: var(--hosp-accent);
+        border-color: var(--hosp-accent);
+        color: #0a0f1a;
+    }
+
+    /* ============================================
+       DARK MODE OVERRIDES
+       ============================================ */
+    [data-theme="dark"] .hosp-bg-mesh {
+        background: 
+            radial-gradient(ellipse 80% 50% at 20% 0%, rgba(69, 10, 84, 0.25) 0%, transparent 50%),
+            radial-gradient(ellipse 60% 40% at 80% 100%, rgba(0, 212, 170, 0.12) 0%, transparent 50%),
+            radial-gradient(ellipse 50% 30% at 50% 50%, rgba(123, 45, 142, 0.1) 0%, transparent 50%);
+    }
+
+    [data-theme="dark"] .hosp-bg-grid {
+        background-image: 
+            linear-gradient(rgba(168, 85, 247, 0.04) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(168, 85, 247, 0.04) 1px, transparent 1px);
+    }
+
+    [data-theme="dark"] .hosp-orb {
+        opacity: 0.25;
+    }
+
+    [data-theme="dark"] .hosp-hero {
+        background: linear-gradient(135deg, rgba(69, 10, 84, 0.95) 0%, rgba(123, 45, 142, 0.9) 50%, rgba(168, 85, 247, 0.85) 100%);
+        box-shadow: 
+            0 8px 32px rgba(0, 0, 0, 0.4),
+            0 0 0 1px rgba(255, 255, 255, 0.05) inset;
+    }
+
+    [data-theme="dark"] .hosp-service-card {
+        background: var(--bg-card, rgba(30, 30, 46, 0.8));
+        border-color: rgba(255, 255, 255, 0.06);
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+    }
+
+    [data-theme="dark"] .hosp-service-card:hover {
+        box-shadow: 
+            0 20px 50px rgba(0, 0, 0, 0.4),
+            0 0 0 1px rgba(168, 85, 247, 0.3);
+        border-color: rgba(168, 85, 247, 0.25);
+    }
+
+    [data-theme="dark"] .hosp-service-name {
+        color: var(--text-primary, #f1f5f9);
+    }
+
+    [data-theme="dark"] .hosp-metric {
+        background: rgba(255, 255, 255, 0.04);
+    }
+
+    [data-theme="dark"] .hosp-metric:hover {
+        background: rgba(255, 255, 255, 0.08);
+    }
+
+    [data-theme="dark"] .hosp-progress-bar {
+        background: rgba(255, 255, 255, 0.08);
+    }
+
+    [data-theme="dark"] .hosp-progress-label {
+        color: var(--text-muted, #94a3b8);
+    }
+
+    [data-theme="dark"] .hosp-chevron {
+        background: rgba(255, 255, 255, 0.06);
+        color: var(--text-muted, #94a3b8);
+    }
+
+    [data-theme="dark"] .hosp-empty {
+        background: var(--bg-card, rgba(30, 30, 46, 0.6));
+        border-color: rgba(168, 85, 247, 0.2);
+    }
+
+    [data-theme="dark"] .hosp-empty-icon {
+        background: rgba(168, 85, 247, 0.15);
+        color: #c084fc;
+    }
+
+    [data-theme="dark"] .hosp-stat-card {
+        background: var(--bg-card, rgba(30, 30, 46, 0.8));
+        border-color: rgba(255, 255, 255, 0.06);
+    }
+    
+    [data-theme="dark"] .hosp-stat-card:hover {
+        border-color: rgba(168, 85, 247, 0.3);
+    }
+
+    [data-theme="dark"] .hosp-filter-tab {
+        border-color: rgba(255, 255, 255, 0.1);
+        color: #94a3b8;
+    }
+
+    [data-theme="dark"] .hosp-filter-tab:hover {
+        border-color: var(--hosp-accent);
+        color: #f1f5f9;
+    }
+
+    [data-theme="dark"] .hosp-filter-tab.active {
+        color: #0a0f1a;
+    }
+
+    /* ============================================
+       RESPONSIVE ADJUSTMENTS
+       ============================================ */
+    @media (max-width: 768px) {
+        .hosp-hero {
+            padding: 1.75rem 1.5rem;
+            border-radius: 1rem;
+        }
+
+        .hosp-hero h2 {
+            font-size: 1.4rem;
+        }
+
+        .hosp-hero-badge,
+        .hosp-config-btn {
+            padding: 0.5rem 1rem;
+            font-size: 0.85rem;
+        }
+
+        .hosp-service-card {
+            padding: 1.25rem;
+        }
+
+        .hosp-service-icon {
+            width: 44px;
+            height: 44px;
+            font-size: 1.1rem;
+        }
+
+        .hosp-service-name {
+            font-size: 1rem;
+        }
+
+        .hosp-metrics {
+            gap: 0.5rem;
+        }
+
+        .hosp-metric {
+            padding: 0.5rem;
+        }
+
+        .hosp-metric-value {
+            font-size: 1rem;
+        }
+
+        .hosp-metric-label {
+            font-size: 0.65rem;
+        }
+
+        .hosp-orb {
+            display: none;
+        }
+
+        .hosp-stats-grid {
+            grid-template-columns: repeat(2, 1fr);
+        }
+
+        .hosp-stat-number {
+            font-size: 2rem;
+        }
+    }
+
+    /* Reduced Motion */
+    @media (prefers-reduced-motion: reduce) {
+        .hosp-orb,
+        .hosp-progress-fill::after {
+            animation: none;
+        }
+
+        .hosp-animate-in {
+            animation: none;
+            opacity: 1;
+        }
+
+        .hosp-service-card,
+        .hosp-config-btn,
+        .hosp-chevron {
+            transition: none;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="hosp-page-wrapper">
+    <!-- Background Effects -->
+    <div class="hosp-bg-mesh"></div>
+    <div class="hosp-bg-grid"></div>
+    <div class="hosp-orb hosp-orb-1"></div>
+    <div class="hosp-orb hosp-orb-2"></div>
+
+<div class="container-fluid py-4">
+        <!-- Hero Section -->
+        <div class="hosp-hero hosp-animate-in">
+        <div class="d-flex align-items-center justify-content-between flex-wrap gap-3">
+            <div>
+                <h2><i class="fas fa-hospital me-2"></i>Hospitalisation</h2>
+                <p>Gestion des services hospitaliers, chambres et admissions</p>
+            </div>
+                <div class="d-flex align-items-center gap-3 flex-wrap">
+                    <span class="hosp-hero-badge" id="hosp-services-count">
+                        <i class="fas fa-building me-2"></i>
+                        {{ services|length }} service{{ 's' if services|length > 1 }}
+                </span>
+                    <a href="{{ url_for('hospitalisation_config') }}" 
+                       class="hosp-config-btn" 
+                       id="hosp-config-link">
+                        <i class="fas fa-cog"></i>
+                        <span>Configuration</span>
+                    </a>
+                </div>
+            </div>
+            </div>
+            
+        <!-- Calculate Totals -->
+        {% set ns = namespace(chambres=0, lits=0, occupes=0) %}
+        {% for s in services %}
+            {% set ns.chambres = ns.chambres + (s.nb_chambres or 0) %}
+            {% set ns.lits = ns.lits + (s.nb_lits or 0) %}
+            {% set ns.occupes = ns.occupes + (s.nb_occupes or 0) %}
+        {% endfor %}
+        {% set total_dispos = (ns.lits - ns.occupes) if ns.lits > 0 else 0 %}
+        {% set taux_global = ((ns.occupes / ns.lits * 100) if ns.lits > 0 else 0)|round(0)|int %}
+
+        <!-- Stats Section -->
+        <div class="hosp-stats-section">
+            <div class="hosp-stats-grid">
+                <div class="hosp-stat-card hosp-animate-in hosp-stagger-1">
+                    <div class="hosp-stat-number" data-count="{{ services|length }}">0</div>
+                    <div class="hosp-stat-label">Services actifs</div>
+                </div>
+                <div class="hosp-stat-card hosp-animate-in hosp-stagger-2">
+                    <div class="hosp-stat-number" data-count="{{ ns.chambres }}">0</div>
+                    <div class="hosp-stat-label">Chambres totales</div>
+                </div>
+                <div class="hosp-stat-card hosp-animate-in hosp-stagger-3">
+                    <div class="hosp-stat-number" data-count="{{ total_dispos }}">0</div>
+                    <div class="hosp-stat-label">Lits disponibles</div>
+                </div>
+                <div class="hosp-stat-card hosp-animate-in hosp-stagger-4">
+                    <div class="hosp-stat-number" data-count="{{ taux_global }}" data-suffix="%">0</div>
+                    <div class="hosp-stat-label">Taux d'occupation</div>
+                </div>
+        </div>
+    </div>
+
+    {% if services|length == 0 %}
+        <!-- Empty State -->
+        <div class="hosp-empty hosp-animate-in">
+            <div class="hosp-empty-icon">
+                <i class="fas fa-hospital"></i>
+    </div>
+            <h5>Aucun service hospitalier configure</h5>
+            <p>Marquez des services comme hospitalier dans l'administration pour les voir apparaitre ici.</p>
+        </div>
+
+    {% else %}
+        <!-- Filter Tabs -->
+        <div class="hosp-filter-tabs hosp-animate-in hosp-stagger-1">
+            <button class="hosp-filter-tab active" data-filter="all">Tous les services</button>
+            <button class="hosp-filter-tab" data-filter="hospitalisation">Hospitalisation</button>
+            <button class="hosp-filter-tab" data-filter="reanimation">Réanimation</button>
+        </div>
+
+        <!-- Services Grid -->
+        <div class="row g-4 hosp-services-container">
+        {% for s in services %}
+        {% set nb_lits = s.nb_lits or 0 %}
+        {% set nb_occ = s.nb_occupes or 0 %}
+        {% set nb_dispo = nb_lits - nb_occ %}
+        {% set taux = ((nb_occ / nb_lits * 100) if nb_lits > 0 else 0)|round(0)|int %}
+            {% set service_color = s.color or '#450A54' %}
+            {% set stagger_class = 'hosp-stagger-' ~ ((loop.index % 9) + 1) %}
+            {% set type_service = 'reanimation' if 'RÉANIMATION' in s.service_name|upper else 'hospitalisation' %}
+            
+            <div class="col-12 col-md-6 col-lg-4 hosp-service-card-wrapper" data-type="{{ type_service }}">
+                <a href="{{ url_for('hospitalisation_floor_plan', id_service=s.id_service) }}" 
+                   class="hosp-service-card hosp-animate-in {{ stagger_class }}"
+                   style="--service-color: {{ service_color }}"
+                   id="hosp-service-{{ s.id_service }}"
+                   aria-label="Service {{ s.service_name }} - {{ nb_dispo }} lits disponibles">
+                    
+                    <!-- Color Accent Bar -->
+                    <div style="position:absolute;top:0;left:0;width:5px;height:100%;background:{{ service_color }};border-radius:1.25rem 0 0 1.25rem;"></div>
+                    
+                <div class="d-flex align-items-start gap-3">
+                        <!-- Icon -->
+                        <div class="hosp-service-icon"
+                             style="background: linear-gradient(135deg, {{ service_color }}, {{ service_color }}cc);">
+                        <i class="fas fa-hospital-alt"></i>
+                    </div>
+                        
+                        <!-- Content -->
+                        <div class="flex-grow-1" style="min-width: 0;">
+                            <h5 class="hosp-service-name">{{ s.service_name }}</h5>
+                            
+                            <!-- Metrics -->
+                            <div class="hosp-metrics">
+                                <div class="hosp-metric">
+                                    <span class="hosp-metric-value">{{ s.nb_chambres or 0 }}</span>
+                                    <span class="hosp-metric-label">Chambres</span>
+                            </div>
+                                <div class="hosp-metric hosp-metric-success">
+                                    <span class="hosp-metric-value">{{ nb_dispo }}</span>
+                                    <span class="hosp-metric-label">Disponibles</span>
+                            </div>
+                                <div class="hosp-metric hosp-metric-danger">
+                                    <span class="hosp-metric-value">{{ nb_occ }}</span>
+                                    <span class="hosp-metric-label">Occupes</span>
+                            </div>
+                            {% if s.nb_attente %}
+                                <div class="hosp-metric hosp-metric-warning">
+                                    <span class="hosp-metric-value">{{ s.nb_attente }}</span>
+                                    <span class="hosp-metric-label">En attente</span>
+                            </div>
+                            {% endif %}
+                        </div>
+                            
+                            <!-- Progress Bar -->
+                            <div class="hosp-progress">
+                                <div class="hosp-progress-header">
+                                    <span class="hosp-progress-label">Taux d'occupation</span>
+                                    <span class="hosp-progress-value" style="color: {% if taux > 80 %}var(--hosp-danger){% elif taux > 50 %}var(--hosp-warning){% else %}var(--hosp-success){% endif %};">
+                                        {{ taux }}%
+                                    </span>
+                            </div>
+                                <div class="hosp-progress-bar">
+                                    <div class="hosp-progress-fill"
+                                         style="width: {{ taux }}%; background: {% if taux > 80 %}var(--hosp-danger){% elif taux > 50 %}var(--hosp-warning){% else %}var(--hosp-success){% endif %};">
+                        </div>
+                    </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Chevron -->
+                        <div class="hosp-chevron">
+                            <i class="fas fa-chevron-right"></i>
+                        </div>
+                </div>
+            </a>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    (function() {
+        'use strict';
+
+        // Intersection Observer for scroll animations
+        const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        
+        if (!prefersReducedMotion) {
+            const observerOptions = {
+                threshold: 0.1,
+                rootMargin: '0px 0px -30px 0px'
+            };
+
+            // Counter animation
+            function animateCounter(element) {
+                const target = parseInt(element.dataset.count);
+                const duration = 2000;
+                const start = performance.now();
+                
+                function update(currentTime) {
+                    const elapsed = currentTime - start;
+                    const progress = Math.min(elapsed / duration, 1);
+                    
+                    // Easing function
+                    const easeOut = 1 - Math.pow(1 - progress, 3);
+                    const current = Math.round(target * easeOut);
+                    
+                    element.textContent = current + (element.dataset.suffix || '');
+                    
+                    if (progress < 1) {
+                        requestAnimationFrame(update);
+                    } else {
+                        element.textContent = target + (element.dataset.suffix || '');
+                    }
+                }
+                
+                requestAnimationFrame(update);
+            }
+
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.style.animationPlayState = 'running';
+                        
+                        // If it's a stat card, animate counter
+                        const counter = entry.target.querySelector('.hosp-stat-number[data-count]');
+                        if (counter && !counter.dataset.animated) {
+                            animateCounter(counter);
+                            counter.dataset.animated = 'true';
+                        }
+                        
+                        observer.unobserve(entry.target);
+                    }
+                });
+            }, observerOptions);
+
+            document.querySelectorAll('.hosp-animate-in').forEach(el => {
+                el.style.animationPlayState = 'paused';
+                observer.observe(el);
+            });
+        } else {
+            // If reduced motion is preferred, just set the final values for counters
+            document.querySelectorAll('.hosp-stat-number[data-count]').forEach(el => {
+                el.textContent = el.dataset.count + (el.dataset.suffix || '');
+            });
+        }
+
+        // Filters logic
+        const filterTabs = document.querySelectorAll('.hosp-filter-tab');
+        const serviceCards = document.querySelectorAll('.hosp-service-card-wrapper');
+
+        filterTabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                filterTabs.forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+                
+                const filter = tab.dataset.filter;
+                
+                serviceCards.forEach(card => {
+                    if (filter === 'all' || card.dataset.type === filter) {
+                        card.style.display = 'block';
+                        // reset animation
+                        const innerCard = card.querySelector('.hosp-animate-in');
+                        if (innerCard && !prefersReducedMotion) {
+                            innerCard.style.animation = 'none';
+                            innerCard.offsetHeight; /* trigger reflow */
+                            innerCard.style.animation = null; 
+                        }
+                    } else {
+                        card.style.display = 'none';
+                    }
+                });
+            });
+        });
+
+        // Parallax effect on mouse move
+        if (!prefersReducedMotion) {
+            const orbs = document.querySelectorAll('.hosp-orb');
+            
+            document.addEventListener('mousemove', (e) => {
+                const x = (e.clientX / window.innerWidth - 0.5) * 20;
+                const y = (e.clientY / window.innerHeight - 0.5) * 20;
+                
+                orbs.forEach((orb, index) => {
+                    const factor = (index + 1) * 0.6;
+                    orb.style.transform = `translate(${x * factor}px, ${y * factor}px)`;
+                });
+            });
+        }
+
+        // Animate progress bars on load
+        document.querySelectorAll('.hosp-progress-fill').forEach(fill => {
+            const width = fill.style.width;
+            fill.style.width = '0';
+            
+            setTimeout(() => {
+                fill.style.width = width;
+            }, 300);
+        });
+
+    })();
+</script>
+{% endblock %}

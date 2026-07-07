@@ -1,0 +1,330 @@
+<!-- En-tête avec stats -->
+<div class="p-4 border-bottom bg-light d-flex flex-wrap justify-content-between align-items-center gap-3">
+    <div class="d-flex align-items-center gap-3">
+        <div class="stats-card" style="border-left-color: var(--primary);">
+            <i class="fas fa-folder-open text-primary"></i>
+            <div>
+                <div class="text-muted small">Total</div>
+                <strong class="h5 mb-0 text-primary">{{ total_count }}</strong>
+                <small class="text-muted">dossier{% if total_count > 1 %}s{% endif %}</small>
+            </div>
+        </div>
+    </div>
+    <div class="d-flex gap-2 align-items-center">
+        <button class="btn btn-outline-success" onclick="exportToExcel()" data-bs-toggle="tooltip"
+            data-bs-placement="bottom" title="Exporter tous les résultats vers Excel">
+            <i class="fas fa-file-excel me-2"></i>
+            <span class="d-none d-md-inline">Exporter Excel</span>
+        </button>
+        <div class="badge" style="background: var(--gray-200); color: var(--gray-700); padding: 0.5rem 1rem;">
+            <i class="fas fa-file-alt me-1"></i>
+            Page {{ page }} / {{ total_pages }}
+        </div>
+    </div>
+</div>
+
+{% if dossiers %}
+<div class="table-responsive">
+    <table class="modern-table">
+        <thead>
+            <tr>
+                <th class="ps-4">
+                    <i class="fas fa-hashtag me-2"></i>Dossier
+                </th>
+                <th class="sortable-header" data-sort-field="location_date">
+                    <i class="fas fa-calendar me-2"></i>Date & Heure
+                    <i class="fas fa-sort ms-1 text-muted sort-icon"></i>
+                </th>
+                <th class="sortable-header" data-sort-field="patient">
+                    <i class="fas fa-user-injured me-2"></i>Patient
+                    <i class="fas fa-sort ms-1 text-muted sort-icon"></i>
+                </th>
+                <th class="sortable-header" data-sort-field="doctor_name">
+                    <i class="fas fa-user-md me-2"></i>Médecin
+                    <i class="fas fa-sort ms-1 text-muted sort-icon"></i>
+                </th>
+                <th class="sortable-header" data-sort-field="bloc">
+                    <i class="fas fa-hospital me-2"></i>Bloc & Type
+                    <i class="fas fa-sort ms-1 text-muted sort-icon"></i>
+                </th>
+                <th class="text-end sortable-header" data-sort-field="prix_total">
+                    <i class="fas fa-money-bill-wave me-2"></i>Montant
+                    <i class="fas fa-sort ms-1 text-muted sort-icon"></i>
+                </th>
+                <th class="text-center">
+                    <i class="fas fa-cog me-2"></i>Actions
+                </th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for dossier in dossiers %}
+            <tr class="clickable-row" data-href="{{ url_for('location_bloc_detail', id_dossier=dossier.id_dossier) }}">
+                <!-- N° Dossier -->
+                <td class="ps-4">
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="icon-wrapper icon-wrapper-primary">
+                            <i class="fas fa-folder"></i>
+                        </div>
+                        <div>
+                            <div class="fw-bold text-primary" data-bs-toggle="tooltip" data-bs-placement="right"
+                                title="Créé par {{ dossier.nom }} {{ dossier.prenom }}">
+                                #D-{{ "%05d"|format(dossier.id_dossier) }}
+                            </div>
+                            <small class="text-muted">
+                                {{ dossier.date_creation.strftime('%d/%m/%Y') if dossier.date_creation else '' }}
+                            </small>
+                        </div>
+                    </div>
+                </td>
+
+                <!-- Date & Heure -->
+                <td>
+                    <div class="d-flex flex-column gap-1">
+                        <div class="d-flex align-items-center gap-2" data-bs-toggle="tooltip" data-bs-placement="top"
+                            title="Date de l'intervention chirurgicale">
+                            <i class="fas fa-calendar-day text-primary"></i>
+                            <strong>{{ dossier.location_date.strftime('%d/%m/%Y') }}</strong>
+                        </div>
+                        {% if dossier.heure_operation %}
+                        <div class="d-flex align-items-center gap-2 text-muted" data-bs-toggle="tooltip"
+                            data-bs-placement="top" title="Heure prévue de début">
+                            <i class="fas fa-clock"></i>
+                            <small>
+                                {% if dossier.heure_operation is string %}
+                                {{ dossier.heure_operation }}
+                                {% else %}
+                                {{ "%02d:%02d"|format((dossier.heure_operation.seconds // 3600),
+                                ((dossier.heure_operation.seconds % 3600) // 60)) }}
+                                {% endif %}
+                            </small>
+                        </div>
+                        {% endif %}
+                    </div>
+                </td>
+
+                <!-- Patient & Acte -->
+                <td>
+                    <div class="d-flex align-items-center gap-2">
+                        {% if dossier.patient_oid_his %}
+                        <div class="icon-wrapper icon-wrapper-info">
+                            <button class="btn btn-sm btn-info"
+                                onclick="event.stopPropagation() ; showPatientHistoryDirect('{{ dossier.patient_oid_his }}')"
+                                title="Historique HIS">
+                                <i class="fas fa-history"></i>
+                            </button>
+                        </div>
+                        {% endif %}
+                        <div class="fw-semibold">
+                            {{ dossier.patient }}
+                        </div>
+                    </div>
+
+                    {% if dossier.nom_acte %}
+                    <small class="text-muted d-flex align-items-center gap-1" style="max-width: 250px;">
+                        <i class="fas fa-stethoscope"></i>
+                        <span class="text-truncate" data-bs-toggle="tooltip" data-bs-placement="top"
+                            title="{{ dossier.nom_acte }}">
+                            {{ dossier.nom_acte }}
+                        </span>
+                    </small>
+                    {% endif %}
+                </td>
+
+                <!-- Médecin -->
+                <td>
+                    <div class="d-flex align-items-center gap-2">
+                        <div class="icon-wrapper icon-wrapper-info">
+                            <i class="fas fa-user-md"></i>
+                        </div>
+                        <div data-bs-toggle="tooltip" data-bs-placement="top"
+                            title="Médecin responsable de l'intervention">
+                            <div class="fw-semibold">
+                                Dr. {{ dossier.first_name }}
+                            </div>
+                            <small class="text-muted">{{ dossier.last_name }}</small>
+                        </div>
+                    </div>
+                </td>
+
+                <!-- Bloc & Type -->
+                <td>
+                    <div class="d-flex flex-wrap gap-2">
+                        <span class="medical-badge badge-info" data-bs-toggle="tooltip" data-bs-placement="top"
+                            title="Bloc: {{ dossier.name_bloc }} | Durée réelle: {{ dossier.duree_reelle }} minutes">
+                            <i class="fas fa-hospital"></i>
+                            {{ dossier.name_bloc }}
+                        </span>
+
+                        {% if dossier.type_tarification == 'FORFAIT' %}
+                        <span class="medical-badge badge-success" data-bs-toggle="tooltip" data-bs-placement="top"
+                            title="Tarification au forfait {% if dossier.name_forfait %}: {{ dossier.name_forfait }}{% endif %}">
+                            <i class="fas fa-box"></i>
+                            Forfait
+                        </span>
+                        {% else %}
+                        <span class="medical-badge badge-primary" data-bs-toggle="tooltip" data-bs-placement="top"
+                            title="Tarification à la durée: {{ dossier.duree_reelle }} minutes">
+                            <i class="fas fa-clock"></i>
+                            {{ dossier.duree_reelle }} min
+                        </span>
+                        {% endif %}
+                    </div>
+                </td>
+
+                <!-- Prix / Statut -->
+                <td class="text-end">
+                    <div class="d-flex flex-column align-items-end gap-2">
+                        <div class="fw-bold" style="font-size: 1.125rem; color: var(--gray-900);"
+                            data-bs-toggle="tooltip" data-bs-placement="left" title="Montant total de la location">
+                            {{ "{:,.0f}".format(dossier.prix_total) }} <small class="text-muted">DA</small>
+                        </div>
+                        {% if dossier.statut_paiement == 'EQUILIBRE' %}
+                        <span class="medical-badge badge-success" data-bs-toggle="tooltip" data-bs-placement="left"
+                            title="Le paiement est équilibré">
+                            <i class="fas fa-check-circle"></i>
+                            Équilibré
+                        </span>
+                        {% elif dossier.statut_paiement == 'SURPLUS_CLINIQUE' %}
+                        <span class="medical-badge badge-info" data-bs-toggle="tooltip" data-bs-placement="left"
+                            title="Surplus en faveur de la clinique">
+                            <i class="fas fa-arrow-up"></i>
+                            Surplus
+                        </span>
+                        {% elif dossier.statut_paiement == 'COMPLEMENT_MEDECIN' %}
+                        <span class="medical-badge badge-warning" data-bs-toggle="tooltip" data-bs-placement="left"
+                            title="Complément dû par le médecin">
+                            <i class="fas fa-arrow-down"></i>
+                            Complément
+                        </span>
+                        {% else %}
+                        <span class="medical-badge badge-secondary" data-bs-toggle="tooltip" data-bs-placement="left"
+                            title="Statut de paiement non défini">
+                            <i class="fas fa-minus-circle"></i>
+                            En attente
+                        </span>
+                        {% endif %}
+                    </div>
+                </td>
+
+                <!-- Actions -->
+                <td class="text-center">
+                    <div class="d-flex justify-content-center gap-2">
+                        <a href="{{ url_for('location_bloc_edit', id_dossier=dossier.id_dossier) }}"
+                            class="action-btn action-btn-edit" data-bs-toggle="tooltip" data-bs-placement="top"
+                            title="Modifier le dossier" onclick="event.stopPropagation()">
+                            <i class="fas fa-edit"></i>
+                        </a>
+                        <a href="{{ url_for('dossier_print_qr', module_url='BLOC_EXTERNE', id_dossier=dossier.id_dossier) }}"
+                            class="action-btn" style="color: var(--secondary); border-color: var(--gray-300);"
+                            data-bs-toggle="tooltip" data-bs-placement="top" title="Imprimer QR Code" target="_blank"
+                            onclick="event.stopPropagation()">
+                            <i class="fas fa-qrcode"></i>
+                        </a>
+                        <button type="button" class="action-btn action-btn-delete" data-bs-toggle="tooltip"
+                            data-bs-placement="top" title="Supprimer le dossier"
+                            onclick="event.stopPropagation(); confirmDelete({{ dossier.id_dossier }}, '{{ dossier.patient }}')">
+                            <i class="fas fa-trash"></i>
+                        </button>
+
+                    </div>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<!-- Pagination moderne -->
+<nav class="p-4 bg-light" aria-label="Navigation">
+    <ul class="pagination justify-content-center mb-0">
+        <!-- Précédent -->
+        <li class="page-item {% if page <= 1 %}disabled{% endif %}">
+            <a class="page-link page-link-ajax" href="#" data-page="{{ page - 1 }}" data-bs-toggle="tooltip"
+                data-bs-placement="top" title="Page précédente" {% if page <=1 %}tabindex="-1" {% endif %}>
+                <i class="fas fa-chevron-left me-2"></i>Précédent
+            </a>
+        </li>
+
+        <!-- Pages -->
+        {% set start = [page - 2, 1]|max %}
+        {% set end = [page + 2, total_pages]|min %}
+
+        {% if start > 1 %}
+        <li class="page-item">
+            <a class="page-link page-link-ajax" href="#" data-page="1">1</a>
+        </li>
+        {% if start > 2 %}
+        <li class="page-item disabled">
+            <span class="page-link">...</span>
+        </li>
+        {% endif %}
+        {% endif %}
+
+        {% for p in range(start, end + 1) %}
+        <li class="page-item {% if p == page %}active{% endif %}">
+            <a class="page-link page-link-ajax" href="#" data-page="{{ p }}" {% if p !=page %} data-bs-toggle="tooltip"
+                data-bs-placement="top" title="Aller à la page {{ p }}" {% endif %}>
+                {{ p }}
+            </a>
+        </li>
+        {% endfor %}
+
+        {% if end < total_pages %} {% if end < total_pages - 1 %} <li class="page-item disabled">
+            <span class="page-link">...</span>
+            </li>
+            {% endif %}
+            <li class="page-item">
+                <a class="page-link page-link-ajax" href="#" data-page="{{ total_pages }}" data-bs-toggle="tooltip"
+                    data-bs-placement="top" title="Dernière page">
+                    {{ total_pages }}
+                </a>
+            </li>
+            {% endif %}
+
+            <!-- Suivant -->
+            <li class="page-item {% if page >= total_pages %}disabled{% endif %}">
+                <a class="page-link page-link-ajax" href="#" data-page="{{ page + 1 }}" data-bs-toggle="tooltip"
+                    data-bs-placement="top" title="Page suivante" {% if page>= total_pages %}tabindex="-1"{% endif %}>
+                    Suivant<i class="fas fa-chevron-right ms-2"></i>
+                </a>
+            </li>
+    </ul>
+</nav>
+
+{% else %}
+<!-- État vide moderne -->
+<div class="empty-state">
+    <div class="empty-state-icon">
+        <i class="fas fa-folder-open"></i>
+    </div>
+    <h3 class="mb-3" style="color: var(--gray-600);">Aucun dossier trouvé</h3>
+
+    {% set has_filters = filters.q or filters.date_debut or filters.date_fin or
+    (filters.doctor and filters.doctor != 'all') or
+    (filters.bloc and filters.bloc != 'all') or
+    (filters.type and filters.type != 'all') or
+    (filters.statut and filters.statut != 'all') %}
+    {% if has_filters %}
+    <p class="text-muted mb-4">
+        Aucune location ne correspond à vos critères de recherche.<br>
+        Essayez de modifier ou réinitialiser vos filtres.
+    </p>
+    <div class="d-flex gap-3 justify-content-center flex-wrap">
+        <a href="{{ url_for('location_bloc_create') }}" class="btn btn-primary btn-lg">
+            <i class="fas fa-plus-circle me-2"></i>Créer une location
+        </a>
+        <button onclick="document.getElementById('resetBtn').click()" class="btn btn-outline-secondary btn-lg">
+            <i class="fas fa-redo me-2"></i>Réinitialiser les filtres
+        </button>
+    </div>
+    {% else %}
+    <p class="text-muted mb-4">
+        Commencez par créer votre première location de bloc opératoire.<br>
+        C'est rapide et facile !
+    </p>
+    <a href="{{ url_for('location_bloc_create') }}" class="btn btn-primary btn-lg">
+        <i class="fas fa-plus-circle me-2"></i>Créer ma première location
+    </a>
+    {% endif %}
+</div>
+{% endif %}

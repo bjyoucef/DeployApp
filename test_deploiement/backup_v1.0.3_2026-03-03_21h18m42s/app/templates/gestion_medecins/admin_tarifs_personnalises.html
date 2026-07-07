@@ -1,0 +1,1607 @@
+{% extends "layout.html" %}
+
+{% block title %}Gestion des Tarifs Personnalisés{% endblock %}
+
+{% block style %}
+<style>
+    /* ── Variables ─────────────────────────────────────────────── */
+    :root {
+        --accent: #7C3AED;
+        --accent-2: #A78BFA;
+        --accent-dark: #5B21B6;
+        --surface: #FFFFFF;
+        --surface-2: #F5F3FF;
+        --surface-3: #EDE9FE;
+        --border: #E5E7EB;
+        --text: #111827;
+        --text-2: #6B7280;
+        --text-3: #9CA3AF;
+        --success: #059669;
+        --danger: #DC2626;
+        --warning: #D97706;
+        --radius-sm: 8px;
+        --radius: 14px;
+        --radius-lg: 20px;
+        --shadow-sm: 0 1px 3px rgba(0, 0, 0, .06), 0 1px 2px rgba(0, 0, 0, .04);
+        --shadow: 0 4px 16px rgba(124, 58, 237, .08), 0 1px 4px rgba(0, 0, 0, .04);
+        --shadow-lg: 0 12px 40px rgba(124, 58, 237, .14), 0 4px 12px rgba(0, 0, 0, .06);
+        --transition: .2s cubic-bezier(.4, 0, .2, 1);
+    }
+
+    [data-theme="dark"] {
+        --surface: #1E1B2E;
+        --surface-2: #2D2847;
+        --surface-3: #3D3660;
+        --border: #3D3660;
+        --text: #F3F0FF;
+        --text-2: #C4B5FD;
+        --text-3: #7C72A0;
+        --shadow-sm: 0 1px 3px rgba(0, 0, 0, .3);
+        --shadow: 0 4px 16px rgba(0, 0, 0, .3);
+        --shadow-lg: 0 12px 40px rgba(0, 0, 0, .4);
+    }
+
+    /* ── Reset & Base ───────────────────────────────────────────── */
+    *,
+    *::before,
+    *::after {
+        box-sizing: border-box;
+    }
+
+    .tarifs-page {
+        font-family: 'Inter', system-ui, sans-serif;
+        color: var(--text);
+    }
+
+    /* ── Hero Header ────────────────────────────────────────────── */
+    .tp-hero {
+        position: relative;
+        border-radius: var(--radius-lg);
+        padding: 2.25rem 2.5rem;
+        margin-bottom: 2rem;
+        overflow: hidden;
+        background: linear-gradient(135deg, #4C1D95 0%, #7C3AED 50%, #A78BFA 100%);
+        box-shadow: var(--shadow-lg);
+    }
+
+    .tp-hero::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background:
+            radial-gradient(circle at 20% 50%, rgba(255, 255, 255, .12) 0%, transparent 55%),
+            radial-gradient(circle at 80% 20%, rgba(255, 255, 255, .08) 0%, transparent 40%);
+    }
+
+    .tp-hero-grid {
+        position: absolute;
+        inset: 0;
+        opacity: .07;
+        background-image:
+            linear-gradient(rgba(255, 255, 255, .5) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(255, 255, 255, .5) 1px, transparent 1px);
+        background-size: 32px 32px;
+    }
+
+    .tp-hero>* {
+        position: relative;
+        z-index: 1;
+    }
+
+    .tp-hero-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: .4rem;
+        background: rgba(255, 255, 255, .15);
+        border: 1px solid rgba(255, 255, 255, .25);
+        padding: .25rem .75rem;
+        border-radius: 100px;
+        font-size: .72rem;
+        font-weight: 600;
+        letter-spacing: .04em;
+        text-transform: uppercase;
+        color: rgba(255, 255, 255, .9);
+        backdrop-filter: blur(4px);
+        margin-bottom: .75rem;
+    }
+
+    .tp-hero h1 {
+        font-size: 1.65rem;
+        font-weight: 800;
+        color: #fff;
+        margin: 0 0 .35rem;
+        letter-spacing: -.02em;
+    }
+
+    .tp-hero p {
+        color: rgba(255, 255, 255, .65);
+        margin: 0;
+        font-size: .875rem;
+    }
+
+    .tp-hero-stat {
+        text-align: right;
+    }
+
+    .tp-hero-stat .number {
+        font-size: 2rem;
+        font-weight: 800;
+        color: #fff;
+        line-height: 1;
+    }
+
+    .tp-hero-stat .label {
+        font-size: .75rem;
+        color: rgba(255, 255, 255, .55);
+        margin-top: .2rem;
+    }
+
+    /* ── Tab Navigation ─────────────────────────────────────────── */
+    .tp-tabs {
+        display: flex;
+        gap: .35rem;
+        padding: .35rem;
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        margin-bottom: 1.75rem;
+        box-shadow: var(--shadow-sm);
+        overflow-x: auto;
+        scrollbar-width: none;
+    }
+
+    .tp-tabs::-webkit-scrollbar {
+        display: none;
+    }
+
+    .tp-tab-btn {
+        flex-shrink: 0;
+        display: flex;
+        align-items: center;
+        gap: .45rem;
+        padding: .6rem 1.1rem;
+        border: none;
+        background: transparent;
+        border-radius: calc(var(--radius) - 4px);
+        color: var(--text-2);
+        font-size: .82rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: var(--transition);
+        white-space: nowrap;
+    }
+
+    .tp-tab-btn:hover {
+        background: var(--surface-2);
+        color: var(--accent);
+    }
+
+    .tp-tab-btn.active {
+        background: linear-gradient(135deg, #7C3AED, #A78BFA);
+        color: #fff;
+        box-shadow: 0 2px 10px rgba(124, 58, 237, .35);
+    }
+
+    .tp-tab-btn .tab-icon {
+        width: 20px;
+        height: 20px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: .78rem;
+    }
+
+    .tp-tab-btn.active .tab-count {
+        background: rgba(255, 255, 255, .25);
+        color: #fff;
+    }
+
+    .tab-count {
+        background: var(--surface-3);
+        color: var(--accent);
+        border-radius: 100px;
+        font-size: .65rem;
+        font-weight: 700;
+        padding: .1rem .45rem;
+        min-width: 18px;
+        text-align: center;
+    }
+
+    /* ── Cards ──────────────────────────────────────────────────── */
+    .tp-card {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        box-shadow: var(--shadow-sm);
+        overflow: hidden;
+        transition: var(--transition);
+    }
+
+    .tp-card:hover {
+        box-shadow: var(--shadow);
+    }
+
+    .tp-card-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 1rem 1.25rem;
+        border-bottom: 1px solid var(--border);
+        background: var(--surface-2);
+    }
+
+    .tp-card-head h6 {
+        margin: 0;
+        font-size: .8rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: .06em;
+        color: var(--accent-dark);
+        display: flex;
+        align-items: center;
+        gap: .5rem;
+    }
+
+    [data-theme="dark"] .tp-card-head h6 {
+        color: var(--accent-2);
+    }
+
+    .tp-card-head h6 i {
+        width: 26px;
+        height: 26px;
+        background: linear-gradient(135deg, #7C3AED, #A78BFA);
+        border-radius: var(--radius-sm);
+        color: #fff;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: .72rem;
+        flex-shrink: 0;
+    }
+
+    .tp-card-body {
+        padding: 1.25rem;
+    }
+
+    /* ── Form Controls ──────────────────────────────────────────── */
+    .tp-label {
+        display: block;
+        font-size: .78rem;
+        font-weight: 600;
+        color: var(--text-2);
+        margin-bottom: .4rem;
+        letter-spacing: .01em;
+    }
+
+    .tp-label .req {
+        color: #EF4444;
+        margin-left: 2px;
+    }
+
+    .tp-input,
+    .tp-select {
+        width: 100%;
+        padding: .6rem .85rem;
+        border: 1.5px solid var(--border);
+        border-radius: var(--radius-sm);
+        background: var(--surface);
+        color: var(--text);
+        font-size: .85rem;
+        transition: var(--transition);
+        outline: none;
+    }
+
+    .tp-input:focus,
+    .tp-select:focus {
+        border-color: var(--accent);
+        box-shadow: 0 0 0 3px rgba(124, 58, 237, .12);
+    }
+
+    .tp-hint {
+        font-size: .72rem;
+        color: var(--text-3);
+        margin-top: .3rem;
+        display: flex;
+        align-items: center;
+        gap: .3rem;
+    }
+
+    .tp-hint strong {
+        color: var(--accent);
+    }
+
+    /* ── Buttons ────────────────────────────────────────────────── */
+    .tp-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: .45rem;
+        padding: .65rem 1.2rem;
+        border: none;
+        border-radius: var(--radius-sm);
+        font-size: .82rem;
+        font-weight: 700;
+        cursor: pointer;
+        transition: var(--transition);
+        text-decoration: none;
+    }
+
+    .tp-btn-primary {
+        background: linear-gradient(135deg, #7C3AED, #A78BFA);
+        color: #fff;
+        box-shadow: 0 2px 8px rgba(124, 58, 237, .3);
+    }
+
+    .tp-btn-primary:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 16px rgba(124, 58, 237, .4);
+        color: #fff;
+    }
+
+    .tp-btn-ghost {
+        background: transparent;
+        color: var(--text-2);
+        border: 1px solid var(--border);
+    }
+
+    .tp-btn-ghost:hover {
+        background: var(--surface-2);
+        color: var(--text);
+    }
+
+    .tp-btn-sm {
+        padding: .35rem .7rem;
+        font-size: .75rem;
+    }
+
+    .tp-btn-icon {
+        width: 30px;
+        height: 30px;
+        padding: 0;
+        border-radius: var(--radius-sm);
+    }
+
+    .tp-btn-danger-ghost {
+        background: transparent;
+        color: var(--danger);
+        border: none;
+        padding: .3rem .5rem;
+        border-radius: var(--radius-sm);
+    }
+
+    .tp-btn-danger-ghost:hover {
+        background: #FEE2E2;
+    }
+
+    /* ── Table ──────────────────────────────────────────────────── */
+    .tp-table-wrap {
+        overflow-x: auto;
+    }
+
+    .tp-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: .82rem;
+    }
+
+    .tp-table thead th {
+        padding: .7rem 1rem;
+        background: var(--surface-2);
+        color: var(--text-3);
+        font-size: .7rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: .06em;
+        white-space: nowrap;
+        border-bottom: 1px solid var(--border);
+    }
+
+    .tp-table thead th:first-child {
+        border-radius: 0;
+    }
+
+    .tp-table tbody td {
+        padding: .85rem 1rem;
+        border-bottom: 1px solid var(--border);
+        color: var(--text);
+        vertical-align: middle;
+    }
+
+    .tp-table tbody tr:last-child td {
+        border-bottom: none;
+    }
+
+    .tp-table tbody tr {
+        transition: var(--transition);
+    }
+
+    .tp-table tbody tr:hover {
+        background: var(--surface-2);
+    }
+
+    .tp-table .cell-primary {
+        font-weight: 700;
+    }
+
+    .tp-table .cell-muted {
+        color: var(--text-2);
+        font-size: .78rem;
+    }
+
+    /* ── Badges ─────────────────────────────────────────────────── */
+    .tp-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: .3rem;
+        padding: .2rem .65rem;
+        border-radius: 100px;
+        font-size: .7rem;
+        font-weight: 700;
+        line-height: 1.4;
+    }
+
+    .badge-success {
+        background: #D1FAE5;
+        color: #065F46;
+    }
+
+    .badge-inactive {
+        background: var(--surface-3);
+        color: var(--text-3);
+    }
+
+    .badge-accent {
+        background: #EDE9FE;
+        color: #5B21B6;
+    }
+
+    .badge-danger {
+        background: #FEE2E2;
+        color: #991B1B;
+    }
+
+    .badge-info {
+        background: #DBEAFE;
+        color: #1E40AF;
+    }
+
+    .badge-warning {
+        background: #FEF3C7;
+        color: #92400E;
+    }
+
+    [data-theme="dark"] .badge-success {
+        background: rgba(5, 150, 105, .25);
+        color: #6EE7B7;
+    }
+
+    [data-theme="dark"] .badge-inactive {
+        background: var(--surface-3);
+        color: var(--text-3);
+    }
+
+    [data-theme="dark"] .badge-accent {
+        background: rgba(124, 58, 237, .3);
+        color: var(--accent-2);
+    }
+
+    [data-theme="dark"] .badge-danger {
+        background: rgba(220, 38, 38, .25);
+        color: #FCA5A5;
+    }
+
+    [data-theme="dark"] .badge-info {
+        background: rgba(37, 99, 235, .25);
+        color: #93C5FD;
+    }
+
+    /* ── Alert ──────────────────────────────────────────────────── */
+    .tp-alert {
+        display: flex;
+        gap: .65rem;
+        padding: .8rem 1rem;
+        border-radius: var(--radius-sm);
+        font-size: .78rem;
+        line-height: 1.5;
+        border: 1px solid;
+    }
+
+    .tp-alert-info {
+        background: #EFF6FF;
+        border-color: #BFDBFE;
+        color: #1D4ED8;
+    }
+
+    .tp-alert-info .alert-icon {
+        color: #3B82F6;
+        flex-shrink: 0;
+        margin-top: .1rem;
+    }
+
+    [data-theme="dark"] .tp-alert-info {
+        background: rgba(37, 99, 235, .15);
+        border-color: rgba(59, 130, 246, .3);
+        color: #93C5FD;
+    }
+
+    /* ── Toggle Switch ──────────────────────────────────────────── */
+    .tp-switch-wrap {
+        display: flex;
+        align-items: center;
+        gap: .75rem;
+        padding: .75rem 1rem;
+        border: 1.5px solid var(--border);
+        border-radius: var(--radius-sm);
+        cursor: pointer;
+        transition: var(--transition);
+    }
+
+    .tp-switch-wrap:has(input:checked) {
+        border-color: #FCA5A5;
+        background: #FFF5F5;
+    }
+
+    [data-theme="dark"] .tp-switch-wrap:has(input:checked) {
+        border-color: rgba(220, 38, 38, .4);
+        background: rgba(220, 38, 38, .1);
+    }
+
+    .tp-switch-wrap label {
+        font-size: .82rem;
+        font-weight: 600;
+        color: var(--text-2);
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: .4rem;
+    }
+
+    .tp-switch-wrap:has(input:checked) label {
+        color: var(--danger);
+    }
+
+    /* ── Row Util ───────────────────────────────────────────────── */
+    .mb-3 {
+        margin-bottom: .9rem !important;
+    }
+
+    .mb-4 {
+        margin-bottom: 1.25rem !important;
+    }
+
+    .row-2col {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: .75rem;
+    }
+
+    .grid-4-8 {
+        display: grid;
+        grid-template-columns: 1fr 2fr;
+        gap: 1.25rem;
+        align-items: start;
+    }
+
+    @media (max-width: 900px) {
+        .grid-4-8 {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    /* ── Stat chip ─────────────────────────────────────────────── */
+    .stat-chip {
+        display: inline-flex;
+        flex-direction: column;
+        align-items: center;
+        background: var(--surface-2);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-sm);
+        padding: .4rem .75rem;
+        font-size: .7rem;
+        color: var(--text-3);
+    }
+
+    .stat-chip strong {
+        font-size: .95rem;
+        color: var(--accent);
+        font-weight: 800;
+    }
+
+    /* ── Empty state ────────────────────────────────────────────── */
+    .tp-empty {
+        text-align: center;
+        padding: 2.5rem 1rem;
+        color: var(--text-3);
+    }
+
+    .tp-empty i {
+        font-size: 2rem;
+        display: block;
+        margin-bottom: .6rem;
+        opacity: .4;
+    }
+
+    .tp-empty p {
+        font-size: .82rem;
+        margin: 0;
+    }
+
+    /* ── Modal ──────────────────────────────────────────────────── */
+    .modal-content {
+        border: 1px solid var(--border);
+        border-radius: var(--radius-lg);
+        box-shadow: var(--shadow-lg);
+        background: var(--surface);
+        overflow: hidden;
+    }
+
+    .tp-modal-head {
+        background: linear-gradient(135deg, #4C1D95, #7C3AED);
+        padding: 1.1rem 1.5rem;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+
+    .tp-modal-head h5 {
+        margin: 0;
+        font-size: .92rem;
+        font-weight: 700;
+        color: #fff;
+        display: flex;
+        align-items: center;
+        gap: .5rem;
+    }
+
+    .modal-body {
+        padding: 1.5rem;
+    }
+
+    .modal-footer {
+        background: var(--surface-2);
+        border-top: 1px solid var(--border);
+        padding: .85rem 1.5rem;
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        gap: .6rem;
+    }
+
+    /* ── Plafond product row ────────────────────────────────────── */
+    #plafondExistants .tp-table tbody tr:hover {
+        background: var(--surface-2);
+    }
+
+    /* ── % MI table input ───────────────────────────────────────── */
+    .pct-input-wrap {
+        display: flex;
+        align-items: center;
+        border: 1.5px solid var(--border);
+        border-radius: var(--radius-sm);
+        overflow: hidden;
+        width: 110px;
+        margin: 0 auto;
+        transition: var(--transition);
+    }
+
+    .pct-input-wrap:focus-within {
+        border-color: var(--accent);
+        box-shadow: 0 0 0 3px rgba(124, 58, 237, .1);
+    }
+
+    .pct-input-wrap input {
+        flex: 1;
+        border: none;
+        outline: none;
+        padding: .45rem .6rem;
+        font-size: .82rem;
+        font-weight: 700;
+        text-align: center;
+        background: transparent;
+        color: var(--text);
+        width: 0;
+    }
+
+    .pct-input-wrap span {
+        padding: 0 .55rem;
+        background: var(--surface-2);
+        color: var(--text-3);
+        font-size: .78rem;
+        font-weight: 600;
+        align-self: stretch;
+        display: flex;
+        align-items: center;
+        border-left: 1px solid var(--border);
+    }
+
+    /* ── Doctor avatar ──────────────────────────────────────────── */
+    .doc-avatar {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        background: var(--surface-3);
+        border: 1.5px solid var(--border);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: .72rem;
+        color: var(--accent);
+        flex-shrink: 0;
+    }
+
+    .doc-cell {
+        display: flex;
+        align-items: center;
+        gap: .65rem;
+    }
+
+    /* ── Choices.js overrides ───────────────────────────────────── */
+    .choices {
+        margin: 0 !important;
+    }
+
+    .choices__inner {
+        border: 1.5px solid var(--border) !important;
+        border-radius: var(--radius-sm) !important;
+        background: var(--surface) !important;
+        padding: .45rem .8rem !important;
+        font-size: .85rem !important;
+        min-height: unset !important;
+    }
+
+    .choices__inner:focus-within {
+        border-color: var(--accent) !important;
+        box-shadow: 0 0 0 3px rgba(124, 58, 237, .12) !important;
+    }
+
+    .choices__list--dropdown {
+        border-radius: var(--radius-sm) !important;
+        border-color: var(--border) !important;
+    }
+
+    [data-theme="dark"] .choices__inner {
+        background: var(--surface) !important;
+        color: var(--text) !important;
+    }
+
+    [data-theme="dark"] .choices__list--dropdown {
+        background: var(--surface-2) !important;
+    }
+
+    [data-theme="dark"] .choices__item {
+        color: var(--text) !important;
+    }
+
+    [data-theme="dark"] .choices__item--selectable.is-highlighted {
+        background: var(--surface-3) !important;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="tarifs-page">
+
+    <!-- ── Hero ──────────────────────────────────────────── -->
+    <div class="tp-hero d-flex justify-content-between align-items-center">
+        <div class="tp-hero-grid"></div>
+        <h1>Tarifs Personnalisés</h1>
+        <p>Configuration des forfaits, chambres et honoraires spécifiques par médecin</p>
+    </div>
+
+    <!-- ── Tab Navigation ──────────────────────────────── -->
+    <div class="tp-tabs" id="tarifsTabs" role="tablist">
+        <button class="tp-tab-btn active" data-bs-toggle="tab" data-bs-target="#forfaits" type="button"
+            id="forfaits-tab">
+            <span class="tab-icon"><i class="fas fa-box"></i></span> Forfaits
+            </button>
+        <button class="tp-tab-btn" data-bs-toggle="tab" data-bs-target="#chambres" type="button" id="chambres-tab">
+            <span class="tab-icon"><i class="fas fa-bed"></i></span> Chambres
+            </button>
+        <button class="tp-tab-btn" data-bs-toggle="tab" data-bs-target="#nuitees-preop" type="button"
+            id="nuitees-preop-tab">
+            <span class="tab-icon"><i class="fas fa-moon"></i></span> Nuitées Pré-op
+            <span class="tab-count">{{ configs_nuitees_preop|length }}</span>
+            </button>
+        <button class="tp-tab-btn" data-bs-toggle="tab" data-bs-target="#tarifs-kt" type="button" id="tarifs-kt-tab">
+            <span class="tab-icon"><i class="fas fa-heartbeat"></i></span> Tarifs KT
+        </button>
+        <button class="tp-tab-btn" data-bs-toggle="tab" data-bs-target="#pourcentage-mi" type="button"
+            id="pourcentage-mi-tab">
+            <span class="tab-icon"><i class="fas fa-percentage"></i></span>
+            <span class="d-none d-sm-inline">% Médecin Interne</span>
+            <span class="d-sm-none">% MI</span>
+            <span class="tab-count">{{ medecins_internes_pourcentages|length }}</span>
+        </button>
+    </div>
+
+    <!-- ── Tab Content ─────────────────────────────────── -->
+    <div class="tab-content">
+
+        <!-- ================================================ -->
+        <!-- ONGLET FORFAITS                                   -->
+        <!-- ================================================ -->
+        <div class="tab-pane fade show active" id="forfaits" role="tabpanel">
+            <div class="grid-4-8">
+
+                <!-- Form -->
+                <div class="tp-card">
+                    <div class="tp-card-head">
+                        <h6><i class="fas fa-plus"></i> Nouveau forfait</h6>
+                        </div>
+                    <div class="tp-card-body">
+                            <form method="POST" action="{{ url_for('admin_ajouter_forfait_personnalise') }}">
+                                <div class="mb-3">
+                                <label class="tp-label">Médecin <span class="req">*</span></label>
+                                <select name="id_doctor" id="forfaitDoctorSelect" class="tp-select" required>
+                                    <option value="">— Sélectionner —</option>
+                                        {% for doctor in doctors %}
+                                        <option value="{{ doctor.id }}">{{ doctor.name }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="mb-3">
+                                <label class="tp-label">Forfait <span class="req">*</span></label>
+                                <select name="id_forfait" id="forfaitForfaitSelect" class="tp-select" required>
+                                    <option value="">— Sélectionner —</option>
+                                        {% for forfait in forfaits %}
+                                    <option value="{{ forfait.id_forfait }}" data-prix="{{ forfait.prix_forfait }}">
+                                        {{ forfait.name_forfait }} — {{ forfait.prix_forfait }} DA
+                                        </option>
+                                        {% endfor %}
+                                    </select>
+                                <div class="tp-hint"><i class="fas fa-tag"></i> Prix standard : <strong
+                                        id="prixStandardForfait">—</strong> DA</div>
+                                </div>
+                                <div class="mb-3">
+                                <label class="tp-label">Prix personnalisé (DA)</label>
+                                <input type="number" name="prix_personnalise" id="prixPersonnaliseForfait"
+                                    class="tp-input" step="0.01" min="0" placeholder="Laisser vide pour standard">
+                                </div>
+                            <div class="row-2col mb-3">
+                                <div>
+                                    <label class="tp-label">Date début</label>
+                                    <input type="date" name="date_debut" class="tp-input">
+                                    </div>
+                                <div>
+                                    <label class="tp-label">Date fin</label>
+                                    <input type="date" name="date_fin" class="tp-input">
+                                    </div>
+                                </div>
+                            <button type="submit" class="tp-btn tp-btn-primary w-100">
+                                    <i class="fas fa-save"></i> Enregistrer
+                                </button>
+                            </form>
+                    </div>
+                </div>
+
+                <!-- List -->
+                <div class="tp-card">
+                    <div class="tp-card-head">
+                        <h6><i class="fas fa-list"></i> Forfaits personnalisés</h6>
+                        <div class="stat-chip"><strong>{{ forfaits_personnalises|length }}</strong>entrées</div>
+                        </div>
+                    <div class="tp-table-wrap">
+                        <table class="tp-table">
+                            <thead>
+                                        <tr>
+                                            <th>Médecin</th>
+                                            <th>Forfait</th>
+                                    <th>Standard</th>
+                                    <th>Perso.</th>
+                                            <th>Période</th>
+                                            <th>Statut</th>
+                                    <th></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for fp in forfaits_personnalises %}
+                                        <tr>
+                                    <td>
+                                        <div class="doc-cell">
+                                            <div class="doc-avatar"><i class="fas fa-user-md"></i></div><span
+                                                class="cell-primary">{{ fp.doctor_name }}</span>
+                                        </div>
+                                    </td>
+                                            <td>{{ fp.name_forfait }}</td>
+                                    <td><span class="cell-muted">{{ fp.prix_standard|float|round(2) }} DA</span></td>
+                                            <td>
+                                                {% if fp.prix_personnalise %}
+                                        <span class="tp-badge badge-accent">{{ fp.prix_personnalise|float|round(2) }}
+                                            DA</span>
+                                        {% else %}<span class="cell-muted">Standard</span>{% endif %}
+                                            </td>
+                                            <td>
+                                        <span class="cell-muted">
+                                            {% if fp.date_debut %}{{ fp.date_debut.strftime('%d/%m/%Y') }}{% endif %}
+                                            {% if fp.date_fin %} — {{ fp.date_fin.strftime('%d/%m/%Y') }}{% endif %}
+                                            {% if not fp.date_debut and not fp.date_fin %}Permanent{% endif %}
+                                        </span>
+                                            </td>
+                                            <td>
+                                        <span
+                                            class="tp-badge {{ 'badge-success' if fp.est_actif else 'badge-inactive' }}">
+                                            <i class="fas fa-circle" style="font-size:.45rem"></i>
+                                            {{ 'Actif' if fp.est_actif else 'Inactif' }}
+                                        </span>
+                                            </td>
+                                            <td>
+                                                <form method="POST"
+                                                      action="{{ url_for('admin_supprimer_forfait_personnalise', id=fp.id) }}"
+                                                      onsubmit="return confirm('Confirmer la suppression ?');">
+                                            <button type="submit" class="tp-btn tp-btn-danger-ghost"><i
+                                                    class="fas fa-trash-alt"></i></button>
+                                                </form>
+                                            </td>
+                                        </tr>
+                                        {% else %}
+                                        <tr>
+                                    <td colspan="7">
+                                        <div class="tp-empty"><i class="fas fa-box-open"></i>
+                                            <p>Aucun forfait personnalisé configuré</p>
+                                        </div>
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+            </div>
+        </div>
+
+        <!-- ================================================ -->
+        <!-- ONGLET CHAMBRES                                   -->
+        <!-- ================================================ -->
+        <div class="tab-pane fade" id="chambres" role="tabpanel">
+            <div class="grid-4-8">
+
+                <div class="tp-card">
+                    <div class="tp-card-head">
+                        <h6><i class="fas fa-bed"></i> Nouveau prix chambre</h6>
+                        </div>
+                    <div class="tp-card-body">
+                            <form method="POST" action="{{ url_for('admin_ajouter_prix_chambre_personnalise') }}">
+                                <div class="mb-3">
+                                <label class="tp-label">Médecin <span class="req">*</span></label>
+                                <select name="id_doctor" id="chambreDoctorSelect" class="tp-select" required>
+                                    <option value="">— Sélectionner —</option>
+                                    {% for doctor in doctors %}<option value="{{ doctor.id }}">{{ doctor.name }}
+                                    </option>{% endfor %}
+                                    </select>
+                                </div>
+                                <div class="mb-3">
+                                <label class="tp-label">Type de chambre <span class="req">*</span></label>
+                                <select name="id_type_chambre" id="chambreChambreSelect" class="tp-select" required>
+                                    <option value="">— Sélectionner —</option>
+                                        {% for chambre in types_chambres %}
+                                        <option value="{{ chambre.id_type_chambre }}"
+                                                data-prix="{{ chambre.prix_unitaire }}">
+                                        {{ chambre.nom_type }} — {{ chambre.prix_unitaire }} DA{% if
+                                        chambre.est_standard %} (Standard){% endif %}
+                                        </option>
+                                        {% endfor %}
+                                    </select>
+                                <div class="tp-hint"><i class="fas fa-tag"></i> Prix standard : <strong
+                                        id="prixStandardChambre">—</strong> DA</div>
+                                </div>
+                                <div class="mb-3">
+                                <label class="tp-label">Prix personnalisé (DA) <span class="req">*</span></label>
+                                <input type="number" name="prix_personnalise" id="prixPersonnaliseChambre"
+                                    class="tp-input" step="0.01" min="0" required>
+                                </div>
+                            <div class="row-2col mb-3">
+                                <div>
+                                    <label class="tp-label">Date début</label>
+                                    <input type="date" name="date_debut" class="tp-input">
+                                    </div>
+                                <div>
+                                    <label class="tp-label">Date fin</label>
+                                    <input type="date" name="date_fin" class="tp-input">
+                                    </div>
+                                </div>
+                            <button type="submit" class="tp-btn tp-btn-primary w-100"><i class="fas fa-save"></i>
+                                Enregistrer</button>
+                            </form>
+                        </div>
+                    </div>
+
+                <div class="tp-card">
+                    <div class="tp-card-head">
+                        <h6><i class="fas fa-list"></i> Prix chambres personnalisés</h6>
+                        <div class="stat-chip"><strong>{{ prix_chambres_personnalises|length }}</strong>entrées</div>
+                        </div>
+                    <div class="tp-table-wrap">
+                        <table class="tp-table">
+                            <thead>
+                                        <tr>
+                                            <th>Médecin</th>
+                                            <th>Type chambre</th>
+                                    <th>Standard</th>
+                                    <th>Perso.</th>
+                                            <th>Période</th>
+                                            <th>Statut</th>
+                                    <th></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for pc in prix_chambres_personnalises %}
+                                        <tr>
+                                    <td>
+                                        <div class="doc-cell">
+                                            <div class="doc-avatar"><i class="fas fa-user-md"></i></div><span
+                                                class="cell-primary">{{ pc.doctor_name }}</span>
+                                        </div>
+                                            </td>
+                                    <td>{{ pc.nom_type }}</td>
+                                    <td><span class="cell-muted">{{ pc.prix_standard|float|round(2) }} DA</span></td>
+                                    <td><span class="tp-badge badge-accent">{{ pc.prix_personnalise|float|round(2) }}
+                                            DA</span></td>
+                                    <td><span class="cell-muted">
+                                            {% if pc.date_debut %}{{ pc.date_debut.strftime('%d/%m/%Y') }}{% endif %}
+                                            {% if pc.date_fin %} — {{ pc.date_fin.strftime('%d/%m/%Y') }}{% endif %}
+                                            {% if not pc.date_debut and not pc.date_fin %}Permanent{% endif %}
+                                        </span></td>
+                                    <td><span
+                                            class="tp-badge {{ 'badge-success' if pc.est_actif else 'badge-inactive' }}"><i
+                                                class="fas fa-circle" style="font-size:.45rem"></i> {{ 'Actif' if
+                                            pc.est_actif else 'Inactif' }}</span></td>
+                                            <td>
+                                                <form method="POST"
+                                                      action="{{ url_for('admin_supprimer_prix_chambre_personnalise', id=pc.id) }}"
+                                                      onsubmit="return confirm('Confirmer la suppression ?');">
+                                            <button type="submit" class="tp-btn tp-btn-danger-ghost"><i
+                                                    class="fas fa-trash-alt"></i></button>
+                                                </form>
+                                            </td>
+                                        </tr>
+                                        {% else %}
+                                        <tr>
+                                    <td colspan="7">
+                                        <div class="tp-empty"><i class="fas fa-bed"></i>
+                                            <p>Aucun prix personnalisé configuré</p>
+                                        </div>
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+            </div>
+        </div>
+
+        <!-- ================================================ -->
+        <!-- ONGLET NUITÉES PRÉ-OP                            -->
+        <!-- ================================================ -->
+        <div class="tab-pane fade" id="nuitees-preop" role="tabpanel">
+            <div class="grid-4-8">
+
+                <div class="tp-card">
+                    <div class="tp-card-head">
+                        <h6><i class="fas fa-moon"></i> Configurer Nuitées</h6>
+                        </div>
+                    <div class="tp-card-body">
+                        <div class="tp-alert tp-alert-info mb-3">
+                            <i class="fas fa-info-circle alert-icon"></i>
+                            <div><strong>Par défaut :</strong> 0 nuitée pré-op gratuite. Uniquement en chambre standard.
+                            </div>
+                        </div>
+                            <form method="POST" action="{{ url_for('admin_configurer_nuitees_preop') }}">
+                                <div class="mb-3">
+                                <label class="tp-label">Médecin <span class="req">*</span></label>
+                                <select name="id_doctor" id="nuiteesDoctorSelect" class="tp-select" required>
+                                    <option value="">— Sélectionner —</option>
+                                    {% for doctor in doctors %}<option value="{{ doctor.id }}">{{ doctor.name }}
+                                    </option>{% endfor %}
+                                    </select>
+                                </div>
+                                <div class="mb-3">
+                                <label class="tp-label">Nuitées gratuites max <span class="req">*</span></label>
+                                <select name="nuitees_preop_gratuites_max" class="tp-select" required>
+                                    <option value="0">0 — Aucune</option>
+                                    <option value="1" selected>1 — Une nuitée</option>
+                                    </select>
+                                    <small class="text-muted">
+                                        <i class="fas fa-exclamation-triangle text-warning"></i>
+                                        Uniquement en chambre standard
+                                    </small>
+                                </div>
+                            <div class="row-2col mb-3">
+                                <div><label class="tp-label">Date début</label><input type="date" name="date_debut"
+                                        class="tp-input"></div>
+                                <div><label class="tp-label">Date fin</label><input type="date" name="date_fin"
+                                        class="tp-input"></div>
+                                    </div>
+                            <button type="submit" class="tp-btn tp-btn-primary w-100"><i class="fas fa-save"></i>
+                                Enregistrer</button>
+                            </form>
+                        </div>
+                    </div>
+
+                <div class="tp-card">
+                    <div class="tp-card-head">
+                        <h6><i class="fas fa-list"></i> Configurations existantes</h6>
+                        <div class="stat-chip"><strong>{{ configs_nuitees_preop|length }}</strong>configs</div>
+                        </div>
+                    <div class="tp-table-wrap">
+                        <table class="tp-table">
+                            <thead>
+                                        <tr>
+                                            <th>Médecin</th>
+                                            <th class="text-center">Nuitées max</th>
+                                            <th>Période</th>
+                                            <th>Statut</th>
+                                    <th></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for config in configs_nuitees_preop %}
+                                        <tr>
+                                            <td>
+                                        <div class="doc-cell">
+                                            <div class="doc-avatar"><i class="fas fa-user-md"></i></div><span
+                                                class="cell-primary">{{ config.doctor_name }}</span>
+                                        </div>
+                                            </td>
+                                            <td class="text-center">
+                                        <span class="tp-badge badge-info" style="font-size:.8rem; font-weight:800;">{{
+                                            config.nuitees_preop_gratuites_max }}</span>
+                                            </td>
+                                    <td><span class="cell-muted">
+                                            {% if config.date_debut %}{{ config.date_debut.strftime('%d/%m/%Y') }}{%
+                                            endif %}
+                                            {% if config.date_fin %} — {{ config.date_fin.strftime('%d/%m/%Y') }}{%
+                                            endif %}
+                                            {% if not config.date_debut and not config.date_fin %}Permanent{% endif %}
+                                        </span></td>
+                                    <td><span
+                                            class="tp-badge {{ 'badge-success' if config.est_actif else 'badge-inactive' }}"><i
+                                                class="fas fa-circle" style="font-size:.45rem"></i> {{ 'Actif' if
+                                            config.est_actif else 'Inactif' }}</span></td>
+                                            <td>
+                                                <form method="POST"
+                                                      action="{{ url_for('admin_supprimer_config_nuitees_preop', id=config.id) }}"
+                                            onsubmit="return confirm('Confirmer la suppression ?');">
+                                            <button type="submit" class="tp-btn tp-btn-danger-ghost"><i
+                                                    class="fas fa-trash-alt"></i></button>
+                                                </form>
+                                            </td>
+                                        </tr>
+                                        {% else %}
+                                        <tr>
+                                    <td colspan="5">
+                                        <div class="tp-empty"><i class="fas fa-moon"></i>
+                                            <p>Aucune configuration active</p>
+                                        </div>
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+        <!-- ================================================ -->
+        <!-- ONGLET TARIFS KT                                  -->
+        <!-- ================================================ -->
+        <div class="tab-pane fade" id="tarifs-kt" role="tabpanel">
+            <div class="grid-4-8">
+
+                <div class="tp-card">
+                    <div class="tp-card-head">
+                        <h6><i class="fas fa-heartbeat"></i> Nouveau Tarif KT</h6>
+            </div>
+                    <div class="tp-card-body">
+                        <div class="tp-alert tp-alert-info mb-3">
+                            <i class="fas fa-info-circle alert-icon"></i>
+                            <div>
+                                <strong>Hiérarchie d'application :</strong><br>
+                                ① Tarif médecin &nbsp;② Prix convention &nbsp;③ Tarif standard
+        </div>
+                        </div>
+                        <form id="formTarifKt">
+                            <div class="mb-3">
+                                <label class="tp-label">Médecin <span class="req">*</span></label>
+                                <select id="ktDoctorSelect" class="tp-select" required>
+                                    <option value="">— Sélectionner —</option>
+                                    {% for doctor in doctors %}<option value="{{ doctor.id }}">{{ doctor.name }}
+                                    </option>{% endfor %}
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label class="tp-label">Acte KT <span class="req">*</span></label>
+                                <select id="ktActeSelect" class="tp-select" required>
+                                    <option value="" data-prix="0" data-honoraires="0" data-prix-urg="0"
+                                        data-hon-urg="0">— Sélectionner —</option>
+                                    {% for acte in actes_kt %}
+                                    <option value="{{ acte.id_acte }}" data-prix="{{ acte.prix_payant }}"
+                                        data-honoraires="{{ acte.honoraires_payant }}"
+                                        data-prix-urg="{{ acte.prix_urgence }}"
+                                        data-hon-urg="{{ acte.honoraires_urgence }}">
+                                        {{ acte.name_acte_kt }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                                <div class="tp-hint">
+                                    <i class="fas fa-coins"></i> Std : <strong id="prixStdActeKt">—</strong> DA
+                                    &nbsp;|&nbsp; Hon : <strong id="honStdActeKt">—</strong> DA
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <label class="tp-label">Convention</label>
+                                <select id="ktConventionSelect" class="tp-select">
+                                    <option value="">Aucune (Payante / Urgence)</option>
+                                    {% for conv in conventions_kt %}<option value="{{ conv.id_convention }}">{{
+                                        conv.nom_convention }}</option>{% endfor %}
+                                </select>
+                            </div>
+                            <div class="mb-3" id="urgenceKtWrapper">
+                                <label class="tp-label">Type de tarif</label>
+                                <label class="tp-switch-wrap">
+                                    <input type="checkbox" id="estUrgenceKt" value="1" style="accent-color:#DC2626;">
+                                    <span
+                                        style="font-size:.82rem;font-weight:600;display:flex;align-items:center;gap:.4rem;cursor:pointer;">
+                                        <i class="fas fa-ambulance" style="color:#DC2626;"></i> Tarif Urgence
+                                    </span>
+                                </label>
+                            </div>
+                            <div class="row-2col mb-3">
+                                <div>
+                                    <label class="tp-label">Prix clinique <span class="req">*</span></label>
+                                    <input type="number" id="ktPrix" class="tp-input" step="0.01" min="0" required>
+                                </div>
+                                <div>
+                                    <label class="tp-label">Honoraires <span class="req">*</span></label>
+                                    <input type="number" id="ktPartOperateur" class="tp-input" step="0.01" min="0"
+                                        required>
+                                </div>
+                            </div>
+                            <button type="submit" class="tp-btn tp-btn-primary w-100" id="btnSaveTarifKt">
+                                <i class="fas fa-save"></i> Enregistrer
+                            </button>
+                        </form>
+    </div>
+</div>
+
+                <div class="tp-card">
+                    <div class="tp-card-head">
+                        <h6><i class="fas fa-list"></i> Tarifs configurés</h6>
+                        <div class="stat-chip"><strong id="badgeCountKt">0</strong>tarifs</div>
+                    </div>
+                    <div class="tp-table-wrap">
+                        <table class="tp-table">
+                            <thead>
+                                <tr>
+                                    <th>Médecin</th>
+                                    <th>Acte</th>
+                                    <th>Convention</th>
+                                    <th class="text-end">Prix</th>
+                                    <th class="text-end">Honoraires</th>
+                                    <th class="text-center">Type</th>
+                                    <th class="text-center">Statut</th>
+                                    <th></th>
+                                </tr>
+                            </thead>
+                            <tbody id="tbodyTarifsKt">
+                                <tr>
+                                    <td colspan="8">
+                                        <div class="tp-empty"><i class="fas fa-spinner fa-spin"
+                                                style="opacity:1;font-size:1.2rem;"></i>
+                                            <p>Chargement…</p>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- ================================================ -->
+        <!-- ONGLET % MÉDECIN INTERNE                          -->
+        <!-- ================================================ -->
+        <div class="tab-pane fade" id="pourcentage-mi" role="tabpanel">
+            <div class="tp-card">
+                <div class="tp-card-head">
+                    <h6><i class="fas fa-percentage"></i> Médecins Internes — Pourcentages</h6>
+                    <div class="stat-chip"><strong>{{ medecins_internes_pourcentages|length }}</strong>médecins</div>
+                </div>
+                <div class="tp-table-wrap">
+                    <table class="tp-table" id="tablePourcentageMI">
+                        <thead>
+                            <tr>
+                                <th style="padding-left:1.5rem;">Médecin</th>
+                                <th>Spécialité</th>
+                                <th class="text-center" style="width:140px;">Pourcentage</th>
+                                <th class="text-center" style="width:150px;">Plafond Conso.</th>
+                                <th class="text-end" style="width:100px; padding-right:1.5rem;">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for med in medecins_internes_pourcentages %}
+                            <tr data-id="{{ med.id }}">
+                                <td style="padding-left:1.5rem;">
+                                    <div class="doc-cell">
+                                        <div class="doc-avatar"><i class="fas fa-user-md"></i></div>
+                                        <span class="cell-primary">{{ med.doctor_name }}</span>
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="tp-badge badge-inactive">{{ med.name_specialty or 'Non définie'
+                                        }}</span>
+                                </td>
+                                <td class="text-center">
+                                    <div class="pct-input-wrap">
+                                        <input type="number" class="pourcentage-input"
+                                            value="{{ med.pourcentage_medecin_interne if med.pourcentage_medecin_interne is not none else '' }}"
+                                            placeholder="50" min="0" max="100" step="0.01" data-doctor-id="{{ med.id }}"
+                                            data-original="{{ med.pourcentage_medecin_interne if med.pourcentage_medecin_interne is not none else '' }}">
+                                        <span>%</span>
+                                    </div>
+                                </td>
+                                <td class="text-center">
+                                    <a href="{{ url_for('admin_plafonds_medecins', doctor_id=med.id) }}"
+                                        class="tp-btn tp-btn-ghost tp-btn-sm position-relative"
+                                        title="Configurer le plafond consommables" style="gap:.4rem;">
+                                        <i class="fas fa-boxes"></i>
+                                        <span
+                                            class="position-absolute top-0 start-100 translate-middle tp-badge badge-danger plafond-count"
+                                            data-doctor-id="{{ med.id }}"
+                                            style="font-size:.6rem;min-width:16px;padding:.1rem .35rem;">0</span>
+                                    </a>
+                                </td>
+                                <td class="text-end" style="padding-right:1.5rem;">
+                                    <button class="tp-btn tp-btn-ghost tp-btn-sm btn-save-pourcentage"
+                                        data-doctor-id="{{ med.id }}" disabled
+                                        style="opacity:.4;transition:opacity .2s;">
+                                        <i class="fas fa-save"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                            {% else %}
+                            <tr>
+                                <td colspan="5">
+                                    <div class="tp-empty"><i class="fas fa-user-md"></i>
+                                        <p>Aucun médecin interne trouvé</p>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+    </div><!-- /tab-content -->
+
+
+    <!-- ================================================ -->
+    <!-- MODAL PLAFOND CONSOMMABLES                        -->
+    <!-- ================================================ -->
+
+
+</div><!-- /tarifs-page -->
+{% endblock %}
+
+
+{% block scripts %}
+<script>
+    // ── Tab active state sync ──────────────────────────────────────
+    document.querySelectorAll('.tp-tab-btn').forEach(btn => {
+        btn.addEventListener('shown.bs.tab', function () {
+            document.querySelectorAll('.tp-tab-btn').forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
+        });
+        // Bootstrap adds active class, mirror it
+        const bsTarget = btn.dataset.bsTarget;
+        if (bsTarget) {
+            document.querySelector(bsTarget)?.addEventListener('shown.bs.tab', () => { });
+        }
+    });
+
+    // ── Choices.js config ──────────────────────────────────────────
+    const choicesCfg = {
+        searchEnabled: true,
+        searchPlaceholderValue: 'Rechercher…',
+        itemSelectText: '',
+        noResultsText: 'Aucun résultat',
+        shouldSort: false
+    };
+
+    ['forfaitDoctorSelect', 'forfaitForfaitSelect', 'chambreDoctorSelect', 'chambreChambreSelect', 'nuiteesDoctorSelect']
+        .forEach(id => { const el = document.getElementById(id); if (el) new Choices(el, choicesCfg); });
+
+    // ── Prix standard displays ─────────────────────────────────────
+    document.getElementById('forfaitForfaitSelect')?.addEventListener('change', function () {
+        const prix = this.options[this.selectedIndex]?.dataset?.prix;
+        document.getElementById('prixStandardForfait').textContent = prix ? parseFloat(prix).toFixed(2) : '—';
+    });
+    document.getElementById('chambreChambreSelect')?.addEventListener('change', function () {
+        const prix = this.options[this.selectedIndex]?.dataset?.prix;
+        document.getElementById('prixStandardChambre').textContent = prix ? parseFloat(prix).toFixed(2) : '—';
+});
+
+    // ── KT TARIFS ─────────────────────────────────────────────────
+    (function () {
+        const doctorSel = document.getElementById('ktDoctorSelect');
+        const acteSel = document.getElementById('ktActeSelect');
+        const convSel = document.getElementById('ktConventionSelect');
+        let choicesDoc, choicesActe, choicesConv;
+
+        if (doctorSel) choicesDoc = new Choices(doctorSel, choicesCfg);
+        if (acteSel) choicesActe = new Choices(acteSel, choicesCfg);
+        if (convSel) choicesConv = new Choices(convSel, { ...choicesCfg, searchEnabled: false });
+
+        const urgWrapper = document.getElementById('urgenceKtWrapper');
+        const urgCheckbox = document.getElementById('estUrgenceKt');
+
+        convSel?.addEventListener('change', function () {
+            if (this.value) { urgWrapper.style.display = 'none'; if (urgCheckbox) urgCheckbox.checked = false; }
+            else urgWrapper.style.display = 'block';
+            updatePrixStd();
+        });
+
+        function updatePrixStd() {
+            if (!acteSel) return;
+            const opt = acteSel.options[acteSel.selectedIndex];
+            if (!opt?.value) {
+                document.getElementById('prixStdActeKt').textContent =
+                    document.getElementById('honStdActeKt').textContent = '—';
+                return;
+            }
+            const urg = urgCheckbox?.checked;
+            document.getElementById('prixStdActeKt').textContent = urg
+                ? (opt.dataset.prixUrg ? parseFloat(opt.dataset.prixUrg).toFixed(2) : '—')
+                : (opt.dataset.prix ? parseFloat(opt.dataset.prix).toFixed(2) : '—');
+            document.getElementById('honStdActeKt').textContent = urg
+                ? (opt.dataset.honUrg ? parseFloat(opt.dataset.honUrg).toFixed(2) : '—')
+                : (opt.dataset.honoraires ? parseFloat(opt.dataset.honoraires).toFixed(2) : '—');
+        }
+
+        acteSel?.addEventListener('change', updatePrixStd);
+        urgCheckbox?.addEventListener('change', updatePrixStd);
+
+        function loadTarifsKt() {
+            fetch('/api/gestion_medecins/tarifs_kt').then(r => r.json()).then(d => {
+                if (d.success) renderKt(d.tarifs);
+            }).catch(err => {
+                document.getElementById('tbodyTarifsKt').innerHTML =
+                    `<tr><td colspan="8"><div class="tp-empty"><i class="fas fa-exclamation-triangle" style="color:#DC2626;opacity:1;"></i><p class="text-danger">${err.message}</p></div></td></tr>`;
+            });
+        }
+
+        function renderKt(tarifs) {
+            const tbody = document.getElementById('tbodyTarifsKt');
+            document.getElementById('badgeCountKt').textContent = tarifs.length;
+            if (!tarifs.length) {
+                tbody.innerHTML = `<tr><td colspan="8"><div class="tp-empty"><i class="fas fa-heartbeat"></i><p>Aucun tarif configuré</p></div></td></tr>`;
+                return;
+            }
+            tbody.innerHTML = tarifs.map(t => `
+      <tr style="${!t.est_actif ? 'opacity:.45;' : ''}">
+        <td><div class="doc-cell"><div class="doc-avatar"><i class="fas fa-user-md"></i></div><span class="cell-primary">${t.doctor_name}</span></div></td>
+        <td>${t.name_acte_kt}</td>
+        <td>${t.nom_convention
+                    ? `<span class="tp-badge badge-info">${t.nom_convention}</span>`
+                    : (t.est_urgence
+                        ? `<span class="tp-badge badge-danger"><i class="fas fa-ambulance"></i> Urgence</span>`
+                        : `<span class="tp-badge badge-inactive">Standard</span>`)}</td>
+        <td class="text-end cell-primary">${t.prix.toFixed(2)} DA</td>
+        <td class="text-end cell-muted">${t.part_operateur.toFixed(2)} DA</td>
+        <td class="text-center">${t.est_urgence
+                    ? `<span class="tp-badge badge-danger"><i class="fas fa-ambulance"></i></span>`
+                    : `<span class="tp-badge badge-success"><i class="fas fa-check"></i></span>`}</td>
+        <td class="text-center">
+          <span class="tp-badge ${t.est_actif ? 'badge-success' : 'badge-inactive'}">
+            <i class="fas fa-circle" style="font-size:.45rem"></i> ${t.est_actif ? 'Actif' : 'Inactif'}
+          </span>
+        </td>
+        <td style="white-space:nowrap;">
+          <button class="tp-btn tp-btn-ghost tp-btn-sm me-1" onclick="toggleTarifKt(${t.id})" title="${t.est_actif ? 'Désactiver' : 'Activer'}">
+            <i class="fas ${t.est_actif ? 'fa-toggle-on text-success' : 'fa-toggle-off'}"></i>
+          </button>
+          <button class="tp-btn tp-btn-danger-ghost" onclick="deleteTarifKt(${t.id})" title="Supprimer">
+            <i class="fas fa-trash-alt"></i>
+          </button>
+        </td>
+      </tr>
+    `).join('');
+        }
+
+        document.getElementById('formTarifKt')?.addEventListener('submit', function (e) {
+            e.preventDefault();
+            const btn = document.getElementById('btnSaveTarifKt');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Enregistrement…';
+
+            fetch('/api/gestion_medecins/tarifs_kt', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    id_doctor: doctorSel.value,
+                    id_acte: acteSel.value,
+                    id_convention: convSel.value || null,
+                    est_urgence: urgCheckbox?.checked ? 1 : 0,
+                    prix: parseFloat(document.getElementById('ktPrix').value) || 0,
+                    part_operateur: parseFloat(document.getElementById('ktPartOperateur').value) || 0
+                })
+            }).then(r => r.json()).then(d => {
+                if (d.success) {
+                    Toastify({ text: "✓ Tarif enregistré", style: { background: "linear-gradient(135deg,#059669,#34D399)" }, duration: 3000 }).showToast();
+                    loadTarifsKt();
+                    document.getElementById('ktPrix').value = '';
+                    document.getElementById('ktPartOperateur').value = '';
+                } else {
+                    Toastify({ text: d.message, style: { background: "#DC2626" } }).showToast();
+                }
+            }).catch(() => Toastify({ text: "Erreur réseau", style: { background: "#DC2626" } }).showToast())
+                .finally(() => { btn.disabled = false; btn.innerHTML = '<i class="fas fa-save"></i> Enregistrer'; });
+        });
+
+        window.toggleTarifKt = id => {
+            fetch(`/api/gestion_medecins/tarifs_kt/${id}/toggle`, { method: 'POST' }).then(r => r.json()).then(d => { if (d.success) loadTarifsKt(); });
+        };
+        window.deleteTarifKt = id => {
+            if (confirm('Confirmer la suppression ?'))
+                fetch(`/api/gestion_medecins/tarifs_kt/${id}/delete`, { method: 'POST' }).then(r => r.json()).then(d => { if (d.success) loadTarifsKt(); });
+        };
+
+        const tabEl = document.getElementById('tarifs-kt-tab');
+        if (tabEl) {
+            tabEl.addEventListener('shown.bs.tab', loadTarifsKt);
+            if (window.location.hash === '#tarifs-kt') loadTarifsKt();
+        }
+    })();
+
+    // ── % MÉDECIN INTERNE ─────────────────────────────────────────
+    (function () {
+        document.querySelectorAll('.pourcentage-input').forEach(input => {
+            input.addEventListener('input', function () {
+                const btn = document.querySelector(`.btn-save-pourcentage[data-doctor-id="${this.dataset.doctorId}"]`);
+                if (btn) { btn.disabled = (this.value == this.dataset.original); btn.style.opacity = (this.value == this.dataset.original) ? '.4' : '1'; }
+            });
+        });
+
+        document.querySelectorAll('.btn-save-pourcentage').forEach(btn => {
+            btn.addEventListener('click', function () {
+                const id = this.dataset.doctorId;
+                const input = document.querySelector(`.pourcentage-input[data-doctor-id="${id}"]`);
+                if (!input.value) return;
+                this.disabled = true; this.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+
+                fetch(`/api/gestion_medecins/pourcentage_medecin_interne/${id}`, {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ pourcentage: parseFloat(input.value) })
+                }).then(r => r.json()).then(d => {
+                    if (d.success) {
+                        Toastify({ text: "✓ Pourcentage mis à jour", style: { background: "linear-gradient(135deg,#059669,#34D399)" }, duration: 2500 }).showToast();
+                        input.dataset.original = input.value;
+                        this.innerHTML = '<i class="fas fa-save"></i>';
+                        this.style.opacity = '.4';
+                    } else {
+                        Toastify({ text: d.message, style: { background: "#DC2626" } }).showToast();
+                        this.disabled = false; this.innerHTML = '<i class="fas fa-save"></i>';
+                    }
+                });
+            });
+        });
+    })();
+
+    // ── PLAFONDS CONSOMMABLES ─────────────────────────────────────
+    (function () {
+        // Init badges count
+        document.querySelectorAll('.plafond-count').forEach(badge => {
+            fetch(`/api/gestion_medecins/plafond_consommables_mi/${badge.dataset.doctorId}`)
+                .then(r => r.json()).then(d => { if (d.success) badge.textContent = d.plafonds.length; });
+        });
+    })();
+</script>
+{% endblock %}

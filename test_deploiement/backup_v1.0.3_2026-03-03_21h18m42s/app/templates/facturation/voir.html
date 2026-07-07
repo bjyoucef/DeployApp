@@ -1,0 +1,674 @@
+{% extends "layout.html" %}
+{% import 'his/macros/his_direct_selector.html' as his_selector %}
+{% block content %}
+
+<style>
+    @media print {
+
+        .no-print,
+        .btn,
+        nav,
+        header,
+        aside,
+        footer {
+            display: none !important;
+        }
+
+        .card {
+            border: none !important;
+            box-shadow: none !important;
+        }
+
+        body {
+            background: white !important;
+        }
+    }
+
+    /* Animation au survol du bouton historique */
+    .btn-history-his {
+        transition: all 0.2s ease;
+    }
+
+    .btn-history-his:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0, 123, 255, 0.3);
+    }
+
+    /* Badge HIS */
+    .badge.bg-info {
+        font-size: 0.75rem;
+        font-weight: 600;
+    }
+
+    /* Pour la cellule patient avec flex */
+    .patient-name-cell {
+        min-height: 32px;
+    }
+
+    /* Responsive - cacher le texte du bouton sur mobile */
+    @media (max-width: 768px) {
+        .btn-history-his {
+            padding: 0.25rem 0.4rem;
+        }
+
+        .btn-history-his .btn-text {
+            display: none;
+        }
+    }
+</style>
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>
+            <i class="fas fa-file-invoice"></i>
+            Facture {{ facture.numero_facture }}
+        </h2>
+        <div class="btn-toolbar" role="toolbar">
+            <div class="btn-group me-2" role="group">
+                <a href="{{ url_for('facturation') }}" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left"></i> Retour
+                </a>
+            </div>
+
+            {# Groupe Édition #}
+            {# Groupe Édition #}
+            {% if facture.statut == 'brouillon' %}
+            <div class="btn-group me-2" role="group">
+                <a href="{{ url_for('editer_facture', facture_id=facture.id) }}" class="btn btn-warning"
+                    id="btn-edit-draft">
+                    <i class="fas fa-edit"></i> Éditer
+                </a>
+            </div>
+            {% elif facture.statut == 'valide' %}
+            <div class="btn-group me-2" role="group">
+                <a href="{{ url_for('editer_facture', facture_id=facture.id) }}" class="btn btn-warning"
+                    id="btn-edit-valid" title="⚠️ Attention : Modification d'une facture validée">
+                    <i class="fas fa-edit"></i> Éditer
+                    <i class="fas fa-exclamation-triangle ms-1"></i>
+                </a>
+            </div>
+            {% endif %}
+
+            {# Groupe Actions facture validée #}
+            {% if facture.statut == 'valide' %}
+            <div class="btn-group me-2" role="group">
+                {# Transformation proforma #}
+                {% if facture.type_facture == 'proforma' and not facture.est_transforme %}
+                <form method="POST" action="{{ url_for('transformer_proforma', proforma_id=facture.id) }}"
+                    class="d-inline" id="form-transform-proforma"
+                    onsubmit="return confirm('Confirmer la transformation de ce proforma en facture définitive ?');">
+                    <button type="submit" class="btn btn-success">
+                        <i class="fas fa-exchange-alt"></i> Transformer en Facture
+                    </button>
+                </form>
+                {% endif %}
+
+                {# Marquer comme donnée #}
+                {% if not facture.donnee_au_patient %}
+                <button type="button" class="btn btn-success" id="btn-mark-given"
+                    onclick="marquerFactureDonnee({{ facture.id }})">
+                    <i class="fas fa-hand-holding"></i> Donner au patient
+                </button>
+                {% endif %}
+
+                {# Annuler la remise #}
+                {% if facture.donnee_au_patient %}
+                <button type="button" class="btn btn-warning" id="btn-undo-given"
+                    onclick="annulerRemiseFacture({{ facture.id }})">
+                    <i class="fas fa-undo"></i> Récupérer facture
+                </button>
+                {% endif %}
+
+                {# Annuler facture - seulement si non donnée #}
+                {% if not facture.donnee_au_patient %}
+                <form method="POST" action="{{ url_for('annuler_facture', facture_id=facture.id) }}" class="d-inline"
+                    id="form-cancel-facture" onsubmit="return confirm('Confirmer l\'annulation de cette facture ?');">
+                    <button type="submit" class="btn btn-danger">
+                        <i class="fas fa-ban"></i> Annuler facture
+                    </button>
+                </form>
+                {% elif facture.donnee_au_patient %}
+                <button type="button" class="btn btn-danger" disabled
+                    title="Impossible d'annuler : facture donnée au patient. Récupérez-la d'abord.">
+                    <i class="fas fa-ban"></i> Annuler facture
+                </button>
+                {% endif %}
+            </div>
+            {% endif %}
+
+            {# Groupe PDF #}
+            {% if facture.statut != 'annule' %}
+            <div class="btn-group" role="group">
+                <button type="button" class="btn btn-danger" id="btn-print-pdf" onclick="printPdf()">
+                    <i class="fas fa-print"></i> Imprimer PDF
+                </button>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Facture imprimable -->
+    <div class="card" id="facture-imprimable">
+        <div class="card-body p-5">
+            <!-- En-tête avec coordonnées fiscales -->
+            <div class="row mb-4">
+                <div class="col-6">
+                    <h3 style="color: #7a6ad8;">CLINIQUE INAYA</h3>
+                    <p class="mb-1">04 RUE DUGUET VIEUX KOUBA ALGER</p>
+                    <p class="mb-1">Tél: 021-82-72-71</p>
+                    <hr style="margin: 8px 0;">
+                    <p class="mb-1"><strong>NIF:</strong> 001916100040926</p>
+                    <p class="mb-1"><strong>RC:</strong> 16/00-1000409 B 19</p>
+                    <p class="mb-1"><strong>N° Article:</strong> 16185014022</p>
+                    <p class="mb-1"><strong>Capital:</strong> 2 000 000,00 DA</p>
+                    <p class="mb-1"><strong>Compte Bancaire:</strong> AL BARKA 00600106303038630265</p>
+                    <p class="mb-0"><strong>Agence:</strong> KOUBA</p>
+                </div>
+                <div class="col-6 text-end">
+                    <h1 class="mb-3" style="color: #7a6ad8;">
+                        {% if facture.type_facture == 'proforma' %}
+                        FACTURE PROFORMA
+                        {% else %}
+                        FACTURE
+                        {% endif %}
+                    </h1>
+                    <h4>{{ facture.numero_facture }}</h4>
+                    <p>Date: {{ facture.date_facture.strftime('%d/%m/%Y') }}</p>
+
+                    {# Badges de statut #}
+                    <div class="mb-3">
+                        {% if facture.statut == 'valide' %}
+                        <span class="badge bg-success fs-6">
+                            <i class="fas fa-check-circle"></i> VALIDÉE
+                        </span>
+                        {% elif facture.statut == 'annule' %}
+                        <span class="badge bg-danger fs-6">
+                            <i class="fas fa-times-circle"></i> ANNULÉE
+                        </span>
+                        {% elif facture.statut == 'brouillon' %}
+                        <span class="badge bg-secondary fs-6">
+                            <i class="fas fa-edit"></i> BROUILLON
+                        </span>
+                        {% endif %}
+
+                        {# Badge remise patient #}
+                        {% if facture.donnee_au_patient %}
+                        <span class="badge bg-info fs-6">
+                            <i class="fas fa-hand-holding"></i> DONNÉE AU PATIENT
+                        </span>
+                        {% elif facture.statut == 'valide' %}
+                        <span class="badge bg-warning text-dark fs-6">
+                            <i class="fas fa-clock"></i> EN ATTENTE DE REMISE
+                        </span>
+                        {% endif %}
+                    </div>
+
+                    {# Alertes #}
+                    {% if facture.proforma_origine_numero %}
+                    <div class="alert alert-info mt-2">
+                        <i class="fas fa-link"></i>
+                        <strong>Issue du proforma:</strong> {{ facture.proforma_origine_numero }}
+                        {% if facture.proforma_origine_id %}
+                        <a href="{{ url_for('voir_facture', facture_id=facture.proforma_origine_id) }}"
+                            class="btn btn-sm btn-outline-info ms-2">
+                            <i class="fas fa-eye"></i> Voir le proforma
+                        </a>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+                    {% if facture.type_facture == 'proforma' and facture.est_transforme %}
+                    <div class="alert alert-success mt-2">
+                        <i class="fas fa-check-circle"></i>
+                        <strong>Ce proforma a été transformé en facture définitive</strong>
+                    </div>
+                    {% endif %}
+
+                    {% if facture.statut == 'valide' %}
+                    <span class="badge bg-success fs-6">VALIDÉE</span>
+
+                    {% elif facture.statut == 'annule' %}
+                    <span class="badge bg-danger fs-6">ANNULÉE</span>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Informations client avec coordonnées fiscales -->
+            <div class="row mb-4">
+                <div class="col-6">
+                    <div class="border p-3">
+                        <div class="d-flex justify-content-between align-items-start mb-3">
+                            <h5 class="mb-0">FACTURÉ À:</h5>
+
+                            <!-- ✅ Bouton Historique HIS -->
+                            {% if facture.patient_oid_his %}
+                            <button class="btn btn-sm btn-info"
+                                onclick="showPatientHistoryDirect('{{ facture.patient_oid_his }}')"
+                                title="Voir l'historique HIS du patient">
+                                <i class="fas fa-history"></i> Historique HIS
+                            </button>
+                            {% endif %}
+                        </div>
+
+                        {% if facture.patient_raison_sociale %}
+                        <strong style="font-size: 1.1em;">{{ facture.patient_raison_sociale }}</strong>
+                        {% if facture.patient_nom and facture.patient_prenom %}
+                        <p class="mb-1">Contact: {{ facture.patient_nom }} {{ facture.patient_prenom }}</p>
+                        {% endif %}
+                        {% else %}
+                        <strong style="font-size: 1.1em;">
+                            {{ facture.patient_nom }} {{ facture.patient_prenom }}
+                        </strong>
+                        {% endif %}
+
+                        <!-- ✅ Badge HIS si référence présente -->
+                        {% if facture.patient_code_his %}
+                        <p class="mb-1">
+                            <span class="badge bg-info">
+                                <i class="fas fa-database"></i> Code HIS: {{ facture.patient_code_his }}
+                            </span>
+                        </p>
+                        {% endif %}
+
+                        {% if facture.patient_adresse %}
+                        <p class="mb-1">{{ facture.patient_adresse }}</p>
+                        {% endif %}
+                        {% if facture.patient_telephone %}
+                        <p class="mb-1">Tél: {{ facture.patient_telephone }}</p>
+                        {% endif %}
+
+                        {% if facture.patient_nif or facture.patient_rc or facture.patient_article %}
+                        <hr style="margin: 10px 0;">
+                        <p class="mb-1"><strong>Coordonnées fiscales:</strong></p>
+                        {% if facture.patient_nif %}
+                        <p class="mb-1">NIF: {{ facture.patient_nif }}</p>
+                        {% endif %}
+                        {% if facture.patient_rc %}
+                        <p class="mb-1">RC: {{ facture.patient_rc }}</p>
+                        {% endif %}
+                        {% if facture.patient_article %}
+                        <p class="mb-0">N° Article: {{ facture.patient_article }}</p>
+                        {% endif %}
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="col-6">
+                    <p><strong>Mode de paiement:</strong>
+                        <span class="badge bg-primary">{{ facture.mode_paiement|capitalize }}</span>
+                    </p>
+
+                    {% if facture.numero_cheque %}
+                    <div class="alert alert-info">
+                        <i class="fas fa-money-check"></i>
+                        <strong>Numéro de chèque:</strong> {{ facture.numero_cheque }}
+                    </div>
+                    {% endif %}
+
+                    {% if facture.droit_timbre > 0 %}
+                    <div class="alert alert-warning">
+                        <i class="fas fa-stamp"></i>
+                        <strong>Droit de timbre (LF 2025):</strong> {{ "%.2f"|format(facture.droit_timbre) }} DA
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <hr class="my-4">
+
+            <!-- Tableau des lignes -->
+            <div class="table-responsive mb-4">
+                <table class="table table-bordered">
+                    <thead style="background-color: #7a6ad8; color: white;">
+                        <tr>
+                            <th>DÉSIGNATION</th>
+                            <th class="text-center" style="width: 10%;">QTÉ</th>
+                            <th class="text-end" style="width: 12%;">PRIX U.</th>
+                            <th class="text-end" style="width: 12%;">MONTANT HT</th>
+                            <th class="text-center" style="width: 8%;">TVA</th>
+                            <th class="text-end" style="width: 14%;">MONTANT TTC</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for ligne in lignes %}
+                        <tr data-ligne-id="{{ ligne.id }}" {% if ligne.est_debours %}class="table-warning" {% endif %}>
+                            <td>
+                                <strong>{{ ligne.designation }}</strong>
+                                {% if ligne.est_debours %}
+                                <span class="badge bg-warning text-dark ms-2">
+                                    <i class="fas fa-file-invoice-dollar"></i> DÉBOURS
+                                </span>
+                                {% endif %}
+                                {% if ligne.description %}
+                                <br><small class="text-muted">{{ ligne.description }}</small>
+                                {% endif %}
+                                {% if ligne.reference_justificatif %}
+                                <br><small class="text-info">
+                                    <i class="fas fa-receipt"></i> Réf
+                                    justificatif: {{ ligne.reference_justificatif }}
+                                </small>
+                                {% endif %}
+                            </td>
+                            <td class="text-center">{{ "%.2f"|format(ligne.quantite) }}</td>
+                            <td class="text-end">{{ "%.2f"|format(ligne.prix_unitaire) }} DA</td>
+                            <td class="text-end">{{ "%.2f"|format(ligne.montant_ht) }} DA</td>
+                            <td class="text-center">
+                                {% if ligne.est_debours %}
+                                <span class="badge bg-warning text-dark">N/A</span>
+                                {% else %}
+                                <span class="badge {% if ligne.taux_tva == 9 %}bg-info{% else %}bg-warning{% endif %}">
+                                    {{ ligne.taux_tva|int }}%
+                                </span>
+                                {% endif %}
+                            </td>
+                            <td class="text-end">
+                                <strong>{{ "%.2f"|format(ligne.montant_ttc if not ligne.est_debours else
+                                    ligne.montant_ht) }}
+                                    DA</strong>
+                            </td>
+                            <td class="text-center">
+                                {% if facture.statut == 'brouillon' %}
+                                <button type="button" class="btn btn-sm btn-danger btn-delete-line"
+                                    onclick="supprimerLigne({{ ligne.id }})">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Totaux -->
+            <div class="row">
+                <div class="col-7"></div>
+                <div class="col-5">
+                    <table class="table">
+                        <tr>
+                            <td class="text-end"><strong>Total HT (hors débours):</strong></td>
+                            <td class="text-end">{{ "%.2f"|format(facture.total_ht) }} DA</td>
+                        </tr>
+                        <tr>
+                            <td class="text-end">TVA 9%:</td>
+                            <td class="text-end">{{ "%.2f"|format(facture.total_tva_9) }} DA</td>
+                        </tr>
+                        <tr>
+                            <td class="text-end">TVA 19%:</td>
+                            <td class="text-end">{{ "%.2f"|format(facture.total_tva_19) }} DA</td>
+                        </tr>
+                        <tr>
+                            <td class="text-end"><strong>Total TVA:</strong></td>
+                            <td class="text-end">{{ "%.2f"|format(facture.total_tva) }} DA</td>
+                        </tr>
+                        {% if facture.remise_montant and facture.remise_montant > 0 %}
+                        <tr>
+                            <td class="text-end">Remise ({{ facture.remise_pourcentage }}%):</td>
+                            <td class="text-end">-{{ "%.2f"|format(facture.remise_montant) }} DA</td>
+                        </tr>
+                        {% endif %}
+                        <tr style="background-color: #7a6ad8; color: white;">
+                            <td class="text-end"><strong>TOTAL TTC:</strong></td>
+                            <td class="text-end"><strong style="font-size: 1.3em;">{{ "%.2f"|format(facture.total_ttc)
+                                    }} DA</strong>
+                            </td>
+                        </tr>
+                        {% if facture.total_debours and facture.total_debours > 0 %}
+                        <tr style="background-color: #fff3cd;">
+                            <td class="text-end">
+                                <strong>+ Débours (sans TVA):</strong><br>
+                                <small>Frais avancés pour le compte du patient</small>
+                            </td>
+                            <td class="text-end"><strong>{{ "%.2f"|format(facture.total_debours) }} DA</strong>
+                            </td>
+                        </tr>
+                        <tr style="background-color: #d1ecf1;">
+                            <td class="text-end"><strong>SOUS-TOTAL (TTC + Débours):</strong></td>
+                            <td class="text-end">
+                                <strong>{{ "%.2f"|format(facture.total_ttc + facture.total_debours) }}
+                                    DA</strong>
+                            </td>
+                        </tr>
+                        {% endif %}
+                        {% if facture.droit_timbre > 0 %}
+                        <tr style="background-color: #ffc107;">
+                            <td class="text-end">
+                                <strong>+ Droit de timbre (LF 2025):</strong><br>
+                                <small>Paiement en espèces<br>
+                                    (calculé sur {{ "%.2f"|format(facture.total_ttc + facture.total_debours) }}
+                                    DA)</small>
+                            </td>
+                            <td class="text-end"><strong>{{ "%.2f"|format(facture.droit_timbre) }} DA</strong>
+                            </td>
+                        </tr>
+                        {% endif %}
+                        <tr style="background-color: #28a745; color: white;">
+                            <td class="text-end"><strong>TOTAL NET À PAYER:</strong></td>
+                            <td class="text-end"><strong style="font-size: 1.5em;">{{ "%.2f"|format(facture.total_net)
+                                    }} DA</strong>
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Notes  -->
+            {% if facture.notes %}
+            <div class="mt-4">
+                <h6>Notes:</h6>
+                <p>{{ facture.notes }}</p>
+            </div>
+            {% endif %}
+
+            <!-- Pied de page -->
+            <div class="text-center mt-5 pt-4" style="border-top: 2px solid #7a6ad8;">
+                <p class="text-muted mb-0">Merci de votre confiance | CLINIQUE INAYA</p>
+            </div>
+        </div>
+    </div>
+</div> <!-- Fermeture du container-fluid -->
+<div class="card mt-4">
+    <div class="card-header bg-light">
+        <strong>
+            <i class="fas fa-history"></i> Historique de la facture
+        </strong>
+    </div>
+    <div class="card-body">
+        <table class="table table-sm mb-0">
+            <tbody>
+
+                <!-- Création -->
+                <tr>
+                    <td width="30%">
+                        <i class="fas fa-plus-circle text-primary"></i>
+                        Créée par
+                    </td>
+                    <td>
+                        {{ facture.cree_par_nom or '-' }}
+                        {% if facture.created_at %}
+                        <br>
+                        <small class="text-muted">
+                            le {{ facture.created_at.strftime('%d/%m/%Y à %H:%M') }}
+                        </small>
+                        {% endif %}
+                    </td>
+                </tr>
+
+                <!-- Validation -->
+                <tr>
+                    <td>
+                        <i class="fas fa-check-circle text-success"></i>
+                        Validée par
+                    </td>
+                    <td>
+                        {% if facture.statut in ['valide', 'annule'] %}
+                        {{ facture.valide_par_nom or '-' }}
+                        {% if facture.date_validation %}
+                        <br>
+                        <small class="text-muted">
+                            le {{ facture.date_validation.strftime('%d/%m/%Y à %H:%M') }}
+                        </small>
+                        {% endif %}
+                        {% else %}
+                        <span class="text-muted">Non validée</span>
+                        {% endif %}
+                    </td>
+                </tr>
+
+                <!-- Annulation -->
+                <tr>
+                    <td>
+                        <i class="fas fa-ban text-danger"></i>
+                        Annulée par
+                    </td>
+                    <td>
+                        {% if facture.statut == 'annule' %}
+                        {{ facture.annule_par_nom or '-' }}
+                        {% if facture.date_annulation %}
+                        <br>
+                        <small class="text-muted">
+                            le {{ facture.date_annulation.strftime('%d/%m/%Y à %H:%M') }}
+                        </small>
+                        {% endif %}
+                        {% else %}
+                        <span class="text-muted">—</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                <!-- Remise patient -->
+                <tr>
+                    <td>
+                        <i class="fas fa-hand-holding text-success"></i>
+                        Donnée au patient
+                    </td>
+                    <td>
+                        {% if facture.donnee_au_patient %}
+                        {{ facture.remise_par_nom or '-' }}
+                        {% if facture.date_remise_patient %}
+                        <br>
+                        <small class="text-muted">
+                            le {{ facture.date_remise_patient.strftime('%d/%m/%Y à %H:%M') }}
+                        </small>
+                        {% endif %}
+                        <span class="badge bg-success ms-2">
+                            <i class="fas fa-check"></i> Remise
+                        </span>
+                        {% else %}
+                        <span class="text-warning">
+                            <i class="fas fa-clock"></i> Non remise
+                        </span>
+                        {% endif %}
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{{ his_selector.render_modal('modalPatientHistoryDirect') }}
+{% endblock %}
+
+{% block scripts %}
+<script>
+    function marquerFactureDonnee(factureId) {
+        if (!confirm('Confirmer que cette facture a été donnée au patient ?')) {
+            return;
+        }
+
+        fetch(`/facturation/marquer_donnee/${factureId}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            credentials: 'same-origin'
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showToast(data.message, "success");
+                    location.reload();
+                } else {
+                    showToast('Erreur: ' + data.message, "error");
+                }
+            })
+            .catch(error => {
+                console.error('Erreur:', error);
+                showToast('Erreur lors de la mise à jour', "error");
+            });
+    }
+
+    function annulerRemiseFacture(factureId) {
+        if (!confirm('Confirmer l\'annulation de la remise au patient ?')) {
+            return;
+        }
+
+        fetch(`/facturation/annuler_remise/${factureId}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            credentials: 'same-origin'
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showToast(data.message, "success");
+                    location.reload();
+                } else {
+                    showToast('Erreur: ' + data.message, "error");
+                }
+            })
+            .catch(error => {
+                console.error('Erreur:', error);
+                showToast('Erreur lors de l\'annulation', "error");
+            });
+    }
+    // ✅ Fonction globale pour afficher l'historique patient HIS
+    window.showPatientHistoryDirect = function (patientOid) {
+        if (typeof PatientHistoryModal !== 'undefined' && PatientHistoryModal.show) {
+            PatientHistoryModal.show(patientOid);
+        } else {
+            console.error('PatientHistoryModal not loaded');
+            showToast('Le module d\'historique HIS n\'est pas chargé.', "warning");
+        }
+    };
+
+    function printPdf() {
+        const url = "{{ url_for('generer_pdf_facture', facture_id=facture.id) }}";
+
+        fetch(url, { credentials: 'same-origin' })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error("Erreur lors du chargement du PDF");
+                }
+                return response.blob();
+            })
+            .then(blob => {
+                const blobUrl = URL.createObjectURL(blob);
+
+                const printWindow = window.open("", "_blank");
+                printWindow.document.write(`
+                <html>
+                    <head>
+                        <title>Impression facture</title>
+                    </head>
+                    <body style="margin:0">
+                        <iframe id="pdfFrame"
+                                src="${blobUrl}"
+                                style="width:100%; height:100vh; border:none;"></iframe>
+                        <script>
+                            const iframe = document.getElementById('pdfFrame');
+                            iframe.onload = function () {
+                                iframe.contentWindow.focus();
+                                iframe.contentWindow.print();
+                            };
+                        <\/script>
+                    </body>
+                </html>
+            `);
+            })
+            .catch(error => {
+                console.error(error);
+                showToast("Impossible d'imprimer le PDF.", "error");
+            });
+    }
+
+</script>
+{% endblock %}

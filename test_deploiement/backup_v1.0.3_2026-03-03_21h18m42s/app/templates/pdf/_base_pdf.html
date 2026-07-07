@@ -1,0 +1,87 @@
+<!-- _base_pdf.html -->
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ title }}</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            line-height: 1.4;
+            color: #333;
+            font-size: 14px;
+        }
+        .letter {
+            width: 600px;
+            margin: 10px auto;
+            padding: 10px;
+            background-color: #fff;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            border-radius: 5px;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 5px;
+        }
+        .header img {
+            margin-bottom: 5px;
+        }
+        .header h1 {
+            font-size: 30px;
+            margin: 5px 0;
+            color: #0073e6;
+        }
+        .header h2 {
+            font-size: 16px;
+            margin: 5px 0;
+            color: #555;
+        }
+        .header p {
+            font-size: 12px;
+            color: #777;
+        }
+        .content {
+            font-size: 14px;
+            line-height: 1.4;
+            margin-bottom: 5px;
+        }
+        .content p, .content ul {
+            margin-bottom: 5px;
+        }
+        .content strong {
+            color: #0073e6;
+        }
+        .signature {
+            text-align: center;
+            font-size: 14px;
+            margin-top: 10px;
+        }
+        .signature p {
+            border-top: 1px solid #333;
+            display: inline-block;
+            width: 200px;
+            margin-top: 10px;
+            padding-top: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="letter">
+        <div class="header">
+            <img src="static/icon/logo.png" alt="Logo de la Clinique INAYA" width="150">
+            <h1>Clinique INAYA</h1>
+            <h2>{{ header_title }}</h2>
+            <p>{{ current_date }}</p>
+        </div>
+        <div class="content">
+            {% block content %}{% endblock %}
+        </div>
+        <div class="signature">
+            <p>Signature du récepteur : _________________________</p>
+        </div>
+    </div>
+</body>
+</html>

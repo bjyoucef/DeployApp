@@ -1,0 +1,107 @@
+{% extends "admin/admin_layout.html" %}
+
+{% block title %}
+{% if action == 'add' %}Ajouter{% else %}Modifier{% endif %} un utilisateur
+{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-8 offset-md-2">
+            <div class="card">
+                <div class="card-header">
+                    <h4 class="mb-0">
+                        {% if action == 'add' %}
+                        <i class="fas fa-plus"></i> Ajouter un utilisateur
+                        {% else %}
+                        <i class="fas fa-edit"></i> Modifier un utilisateur
+                        {% endif %}
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <form method="POST">
+                        <div class="form-group">
+                            <label for="user_id">ID Telegram *</label>
+                            <input type="number"
+                                   class="form-control"
+                                   id="user_id"
+                                   name="user_id"
+                                   value="{{ user.user_id if user else '' }}"
+                                   {% if action == 'edit' %}readonly{% endif %}
+                                   required>
+                            <small class="form-text text-muted">
+                                L'utilisateur peut obtenir son ID via <a href="https://t.me/userinfobot" target="_blank">@userinfobot</a>
+                            </small>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="first_name">Prénom</label>
+                            <input type="text"
+                                   class="form-control"
+                                   id="first_name"
+                                   name="first_name"
+                                   value="{{ user.first_name if user else '' }}">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="last_name">Nom</label>
+                            <input type="text"
+                                   class="form-control"
+                                   id="last_name"
+                                   name="last_name"
+                                   value="{{ user.last_name if user else '' }}">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="username">Username Telegram</label>
+                            <div class="input-group">
+                                <div class="input-group-prepend">
+                                    <span class="input-group-text">@</span>
+                                </div>
+                                <input type="text"
+                                       class="form-control"
+                                       id="username"
+                                       name="username"
+                                       value="{{ user.username if user else '' }}"
+                                       placeholder="sans le @">
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="notes">Notes / Raison de l'ajout</label>
+                            <textarea class="form-control"
+                                      id="notes"
+                                      name="notes"
+                                      rows="3">{{ user.notes if user else '' }}</textarea>
+                        </div>
+
+                        {% if action == 'edit' %}
+                        <div class="form-group">
+                            <div class="custom-control custom-switch">
+                                <input type="checkbox"
+                                       class="custom-control-input"
+                                       id="is_active"
+                                       name="is_active"
+                                       {% if user.is_active %}checked{% endif %}>
+                                <label class="custom-control-label" for="is_active">
+                                    Utilisateur actif
+                                </label>
+                            </div>
+                        </div>
+                        {% endif %}
+
+                        <div class="form-group mb-0">
+                            <button type="submit" class="btn btn-success">
+                                <i class="fas fa-save"></i> Enregistrer
+                            </button>
+                            <a href="{{ url_for('bot_whitelist_index') }}" class="btn btn-secondary">
+                                <i class="fas fa-times"></i> Annuler
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

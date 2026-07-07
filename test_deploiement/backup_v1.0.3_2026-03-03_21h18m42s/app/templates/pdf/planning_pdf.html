@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Planning des Shifts</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 5px;
+        }
+        h1, h2 {
+            text-align: center;
+            color: #000;
+        }
+        h1 {
+            font-size: 3em;
+            margin-bottom: 5px;
+        }
+        h2 {
+            font-size: 2em;
+            margin-bottom: 5px;
+            color: #7f8c8d;
+        }
+        p {
+            font-size: 1em;
+            margin: 5px 0;
+            color: #34495e;
+        }
+        p strong {
+            color: #16a085;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 5px;
+        }
+        table, th, td {
+            border: 1px solid #000;
+        }
+        th, td {
+            padding: 5px;
+            text-align: left;
+        }
+        th {
+            background-color: #3498db;
+            color: white;
+            font-weight: bold;
+        }
+        td {
+            background-color: #ecf0f1;
+        }
+        tr:nth-child(even) td {
+            background-color: #f9f9f9;
+        }
+        tr:hover td {
+            background-color: #d5dbdb;
+        }
+        @media (max-width: 768px) {
+            body {
+                margin: 5px;
+            }
+            table, th, td {
+                font-size: 1em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <h1>Planning des Shifts</h1>
+    <h2>{{ month }} / {{ year }}</h2>
+    <p><strong>Service :</strong> {{ selected_service }}</p>
+    <p><strong>Shift :</strong> {{ selected_shift }}</p>
+    <p><strong>Employé :</strong> {{ selected_employee }}</p>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Date</th>
+                {% if selected_employee == 'all' %}
+                    <th>Employé</th>
+                {% endif %}
+
+                {% if selected_shift == 'all' %}
+                    <th>Shift</th>
+                {% endif %}
+
+                {% if selected_service == 'all' %}
+                    <th>Service</th>
+                {% endif %}
+            </tr>
+        </thead>
+        <tbody>
+            {% for planning in plannings %}
+            <tr>
+                <td>{{ planning['shift_date'] }}</td>
+                {% if selected_employee == 'all' %}
+                    <td>{{ planning['full_name'] }}</td>
+                {% endif %}
+                {% if selected_shift == 'all' %}
+                    <td>{{ planning['shift_type'] }}</td>
+                {% endif %}
+                {% if selected_service == 'all' %}
+                    <td>{{ planning['service'] }}</td>
+                {% endif %}
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</body>
+</html>

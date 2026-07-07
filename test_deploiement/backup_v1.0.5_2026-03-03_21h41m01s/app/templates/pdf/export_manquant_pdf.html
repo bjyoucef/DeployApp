@@ -1,0 +1,16 @@
+{% extends "pdf/_base_pdf.html" %}
+{% block content %}
+        <p>Je soussigné(e), <strong>{{ cles_manquantes.nom_perte }} {{ cles_manquantes.prenom_perte }}</strong>, titulaire du poste de <strong>{{ cles_manquantes.role_perte }}</strong> au sein de la clinique INAYA, déclare par la présente que la clé numéro <strong>{{ cles_manquantes.numero_cle }}</strong> (clé de <strong>{{ cles_manquantes.description }}</strong>) est manquante depuis le <strong>{{ cles_manquantes.date_marquer_manquante }}</strong>.</p>
+
+        <p>Cette déclaration est faite afin de signaler la perte de la clé susmentionnée et de permettre aux responsables de la clinique de prendre les mesures nécessaires pour garantir la sécurité de nos locaux. Je m'engage à coopérer pleinement avec les procédures qui pourraient être mises en place pour éviter toute utilisation non autorisée de cette clé.</p>
+
+        <p>Je comprends que la perte de cette clé peut entraîner des répercussions sur la sécurité de la clinique et que je pourrais être tenu responsable des conséquences liées à cette perte.</p>
+
+        <p><strong>Informations :</strong></p>
+        <ul>
+            <li><strong>Nom du déclarant :</strong> {{ cles_manquantes.nom_perte }} {{ cles_manquantes.prenom_perte }}</li>
+            <li><strong>Numéro de clé :</strong> {{ cles_manquantes.numero_cle }}</li>
+            <li><strong>Description de la clé :</strong> {{ cles_manquantes.description }}</li>
+            <li><strong>Date de déclaration :</strong> {{ cles_manquantes.date_marquer_manquante }}</li>
+        </ul><br>
+{% endblock %}

@@ -1,0 +1,41 @@
+<div class="table-responsive">
+    <table class="table-modern">
+        <thead>
+        <tr>
+            <th>#</th>
+            <th>Date</th>
+            <th>Patient</th>
+            <th>Acte</th>
+            <th class="text-end">Honoraires</th>
+            <th class="text-center">Payé</th>
+            <th class="text-center">Action</th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for item in items %}
+            <tr>
+                <td><strong>#{{ item.id_acte }}</strong></td>
+                <td>{{ item.date_acte.strftime('%d/%m/%Y') }}</td>
+                <td><strong>{{ item.patient }}</strong></td>
+                <td>{{ item.nom_acte or 'N/A' }}</td>
+                <td class="text-end">
+                    <strong>{{ "{:,.2f}".format(item.part_medecin).replace(",", " ") }} DA</strong>
+                </td>
+                <td class="text-center">
+                    {% if item.medecin_paye %}
+                        <span class="badge bg-success">✓</span>
+                    {% else %}
+                        <span class="badge bg-warning">En attente</span>
+                    {% endif %}
+                </td>
+                <td class="text-center">
+                    <a href="{{ url_for('medecin_interne_actes_detail', id_acte=item.id_acte) }}"
+                       class="btn btn-sm btn-outline-primary" title="Voir détails">
+                        <i class="fas fa-eye"></i>
+                    </a>
+                </td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>

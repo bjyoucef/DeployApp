@@ -1,0 +1,53 @@
+<!-- Modal Info Médecin -->
+<div class="modal fade" id="modalMedecinInfo" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg">
+            <div class="modal-header bg-gradient-primary text-white"
+                style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                <h5 class="modal-title fw-bold">
+                    <i class="fas fa-user-md me-2"></i>Détails du Médecin
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                    aria-label="Close" id="modal_medecin_info_button_1"></button>
+            </div>
+            <div class="modal-body p-0">
+                <div id="medecinInfoLoading" class="text-center py-5">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Chargement...</span>
+                    </div>
+                    <p class="mt-2 text-muted">Récupération des informations...</p>
+                </div>
+
+                <div id="medecinInfoContent" style="display: none;">
+                    <!-- En-tête Profil -->
+                    <div class="p-4 bg-light border-bottom">
+                        <div class="d-flex align-items-center mb-3">
+                            <div class="avatar-lg rounded-circle bg-white text-primary d-flex align-items-center justify-content-center shadow-sm me-3"
+                                style="width: 64px; height: 64px; font-size: 1.5rem; font-weight: bold;"
+                                id="infoMedecinInitials">
+                                --
+                            </div>
+                            <div>
+                                <h4 class="mb-1 fw-bold text-dark" id="infoMedecinName">--</h4>
+                                <div class="badge bg-primary mb-1" id="infoMedecinSpecialty">--</div>
+                                <div class="text-muted small" id="infoMedecinType">--</div>
+                            </div>
+                        </div>
+                        <div class="d-flex align-items-center text-muted">
+                            <i class="fas fa-phone-alt me-2"></i>
+                            <span id="infoMedecinPhone">--</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="medecinInfoError" class="text-center py-5 text-danger" style="display: none;">
+                    <i class="fas fa-exclamation-circle fa-2x mb-2"></i>
+                    <p class="mb-0">Impossible de charger les informations.</p>
+                </div>
+            </div>
+            <div class="modal-footer bg-light">
+                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal" id="modal_medecin_info_button_2">Fermer</button>
+            </div>
+        </div>
+    </div>
+</div>

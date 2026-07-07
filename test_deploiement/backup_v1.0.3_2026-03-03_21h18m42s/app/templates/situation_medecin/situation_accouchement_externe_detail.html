@@ -1,0 +1,874 @@
+{% extends 'layout.html' %}
+
+{% block title %}Détail - Dr. {{ gyneco.nom_complet }}{% endblock %}
+
+{% block style %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/litepicker.css') }}" />
+<style>
+    .litepicker {
+        font-family: inherit;
+        box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1) !important;
+        border: none !important;
+        border-radius: 15px !important;
+    }
+
+    .litepicker .container__months {
+        border-radius: 15px;
+    }
+
+    .litepicker .container__days .day-item.is-start-date,
+    .litepicker .container__days .day-item.is-end-date {
+        background-color: #dc3545 !important;
+        color: white !important;
+    }
+
+    .litepicker .container__days .day-item.is-in-range {
+        background-color: #ffe3e3 !important;
+    }
+
+    .litepicker .container__footer .apply-button {
+        background-color: #dc3545 !important;
+        border-color: #dc3545 !important;
+    }
+
+    .header-gyneco {
+        background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+        color: white;
+        padding: 2rem;
+        border-radius: 15px;
+        margin-bottom: 2rem;
+    }
+
+    .stat-box {
+        background: white;
+        padding: 1.5rem;
+        border-radius: 10px;
+        border-left: 4px solid;
+        transition: all 0.3s ease;
+    }
+
+    .stat-box:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
+    }
+
+    .dossier-card {
+        transition: all 0.3s ease;
+        border-left: 4px solid transparent;
+    }
+
+    .dossier-card:hover {
+        border-left-color: #dc3545;
+        box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item">
+                <a href="{{ url_for('situation_accouchement_externe') }}">
+                    <i class="fas fa-heartbeat"></i> Situation Accouchements
+                </a>
+            </li>
+            <li class="breadcrumb-item active">Dr. {{ gyneco.nom_complet }}</li>
+        </ol>
+    </nav>
+
+    <!-- En-tête gynéco -->
+    <div class="header-gyneco">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <div class="d-flex align-items-center mb-3">
+                    <div class="me-4">
+                        <div class="bg-white text-danger rounded-circle d-flex align-items-center justify-content-center"
+                            style="width: 80px; height: 80px;">
+                            <i class="fas fa-user-md display-4"></i>
+                        </div>
+                    </div>
+                    <div>
+                        <h2 class="mb-1">Dr. {{ gyneco.nom_complet }}
+                            <span class="badge bg-light text-dark ms-2">
+                                <i class="fas fa-user"></i> Externe
+                            </span>
+                        </h2>
+                        <p class="mb-0 opacity-75">
+                            <i class="fas fa-award"></i> {{ gyneco.name_specialty or 'Gynécologue' }}
+                        </p>
+                    </div>
+                </div>
+
+                <div class="row mt-4">
+                    <div class="col-md-4">
+                        <div class="text-center">
+                            <h4 class="mb-0">{{ gyneco.total_dossiers }}</h4>
+                            <small class="opacity-75">Accouchements</small>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="text-center">
+                            <h4 class="mb-0">{{ "{:,.2f}".format(gyneco.chiffre_affaire) }} DA</h4>
+                            <small class="opacity-75">Honoraires</small>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="text-center">
+                            <h4 class="mb-0 {{ 'text-success' if gyneco.balance_globale >= 0 else 'text-danger' }}">
+                                {{ "{:,.2f}".format(gyneco.balance_globale) }} DA
+                            </h4>
+                            <small class="opacity-75">Balance globale</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-4 text-end">
+                <div class="action-buttons">
+                    <button class="btn btn-light" onclick="ouvrirModalCreerOperation('ENCAISSEMENT')">
+                        <i class="fas fa-receipt"></i>
+                        Créer encaissement
+                    </button>
+                    <button class="btn btn-light" onclick="ouvrirModalCreerOperation('DECHARGE')">
+                        <i class="fas fa-wallet"></i>
+                        Créer décharge
+                    </button>
+                    <button class="btn btn-warning" onclick="ouvrirModalCompensation()">
+                        <i class="fas fa-exchange-alt"></i>
+                        Compensation
+                    </button>
+                    <a href="{{ url_for('export_situation_medecin_detail', type_situation='ACCOUCHEMENT', id_doctor=gyneco.id_gyneco, start_date=start_date, end_date=end_date) }}"
+                        target="_blank" class="btn btn-light text-dark">
+                        <i class="fas fa-file-pdf"></i>
+                        Imprimer
+                    </a>
+                    <a href="{{ url_for('situation_accouchement_externe') }}" class="btn btn-outline-light">
+                        <i class="fas fa-arrow-left"></i>
+                        Retour
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filtres Date -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <form method="GET" id="dateForm" class="row align-items-end">
+                <input type="hidden" name="start_date" id="start_date" value="{{ start_date or '' }}">
+                <input type="hidden" name="end_date" id="end_date" value="{{ end_date or '' }}">
+
+                <div class="col-md-9">
+                    <label class="form-label">Période</label>
+                    <div class="input-group">
+                        <span class="input-group-text bg-white"><i class="fas fa-calendar-alt text-danger"></i></span>
+                        <input type="text" id="daterange" class="form-control ps-3"
+                            placeholder="Sélectionner une période..." readonly
+                            style="cursor: pointer; background-color: white;">
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="fas fa-filter"></i> Filtrer
+                    </button>
+                    {% if start_date or end_date %}
+                    <a href="{{ url_for('situation_accouchement_externe_detail', id_gyneco=gyneco.id_gyneco) }}"
+                        class="btn btn-outline-secondary w-100 mt-2">
+                        <i class="fas fa-times"></i> Rétablir
+                    </a>
+                    {% endif %}
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Statistiques détaillées -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="stat-box border-danger">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <small class="text-muted d-block mb-1">Décaissements (Clinique → Gynéco)</small>
+                        <h4 class="mb-0 text-success">{{ "{:,.2f}".format(gyneco.total_decaissement) }} DA</h4>
+                    </div>
+                    <i class="fas fa-arrow-up-circle text-success display-5"></i>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-box border-danger">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <small class="text-muted d-block mb-1">Encaissements (Gynéco → Clinique)</small>
+                        <h4 class="mb-0 text-danger">{{ "{:,.2f}".format(gyneco.total_encaissement) }} DA</h4>
+                    </div>
+                    <i class="fas fa-arrow-down-circle text-danger display-5"></i>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-box border-warning">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <small class="text-muted d-block mb-1">Compensations</small>
+                        <h4 class="mb-0 text-warning">{{ "{:,.2f}".format(gyneco.total_compensation) }} DA</h4>
+                    </div>
+                    <i class="fas fa-exchange-alt text-warning display-5"></i>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-box border-info">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <small class="text-muted d-block mb-1">Reste à régler</small>
+                        <h4 class="mb-0 {{ 'text-success' if gyneco.reste_a_regler_global >= 0 else 'text-danger' }}">
+                            {{ "{:,.2f}".format(gyneco.reste_a_regler_global) }} DA
+                        </h4>
+                    </div>
+                    <i class="fas fa-money-bill-wave text-info display-5"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Alerte info -->
+    <div class="alert alert-info mb-4">
+        <h6><i class="fas fa-info-circle"></i> Comprendre les statuts</h6>
+        <ul class="mb-0 small">
+            <li><strong>CLINIQUE_DOIT_PAYER (reste > 0)</strong> : La clinique doit de l'argent au gynécologue → Créer
+                une <strong>DÉCHARGE</strong></li>
+            <li><strong>GYNECO_DOIT_PAYER (reste < 0)</strong> : Le gynécologue doit de l'argent à la clinique → Créer
+                        un <strong>ENCAISSEMENT</strong></li>
+            <li><strong>EQUILIBRE (reste ≈ 0)</strong> : Situation équilibrée</li>
+        </ul>
+    </div>
+
+    <!-- Filtres -->
+    <div class="row mb-3">
+        <div class="col-md-6">
+            <h4><i class="far fa-folder-open"></i> Dossiers ({{ dossiers|length }})</h4>
+        </div>
+        <div class="col-md-6">
+            <div class="input-group">
+                <span class="input-group-text"><i class="fas fa-search"></i></span>
+                <input type="text" id="searchDossiers" class="form-control"
+                    placeholder="Rechercher par patiente, date...">
+            </div>
+        </div>
+    </div>
+
+    <!-- Filtres de statut -->
+    <div class="row mb-3">
+        <div class="col-md-6 text-start">
+            <div class="btn-group" role="group">
+                <input type="radio" class="btn-check" name="filter" id="filter_all" checked>
+                <label class="btn btn-outline-danger" for="filter_all" onclick="filtrerDossiers('all')">Tous</label>
+
+                <input type="radio" class="btn-check" name="filter" id="filter_encaisser">
+                <label class="btn btn-outline-danger" for="filter_encaisser" onclick="filtrerDossiers('encaisser')">
+                    Gynéco doit payer
+                </label>
+
+                <input type="radio" class="btn-check" name="filter" id="filter_decaisser">
+                <label class="btn btn-outline-success" for="filter_decaisser" onclick="filtrerDossiers('decaisser')">
+                    Clinique doit payer
+                </label>
+
+                <input type="radio" class="btn-check" name="filter" id="filter_equilibre">
+                <label class="btn btn-outline-secondary" for="filter_equilibre" onclick="filtrerDossiers('equilibre')">
+                    Équilibrés
+                </label>
+            </div>
+        </div>
+        <div class="col-md-6 text-end">
+            <a href="{{ url_for('operations_accouchement_externe_list', type_operation='ENCAISSEMENT') }}"
+                class="btn btn-outline-danger">
+                <i class="fas fa-money-bill-wave"></i> Voir encaissements
+            </a>
+            <a href="{{ url_for('operations_accouchement_externe_list', type_operation='DECHARGE') }}"
+                class="btn btn-outline-success">
+                <i class="fas fa-wallet"></i> Voir décharges
+            </a>
+            <a href="{{ url_for('operations_accouchement_externe_list', type_operation='COMPENSATION') }}"
+                class="btn btn-outline-warning">
+                <i class="fas fa-exchange-alt"></i> Voir compensations
+            </a>
+        </div>
+    </div>
+
+    <!-- Liste des dossiers -->
+    <div class="row mt-3" id="dossiersContainer">
+        {% for dossier in dossiers %}
+        <div class="col-md-6 mb-3 dossier-item" data-statut="{{ dossier.statut_paiement }}"
+            data-reste="{{ dossier.reste }}"
+            data-search="{{ dossier.patient|lower }} {{ dossier.date_accouchement.strftime('%d/%m/%Y') }}">
+
+            <div class="card dossier-card h-100">
+                <div class="card-header bg-light">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <span class="badge bg-danger me-2">
+                                <i class="fas fa-heartbeat"></i> Accouchement
+                            </span>
+                            <strong>{{ dossier.patient }}</strong>
+                        </div>
+                        <small class="text-muted">
+                            {{ dossier.date_accouchement.strftime('%d/%m/%Y') }}
+                        </small>
+                    </div>
+                </div>
+
+                <div class="card-body">
+                    <!-- Montants -->
+                    <div class="row mb-3">
+                        <div class="col-4">
+                            <small class="text-muted d-block">
+                                <i class="fas fa-hospital text-info"></i> Part clinique
+                            </small>
+                            <strong class="text-info">{{ "{:,.2f}".format(dossier.part_clinique) }} DA</strong>
+                        </div>
+                        <div class="col-4">
+                            <small class="text-muted d-block">
+                                <i class="fas fa-user-md text-danger"></i> Part gynéco
+                            </small>
+                            <strong class="text-danger">{{ "{:,.2f}".format(dossier.part_gyneco) }} DA</strong>
+                        </div>
+                        <div class="col-4 text-end">
+                            <small class="text-muted d-block">Balance</small>
+                            <strong class="{{ 'text-success' if dossier.balance >= 0 else 'text-danger' }}">
+                                {{ "{:,.2f}".format(dossier.balance) }} DA
+                            </strong>
+                        </div>
+                    </div>
+
+                    <!-- Prix total -->
+                    <div class="mb-2 text-center">
+                        <small class="text-muted">
+                            <i class="fas fa-calculator"></i>
+                            Prix total dossier:
+                            <strong>{{ "{:,.2f}".format(dossier.prix_total_dossier) }} DA</strong>
+                        </small>
+                    </div>
+
+                    <!-- Reste à régler -->
+                    <div class="alert {{ 'alert-success' if dossier.reste >= 0 else 'alert-danger' }} py-2 mb-3">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <small>Reste à régler:</small>
+                            <strong>{{ "{:,.2f}".format(dossier.reste) }} DA</strong>
+                        </div>
+                    </div>
+
+                    <!-- Statut -->
+                    <div class="mb-3">
+                        {% if dossier.statut_paiement == 'EQUILIBRE' %}
+                        <span class="badge bg-success">
+                            <i class="far fa-check-circle"></i> Équilibré
+                        </span>
+                        {% elif dossier.statut_paiement == 'CLINIQUE_DOIT_PAYER' %}
+                        <span class="badge bg-info">
+                            <i class="fas fa-arrow-up"></i> Clinique doit payer (Décharge)
+                        </span>
+                        {% elif dossier.statut_paiement == 'GYNECO_DOIT_PAYER' %}
+                        <span class="badge bg-warning">
+                            <i class="fas fa-arrow-down"></i> Gynéco doit payer (Encaissement)
+                        </span>
+                        {% endif %}
+                    </div>
+
+                    <!-- Transactions -->
+                    {% if dossier.transactions %}
+                    <div class="border-top pt-3">
+                        <h6 class="mb-2">
+                            <i class="far fa-clock"></i>
+                            Transactions ({{ dossier.transactions|length }})
+                        </h6>
+                        <div class="timeline">
+                            {% for trans in dossier.transactions[:5] %}
+                            <div class="timeline-item mb-2">
+                                <small class="text-muted d-block">
+                                    {{ trans.payment_date.strftime('%d/%m/%Y %H:%M') if trans.payment_date else 'N/A' }}
+                                </small>
+                                <div class="mt-1">
+                                    {% if trans.encaissement_patient %}
+                                    <span class="badge bg-info me-1">
+                                        <i class="fas fa-user"></i> Enc Patient: {{
+                                        "{:,.2f}".format(trans.encaissement_patient) }} DA
+                                    </span>
+                                    {% endif %}
+                                    {% if trans.encaissement_gyneco %}
+                                    <span class="badge bg-danger me-1">
+                                        <i class="fas fa-arrow-right"></i> Enc Gynéco: {{
+                                        "{:,.2f}".format(trans.encaissement_gyneco) }} DA
+                                    </span>
+                                    {% endif %}
+                                    {% if trans.decaissement_clinique %}
+                                    <span class="badge bg-success me-1">
+                                        <i class="fas fa-arrow-left"></i> Déc: {{
+                                        "{:,.2f}".format(abs(trans.decaissement_clinique)) }} DA
+                                    </span>
+                                    {% endif %}
+                                    {% if trans.compensation %}
+                                    <span class="badge bg-warning me-1">
+                                        <i class="fas fa-exchange-alt"></i> Comp: {{
+                                        "{:,.2f}".format(abs(trans.compensation)) }} DA
+                                    </span>
+                                    {% endif %}
+                                </div>
+                                {% if trans.notes %}
+                                <small class="text-muted">
+                                    <i class="fas fa-info-circle"></i> {{ trans.notes }}
+                                </small>
+                                {% endif %}
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+
+                <div class="card-footer bg-transparent">
+                    <a href="{{ url_for('accouchement_detail', id_dossier=dossier.id) }}"
+                        class="btn btn-sm btn-outline-danger w-100">
+                        <i class="far fa-eye"></i> Voir le dossier complet
+                    </a>
+                </div>
+            </div>
+        </div>
+        {% else %}
+        <div class="col-12">
+            <div class="alert alert-info text-center py-5">
+                <i class="far fa-inbox display-3"></i>
+                <h4 class="mt-3">Aucun dossier</h4>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<!-- Modals (similaires à situation_medecin_detail.html mais adaptés) -->
+<!-- Modal Créer Opération -->
+<div class="modal fade" id="modalCreerOperation" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <form method="POST" action="{{ url_for('creer_operation_accouchement_externe') }}">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="modalCreerOperationTitle">
+                        <i class="fas fa-receipt"></i> Créer une opération
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" name="id_gyneco" value="{{ gyneco.id_gyneco }}">
+                    <input type="hidden" name="type_operation" id="type_operation">
+
+                    <div class="mb-3">
+                        <label class="form-label">Date de l'opération</label>
+                        <input type="date" class="form-control" name="date_operation" value="{{ current_date }}"
+                            required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Sélectionner les dossiers</label>
+                        <div id="listeDossiersOperation" class="border rounded p-3"
+                            style="max-height: 300px; overflow-y: auto;">
+                            <div class="text-center text-muted">
+                                <div class="spinner-border spinner-border-sm" role="status"></div>
+                                Chargement...
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="alert alert-info">
+                        <strong>Total sélectionné: <span id="totalSelectionne">0.00</span> DA</strong>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                    <button type="submit" class="btn btn-danger">
+                        <i class="far fa-check-circle"></i> Créer l'opération
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Compensation -->
+<div class="modal fade" id="modalCompensation" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <form method="POST" action="{{ url_for('creer_compensation_accouchement_externe') }}">
+                <div class="modal-header bg-warning text-white">
+                    <h5 class="modal-title">
+                        <i class="fas fa-exchange-alt"></i> Compensation entre dossiers
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" name="id_gyneco" value="{{ gyneco.id_gyneco }}">
+                    <input type="hidden" name="type_operation" value="COMPENSATION">
+
+                    <div class="mb-3">
+                        <label class="form-label">Date de la compensation</label>
+                        <input type="date" class="form-control" name="date_operation" value="{{ current_date }}"
+                            required>
+                    </div>
+
+                    <div class="alert alert-info">
+                        <h6><i class="fas fa-info-circle"></i> Comment fonctionne la compensation</h6>
+                        <p class="mb-0 small">
+                            La compensation s'applique par ordre chronologique (FIFO).
+                            Sélectionnez des dossiers positifs et négatifs pour les compenser.
+                        </p>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6 class="border-bottom pb-2">
+                                <i class="fas fa-arrow-up-circle text-success"></i> Clinique doit payer
+                            </h6>
+                            <div id="dossiersPositifs" class="border rounded p-2"
+                                style="max-height: 250px; overflow-y: auto;">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <h6 class="border-bottom pb-2">
+                                <i class="fas fa-arrow-down-circle text-danger"></i> Gynéco doit payer
+                            </h6>
+                            <div id="dossiersNegatifs" class="border rounded p-2"
+                                style="max-height: 250px; overflow-y: auto;">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row mt-3">
+                        <div class="col-md-6">
+                            <div class="alert alert-success">
+                                <strong>Total surplus:</strong>
+                                <span id="totalSurplus" class="float-end">0.00 DA</span>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="alert alert-danger">
+                                <strong>Total déficit:</strong>
+                                <span id="totalDeficit" class="float-end">0.00 DA</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="alert alert-warning" id="equilibreAlert">
+                        <strong id="equilibreText">Sélectionnez des dossiers pour compenser</strong>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                    <button type="submit" class="btn btn-warning" id="btnCreerCompensation" disabled>
+                        <i class="far fa-check-circle"></i> Créer la compensation
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Filtrage des dossiers
+    function filtrerDossiers(type) {
+        const items = document.querySelectorAll('.dossier-item');
+        items.forEach(item => {
+            const statut = item.dataset.statut;
+            const reste = parseFloat(item.dataset.reste);
+
+            let visible = true;
+            if (type === 'encaisser') {
+                visible = statut === 'GYNECO_DOIT_PAYER';
+            } else if (type === 'decaisser') {
+                visible = statut === 'CLINIQUE_DOIT_PAYER';
+            } else if (type === 'equilibre') {
+                visible = statut === 'EQUILIBRE';
+            }
+
+            item.style.display = visible ? '' : 'none';
+        });
+    }
+
+    // Recherche
+    document.getElementById('searchDossiers')?.addEventListener('input', function (e) {
+        const search = e.target.value.toLowerCase();
+        const items = document.querySelectorAll('.dossier-item');
+
+        items.forEach(item => {
+            const searchText = item.dataset.search;
+            const visible = searchText.includes(search);
+            item.style.display = visible ? '' : 'none';
+        });
+    });
+
+    // Ouvrir modal opération
+    function ouvrirModalCreerOperation(type) {
+        const modal = new bootstrap.Modal(document.getElementById('modalCreerOperation'));
+        const title = document.getElementById('modalCreerOperationTitle');
+        const typeInput = document.getElementById('type_operation');
+        const liste = document.getElementById('listeDossiersOperation');
+        const modalHeader = document.querySelector('#modalCreerOperation .modal-header');
+
+        typeInput.value = type;
+
+        const config = {
+            'ENCAISSEMENT': {
+                title: '<i class="fas fa-receipt"></i> Créer un encaissement (Gynéco → Clinique)',
+                headerClass: 'modal-header bg-danger text-white',
+                url: '/api/get_gynecos_a_encaisser'
+            },
+            'DECHARGE': {
+                title: '<i class="fas fa-wallet"></i> Créer une décharge (Clinique → Gynéco)',
+                headerClass: 'modal-header bg-success text-white',
+                url: '/api/get_gynecos_a_decaisser'
+            }
+        };
+
+        const settings = config[type];
+        title.innerHTML = settings.title;
+        modalHeader.className = settings.headerClass;
+        modal.show();
+
+        // Charger les dossiers
+        fetch(settings.url)
+            .then(res => res.json())
+            .then(data => {
+                const gyneco = data.find(g => g.id === {{ gyneco.id_gyneco }});
+
+        if (!gyneco || !gyneco.dossiers || gyneco.dossiers.length === 0) {
+            liste.innerHTML = '<div class="text-center text-muted py-3">Aucun dossier éligible</div>';
+            return;
+        }
+
+        let html = '';
+        gyneco.dossiers.forEach(d => {
+            html += `
+                            <div class="form-check mb-2 p-2 border rounded">
+                                <input class="form-check-input dossier-checkbox"
+                                       type="checkbox"
+                                       name="dossiers[]"
+                                       value="${d.id_dossier}"
+                                       data-montant="${Math.abs(d.montant_du)}"
+                                       onchange="updateTotal()">
+                                <label class="form-check-label w-100">
+                                    <strong>${d.patient}</strong>
+                                    <br>
+                                    <small class="text-muted">${d.date}</small>
+                                    <div class="text-end">
+                                        <strong class="text-danger">
+                                            ${Math.abs(d.montant_du).toLocaleString('fr-FR', { minimumFractionDigits: 2 })} DA
+                                        </strong>
+                                    </div>
+                                </label>
+                            </div>
+                        `;
+        });
+
+        liste.innerHTML = html;
+    })
+                .catch (err => {
+        liste.innerHTML = '<div class="alert alert-danger">Erreur de chargement</div>';
+    });
+        }
+
+    function updateTotal() {
+        const checkboxes = document.querySelectorAll('.dossier-checkbox:checked');
+        const total = Array.from(checkboxes).reduce((sum, cb) => {
+            return sum + (parseFloat(cb.dataset.montant) || 0);
+        }, 0);
+
+        document.getElementById('totalSelectionne').textContent =
+            total.toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
+
+    // Ouvrir modal compensation
+    function ouvrirModalCompensation() {
+        const modal = new bootstrap.Modal(document.getElementById('modalCompensation'));
+        modal.show();
+
+        fetch(`/api/get_dossiers_compensation_accouchement/{{ gyneco.id_gyneco }}`)
+            .then(res => res.json())
+            .then(data => {
+                afficherDossiersCompensation(data);
+            })
+            .catch(err => {
+                console.error('Erreur:', err);
+            });
+    }
+
+    function afficherDossiersCompensation(data) {
+        const dossiersPositifs = document.getElementById('dossiersPositifs');
+        const dossiersNegatifs = document.getElementById('dossiersNegatifs');
+
+        // Positifs
+        if (data.dossiers_positifs && data.dossiers_positifs.length) {
+            let html = '';
+            data.dossiers_positifs.forEach(d => {
+                const isDisabled = d.deja_decharge ? 'disabled' : '';
+                const warningClass = d.deja_decharge ? 'border-warning' : '';
+
+                html += `
+                        <div class="form-check mb-2 p-2 border rounded ${warningClass}">
+                            <input class="form-check-input dossier-compensation"
+                                   type="checkbox"
+                                   name="dossiers[]"
+                                   value="${d.id_dossier}"
+                                   data-montant="${Math.abs(d.reste)}"
+                                   data-type="positif"
+                                   ${isDisabled}>
+                            <label class="form-check-label w-100">
+                                <strong>${d.patient}</strong>
+                                <small class="text-muted d-block">${d.date}</small>
+                                <strong class="text-success">
+                                    ${Math.abs(d.reste).toLocaleString('fr-FR', { minimumFractionDigits: 2 })} DA
+                                </strong>
+                            </label>
+                        </div>
+                    `;
+            });
+            dossiersPositifs.innerHTML = html;
+        } else {
+            dossiersPositifs.innerHTML = '<div class="text-muted text-center py-3">Aucun dossier</div>';
+        }
+
+        // Négatifs
+        if (data.dossiers_negatifs && data.dossiers_negatifs.length) {
+            let html = '';
+            data.dossiers_negatifs.forEach(d => {
+                const isDisabled = d.deja_encaisse ? 'disabled' : '';
+                const warningClass = d.deja_encaisse ? 'border-warning' : '';
+
+                html += `
+                        <div class="form-check mb-2 p-2 border rounded ${warningClass}">
+                            <input class="form-check-input dossier-compensation"
+                                   type="checkbox"
+                                   name="dossiers[]"
+                                   value="${d.id_dossier}"
+                                   data-montant="${Math.abs(d.reste)}"
+                                   data-type="negatif"
+                                   ${isDisabled}>
+                            <label class="form-check-label w-100">
+                                <strong>${d.patient}</strong>
+                                <small class="text-muted d-block">${d.date}</small>
+                                <strong class="text-danger">
+                                    ${Math.abs(d.reste).toLocaleString('fr-FR', { minimumFractionDigits: 2 })} DA
+                                </strong>
+                            </label>
+                        </div>
+                    `;
+            });
+            dossiersNegatifs.innerHTML = html;
+        } else {
+            dossiersNegatifs.innerHTML = '<div class="text-muted text-center py-3">Aucun dossier</div>';
+        }
+
+        // Liaison événements
+        document.querySelectorAll('.dossier-compensation').forEach(cb => {
+            cb.addEventListener('change', miseAJourCompensation);
+        });
+
+        miseAJourCompensation();
+    }
+
+    function miseAJourCompensation() {
+        const cbs = document.querySelectorAll('.dossier-compensation:checked');
+        let totalPositif = 0;
+        let totalNegatif = 0;
+
+        cbs.forEach(cb => {
+            const montant = Math.abs(parseFloat(cb.dataset.montant) || 0);
+            const type = cb.dataset.type;
+            if (type === 'positif') {
+                totalPositif += montant;
+            } else if (type === 'negatif') {
+                totalNegatif += montant;
+            }
+        });
+
+        const formatDA = (amount) => amount.toLocaleString('fr-FR', {
+            minimumFractionDigits: 2
+        }) + ' DA';
+
+        document.getElementById('totalSurplus').textContent = formatDA(totalPositif);
+        document.getElementById('totalDeficit').textContent = formatDA(totalNegatif);
+
+        const equilibreAlert = document.getElementById('equilibreAlert');
+        const equilibreText = document.getElementById('equilibreText');
+        const btnCreer = document.getElementById('btnCreerCompensation');
+
+        if (cbs.length === 0) {
+            equilibreAlert.className = 'alert alert-warning';
+            equilibreText.textContent = 'Sélectionnez des dossiers pour compenser';
+            btnCreer.disabled = true;
+            return;
+        }
+
+        const montantCompense = Math.min(totalPositif, totalNegatif);
+
+        if (montantCompense === 0) {
+            equilibreAlert.className = 'alert alert-danger';
+            equilibreText.textContent = 'Vous devez sélectionner au moins un dossier de chaque type';
+            btnCreer.disabled = true;
+            return;
+        }
+
+        equilibreAlert.className = 'alert alert-success';
+        equilibreText.innerHTML = `✅ Compensation de ${formatDA(montantCompense)}`;
+        btnCreer.disabled = false;
+    }
+</script>
+<script src="{{ url_for('static', filename='js/litepicker.js') }}"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        // Configuration Litepicker
+        const startDateInput = document.getElementById('start_date');
+        const endDateInput = document.getElementById('end_date');
+        const dateRangeInput = document.getElementById('daterange');
+
+        // Initialisation de l'affichage
+        if (startDateInput.value && endDateInput.value) {
+            const start = new Date(startDateInput.value);
+            const end = new Date(endDateInput.value);
+            const formatDate = (d) => {
+                return d.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+            };
+            dateRangeInput.value = `${formatDate(start)} - ${formatDate(end)}`;
+        }
+
+        const picker = new Litepicker({
+            element: dateRangeInput,
+            singleMode: false,
+            numberOfMonths: 2,
+            numberOfColumns: 2,
+            format: 'DD/MM/YYYY',
+            lang: 'fr-FR',
+            buttonText: {
+                apply: 'Appliquer',
+                cancel: 'Annuler',
+                previousMonth: '←',
+                nextMonth: '→'
+            },
+            mobileFriendly: true,
+            autoApply: false,
+            startDate: startDateInput.value,
+            endDate: endDateInput.value,
+            setup: (picker) => {
+                picker.on('selected', (date1, date2) => {
+                    const d1 = date1.format('YYYY-MM-DD');
+                    const d2 = date2.format('YYYY-MM-DD');
+                    startDateInput.value = d1;
+                    endDateInput.value = d2;
+                });
+            }
+        });
+    });
+</script>
+{% endblock %}

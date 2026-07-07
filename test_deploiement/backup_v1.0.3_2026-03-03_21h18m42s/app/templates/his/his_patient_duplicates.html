@@ -1,0 +1,631 @@
+{% extends 'admin/admin_layout.html' %}
+
+{% block content %}
+<style>
+    .duplicate-score-high {
+        background-color: #dc3545;
+        color: white;
+    }
+
+    .duplicate-score-medium {
+        background-color: #ffc107;
+        color: #000;
+    }
+
+    .duplicate-score-low {
+        background-color: #17a2b8;
+        color: white;
+    }
+
+    .patient-card:hover {
+        background-color: #f8f9fa;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+    .stat-card {
+        border-radius: 10px;
+        transition: transform 0.3s;
+    }
+
+    .stat-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
+    }
+
+    .sticky-header {
+        position: sticky;
+        top: 0;
+        background: white;
+        z-index: 1000;
+        box-shadow: 0 2px 15px rgba(0, 0, 0, 0.1);
+        border-bottom: 3px solid #28a745;
+    }
+
+    .badge-tag {
+        font-size: 0.8em;
+        padding: 4px 8px;
+        margin: 2px;
+    }
+
+    .progress-thin {
+        height: 8px;
+    }
+
+    .match-indicator {
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        display: inline-block;
+        margin-right: 5px;
+    }
+
+    .match-100 {
+        background-color: #dc3545;
+    }
+
+    .match-90 {
+        background-color: #e74c3c;
+    }
+
+    .match-80 {
+        background-color: #f39c12;
+    }
+
+    .match-70 {
+        background-color: #3498db;
+    }
+
+    .match-60 {
+        background-color: #2ecc71;
+    }
+
+    .modal-xl-custom {
+        max-width: 95%;
+    }
+
+    .comparison-panel {
+        border: 2px solid #e9ecef;
+        border-radius: 10px;
+        padding: 15px;
+        margin-bottom: 15px;
+        background: #f8f9fa;
+    }
+</style>
+
+
+<div class="container-fluid py-4">
+    <!-- En-tête avec statistiques -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card shadow-sm border-0">
+                <div class="card-body">
+                    <h2 class="mb-4">
+                        <i class="fas fa-exclamation-triangle text-warning"></i>
+                        Détection Automatique de Doublons
+                    </h2>
+                    <p class="text-muted mb-4">
+                        Cet outil analyse la base de données HIS en temps réel pour identifier les patients
+                        potentiellement dupliqués.
+                        Les algorithmes utilisent la correspondance floue sur les noms, dates de naissance et
+                        identifiants.
+                    </p>
+
+                    <!-- Statistiques rapides -->
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-4">
+                            <div class="stat-card card border-primary">
+                                <div class="card-body text-center">
+                                    <h3 class="text-primary mb-2" id="totalPatients">0</h3>
+                                    <small class="text-muted">Patients analysés</small>
+                                    <div class="mt-2">
+                                        <i class="fas fa-users text-primary fa-2x"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="stat-card card border-warning">
+                                <div class="card-body text-center">
+                                    <h3 class="text-warning mb-2" id="duplicatesFound">0</h3>
+                                    <small class="text-muted">Doublons détectés</small>
+                                    <div class="mt-2">
+                                        <i class="fas fa-clone text-warning fa-2x"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="stat-card card border-danger">
+                                <div class="card-body text-center">
+                                    <h3 class="text-danger mb-2" id="highRisk">0</h3>
+                                    <small class="text-muted">Risque élevé (≥90%)</small>
+                                    <div class="mt-2">
+                                        <i class="fas fa-exclamation-triangle text-danger fa-2x"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Section Paramètres de Recherche -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-header bg-warning text-dark">
+                    <h5 class="mb-0">
+                        <i class="fas fa-sliders-h"></i>
+                        Paramètres de Détection
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <form id="duplicateDetectionForm" class="row g-3">
+                        <div class="col-md-3">
+                            <label class="form-label">
+                                <i class="fas fa-percentage"></i> Seuil de Similarité
+                            </label>
+                            <input type="range" class="form-range" id="similarityThreshold" min="60" max="100"
+                                value="85" step="5">
+                            <div class="d-flex justify-content-between">
+                                <small class="text-muted">60%</small>
+                                <small class="text-muted">70%</small>
+                                <small class="text-muted">80%</small>
+                                <small class="text-muted">90%</small>
+                                <small class="text-muted">100%</small>
+                            </div>
+                            <div class="text-center mt-2">
+                                <span class="badge bg-warning fs-6" id="thresholdValue">85%</span>
+                                <small class="text-muted d-block">Seuil actuel</small>
+                            </div>
+                        </div>
+
+                        <div class="col-md-3">
+                            <label class="form-label">
+                                <i class="fas fa-filter"></i> Blocage par
+                            </label>
+                            <select class="form-select" id="blockBy">
+                                <option value="birth_year">Année de naissance</option>
+                                <option value="birth_date">Date exacte</option>
+                                <option value="last_name">Première lettre du nom</option>
+                                <option value="none">Aucun blocage</option>
+                            </select>
+                            <small class="text-muted">
+                                Optimise les performances en regroupant les comparaisons
+                            </small>
+                        </div>
+
+                        <div class="col-md-3">
+                            <label class="form-label">
+                                <i class="fas fa-balance-scale"></i> Critères de Comparaison
+                            </label>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="checkNames" checked>
+                                <label class="form-check-label" for="checkNames">
+                                    Noms et prénoms
+                                </label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="checkBirthDate" checked>
+                                <label class="form-check-label" for="checkBirthDate">
+                                    Date de naissance
+                                </label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="checkIdCard">
+                                <label class="form-check-label" for="checkIdCard">
+                                    Carte d'identité
+                                </label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="checkParents">
+                                <label class="form-check-label" for="checkParents">
+                                    Noms des parents
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="col-md-3 d-flex align-items-end">
+                            <div class="d-grid gap-2 w-100">
+                                <button type="button" class="btn btn-primary" onclick="startDetection()">
+                                    <i class="fas fa-play-circle"></i> Lancer la Détection
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Résultats en temps réel -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-header bg-danger text-white d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i class="fas fa-clone"></i>
+                        Doublons Détectés
+                        <span class="badge bg-light text-danger ms-2" id="resultsCount">0</span>
+                    </h5>
+                    <div>
+                        <button class="btn btn-sm btn-light me-2" onclick="exportToCSV()">
+                            <i class="fas fa-download"></i> CSV
+                        </button>
+                        <button class="btn btn-sm btn-light" onclick="exportToPDF()">
+                            <i class="fas fa-file-pdf"></i> PDF
+                        </button>
+                    </div>
+                </div>
+
+                <div class="card-body">
+                    <!-- Barre de progression -->
+                    <div id="progressContainer" style="display: none;">
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-between mb-2">
+                                <small>Analyse en cours...</small>
+                                <small id="progressPercentage">0%</small>
+                            </div>
+                            <div class="progress progress-thin">
+                                <div id="progressBar" class="progress-bar progress-bar-striped progress-bar-animated"
+                                    role="progressbar" style="width: 0%"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Tableau des résultats -->
+                    <div class="table-responsive" id="resultsContainer" style="display: none;">
+                        <table class="table table-hover" id="duplicatesTable">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th width="50">Score</th>
+                                    <th>Patient A</th>
+                                    <th>Patient B</th>
+                                    <th>Correspondances</th>
+                                    <th width="120">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="duplicatesBody">
+                                <!-- Les résultats seront insérés ici dynamiquement -->
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Message d'état -->
+                    <div id="statusMessage" class="text-center py-5">
+                        <div class="mb-3">
+                            <i class="fas fa-search fa-3x text-muted"></i>
+                        </div>
+                        <h5 class="text-muted">En attente de lancer la détection</h5>
+                        <p class="text-muted">Configurez les paramètres et cliquez sur "Lancer la Détection"</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de comparaison détaillée -->
+<div class="modal fade" id="comparisonModal" tabindex="-1">
+    <div class="modal-dialog modal-xl-custom modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title">
+                    <i class="fas fa-exchange-alt"></i>
+                    Comparaison Détaillée
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="comparisonContent">
+                <!-- Contenu chargé dynamiquement -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times"></i> Fermer
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Scripts -->
+<script src="{{ url_for('static', filename='js/axios.min.js') }}"></script>
+
+<script>
+    let currentResults = [];
+    let detectionInProgress = false;
+    const modal = new bootstrap.Modal(document.getElementById('comparisonModal'));
+
+    // Mettre à jour l'affichage du seuil
+    document.getElementById('similarityThreshold').addEventListener('input', function () {
+        document.getElementById('thresholdValue').textContent = this.value + '%';
+    });
+
+    // Démarrer la détection
+    async function startDetection() {
+        if (detectionInProgress) {
+            showToast('Une détection est déjà en cours.', "warning");
+            return;
+        }
+
+        const threshold = document.getElementById('similarityThreshold').value;
+        const blockBy = document.getElementById('blockBy').value;
+
+        // Récupérer les critères
+        const criteria = {
+            checkNames: document.getElementById('checkNames').checked,
+            checkBirthDate: document.getElementById('checkBirthDate').checked,
+            checkIdCard: document.getElementById('checkIdCard').checked,
+            checkParents: document.getElementById('checkParents').checked
+        };
+
+        // Afficher la barre de progression
+        document.getElementById('progressContainer').style.display = 'block';
+        document.getElementById('statusMessage').style.display = 'none';
+        document.getElementById('resultsContainer').style.display = 'none';
+        detectionInProgress = true;
+
+        try {
+            const response = await axios.get(`/api/his-direct/duplicates/detect`, {
+                params: {
+                    threshold: threshold,
+                    block_by: blockBy,
+                    criteria: JSON.stringify(criteria)
+                }
+            });
+
+            if (response.data.success) {
+                currentResults = response.data.candidates || [];
+                displayResults(currentResults);
+
+                // Mettre à jour les statistiques
+                updateStatistics(response.data.stats || {});
+            } else {
+                throw new Error(response.data.message);
+            }
+        } catch (error) {
+            console.error('Erreur:', error);
+            showToast('Erreur lors de la détection: ' + error.message, "error");
+        } finally {
+            detectionInProgress = false;
+            document.getElementById('progressContainer').style.display = 'none';
+        }
+    }
+
+    // Afficher les résultats
+    function displayResults(results) {
+        const tbody = document.getElementById('duplicatesBody');
+        tbody.innerHTML = '';
+
+        if (results.length === 0) {
+            document.getElementById('statusMessage').style.display = 'block';
+            document.getElementById('statusMessage').innerHTML = `
+                    <div class="mb-3">
+                        <i class="fas fa-check-circle fa-3x text-success"></i>
+                    </div>
+                    <h5 class="text-success">Aucun doublon détecté</h5>
+                    <p class="text-muted">Tous les patients semblent uniques avec les paramètres actuels.</p>
+                `;
+            return;
+        }
+
+        document.getElementById('resultsContainer').style.display = 'block';
+        document.getElementById('resultsCount').textContent = results.length;
+
+        results.forEach((dup, index) => {
+            const matchClass = getMatchClass(dup.score);
+            const matchIndicator = getMatchIndicator(dup.score);
+
+            const row = document.createElement('tr');
+            row.className = 'patient-card';
+            row.innerHTML = `
+                    <td>
+                        <span class="badge ${matchClass} fs-6">
+                            ${matchIndicator}
+                            ${dup.score}%
+                        </span>
+                    </td>
+                    <td>
+                        <strong>${dup.a_name}</strong>
+                        <div class="small text-muted">
+                            <i class="fas fa-id-card"></i> OID: ${dup.a_oid}
+                            ${dup.a_birth ? `<br><i class="fas fa-birthday-cake"></i> ${dup.a_birth}` : ''}
+                        </div>
+                    </td>
+                    <td>
+                        <strong>${dup.b_name}</strong>
+                        <div class="small text-muted">
+                            <i class="fas fa-id-card"></i> OID: ${dup.b_oid}
+                            ${dup.b_birth ? `<br><i class="fas fa-birthday-cake"></i> ${dup.b_birth}` : ''}
+                        </div>
+                    </td>
+                    <td>
+                        <div class="d-flex flex-wrap">
+                            ${dup.reasons.map(r => `<span class="badge-tag badge bg-secondary">${r}</span>`).join('')}
+                        </div>
+                    </td>
+                    <td>
+                        <button class="btn btn-sm btn-outline-primary" onclick="showComparison(${dup.a_oid}, ${dup.b_oid})">
+                            <i class="fas fa-search"></i> Détails
+                        </button>
+                    </td>
+                `;
+            tbody.appendChild(row);
+        });
+    }
+
+    // Obtenir la classe CSS selon le score
+    function getMatchClass(score) {
+        if (score >= 90) return 'duplicate-score-high';
+        if (score >= 80) return 'duplicate-score-medium';
+        return 'duplicate-score-low';
+    }
+
+    // Obtenir l'indicateur visuel
+    function getMatchIndicator(score) {
+        if (score >= 90) return '<span class="match-indicator match-100"></span>';
+        if (score >= 80) return '<span class="match-indicator match-90"></span>';
+        if (score >= 70) return '<span class="match-indicator match-80"></span>';
+        if (score >= 60) return '<span class="match-indicator match-70"></span>';
+        return '<span class="match-indicator match-60"></span>';
+    }
+
+    // Afficher la comparaison détaillée
+    async function showComparison(oidA, oidB) {
+        try {
+            const response = await axios.get(`/api/his-direct/duplicates/compare/${oidA}/${oidB}`);
+            if (response.data.success) {
+                renderComparison(response.data);
+                modal.show();
+            }
+        } catch (error) {
+            console.error('Erreur:', error);
+            showToast('Erreur lors de la comparaison', "error");
+        }
+    }
+
+    // Rendre la comparaison
+    function renderComparison(data) {
+        const container = document.getElementById('comparisonContent');
+        const patientA = data.patient_a;
+        const patientB = data.patient_b;
+        const similarities = data.similarities;
+
+        let html = `
+                <div class="comparison-panel">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="card h-100">
+                                <div class="card-header bg-primary text-white">
+                                    <h6 class="mb-0">Patient A</h6>
+                                </div>
+                                <div class="card-body">
+                                    <h5>${patientA.full_name}</h5>
+                                    <table class="table table-sm">
+                                        <tr><td><strong>Code:</strong></td><td>${patientA.code}</td></tr>
+                                        <tr><td><strong>Date naissance:</strong></td><td>${patientA.birth_date || 'N/A'}</td></tr>
+                                        <tr><td><strong>Carte ID:</strong></td><td>${patientA.id_card_number || 'N/A'}</td></tr>
+                                        <tr><td><strong>Père:</strong></td><td>${patientA.father_name || 'N/A'}</td></tr>
+                                        <tr><td><strong>Mère:</strong></td><td>${patientA.mother_name || 'N/A'}</td></tr>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card h-100">
+                                <div class="card-header bg-info text-white">
+                                    <h6 class="mb-0">Patient B</h6>
+                                </div>
+                                <div class="card-body">
+                                    <h5>${patientB.full_name}</h5>
+                                    <table class="table table-sm">
+                                        <tr><td><strong>Code:</strong></td><td>${patientB.code}</td></tr>
+                                        <tr><td><strong>Date naissance:</strong></td><td>${patientB.birth_date || 'N/A'}</td></tr>
+                                        <tr><td><strong>Carte ID:</strong></td><td>${patientB.id_card_number || 'N/A'}</td></tr>
+                                        <tr><td><strong>Père:</strong></td><td>${patientB.father_name || 'N/A'}</td></tr>
+                                        <tr><td><strong>Mère:</strong></td><td>${patientB.mother_name || 'N/A'}</td></tr>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card mt-3">
+                    <div class="card-header bg-warning">
+                        <h6 class="mb-0">
+                            <i class="fas fa-chart-bar"></i>
+                            Analyse de Similarité
+                            <span class="badge bg-light text-warning ms-2">${data.overall_score}%</span>
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            ${similarities.map(sim => `
+                                <div class="col-md-6 mb-3">
+                                    <div class="d-flex justify-content-between">
+                                        <strong>${sim.field}:</strong>
+                                        <span class="badge ${sim.score >= 80 ? 'bg-success' : sim.score >= 60 ? 'bg-warning' : 'bg-info'}">
+                                            ${sim.score}%
+                                        </span>
+                                    </div>
+                                    <div class="progress progress-thin mt-1">
+                                        <div class="progress-bar ${sim.score >= 80 ? 'bg-success' : sim.score >= 60 ? 'bg-warning' : 'bg-info'}"
+                                             style="width: ${sim.score}%"></div>
+                                    </div>
+                                    <small class="text-muted">${sim.details}</small>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="alert alert-info mt-3">
+                    <i class="fas fa-lightbulb"></i>
+                    <strong>Recommandation:</strong> ${data.recommendation}
+                </div>
+            `;
+
+        container.innerHTML = html;
+    }
+
+    // Mettre à jour les statistiques
+    function updateStatistics(stats) {
+        document.getElementById('totalPatients').textContent = stats.total_patients || 0;
+        document.getElementById('duplicatesFound').textContent = stats.duplicates_found || 0;
+        document.getElementById('highRisk').textContent = stats.high_risk || 0;
+    }
+
+    // Exporter en CSV
+    function exportToCSV() {
+        if (currentResults.length === 0) {
+            showToast('Aucun résultat à exporter.', "warning");
+            return;
+        }
+
+        let csv = 'Score,Patient A,OID A,Patient B,OID B,Naissance A,Naissance B,Raisons\n';
+        currentResults.forEach(dup => {
+            const reasons = dup.reasons.join('; ');
+            csv += `${dup.score},"${dup.a_name}",${dup.a_oid},"${dup.b_name}",${dup.b_oid},${dup.a_birth},${dup.b_birth},"${reasons}"\n`;
+        });
+
+        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement('a');
+        const url = URL.createObjectURL(blob);
+        link.setAttribute('href', url);
+        link.setAttribute('download', `doublons_${new Date().toISOString().split('T')[0]}.csv`);
+        link.style.visibility = 'hidden';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
+
+    // Exporter en PDF (simplifié)
+    function exportToPDF() {
+        showToast('Export PDF - Fonctionnalité à implémenter', "info");
+        // Utiliser une bibliothèque comme jsPDF ou générer côté serveur
+    }
+
+
+    // Initialisation
+    document.addEventListener('DOMContentLoaded', function () {
+        // Charger les statistiques initiales
+        loadInitialStats();
+    });
+
+    async function loadInitialStats() {
+        try {
+            const response = await axios.get('/api/his-direct/stats');
+            if (response.data.success) {
+                updateStatistics(response.data);
+            }
+        } catch (error) {
+            console.error('Erreur chargement stats:', error);
+        }
+    }
+</script>
+{% endblock %}

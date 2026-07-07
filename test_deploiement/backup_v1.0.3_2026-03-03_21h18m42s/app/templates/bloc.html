@@ -1,0 +1,136 @@
+{%extends "layout.html"%}
+{% block content%}
+<div class="d-flex justify-content-center mb-2">
+
+        <a href="{{ url_for('bloc') }}" class="btn btn-secondary {% if request.path == '/bloc' %}Cles_active{% endif %}">Bloc</a>
+        <a href="{{ url_for('videos') }}" class="btn btn-secondary {% if request.path == '/videos' %}Cles_active{% endif %}">Vidéos</a>
+        <a href="{{ url_for('live') }}" class="btn btn-secondary {% if request.path == '/live' %}Cles_active{% endif %}">Live</a>
+    </div>
+
+
+<div class="row mb-2">
+    <!-- Filtres -->
+    <div class="col-md-3">
+        <input type="date" id="date-input" class="form-control" placeholder="Date">
+            </div>
+
+    <div class="col-md-3">
+        <select id="bloc-filter" class="form-control">
+                <option value="">Tous les blocs</option>
+                {% for acte in actes|unique(attribute='Bloc') %}
+            <option value="{{ acte.Bloc }}">{{ acte.Bloc }}</option>
+            {% endfor %}
+        </select>
+    </div>
+
+    <div class="col-md-3">
+        <select id="medcin-filter" class="form-control">
+                <option value="">Tous les médecins</option>
+                {% for acte in actes|unique(attribute='Medcin') %}
+            <option value="{{ acte.Medcin }}">{{ acte.Medcin }}</option>
+            {% endfor %}
+
+        </select>
+    </div>
+
+    <div class="col-md-3">
+        <select id="patient-filter" class="form-control">
+                <option value="">Tous les patients</option>
+                {% for acte in actes|unique(attribute='Patient') %}
+            <option value="{{ acte.Patient }}">{{ acte.Patient }}</option>
+            {% endfor %}
+        </select>
+    </div>
+</div>
+
+<table id="myTable" class="table table-hover">
+    <thead class="thead-light">
+<tr>
+    <th class="icon-cell"><i class="fas fa-home"></i> Bloc</th>
+    <th class="icon-cell"><i class="fas fa-user-md"></i> Médecin</th>
+    <th class="icon-cell"><i class="fas fa-user"></i> Patient</th>
+    <th class="icon-cell"><i class="fas fa-calendar-alt"></i> Date de Début</th>
+    <th class="icon-cell"><i class="fas fa-calendar-check"></i> Date de Fin</th>
+    <th class="icon-cell"><i class="fas fa-clock"></i> Durée</th>
+</tr>
+
+
+    </thead>
+    <tbody>
+    {% for acte in actes %}
+    <tr>
+        <td>{{ acte.Bloc }}</td>
+        <td>{{ acte.Medcin }}</td>
+        <td>{{ acte.Patient }}</td>
+            <td>{{ acte.DateStart.strftime('%Y-%m-%d %H:%M:%S') if acte.DateStart else 'N/A' }}</td>
+            <td>{{ acte.DateEnd.strftime('%Y-%m-%d %H:%M:%S') if acte.DateEnd else 'N/A' }}</td>
+        <td>
+            {% if acte.Duree %}
+            {% set total_seconds = acte.Duree.total_seconds() %}
+            {% set hours = total_seconds // 3600 %}
+            {% set minutes = (total_seconds % 3600) // 60 %}
+            {% set seconds = total_seconds % 60 %}
+            {{ "{:02}:{:02}:{:02}".format(hours, minutes, seconds) }}
+            {% else %}
+            N/A
+            {% endif %}
+        </td>
+    </tr>
+    {% endfor %}
+    </tbody>
+</table>
+
+
+<script>
+    // Fonction pour appliquer les filtres
+    function applyFilters() {
+        const dateInput = document.getElementById('date-input').value;
+        const blocFilter = document.getElementById('bloc-filter').value;
+        const medcinFilter = document.getElementById('medcin-filter').value;
+        const patientFilter = document.getElementById('patient-filter').value;
+
+        const table = document.getElementById('myTable');
+        const rows = table.getElementsByTagName('tbody')[0].getElementsByTagName('tr');
+
+        for (let i = 0; i < rows.length; i++) {
+            const row = rows[i];
+            const bloc = row.cells[0].textContent;
+            const medcin = row.cells[1].textContent;
+            const patient = row.cells[2].textContent;
+            const dateStart = row.cells[3].textContent.split(' ')[0];  // Get only the date part
+
+            let showRow = true;
+
+            // Filtrer par bloc
+            if (blocFilter && bloc !== blocFilter) {
+                showRow = false;
+            }
+
+            // Filtrer par médecin
+            if (medcinFilter && medcin !== medcinFilter) {
+                showRow = false;
+            }
+
+            // Filtrer par patient
+            if (patientFilter && patient !== patientFilter) {
+                showRow = false;
+            }
+
+            // Filtrer par date de début
+            if (dateInput && dateStart < dateInput) {
+                showRow = false;
+            }
+
+            // Afficher ou masquer la ligne
+            row.style.display = showRow ? '' : 'none';
+        }
+    }
+
+    // Écouteurs d'événements pour appliquer les filtres dès qu'un élément change
+    document.getElementById('date-input').addEventListener('input', applyFilters);
+    document.getElementById('bloc-filter').addEventListener('change', applyFilters);
+    document.getElementById('medcin-filter').addEventListener('change', applyFilters);
+    document.getElementById('patient-filter').addEventListener('change', applyFilters);
+</script>
+
+{% endblock content %}

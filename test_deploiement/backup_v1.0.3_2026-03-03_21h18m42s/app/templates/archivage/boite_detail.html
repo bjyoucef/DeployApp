@@ -1,0 +1,588 @@
+{% extends "layout.html" %}
+
+{% block title %}Détails Boîte {{ boite.numero_archive }}{% endblock %}
+
+{% block style %}
+<style>
+    .modern-card {
+        background: var(--bg-card);
+        border: 1px solid var(--border-color);
+        border-radius: 12px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+        margin-bottom: 1.5rem;
+        overflow: hidden;
+    }
+
+    .card-header-modern {
+        background: linear-gradient(45deg, rgba(69, 10, 84, 0.05), transparent);
+        border-bottom: 1px solid var(--border-color);
+        padding: 1.25rem 1.5rem;
+    }
+
+    [data-theme="dark"] .card-header-modern {
+        background: linear-gradient(45deg, rgba(69, 10, 84, 0.2), transparent);
+    }
+
+    .status-badge {
+        padding: 0.35rem 0.75rem;
+        border-radius: 50px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+    }
+
+    .loc-card {
+        background: rgba(69, 10, 84, 0.03);
+        border: 1px solid rgba(69, 10, 84, 0.1);
+        border-radius: 8px;
+        padding: 1rem;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+
+    [data-theme="dark"] .loc-card {
+        background: rgba(255, 255, 255, 0.03);
+        border-color: rgba(255, 255, 255, 0.1);
+    }
+
+    .loc-icon {
+        background: white;
+        color: #450A54;
+        width: 45px;
+        height: 45px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.25rem;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    }
+
+    .dossier-list-item {
+        border-bottom: 1px solid var(--border-color);
+        padding: 1rem 1.5rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        transition: background 0.2s;
+    }
+
+    .dossier-list-item:last-child {
+        border-bottom: none;
+    }
+
+    .dossier-list-item:hover {
+        background: rgba(69, 10, 84, 0.02);
+    }
+
+    [data-theme="dark"] .dossier-list-item:hover {
+        background: rgba(255, 255, 255, 0.02);
+    }
+
+    .module-badge {
+        padding: 0.25rem 0.6rem;
+        border-radius: 4px;
+        font-size: 0.7rem;
+        font-weight: 600;
+        background: rgba(69, 10, 84, 0.1);
+        color: #450A54;
+    }
+
+    [data-theme="dark"] .module-badge {
+        background: rgba(255, 255, 255, 0.1);
+        color: #e0e0e0;
+    }
+
+    .statut-badge {
+        padding: 0.2rem 0.5rem;
+        border-radius: 4px;
+        font-size: 0.65rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .statut-archive {
+        background: rgba(34, 197, 94, 0.12);
+        color: #16a34a;
+    }
+
+    .statut-sorti {
+        background: rgba(239, 68, 68, 0.12);
+        color: #dc2626;
+    }
+
+    .statut-desarchive {
+        background: rgba(156, 163, 175, 0.15);
+        color: #6b7280;
+    }
+
+    [data-theme="dark"] .statut-archive {
+        background: rgba(34, 197, 94, 0.2);
+        color: #4ade80;
+    }
+
+    [data-theme="dark"] .statut-sorti {
+        background: rgba(239, 68, 68, 0.2);
+        color: #f87171;
+    }
+
+    [data-theme="dark"] .statut-desarchive {
+        background: rgba(156, 163, 175, 0.2);
+        color: #9ca3af;
+    }
+
+    .dossier-actions .btn {
+        padding: 0.25rem 0.5rem;
+        font-size: 0.75rem;
+    }
+
+    .timeline-item {
+        position: relative;
+        padding-left: 2rem;
+        padding-bottom: 1.5rem;
+        border-left: 2px solid var(--border-color);
+    }
+
+    .timeline-item:last-child {
+        border-left: none;
+        padding-bottom: 0;
+    }
+
+    .timeline-dot {
+        position: absolute;
+        left: -6px;
+        top: 4px;
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+    }
+
+    .timeline-dot.creation {
+        background: #22c55e;
+    }
+
+    .timeline-dot.sortie {
+        background: #ef4444;
+    }
+
+    .timeline-dot.retour {
+        background: #3b82f6;
+    }
+
+    .timeline-dot.deplacement {
+        background: #f59e0b;
+    }
+
+    .timeline-dot.desarchive {
+        background: #6b7280;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Header Page -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <a href="{{ url_for('archivage_boites_list') }}" class="btn btn-outline-secondary btn-sm mb-2 rounded-pill">
+                <i class="fas fa-arrow-left me-1"></i> Toutes les boîtes
+            </a>
+            <h2 class="fw-bold mb-0 d-flex align-items-center gap-3">
+                <i class="fas fa-box-open text-primary"></i>
+                Boîte <span class="text-primary">{{ boite.numero_archive }}</span>
+            </h2>
+        </div>
+        <div>
+            <a href="{{ url_for('archivage_boites_print', numero_archive=boite.numero_archive) }}" target="_blank"
+                class="btn btn-primary rounded-pill px-4 shadow-sm">
+                <i class="fas fa-print me-2"></i> Réimprimer l'étiquette
+            </a>
+        </div>
+    </div>
+
+    <div class="row g-4 mb-4">
+        <!-- Identity Card -->
+        <div class="col-md-7">
+            <div class="modern-card h-100 mb-0">
+                <div class="card-header-modern">
+                    <h5 class="mb-0 fw-bold"><i class="fas fa-id-card text-muted me-2"></i> Identité de la Boîte</h5>
+                </div>
+                <div class="card-body p-4 p-lg-5">
+                    <div class="row mb-4">
+                        <div class="col-sm-6 mb-3 mb-sm-0">
+                            <small class="text-muted d-block fw-bold text-uppercase mb-1">Médecin Assigné</small>
+                            <div class="fs-5 fw-bold text-main">{{ boite.doctor_name or 'Non assigné' }}</div>
+                        </div>
+                        <div class="col-sm-6">
+                            <small class="text-muted d-block fw-bold text-uppercase mb-1">Spécialité</small>
+                            <div class="fs-5 fw-bold text-main">{{ boite.specialite_nom or 'Générale / Non définie' }}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row mb-0">
+                        <div class="col-sm-6 mb-3 mb-sm-0">
+                            <small class="text-muted d-block fw-bold text-uppercase mb-1">Création</small>
+                            <div class="fw-medium text-main"><i class="fas fa-calendar-plus text-muted me-1"></i> {{
+                                boite.date_creation.strftime('%d/%m/%Y à %H:%M') }}</div>
+                        </div>
+                        <div class="col-sm-6">
+                            <small class="text-muted d-block fw-bold text-uppercase mb-2">Remplissage</small>
+                            <div class="progress"
+                                style="height: 10px; border-radius: 10px; background: var(--border-color);">
+                                <div class="progress-bar {% if boite.est_pleine %}bg-danger{% elif boite.remplissage_pct > 75 %}bg-warning{% else %}bg-success{% endif %}"
+                                    role="progressbar" style="width: {{ boite.remplissage_pct }}%;"
+                                    aria-valuenow="{{ boite.remplissage_pct }}" aria-valuemin="0" aria-valuemax="100">
+                                </div>
+                            </div>
+                            <div
+                                class="text-end small fw-bold mt-1 {% if boite.est_pleine %}text-danger{% else %}text-muted{% endif %}">
+                                {{ boite.remplissage_pct }}%
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Location Card -->
+        <div class="col-md-5">
+            <div class="modern-card h-100 mb-0"
+                style="background: linear-gradient(135deg, rgba(69, 10, 84, 0.05), rgba(69, 10, 84, 0.01)); border-color: rgba(69, 10, 84, 0.1);">
+                <div class="card-header-modern bg-transparent border-bottom-0 pb-0">
+                    <h5 class="mb-0 fw-bold"><i class="fas fa-map-marker-alt text-primary me-2"></i> Localisation
+                        Physique</h5>
+                </div>
+                <div class="card-body p-4">
+                    {% if boite.id_emplacement %}
+                    <div class="d-flex flex-column gap-3">
+                        <div class="loc-card">
+                            <div class="loc-icon"><i class="fas fa-building"></i></div>
+                            <div>
+                                <small class="text-muted fw-bold text-uppercase">Zone d'Archive</small>
+                                <div class="fs-5 fw-bold">{{ boite.nom_zone }}</div>
+                            </div>
+                        </div>
+                        <div class="loc-card">
+                            <div class="loc-icon"><i class="fas fa-layer-group"></i></div>
+                            <div>
+                                <small class="text-muted fw-bold text-uppercase">Rayonnage</small>
+                                <div class="fs-5 fw-bold">Étagère {{ boite.code_etagere }}</div>
+                            </div>
+                        </div>
+                        <div class="d-flex gap-3">
+                            <div class="loc-card flex-grow-1">
+                                <div>
+                                    <small class="text-muted fw-bold text-uppercase">Niveau (Ligne)</small>
+                                    <div class="fs-5 fw-bold">L{{ boite.ligne_y }}</div>
+                                </div>
+                            </div>
+                            <div class="loc-card flex-grow-1">
+                                <div>
+                                    <small class="text-muted fw-bold text-uppercase">Colonne</small>
+                                    <div class="fs-5 fw-bold">C{{ boite.colonne_x }}</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% else %}
+                    <div class="h-100 d-flex flex-column align-items-center justify-content-center text-center p-4">
+                        <i class="fas fa-exclamation-triangle fa-3x text-warning mb-3 opacity-50"></i>
+                        <h5 class="fw-bold">Non Emplacée</h5>
+                        <p class="text-muted small mb-0">Cette boîte ne se trouve actuellement sur aucune étagère
+                            configurée dans le système.</p>
+                        <a href="{{ url_for('archivage_plan_visuel') }}"
+                            class="btn btn-outline-primary btn-sm mt-3 rounded-pill">Aller au plan pour la placer</a>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Contenu Table -->
+    <div class="modern-card">
+        <div class="card-header-modern d-flex justify-content-between align-items-center flex-wrap gap-2">
+            <h5 class="mb-0 fw-bold">
+                <i class="fas fa-folder-open text-muted me-2"></i> Contenu de la Boîte
+                <span class="badge bg-secondary ms-2" id="dossierCount">{{ dossiers|length }} dossiers</span>
+            </h5>
+            <div class="input-group" style="width: auto; min-width: 250px;">
+                <span class="input-group-text bg-transparent border-end-0"><i
+                        class="fas fa-search text-muted"></i></span>
+                <input type="text" id="searchInput" class="form-control border-start-0 ps-0"
+                    placeholder="Rechercher un patient...">
+            </div>
+        </div>
+        <div class="card-body p-0">
+            {% if dossiers %}
+            <div class="d-flex flex-column" id="dossiersContainer">
+                {% for dossier in dossiers %}
+                <div class="dossier-list-item" data-id="{{ dossier.id_archive }}" data-statut="{{ dossier.statut }}">
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="text-center" style="width: 60px;">
+                            <div class="fw-bold fs-5 text-main">{{ dossier.date_acte.strftime('%d') if dossier.date_acte
+                                else '--' }}</div>
+                            <div class="small text-muted text-uppercase fw-bold" style="font-size: 0.65rem;">{{
+                                dossier.date_acte.strftime('%b %Y') if dossier.date_acte else '----' }}</div>
+                        </div>
+                        <div class="vr bg-secondary opacity-25"></div>
+                        <div>
+                            <div class="fw-bold fs-6 text-main mb-1">{{ dossier.nom_patient }}</div>
+                            <div class="d-flex gap-1 flex-wrap">
+                                <span class="module-badge">{{ dossier.source_module }}</span>
+                                {% if dossier.statut == 'SORTI' %}
+                                <span class="statut-badge statut-sorti"><i
+                                        class="fas fa-sign-out-alt me-1"></i>Sorti</span>
+                                {% elif dossier.statut == 'DESARCHIVE' %}
+                                <span class="statut-badge statut-desarchive"><i
+                                        class="fas fa-archive me-1"></i>Désarchivé</span>
+                                {% else %}
+                                <span class="statut-badge statut-archive"><i
+                                        class="fas fa-check me-1"></i>Archivé</span>
+                                {% endif %}
+                            </div>
+                            {% if dossier.statut == 'SORTI' and dossier.sortie_motif %}
+                            <div class="small text-danger mt-1" style="font-size: 0.7rem;">
+                                <i class="fas fa-info-circle me-1"></i>{{ dossier.sortie_motif }}
+                                {% if dossier.sorti_par_nom %} — {{ dossier.sorti_par_nom }}{% endif %}
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="d-flex gap-1 dossier-actions">
+                        {# Action buttons based on statut #}
+                        {% if dossier.statut == 'ARCHIVE' %}
+                        <button class="btn btn-outline-danger btn-sm" title="Sortie temporaire"
+                            onclick="ouvrirModalSortie({{ dossier.id_archive }}, '{{ dossier.nom_patient|e }}')"><i
+                                class="fas fa-sign-out-alt"></i></button>
+                        {% elif dossier.statut == 'SORTI' %}
+                        <button class="btn btn-outline-success btn-sm" title="Enregistrer le retour"
+                            onclick="enregistrerRetour({{ dossier.id_archive }})"><i class="fas fa-undo"></i></button>
+                        {% endif %}
+                        {% if dossier.statut != 'DESARCHIVE' %}
+                        <button class="btn btn-outline-secondary btn-sm" title="Historique"
+                            onclick="ouvrirHistorique({{ dossier.id_archive }})"><i class="fas fa-history"></i></button>
+                        {% endif %}
+                        {# Link to source #}
+                        {% if dossier.source_module == 'MATERNITE' %}
+                        <a href="{{ url_for('accouchement_detail', id_dossier=dossier.id_source) }}"
+                            class="btn btn-sm btn-light rounded-circle" target="_blank" title="Voir dossier"><i
+                                class="fas fa-external-link-alt"></i></a>
+                        {% elif dossier.source_module == 'BLOC_EXTERNE' %}
+                        <a href="{{ url_for('location_bloc_detail', id_dossier=dossier.id_source) }}"
+                            class="btn btn-sm btn-light rounded-circle" target="_blank" title="Voir dossier"><i
+                                class="fas fa-external-link-alt"></i></a>
+                        {% elif dossier.source_module == 'PRESTATION KT' %}
+                        <a href="{{ url_for('kt_dossier_detail', id_dossier=dossier.id_source) }}"
+                            class="btn btn-sm btn-light rounded-circle" target="_blank" title="Voir dossier"><i
+                                class="fas fa-external-link-alt"></i></a>
+                        {% elif dossier.source_module == 'BLOC_INTERNE' %}
+                        <a href="{{ url_for('medecin_interne_actes_detail', id_acte=dossier.id_source) }}"
+                            class="btn btn-sm btn-light rounded-circle" target="_blank" title="Voir dossier"><i
+                                class="fas fa-external-link-alt"></i></a>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="text-center py-5">
+                <i class="fas fa-folder fa-3x text-muted opacity-25 mb-3"></i>
+                <h6 class="fw-bold text-muted">Boîte Vide</h6>
+                <p class="text-muted small">Aucun dossier clinique n'a encore été assigné à cette boîte.</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+<!-- Modal Sortie -->
+<div class="modal fade" id="modalSortie" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="fas fa-sign-out-alt text-danger me-2"></i>Sortie Temporaire</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="sortie_id_dossier">
+                <p class="small text-muted mb-3">Dossier : <strong id="sortie_patient_name"></strong></p>
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Motif de sortie <span class="text-danger">*</span></label>
+                    <textarea id="sortie_motif" class="form-control" rows="3"
+                        placeholder="Ex: Consultation par le médecin traitant..."></textarea>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Date de retour prévue</label>
+                    <input type="date" id="sortie_date_retour" class="form-control">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                <button type="button" class="btn btn-danger" onclick="confirmerSortie()"><i
+                        class="fas fa-sign-out-alt me-1"></i>Confirmer la sortie</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Historique -->
+<div class="modal fade" id="modalHistorique" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="fas fa-history text-primary me-2"></i>Historique des mouvements</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="historique_body">
+                <div class="text-center py-4">
+                    <div class="spinner-border text-primary" role="status"></div>
+                    <p class="mt-2 text-muted">Chargement...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const searchInput = document.getElementById('searchInput');
+        if (searchInput) {
+            searchInput.addEventListener('input', function (e) {
+                const term = e.target.value.toLowerCase();
+                const items = document.querySelectorAll('#dossiersContainer .dossier-list-item');
+                let count = 0;
+
+                items.forEach(item => {
+                    const patientName = item.querySelector('.text-main.mb-1').textContent.toLowerCase();
+                    if (patientName.includes(term)) {
+                        item.style.display = 'flex';
+                        count++;
+                    } else {
+                        item.style.display = 'none';
+                    }
+                });
+
+                document.getElementById('dossierCount').textContent = count + (count <= 1 ? ' dossier' : ' dossiers');
+            });
+        }
+    });
+
+    // ─── Sortie ───
+    function ouvrirModalSortie(id, patientName) {
+        document.getElementById('sortie_id_dossier').value = id;
+        document.getElementById('sortie_patient_name').textContent = patientName;
+        document.getElementById('sortie_motif').value = '';
+        document.getElementById('sortie_date_retour').value = '';
+        new bootstrap.Modal(document.getElementById('modalSortie')).show();
+    }
+
+    function confirmerSortie() {
+        const id = document.getElementById('sortie_id_dossier').value;
+        const motif = document.getElementById('sortie_motif').value.trim();
+        const dateRetour = document.getElementById('sortie_date_retour').value || null;
+
+        if (!motif) {
+            Toastify({ text: "Le motif est obligatoire.", duration: 3000, style: { background: "linear-gradient(to right, #f85032, #e73827)" } }).showToast();
+            return;
+        }
+
+        fetch(`/archivage/api/dossier/${id}/sortie`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ motif: motif, date_retour_prevue: dateRetour })
+        })
+            .then(r => r.json())
+            .then(data => {
+                if (data.success) {
+                    Toastify({ text: data.message, duration: 3000, style: { background: "linear-gradient(to right, #00b09b, #96c93d)" } }).showToast();
+                    bootstrap.Modal.getInstance(document.getElementById('modalSortie')).hide();
+                    location.reload();
+                } else {
+                    Toastify({ text: data.message, duration: 4000, style: { background: "linear-gradient(to right, #f85032, #e73827)" } }).showToast();
+                }
+            })
+            .catch(() => Toastify({ text: "Erreur réseau.", duration: 3000, style: { background: "red" } }).showToast());
+    }
+
+    // ─── Retour ───
+    function enregistrerRetour(id) {
+        if (!confirm('Confirmer le retour de ce dossier ?')) return;
+
+        fetch(`/archivage/api/dossier/${id}/retour`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' }
+        })
+            .then(r => r.json())
+            .then(data => {
+                if (data.success) {
+                    Toastify({ text: data.message, duration: 3000, style: { background: "linear-gradient(to right, #00b09b, #96c93d)" } }).showToast();
+                    location.reload();
+                } else {
+                    Toastify({ text: data.message, duration: 4000, style: { background: "linear-gradient(to right, #f85032, #e73827)" } }).showToast();
+                }
+            });
+    }
+
+    // ─── Historique ───
+    const ACTION_LABELS = {
+        'CREATION': { label: 'Création', icon: 'fa-plus-circle', dot: 'creation' },
+        'DEPLACEMENT_BOITE': { label: 'Déplacement (Boîte)', icon: 'fa-exchange-alt', dot: 'deplacement' },
+        'DEPLACEMENT_ZONE': { label: 'Déplacement (Zone)', icon: 'fa-exchange-alt', dot: 'deplacement' },
+        'SORTIE_TEMPORAIRE': { label: 'Sortie temporaire', icon: 'fa-sign-out-alt', dot: 'sortie' },
+        'RETOUR': { label: 'Retour', icon: 'fa-undo', dot: 'retour' },
+        'DESARCHIVE': { label: 'Désarchivé', icon: 'fa-archive', dot: 'desarchive' },
+    };
+
+    function ouvrirHistorique(id) {
+        const body = document.getElementById('historique_body');
+        body.innerHTML = '<div class="text-center py-4"><div class="spinner-border text-primary"></div><p class="mt-2 text-muted">Chargement...</p></div>';
+        new bootstrap.Modal(document.getElementById('modalHistorique')).show();
+
+        fetch(`/archivage/api/dossier/${id}/historique`)
+            .then(r => r.json())
+            .then(data => {
+                if (!data.success || !data.historique.length) {
+                    body.innerHTML = '<div class="text-center text-muted py-4"><i class="fas fa-inbox fa-3x mb-3 opacity-25"></i><p>Aucun historique enregistré.</p></div>';
+                    return;
+                }
+
+                let html = '<div class="px-3 py-2">';
+                data.historique.forEach(h => {
+                    const info = ACTION_LABELS[h.action] || { label: h.action, icon: 'fa-circle', dot: 'creation' };
+                    let details = '';
+                    if (h.boite_avant && h.boite_apres) details += `<span class="small text-muted">Boîte: ${h.boite_avant} → ${h.boite_apres}</span><br>`;
+                    if (h.zone_avant && h.zone_apres) details += `<span class="small text-muted">Zone: ${h.zone_avant} → ${h.zone_apres}</span><br>`;
+                    if (h.commentaire) details += `<span class="small text-muted fst-italic">${h.commentaire}</span><br>`;
+
+                    html += `
+                <div class="timeline-item">
+                    <div class="timeline-dot ${info.dot}"></div>
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <strong><i class="fas ${info.icon} me-1"></i>${info.label}</strong>
+                            <div class="mt-1">${details}</div>
+                        </div>
+                        <div class="text-end">
+                            <div class="small text-muted">${h.date_action || ''}</div>
+                            <div class="small text-muted">${h.effectue_par || ''}</div>
+                        </div>
+                    </div>
+                </div>`;
+                });
+                html += '</div>';
+                body.innerHTML = html;
+            })
+            .catch(() => {
+                body.innerHTML = '<div class="text-center text-danger py-4"><i class="fas fa-exclamation-triangle fa-2x mb-2"></i><p>Erreur de chargement.</p></div>';
+            });
+    }
+</script>
+{% endblock %}

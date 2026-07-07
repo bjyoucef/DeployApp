@@ -1,0 +1,928 @@
+{% extends 'layout.html' %}
+{% block content %}
+
+<style>
+    :root {
+        --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        --success-gradient: linear-gradient(135deg, #56ab2f 0%, #a8e063 100%);
+        --info-gradient: linear-gradient(135deg, #0dcaf0 0%, #0a98c0 100%);
+        --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.08);
+        --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.1);
+        --border-radius: 12px;
+    }
+
+    .detail-header {
+        background: var(--primary-gradient);
+        padding: 2rem;
+        border-radius: var(--border-radius);
+        color: white;
+        margin-bottom: 2rem;
+        box-shadow: var(--shadow-md);
+    }
+
+    .info-card {
+        background: white;
+        border-radius: var(--border-radius);
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+        box-shadow: var(--shadow-sm);
+        border: 1px solid rgba(0, 0, 0, 0.05);
+    }
+
+    .info-card-title {
+        font-size: 1.15rem;
+        font-weight: 700;
+        color: #667eea;
+        margin-bottom: 1.25rem;
+        padding-bottom: 0.75rem;
+        border-bottom: 3px solid #667eea;
+        display: flex;
+        align-items: center;
+    }
+
+    .info-row {
+        display: flex;
+        padding: 0.75rem 0;
+        border-bottom: 1px solid #f0f0f0;
+    }
+
+    .info-row:last-child {
+        border-bottom: none;
+    }
+
+    .info-label {
+        font-weight: 600;
+        color: #6c757d;
+        min-width: 200px;
+    }
+
+    .info-value {
+        color: #212529;
+        flex: 1;
+    }
+
+    .badge-vip {
+        background: linear-gradient(135deg, #ffd700 0%, #ffed4e 100%);
+        color: #333;
+        padding: 0.45rem 0.85rem;
+        border-radius: 20px;
+        font-weight: 600;
+        font-size: 0.75rem;
+    }
+
+    .badge-urgence {
+        background: linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%);
+        color: white;
+        padding: 0.45rem 0.85rem;
+        border-radius: 20px;
+        font-weight: 600;
+        font-size: 0.75rem;
+    }
+
+    .edit-mode {
+        display: none;
+    }
+
+    .view-mode {
+        display: block;
+    }
+
+    .editing .edit-mode {
+        display: block;
+    }
+
+    .editing .view-mode {
+        display: none;
+    }
+
+    .acte-item-display {
+        background: #f8f9fa;
+        padding: 1rem;
+        border-radius: 8px;
+        margin-bottom: 0.75rem;
+        border-left: 4px solid #667eea;
+    }
+
+    .btn-gradient {
+        background: var(--primary-gradient);
+        border: none;
+        color: white;
+        font-weight: 600;
+        padding: 0.8rem 1.75rem;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+    }
+
+    .btn-gradient:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+        color: white;
+    }
+
+    .table-custom thead {
+        background: var(--primary-gradient);
+        color: white;
+    }
+
+    .table-custom thead th {
+        border: none;
+        padding: 1rem;
+        font-weight: 600;
+    }
+
+    .form-section {
+        background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+        padding: 1.75rem;
+        border-radius: var(--border-radius);
+        margin-bottom: 1.5rem;
+        border: 2px solid #e9ecef;
+    }
+
+    .acte-item {
+        background: white;
+        border: 2px solid #e9ecef;
+        border-radius: var(--border-radius);
+        padding: 1.75rem;
+        margin-bottom: 1.25rem;
+        position: relative;
+    }
+
+    .acte-number {
+        position: absolute;
+        top: -12px;
+        left: 20px;
+        background: var(--primary-gradient);
+        color: white;
+        padding: 0.35rem 0.9rem;
+        border-radius: 20px;
+        font-size: 0.85rem;
+        font-weight: 700;
+    }
+</style>
+
+<!-- CHOICES.JS CSS -->
+
+<!-- En-tête -->
+<div class="detail-header">
+    <div class="d-flex justify-content-between align-items-center flex-wrap">
+        <div>
+            <h1>
+                <i class="fas fa-folder-open me-2"></i>
+                Dossier #{{ dossier.id_dossier }}
+            </h1>
+            <p class="mb-0">
+                <i class="fas fa-user me-2"></i>{{ dossier.patient }}
+                {% if dossier.vip %}
+                <span class="badge-vip ms-2"><i class="fas fa-star"></i> VIP</span>
+                {% endif %}
+                {% if dossier.urgence %}
+                <span class="badge-urgence ms-2"><i class="fas fa-exclamation-triangle"></i> URGENCE</span>
+                {% endif %}
+            </p>
+        </div>
+        <div class="d-flex gap-2">
+            <a href="{{ url_for('kt_dossier_patient') }}" class="btn btn-light">
+                <i class="fas fa-arrow-left me-2"></i>Retour
+            </a>
+            <a href="{{ url_for('kt_dossier_export_pdf', id_dossier=dossier.id_dossier) }}" class="btn btn-light"
+                title="Exporter PDF">
+                <i class="fas fa-file-pdf me-2"></i>PDF
+            </a>
+            <a href="{{ url_for('dossier_print_qr', module_url='PRESTATION_KT', id_dossier=dossier.id_dossier) }}"
+                class="btn btn-light" title="Imprimer QR Code" target="_blank">
+                <i class="fas fa-qrcode me-2"></i>QR
+            </a>
+            <button class="btn btn-warning" id="toggleEditBtn" onclick="toggleEditMode()">
+                <i class="fas fa-edit me-2"></i>Modifier
+            </button>
+        </div>
+    </div>
+</div>
+
+<form method="POST" action="{{ url_for('modifier_dossier_kt', id_dossier=dossier.id_dossier) }}" id="editForm">
+    <div class="row">
+        <!-- Informations Générales -->
+        <div class="col-md-6">
+            <div class="info-card" id="info-card">
+                <div class="info-card-title">
+                    <i class="fas fa-info-circle me-2"></i>Informations Générales
+                </div>
+
+                <!-- Mode Vue -->
+                <div class="view-mode">
+                    <div class="info-row">
+                        <div class="info-label"><i class="fas fa-user-md me-2"></i>Médecin</div>
+                        <div class="info-value">{{ dossier.doctor_name }}</div>
+                    </div>
+                    <div class="info-row">
+                        <div class="info-label"><i class="fas fa-stethoscope me-2"></i>Spécialité</div>
+                        <div class="info-value">{{ dossier.specialty_name or '-' }}</div>
+                    </div>
+                    <div class="info-row">
+                        <div class="info-label"><i class="far fa-calendar-alt me-2"></i>Date de l'acte</div>
+                        <div class="info-value">{{ dossier.acte_date.strftime('%d/%m/%Y') if dossier.acte_date else '-'
+                            }}</div>
+                    </div>
+                </div>
+
+                <!-- Mode Édition -->
+                <div class="edit-mode" id="edit-mode">
+                    <div class="mb-3">
+                        <label for="id_doctor" class="form-label">
+                            <i class="fas fa-user-md me-1"></i>Médecin <span class="text-danger">*</span>
+                        </label>
+                        <select class="form-select choices-select" id="id_doctor" name="id_doctor" required>
+                            {% for doctor in doctors %}
+                            <option value="{{ doctor.id }}" {% if doctor.id==dossier.id_doctor %}selected{% endif %}>
+                                {{ doctor.name }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="patient" class="form-label">
+                            <i class="fas fa-user me-1"></i>Patient <span class="text-danger">*</span>
+                        </label>
+                        <input type="text" id="patient" name="patient" class="form-control"
+                            value="{{ dossier.patient }}" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="acte_date" class="form-label">
+                            <i class="far fa-calendar-alt me-1"></i>Date de l'acte <span class="text-danger">*</span>
+                        </label>
+                        <input type="date" class="form-control" id="acte_date" name="acte_date"
+                            value="{{ dossier.acte_date.strftime('%Y-%m-%d') if dossier.acte_date else '' }}" required>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-6">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="vip" name="vip" value="1" {% if
+                                    dossier.vip %}checked{% endif %}>
+                                <label class="form-check-label" for="vip">
+                                    <i class="fas fa-star me-1"></i>VIP
+                                </label>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="urgenceCheck" name="urgenceCheck"
+                                    value="1" {% if dossier.urgence %}checked{% endif %}>
+                                <label class="form-check-label" for="urgenceCheck">
+                                    <i class="fas fa-exclamation-triangle me-1"></i>Urgence
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Hébergement -->
+        <div class="col-md-6">
+            <div class="info-card" id="info-card">
+                <div class="info-card-title">
+                    <i class="fas fa-moon me-2"></i>Hébergement et Suppléments
+                </div>
+
+                <!-- Mode Vue -->
+                <div class="view-mode">
+                    <div class="info-row">
+                        <div class="info-label"><i class="far fa-moon me-2"></i>Nuits (Patient)</div>
+                        <div class="info-value">{{ dossier.nbr_nuite or 0 }}</div>
+                    </div>
+                    <div class="info-row">
+                        <div class="info-label"><i class="fas fa-users me-2"></i>Nuits (Conjoint)</div>
+                        <div class="info-value">{{ dossier.nbr_nuite_conjoint or 0 }}</div>
+                    </div>
+                    <div class="info-row">
+                        <div class="info-label"><i class="fas fa-money-bill-alt me-2"></i>Extras</div>
+                        <div class="info-value">{{ "%.2f"|format(dossier.extras or 0) }} DA</div>
+                    </div>
+                    <div class="info-row">
+                        <div class="info-label"><i class="fas fa-plus-circle me-2"></i>UP Médecin</div>
+                        <div class="info-value">{{ "%.2f"|format(dossier.up_medecin or 0) }} DA</div>
+                    </div>
+                    <div class="info-row">
+                        <div class="info-label"><i class="fas fa-hospital me-2"></i>UP Clinique</div>
+                        <div class="info-value">{{ "%.2f"|format(dossier.up_clinique or 0) }} DA</div>
+                    </div>
+                </div>
+
+                <!-- Mode Édition -->
+                <div class="edit-mode" id="edit-mode">
+                    <div class="mb-3">
+                        <label for="nbr_nuite" class="form-label">
+                            <i class="far fa-moon me-1"></i>Nuits (Patient)
+                        </label>
+                        <input type="number" class="form-control" id="nbr_nuite" name="nbr_nuite" min="0"
+                            value="{{ dossier.nbr_nuite or 0 }}">
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="nbr_nuite_conjoint" class="form-label">
+                            <i class="fas fa-users me-1"></i>Nuits (Conjoint)
+                        </label>
+                        <input type="number" class="form-control" id="nbr_nuite_conjoint" name="nbr_nuite_conjoint"
+                            min="0" value="{{ dossier.nbr_nuite_conjoint or 0 }}">
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="extras" class="form-label">
+                            <i class="fas fa-money-bill-alt me-1"></i>Extras (DA)
+                        </label>
+                        <input type="number" class="form-control" id="extras" name="extras" step="0.01" min="0"
+                            value="{{ dossier.extras or 0 }}">
+                        <div class="mt-2">
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input" type="radio" name="extraPercentage" id="extra20"
+                                    value="20" checked>
+                                <label class="form-check-label" for="extra20">+20%</label>
+                            </div>
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input" type="radio" name="extraPercentage" id="extra50"
+                                    value="50">
+                                <label class="form-check-label" for="extra50">+50%</label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="up_medecin" class="form-label">
+                            <i class="fas fa-plus-circle me-1"></i>UP Médecin (DA)
+                        </label>
+                        <input type="number" class="form-control" id="up_medecin" name="up_medecin" step="0.01" min="0"
+                            value="{{ dossier.up_medecin or 0 }}">
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="up_clinique" class="form-label">
+                            <i class="fas fa-hospital me-1"></i>UP Clinique (DA)
+                        </label>
+                        <input type="number" class="form-control" id="up_clinique" name="up_clinique" step="0.01"
+                            min="0" value="{{ dossier.up_clinique or 0 }}">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Anesthésie / Réanimation -->
+        <div class="col-md-6">
+            <div class="info-card">
+                <div class="info-card-title">
+                    <i class="fas fa-heartbeat me-2"></i>Anesthésie / Réanimation
+                </div>
+
+                <!-- Mode Vue -->
+                <div class="view-mode">
+                    <div class="info-row">
+                        <div class="info-label"><i class="fas fa-syringe me-2"></i>Anesthésiste</div>
+                        <div class="info-value">{{ dossier.anesthesiste_name or '-' }}</div>
+                    </div>
+                    <div class="info-row">
+                        <div class="info-label"><i class="fas fa-heartbeat me-2"></i>Réanimateur</div>
+                        <div class="info-value">{{ dossier.reanimateur_name or '-' }}</div>
+                    </div>
+                    <div class="info-row">
+                        <div class="info-label"><i class="far fa-clock me-2"></i>Durée opération</div>
+                        <div class="info-value">{{ dossier.duree_operation or '-' }}{% if dossier.duree_operation %}
+                            min{% endif %}</div>
+                    </div>
+                </div>
+
+                <!-- Mode Édition -->
+                <div class="edit-mode">
+                    <div class="mb-3">
+                        <label for="id_acte_anesthesie" class="form-label">
+                            <i class="fas fa-clipboard-check me-1"></i>Type d'Acte d'Anesthésie
+                        </label>
+                        <select class="form-select" id="id_acte_anesthesie" name="id_acte_anesthesie">
+                            <option value="">Aucun</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="id_anesthesiste" class="form-label">
+                            <i class="fas fa-syringe me-1"></i>Anesthésiste
+                        </label>
+                        <select class="form-select" id="id_anesthesiste" name="id_anesthesiste">
+                            <option value="">Aucun</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="id_reanimateur" class="form-label">
+                            <i class="fas fa-heartbeat me-1"></i>Réanimateur
+                        </label>
+                        <select class="form-select" id="id_reanimateur" name="id_reanimateur">
+                            <option value="">Aucun</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="duree_operation" class="form-label">
+                            <i class="far fa-clock me-1"></i>Durée d'opération (minutes)
+                        </label>
+                        <input type="number" class="form-control" id="duree_operation" name="duree_operation" min="0"
+                            value="{{ dossier.duree_operation or '' }}">
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="observations_anesthesie" class="form-label">
+                            <i class="far fa-comment-alt me-1"></i>Observations
+                        </label>
+                        <textarea class="form-control" id="observations_anesthesie" name="observations_anesthesie"
+                            rows="3"></textarea>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Résumé Financier -->
+        <div class="col-md-6">
+            <div class="info-card">
+                <div class="info-card-title">
+                    <i class="fas fa-euro-sign me-2"></i>Résumé Financier
+                </div>
+
+                <div class="info-row align-items-center">
+                    <div class="info-label"><i class="fas fa-user-md me-2"></i>Part Opérateur</div>
+                    <div class="info-value d-flex align-items-center gap-2">
+                        <strong class="text-primary">{{ "%.2f"|format(dossier.part_operateur or 0) }} DA</strong>
+                        {% if dossier.part_operateur and dossier.part_operateur > 0 %}
+                            {% if dossier.payment and dossier.payment >= dossier.part_operateur %}
+                                <span class="badge bg-success rounded-pill"><i class="fas fa-check-circle"></i> Payé</span>
+                            {% elif dossier.payment and dossier.payment > 0 %}
+                                <span class="badge bg-warning text-dark rounded-pill"><i class="fas fa-adjust"></i> Partiel</span>
+                            {% else %}
+                                <span class="badge bg-danger rounded-pill"><i class="fas fa-times-circle"></i> Non payé</span>
+                            {% endif %}
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="info-row">
+                    <div class="info-label"><i class="fas fa-hospital me-2"></i>Prix Hospitalisation</div>
+                    <div class="info-value">{{ "%.2f"|format(dossier.prix_hospitalisation or 0) }} DA</div>
+                </div>
+                <div class="info-row">
+                    <div class="info-label"><i class="fas fa-file-invoice-dollar me-2"></i>Prix Dossier Convention
+                    </div>
+                    <div class="info-value">{{ "%.2f"|format(dossier.prix_dossier_convention or 0) }} DA</div>
+                </div>
+                <div class="info-row">
+                    <div class="info-label"><i class="fas fa-money-bill-wave me-2"></i>Prix Dossier Espèce</div>
+                    <div class="info-value">
+                        <strong class="text-success">{{ "%.2f"|format(dossier.prix_dossier_esp or 0) }} DA</strong>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Actes Médicaux -->
+        <div class="col-12">
+            <div class="info-card">
+                <div class="info-card-title">
+                    <i class="fas fa-clipboard-list me-2"></i>Actes Médicaux KT
+                </div>
+
+                <!-- Mode Vue -->
+                <div class="view-mode">
+                    {% for acte in actes %}
+                    <div class="acte-item-display">
+                        <div class="row align-items-center">
+                            <div class="col-md-4">
+                                <strong>{{ acte.name_acte_kt }}</strong><br>
+                                <small class="text-muted">Code: {{ acte.code_cnas }}</small>
+                            </div>
+                            <div class="col-md-2">
+                                <span class="badge bg-primary">{{ acte.convention }}</span>
+                            </div>
+                            <div class="col-md-3 text-end">
+                                <small class="text-muted">Prix Clinique</small><br>
+                                <strong class="text-primary">
+                                    {% set prix_clinique = (acte.part_clinique_convention or 0) +
+                                    (acte.part_clinique_esp or 0) %}
+                                    {{ "%.2f"|format(prix_clinique) }} DA
+                                </strong>
+                            </div>
+                            <div class="col-md-3 text-end">
+                                <small class="text-muted">Honoraires</small><br>
+                                <strong class="text-success">
+                                    {{ "%.2f"|format(acte.part_operateur or 0) }} DA
+                                </strong>
+                            </div>
+                        </div>
+                    </div>
+                    {% else %}
+                    <p class="text-muted">Aucun acte enregistré</p>
+                    {% endfor %}
+                </div>
+
+                <!-- Mode Édition -->
+                <div class="edit-mode">
+                    <div id="acteContainer">
+                        {% for acte in actes %}
+                        <div id="acte_{{ loop.index0 }}" class="acte-item" data-resolved-prix="0"
+                            data-resolved-honoraires="0" data-resolved-source="">
+                            <span class="acte-number">Acte {{ loop.index }}</span>
+                            <div class="row g-3">
+                                <div class="col-md-4">
+                                    <label class="form-label fw-semibold">
+                                        Type d'Acte <span class="text-danger">*</span>
+                                    </label>
+                                    <select class="form-select acte-select-detail" name="id_acte_{{ loop.index0 }}"
+                                        required data-current-acte="{{ acte.id_acte }}"
+                                        data-current-convention="{{ acte.id_convention or '' }}">
+                                        <option value="">Sélectionner un acte</option>
+                                        {% for act_kt in acts_kt %}
+                                        <option value="{{ act_kt.id_acte }}" {% if act_kt.id_acte==acte.id_acte
+                                            %}selected{% endif %}>
+                                            {{ act_kt.name_acte_kt }}
+                                        </option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label fw-semibold">
+                                        Convention <span class="text-danger">*</span>
+                                    </label>
+                                    <input type="hidden" name="id_convention_{{ loop.index0 }}"
+                                        class="convention-id-hidden" value="{{ acte.id_convention or '' }}">
+                                    <select class="form-select convention-select-detail"
+                                        name="convention_acte_kt_{{ loop.index0 }}">
+                                        <option value="payante" data-id-convention="" {% if not acte.id_convention
+                                            %}selected{% endif %}>Aucune (Tarif payante / urgence)</option>
+                                        <!-- Conventions dynamiques chargées via JS -->
+                                    </select>
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label fw-semibold">Prix Résolu</label>
+                                    <div class="prix-resolved-info p-2 rounded border bg-light text-center">
+                                        <span class="prix-resolved-amount fw-bold text-primary">—</span>
+                                        <br>
+                                        <span class="prix-resolved-source badge bg-secondary mt-1"
+                                            style="font-size:0.7rem;"></span>
+                                    </div>
+                                </div>
+                                <div class="col-md-2 d-flex align-items-end">
+                                    <button type="button" class="btn btn-sm btn-danger w-100"
+                                        onclick="this.closest('.acte-item').remove()">
+                                        <i class="fas fa-trash-alt me-1"></i>Supprimer
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+
+                    <button type="button" class="btn btn-sm btn-gradient mt-2" id="addActeBtn">
+                        <i class="fas fa-plus-circle me-1"></i>Ajouter un acte
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Boutons d'action en mode édition -->
+    <div class="edit-mode text-center mt-4 mb-4">
+        {% if 'MODIFIER_DOSSIERS_PATIENTS_KT' in session.privileges %}
+        <button type="button" class="btn btn-secondary btn-lg me-2" onclick="toggleEditMode()">
+            <i class="fas fa-times-circle me-2"></i>Annuler
+        </button>
+        <button type="submit" class="btn btn-gradient btn-lg">
+            <i class="fas fa-check-circle me-2"></i>Enregistrer les modifications
+        </button>
+        {% endif %}
+    </div>
+</form>
+
+<!-- CHOICES.JS -->
+
+<script>
+    'use strict';
+
+    let isEditMode = false;
+    let acteCount = {{ actes| length }};
+    let choicesInstances = [];
+    let personnelAnesthesie = [];
+    let actesAnesthesie = [];
+
+    // ========================================
+    // PRIX RESOLUTION ENGINE
+    // ========================================
+    const sourceLabels = {
+        'MEDECIN_CONV': 'Tarif Médecin (Conv)',
+        'MEDECIN_STD': 'Tarif Médecin',
+        'MEDECIN_URG': 'Tarif Médecin (Urg)',
+        'CONVENTION': 'Convention',
+        'PAYANTE': 'Payante',
+        'URGENCE': 'Urgence'
+    };
+    const sourceColors = {
+        'MEDECIN_CONV': 'bg-info',
+        'MEDECIN_STD': 'bg-info',
+        'MEDECIN_URG': 'bg-warning text-dark',
+        'CONVENTION': 'bg-success',
+        'PAYANTE': 'bg-secondary',
+        'URGENCE': 'bg-danger'
+    };
+
+    function resolvePriceDetail(acteItem) {
+        const acteSelect = acteItem.querySelector('.acte-select-detail');
+        const hiddenConvId = acteItem.querySelector('.convention-id-hidden');
+        const doctorSelect = document.getElementById('id_doctor');
+        const urgenceCheck = document.getElementById('urgenceCheck');
+
+        const idActe = acteSelect?.value;
+        const idDoctor = doctorSelect?.value;
+        const idConvention = hiddenConvId?.value || null;
+        const estUrgence = urgenceCheck?.checked || false;
+
+        const amountEl = acteItem.querySelector('.prix-resolved-amount');
+        const sourceEl = acteItem.querySelector('.prix-resolved-source');
+
+        if (!idActe || !idDoctor) {
+            acteItem.dataset.resolvedPrix = '0';
+            acteItem.dataset.resolvedHonoraires = '0';
+            acteItem.dataset.resolvedSource = '';
+            if (amountEl) amountEl.textContent = '—';
+            if (sourceEl) { sourceEl.textContent = ''; sourceEl.className = 'prix-resolved-source badge bg-secondary mt-1'; sourceEl.style.fontSize = '0.7rem'; }
+            return;
+        }
+
+        if (amountEl) amountEl.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+
+        fetch('/api/kt/resoudre_prix', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                id_acte: parseInt(idActe),
+                id_doctor: parseInt(idDoctor),
+                id_convention: idConvention ? parseInt(idConvention) : null,
+                est_urgence: estUrgence
+            })
+        })
+            .then(r => r.json())
+            .then(data => {
+                if (data.success) {
+                    acteItem.dataset.resolvedPrix = data.prix;
+                    acteItem.dataset.resolvedHonoraires = data.part_operateur;
+                    acteItem.dataset.resolvedSource = data.source;
+                    if (amountEl) amountEl.textContent = `${data.prix.toLocaleString('fr-FR')} DA`;
+                    if (sourceEl) {
+                        sourceEl.textContent = sourceLabels[data.source] || data.source;
+                        sourceEl.className = `prix-resolved-source badge ${sourceColors[data.source] || 'bg-secondary'} mt-1`;
+                        sourceEl.style.fontSize = '0.7rem';
+                    }
+                }
+            })
+            .catch(() => {
+                if (amountEl) amountEl.textContent = 'Erreur';
+                acteItem.dataset.resolvedPrix = '0';
+                acteItem.dataset.resolvedHonoraires = '0';
+            });
+    }
+
+    function resolveAllPricesDetail() {
+        document.querySelectorAll('.acte-item').forEach(item => resolvePriceDetail(item));
+    }
+
+    // Load conventions for an acte and optionally pre-select one
+    function loadConventionsForActe(acteItem, idActe, preSelectConventionId) {
+        const conventionSelect = acteItem.querySelector('.convention-select-detail');
+        const hiddenConvId = acteItem.querySelector('.convention-id-hidden');
+
+        // Reset to payante only
+        conventionSelect.innerHTML = '<option value="payante" data-id-convention="">Aucune (Tarif payante / urgence)</option>';
+        hiddenConvId.value = '';
+
+        if (!idActe) return Promise.resolve();
+
+        return fetch(`/api/conventions_acte_kt/${idActe}`)
+            .then(r => r.json())
+            .then(data => {
+                if (data.success && data.conventions.length > 0) {
+                    data.conventions.forEach(conv => {
+                        const opt = document.createElement('option');
+                        opt.value = conv.code_convention.toLowerCase();
+                        opt.textContent = `${conv.nom_convention} (${conv.prix.toLocaleString()} DA)`;
+                        opt.dataset.idConvention = conv.id_convention;
+                        opt.dataset.prix = conv.prix;
+                        opt.dataset.honoraires = conv.part_operateur;
+                        if (preSelectConventionId && conv.id_convention == preSelectConventionId) {
+                            opt.selected = true;
+                        }
+                        conventionSelect.appendChild(opt);
+                    });
+                    // Update hidden field
+                    const selected = conventionSelect.options[conventionSelect.selectedIndex];
+                    hiddenConvId.value = selected.dataset.idConvention || '';
+                }
+            });
+    }
+
+    // Wire convention change listener for an acte item
+    function wireConventionListener(acteItem) {
+        const conventionSelect = acteItem.querySelector('.convention-select-detail');
+        conventionSelect.addEventListener('change', function () {
+            const selected = this.options[this.selectedIndex];
+            const hiddenConvId = acteItem.querySelector('.convention-id-hidden');
+            hiddenConvId.value = selected.dataset.idConvention || '';
+            resolvePriceDetail(acteItem);
+        });
+    }
+
+    // Wire acte change listener for an acte item
+    function wireActeListener(acteItem) {
+        const acteSelect = acteItem.querySelector('.acte-select-detail');
+        acteSelect.addEventListener('change', function () {
+            loadConventionsForActe(acteItem, this.value, null)
+                .then(() => resolvePriceDetail(acteItem));
+        });
+    }
+
+    // ========================================
+    // ANESTHÉSIE
+    // ========================================
+    async function loadPersonnelAnesthesie() {
+        try {
+            const response = await fetch('/api/kt_personnel_anesthesie');
+            const data = await response.json();
+            if (data.success) {
+                personnelAnesthesie = data.personnel;
+                populatePersonnelSelects();
+            }
+        } catch (error) {
+            console.error('Erreur chargement personnel:', error);
+        }
+    }
+
+    async function loadActesAnesthesie() {
+        try {
+            const response = await fetch('/api/anesthesie/types_actes');
+            const data = await response.json();
+            actesAnesthesie = data;
+            populateActesSelect();
+        } catch (error) {
+            console.error('Erreur chargement actes:', error);
+        }
+    }
+
+    function populatePersonnelSelects() {
+        const anesthesisteSelect = document.getElementById('id_anesthesiste');
+        const reanimateurSelect = document.getElementById('id_reanimateur');
+
+        personnelAnesthesie
+            .filter(p => p.nom_type === 'TECH_ANESTHESISTE')
+            .forEach(p => {
+                const option = new Option(p.nom_complet, p.id_personnel_anesthesie);
+                if (p.id_personnel_anesthesie == {{ dossier.id_anesthesiste or 'null' }})
+                {
+            option.selected = true;
+        }
+        anesthesisteSelect.add(option);
+    });
+
+    personnelAnesthesie
+        .filter(p => p.nom_type === 'REANIMATEUR' || p.nom_type === 'REANIMATEUR_GARDE')
+        .forEach(p => {
+            const option = new Option(
+                `${p.nom_complet}${p.nom_type === 'REANIMATEUR_GARDE' ? ' (Garde)' : ''}`,
+                p.id_personnel_anesthesie
+            );
+            if (p.id_personnel_anesthesie == {{ dossier.id_reanimateur or 'null' }})
+            {
+        option.selected = true;
+    }
+    reanimateurSelect.add(option);
+            });
+    }
+
+    function populateActesSelect() {
+        const acteSelect = document.getElementById('id_acte_anesthesie');
+        actesAnesthesie.forEach(acte => {
+            const option = new Option(
+                `${acte.nom_acte}${acte.description ? ' (' + acte.description + ')' : ''}`,
+                acte.id_acte_anesthesie
+            );
+            acteSelect.add(option);
+        });
+    }
+
+    // ========================================
+    // EDIT MODE TOGGLE
+    // ========================================
+    function toggleEditMode() {
+        isEditMode = !isEditMode;
+        const form = document.getElementById('editForm');
+
+        if (isEditMode) {
+            form.classList.add('editing');
+            document.getElementById('toggleEditBtn').innerHTML = '<i class="fas fa-times me-2"></i>Annuler';
+        } else {
+            form.classList.remove('editing');
+            document.getElementById('toggleEditBtn').innerHTML = '<i class="fas fa-edit me-2"></i>Modifier';
+            location.reload();
+        }
+    }
+
+    // ========================================
+    // AJOUTER UN ACTE (mode édition)
+    // ========================================
+    document.getElementById('addActeBtn')?.addEventListener('click', function () {
+        const container = document.getElementById('acteContainer');
+        const count = acteCount++;
+
+        const acteHTML = `
+        <div id="acte_${count}" class="acte-item" data-resolved-prix="0" data-resolved-honoraires="0" data-resolved-source="">
+            <span class="acte-number">Acte ${count + 1}</span>
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <label class="form-label fw-semibold">
+                        Type d'Acte <span class="text-danger">*</span>
+                    </label>
+                    <select class="form-select acte-select-detail" name="id_acte_${count}" required>
+                        <option value="">Sélectionner un acte</option>
+                        {% for act_kt in acts_kt %}
+                        <option value="{{ act_kt.id_acte }}">{{ act_kt.name_acte_kt }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label fw-semibold">
+                        Convention <small class="text-muted">(vide = tarif standard payante ou urgence)</small>
+                    </label>
+                    <input type="hidden" name="id_convention_${count}" class="convention-id-hidden" value="">
+                    <select class="form-select convention-select-detail" name="convention_acte_kt_${count}">
+                        <option value="payante" data-id-convention="">Aucune (Tarif payante / urgence)</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label fw-semibold">Prix Résolu</label>
+                    <div class="prix-resolved-info p-2 rounded border bg-light text-center">
+                        <span class="prix-resolved-amount fw-bold text-primary">—</span>
+                        <br>
+                        <span class="prix-resolved-source badge bg-secondary mt-1" style="font-size:0.7rem;"></span>
+                    </div>
+                </div>
+                <div class="col-md-2 d-flex align-items-end">
+                    <button type="button" class="btn btn-sm btn-danger w-100" onclick="this.closest('.acte-item').remove()">
+                        <i class="fas fa-trash-alt me-1"></i>Supprimer
+                    </button>
+                </div>
+            </div>
+        </div>
+    `;
+
+        container.insertAdjacentHTML('beforeend', acteHTML);
+        const newItem = document.getElementById(`acte_${count}`);
+        wireActeListener(newItem);
+        wireConventionListener(newItem);
+    });
+
+    // ========================================
+    // INITIALISATION
+    // ========================================
+    document.addEventListener('DOMContentLoaded', async function () {
+        await loadPersonnelAnesthesie();
+        await loadActesAnesthesie();
+
+        // Initialiser Choices.js pour le médecin
+        const doctorSelect = document.getElementById('id_doctor');
+        if (doctorSelect) {
+            choicesInstances.push(new Choices(doctorSelect, {
+                searchEnabled: true,
+                itemSelectText: '',
+                shouldSort: false
+            }));
+            // Re-résoudre tous les prix quand médecin change
+            doctorSelect.addEventListener('change', resolveAllPricesDetail);
+        }
+
+        // Re-résoudre tous les prix quand urgence change
+        const urgenceCheck = document.getElementById('urgenceCheck');
+        if (urgenceCheck) {
+            urgenceCheck.addEventListener('change', resolveAllPricesDetail);
+        }
+
+        // Initialiser conventions et prix pour les actes existants
+        const existingActes = document.querySelectorAll('.acte-item');
+        for (const acteItem of existingActes) {
+            const acteSelect = acteItem.querySelector('.acte-select-detail');
+            const currentActeId = acteSelect?.dataset.currentActe;
+            const currentConventionId = acteSelect?.dataset.currentConvention;
+
+            wireActeListener(acteItem);
+            wireConventionListener(acteItem);
+
+            if (currentActeId) {
+                await loadConventionsForActe(acteItem, currentActeId, currentConventionId);
+                resolvePriceDetail(acteItem);
+            }
+        }
+    });
+</script>
+
+{% endblock %}

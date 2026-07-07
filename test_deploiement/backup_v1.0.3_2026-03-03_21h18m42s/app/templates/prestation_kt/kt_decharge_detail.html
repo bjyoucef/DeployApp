@@ -1,0 +1,688 @@
+{% extends 'layout.html' %}
+{% block content %}
+
+<style>
+    :root {
+        --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.08);
+        --border-radius: 12px;
+    }
+
+    .page-header {
+        background: var(--primary-gradient);
+        padding: 2rem;
+        border-radius: var(--border-radius);
+        margin-bottom: 2rem;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+        color: white;
+    }
+
+    .tranche-annulee {
+        background-color: #fff3cd;
+        text-decoration: line-through;
+        opacity: 0.7;
+    }
+
+    .badge-annulee {
+        background-color: #dc3545;
+    }
+
+    .alert-annulation {
+        background-color: #f8d7da;
+        border-left: 4px solid #dc3545;
+        padding: 1rem;
+        margin-bottom: 1rem;
+    }
+    .quick-nav {
+        background: white;
+        padding: 1rem;
+        border-radius: var(--border-radius);
+        box-shadow: var(--shadow-sm);
+        margin-bottom: 2rem;
+        display: flex;
+        gap: 1rem;
+        flex-wrap: wrap;
+    }
+
+    .quick-nav a {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.75rem 1.5rem;
+        border-radius: 10px;
+        text-decoration: none;
+        font-weight: 600;
+        transition: all 0.3s ease;
+    }
+
+    .quick-nav a.active {
+        background: var(--primary-gradient);
+        color: white;
+        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+    }
+
+    .quick-nav a:not(.active) {
+        background: #f8f9fa;
+        color: #495057;
+        border: 2px solid #dee2e6;
+    }
+
+    .quick-nav a:not(.active):hover {
+        background: #e9ecef;
+        transform: translateY(-2px);
+    }
+</style>
+
+<div class="container-fluid">
+    <!-- En-tête -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <h2>
+                <i class="fas fa-file-invoice-dollar"></i> {{ decharge.numero_decharge }}
+                {% if decharge.statut == 'ANNULEE' %}
+                <span class="badge badge-annulee">ANNULÉE</span>
+                {% endif %}
+            </h2>
+            <p class="text-muted mb-0">
+                Créée le {{ decharge.date_decharge.strftime('%d/%m/%Y') }}
+            </p>
+        </div>
+        <div class="col-md-6 text-end">
+            <a href="{{ url_for('kt_decharges') }}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left"></i> Retour à la liste
+            </a>
+
+            <!-- Bouton Export PDF -->
+{% if 'ACCES_DECHARGES_KT' in session.privileges %}
+<a href="{{ url_for('kt_decharge_pdf', id_decharge=decharge.id_decharge) }}"
+   class="btn btn-pdf" target="_blank">
+    <i class="fas fa-file-pdf"></i> Exporter en PDF
+</a>
+{% endif %}
+{% if decharge.statut not in ['SOLDE', 'ANNULEE'] and 'CREER_DECHARGE_KT' in session.privileges %}
+<button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#addTrancheModal">
+    <i class="fas fa-plus"></i> Ajouter un Paiement
+</button>
+{% endif %}
+
+{% if decharge.statut != 'ANNULEE' and 'SUPPRIMER_DECHARGE_KT' in session.privileges %}
+<button class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#annulerDechargeModal">
+    <i class="fas fa-ban"></i> Annuler la Décharge
+</button>
+{% endif %}
+        </div>
+    </div>
+
+    <!-- Alerte si décharge annulée -->
+    {% if decharge.statut == 'ANNULEE' %}
+    <div class="alert-annulation">
+        <h5><i class="fas fa-exclamation-triangle"></i> Décharge Annulée</h5>
+        <p><strong>Raison :</strong> {{ decharge.raison_annulation or 'Non spécifiée' }}</p>
+        <p class="mb-0">
+            <small>
+                <i class="fas fa-user"></i> Annulée par : {{ decharge.annulateur or '-' }}
+                le {{ decharge.date_annulation.strftime('%d/%m/%Y à %H:%M') if decharge.date_annulation else '-' }}
+            </small>
+        </p>
+    </div>
+    {% endif %}
+
+    <!-- Traçabilité -->
+    <div class="tracability-card">
+        <h6 class="mb-3">
+            <i class="fas fa-history"></i> Traçabilité
+        </h6>
+        <div class="row">
+            <div class="col-md-4">
+                <div class="tracability-item">
+                    <div class="tracability-label">
+                        <i class="fas fa-user-plus text-success me-2"></i>Créé par:
+                    </div>
+                    <div class="tracability-value">
+                        {{ decharge.createur or '-' }}
+                    </div>
+                </div>
+                <div class="tracability-item">
+                    <div class="tracability-label">
+                        <i class="far fa-calendar-plus text-success me-2"></i>Date de création:
+                    </div>
+                    <div class="tracability-value">
+                        {{ decharge.date_creation.strftime('%d/%m/%Y à %H:%M') if decharge.date_creation else '-' }}
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                {% if decharge.modificateur %}
+                <div class="tracability-item">
+                    <div class="tracability-label">
+                        <i class="fas fa-user-edit text-warning me-2"></i>Modifié par:
+                    </div>
+                    <div class="tracability-value">
+                        {{ decharge.modificateur }}
+                    </div>
+                </div>
+                <div class="tracability-item">
+                    <div class="tracability-label">
+                        <i class="far fa-calendar-check text-warning me-2"></i>Date de modification:
+                    </div>
+                    <div class="tracability-value">
+                        {{ decharge.date_modification.strftime('%d/%m/%Y à %H:%M') if decharge.date_modification else '-' }}
+                    </div>
+                </div>
+                {% else %}
+                <div class="text-muted">
+                    <i class="fas fa-info-circle me-2"></i>Aucune modification
+                </div>
+                {% endif %}
+            </div>
+            <div class="col-md-4">
+                {% if decharge.statut == 'ANNULEE' %}
+                <div class="tracability-item">
+                    <div class="tracability-label">
+                        <i class="fas fa-user-times text-danger me-2"></i>Annulée par:
+                    </div>
+                    <div class="tracability-value">
+                        {{ decharge.annulateur or '-' }}
+                    </div>
+                </div>
+                <div class="tracability-item">
+                    <div class="tracability-label">
+                        <i class="far fa-calendar-times text-danger me-2"></i>Date d'annulation:
+                    </div>
+                    <div class="tracability-value">
+                        {{ decharge.date_annulation.strftime('%d/%m/%Y à %H:%M') if decharge.date_annulation else '-' }}
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Informations générales -->
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="card border-primary">
+                <div class="card-header bg-primary text-white">
+                    <h6 class="mb-0"><i class="fas fa-user-md"></i> Médecin</h6>
+                </div>
+                <div class="card-body">
+                    <h5>{{ decharge.nom_medecin }}</h5>
+                    <p class="text-muted mb-0">{{ decharge.name_specialty }}</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <div class="card border-info">
+                <div class="card-header bg-info text-white">
+                    <h6 class="mb-0"><i class="fas fa-folder"></i> Dossiers</h6>
+                </div>
+                <div class="card-body text-center">
+                    <h2 class="text-info mb-0">{{ decharge.nb_dossiers }}</h2>
+                    <small class="text-muted">dossiers inclus</small>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <div class="card {% if decharge.statut == 'ANNULEE' %}border-danger{% elif decharge.statut == 'SOLDE' %}border-success{% elif decharge.statut == 'PARTIEL' %}border-warning{% else %}border-secondary{% endif %}">
+                <div class="card-header {% if decharge.statut == 'ANNULEE' %}bg-danger{% elif decharge.statut == 'SOLDE' %}bg-success{% elif decharge.statut == 'PARTIEL' %}bg-warning{% else %}bg-secondary{% endif %} text-white">
+                    <h6 class="mb-0"><i class="fas fa-info-circle"></i> Statut</h6>
+                </div>
+                <div class="card-body text-center">
+                    {% if decharge.statut == 'ANNULEE' %}
+                    <h4 class="text-danger mb-0">
+                        <i class="fas fa-ban"></i> ANNULÉE
+                    </h4>
+                    {% elif decharge.statut == 'SOLDE' %}
+                    <h4 class="text-success mb-0">
+                        <i class="fas fa-check-circle"></i> SOLDÉ
+                    </h4>
+                    {% elif decharge.statut == 'PARTIEL' %}
+                    <h4 class="text-warning mb-0">
+                        <i class="fas fa-exclamation-circle"></i> PARTIEL
+                    </h4>
+                    {% else %}
+                    <h4 class="text-secondary mb-0">
+                        <i class="fas fa-clock"></i> EN COURS
+                    </h4>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Résumé financier -->
+    <div class="card mb-4">
+        <div class="card-header bg-light">
+            <h5 class="mb-0"><i class="fas fa-calculator"></i> Résumé Financier</h5>
+        </div>
+        <div class="card-body">
+            <div class="row text-center">
+                <div class="col-md-4">
+                    <h6 class="text-muted">Montant Total</h6>
+                    <h3 class="text-primary">{{ decharge.montant_total|format_price }} DA</h3>
+                </div>
+                <div class="col-md-4">
+                    <h6 class="text-muted">Montant Payé</h6>
+                    <h3 class="text-success">{{ decharge.montant_paye|format_price }} DA</h3>
+                    {% if decharge.statut != 'ANNULEE' %}
+                    <div class="progress" style="height: 25px;">
+                        {% set pct = (decharge.montant_paye / decharge.montant_total * 100)|round(2) if decharge.montant_total > 0 else 0 %}
+                        <div class="progress-bar bg-success" role="progressbar" 
+                             style="width: {{ pct }}%">
+                            {{ pct }}%
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+                <div class="col-md-4">
+                    <h6 class="text-muted">Montant Restant</h6>
+                    <h3 class="text-danger">{{ decharge.montant_restant|format_price }} DA</h3>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Onglets -->
+    <ul class="nav nav-tabs mb-3" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#dossiers-tab" type="button">
+                <i class="fas fa-folder-open"></i> Dossiers ({{ dossiers|length }})
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tranches-tab" type="button">
+                <i class="fas fa-money-bill-wave"></i> Paiements ({{ tranches|length }})
+            </button>
+        </li>
+    </ul>
+    
+    <div class="tab-content">
+        <!-- Onglet Dossiers -->
+        <div class="tab-pane fade show active" id="dossiers-tab">
+            <div class="card">
+                <div class="card-body">
+                            {% if decharge.statut == 'ANNULEE' %}
+            <div class="alert alert-warning">
+                <i class="fas fa-info-circle"></i>
+                Ces dossiers faisaient partie de la décharge annulée. Ils sont à nouveau disponibles pour une nouvelle décharge.
+            </div>
+            {% endif %}
+
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>N° Dossier</th>
+                                    <th>Patient</th>
+                                    <th>Date Acte</th>
+                                    <th>Actes</th>
+                                    <th>Montant</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for dossier in dossiers %}
+                                <tr>
+                                    <td><strong>#{{ dossier.id_dossier }}</strong></td>
+                                    <td>{{ dossier.patient }}</td>
+                                    <td>{{ dossier.acte_date.strftime('%d/%m/%Y') if dossier.acte_date }}</td>
+                                    <td>
+                                        <small class="text-muted">{{ dossier.actes or 'N/A' }}</small>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-success fs-6">
+                                            {{ dossier.montant_dossier|format_price }} DA
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <a href="{{ url_for('kt_dossier_detail', id_dossier=dossier.id_dossier) }}" 
+                                           class="btn btn-sm btn-outline-primary" target="_blank">
+                                            <i class="fas fa-external-link-alt"></i> Voir
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                            <tfoot class="table-light">
+                                <tr>
+                                    <th colspan="4" class="text-end">TOTAL:</th>
+                                    <th>
+                                        <span class="badge bg-primary fs-6">
+                                            {{ dossiers|sum(attribute='montant_dossier')|format_price }} DA
+                                        </span>
+                                    </th>
+                                    <th></th>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Onglet Tranches/Paiements avec gestion des annulations -->
+        <div class="tab-pane fade" id="tranches-tab">
+            <div class="card">
+                <div class="card-body">
+                    {% if tranches|length == 0 %}
+                    <div class="text-center py-5">
+                        <i class="fas fa-money-bill-wave fa-3x text-muted mb-3"></i>
+                        <p class="text-muted">Aucun paiement enregistré</p>
+                    </div>
+                    {% else %}
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Tranche N°</th>
+                                    <th>Date Paiement</th>
+                                    <th>Montant</th>
+                                    <th>Mode</th>
+                                    <th>Référence</th>
+                                    <th>Statut</th>
+                                    <th>Observations</th>
+                                    <th>Créé par</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for tranche in tranches %}
+                                <tr class="{% if tranche.statut == 'ANNULEE' %}tranche-annulee{% endif %}">
+                                    <td>
+                                        <span class="badge {% if tranche.statut == 'ANNULEE' %}badge-annulee{% else %}bg-secondary{% endif %}">
+                                            Tranche #{{ tranche.numero_tranche }}
+                                        </span>
+                                    </td>
+                                    <td>{{ tranche.date_paiement.strftime('%d/%m/%Y') }}</td>
+                                    <td>
+                                        <strong class="{% if tranche.statut == 'ANNULEE' %}text-muted{% else %}text-success{% endif %}">
+                                            {{ tranche.montant_tranche|format_price }} DA
+                                        </strong>
+                                    </td>
+                                    <td>
+                                        {% if tranche.mode_paiement == 'ESPECE' %}
+                                        <span class="badge bg-success">Espèce</span>
+                                        {% elif tranche.mode_paiement == 'CHEQUE' %}
+                                        <span class="badge bg-info">Chèque</span>
+                                        {% elif tranche.mode_paiement == 'VIREMENT' %}
+                                        <span class="badge bg-primary">Virement</span>
+                                        {% else %}
+                                        <span class="badge bg-secondary">Autre</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ tranche.reference_paiement or '-' }}</td>
+                                    <td>
+                                        {% if tranche.statut == 'ANNULEE' %}
+                                        <span class="badge badge-annulee">ANNULÉE</span>
+                                        <br>
+                                        <small class="text-muted">
+                                            Par: {{ tranche.annulateur or '-' }}<br>
+                                            Le: {{ tranche.date_annulation.strftime('%d/%m/%Y %H:%M') if tranche.date_annulation else '-' }}
+                                        </small>
+                                        {% else %}
+                                        <span class="badge bg-success">ACTIVE</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <small class="text-muted">{{ tranche.observations or '-' }}</small>
+                                        {% if tranche.statut == 'ANNULEE' and tranche.raison_annulation %}
+                                        <br>
+                                        <small class="text-danger">
+                                            <strong>Raison annulation:</strong> {{ tranche.raison_annulation }}
+                                        </small>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <small>{{ tranche.createur }}</small><br>
+                                        <small class="text-muted">{{ tranche.date_creation.strftime('%d/%m/%Y %H:%M') if tranche.date_creation else '-' }}</small>
+                                    </td>
+                                    <td>
+                                        {% if tranche.statut == 'ACTIVE' and 'SUPPRIMER_DECHARGE_KT' in session.privileges and decharge.statut != 'ANNULEE' %}
+                                        <button type="button"
+                                                class="btn btn-sm btn-outline-danger"
+                                                data-bs-toggle="modal"
+                                                data-bs-target="#annulerTrancheModal"
+                                                data-id-tranche="{{ tranche.id_tranche }}"
+                                                data-numero-tranche="{{ tranche.numero_tranche }}"
+                                                data-montant-tranche="{{ tranche.montant_tranche }}">
+                                            <i class="fas fa-ban"></i> Annuler
+                                        </button>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                            <tfoot class="table-light">
+                                <tr>
+                                    <th colspan="2" class="text-end">TOTAL PAYÉ (actif):</th>
+                                    <th>
+                                        <strong class="text-success">
+                                            {{ tranches|selectattr('statut', 'equalto', 'ACTIVE')|sum(attribute='montant_tranche')|format_price }} DA
+                                        </strong>
+                                    </th>
+                                    <th colspan="6"></th>
+                                </tr>
+                                {% set montant_annule = tranches|selectattr('statut', 'equalto', 'ANNULEE')|sum(attribute='montant_tranche') %}
+                                {% if montant_annule > 0 %}
+                                <tr>
+                                    <th colspan="2" class="text-end">TOTAL ANNULÉ:</th>
+                                    <th>
+                                        <strong class="text-danger">
+                                            {{ montant_annule|format_price }} DA
+                                        </strong>
+                                    </th>
+                                    <th colspan="6"></th>
+                                </tr>
+                                {% endif %}
+                            </tfoot>
+                        </table>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    {% if decharge.observations %}
+    <div class="card mt-4">
+        <div class="card-header bg-light">
+            <h6 class="mb-0"><i class="fas fa-comment"></i> Observations</h6>
+        </div>
+        <div class="card-body">
+            <p class="mb-0">{{ decharge.observations }}</p>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Modal Ajouter Tranche -->
+<div class="modal fade" id="addTrancheModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title">
+                    <i class="fas fa-plus"></i> Ajouter un Paiement
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            
+            <form method="POST" action="{{ url_for('ajouter_tranche_kt', id_decharge=decharge.id_decharge) }}">
+                <div class="modal-body">
+                    <div class="alert alert-info">
+                        <strong>Montant restant:</strong> {{ decharge.montant_restant|format_price }} DA
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Montant de la tranche *</label>
+                        <div class="input-group">
+                            <input type="number" class="form-control" name="montant_tranche" 
+                                   step="0.01" required max="{{ decharge.montant_restant }}"
+                                   placeholder="0.00">
+                            <span class="input-group-text">DA</span>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Date de paiement *</label>
+                        <input type="date" class="form-control" name="date_paiement" 
+                               required id="date_paiement_tranche">
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Mode de paiement *</label>
+                        <select class="form-select" name="mode_paiement" required>
+                            <option value="ESPECE">Espèce</option>
+                            <option value="CHEQUE">Chèque</option>
+                            <option value="VIREMENT">Virement</option>
+                            <option value="AUTRE">Autre</option>
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Référence</label>
+                        <input type="text" class="form-control" name="reference_paiement" 
+                               placeholder="N° chèque, virement, etc.">
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Observations</label>
+                        <textarea class="form-control" name="observations" rows="2" 
+                                  placeholder="Notes ou remarques..."></textarea>
+                    </div>
+                </div>
+                
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times"></i> Annuler
+                    </button>
+                    <button type="submit" class="btn btn-success">
+                        <i class="fas fa-check"></i> Enregistrer
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Annuler Décharge -->
+<div class="modal fade" id="annulerDechargeModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title">
+                    <i class="fas fa-ban"></i> Annuler la Décharge
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+
+            <form method="POST" action="{{ url_for('annuler_decharge_kt', id_decharge=decharge.id_decharge) }}">
+                <div class="modal-body">
+                    <div class="alert alert-warning">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <strong>Attention !</strong> Cette action va annuler la décharge et toutes ses tranches de paiement.
+                        Les dossiers seront libérés et pourront être utilisés dans une nouvelle décharge.
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Raison de l'annulation *</label>
+                        <textarea class="form-control" name="raison_annulation" rows="3"
+                                  required placeholder="Expliquez la raison de l'annulation..."></textarea>
+                    </div>
+
+                    <div class="mb-3">
+                        <p class="mb-1"><strong>Décharge :</strong> {{ decharge.numero_decharge }}</p>
+                        <p class="mb-1"><strong>Médecin :</strong> {{ decharge.nom_medecin }}</p>
+                        <p class="mb-1"><strong>Montant total :</strong> {{ decharge.montant_total|format_price }} DA</p>
+                        <p class="mb-0"><strong>Nombre de tranches :</strong> {{ tranches|selectattr('statut', 'equalto', 'ACTIVE')|list|length }}</p>
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times"></i> Annuler
+                    </button>
+                    <button type="submit" class="btn btn-danger">
+                        <i class="fas fa-ban"></i> Confirmer l'annulation
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Annuler Tranche -->
+<div class="modal fade" id="annulerTrancheModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title">
+                    <i class="fas fa-ban"></i> Annuler la Tranche
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+
+            <form method="POST" id="annulerTrancheForm">
+                <div class="modal-body">
+                    <div class="alert alert-warning">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <strong>Attention !</strong> Cette action va annuler la tranche de paiement.
+                        Le montant sera déduit du total payé de la décharge.
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Raison de l'annulation *</label>
+                        <textarea class="form-control" name="raison_annulation" rows="3"
+                                  required placeholder="Expliquez la raison de l'annulation..."></textarea>
+                    </div>
+
+                    <div class="mb-3">
+                        <p class="mb-1"><strong>Tranche N° :</strong> <span id="modal-numero-tranche"></span></p>
+                        <p class="mb-0"><strong>Montant :</strong> <span id="modal-montant-tranche"></span> DA</p>
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times"></i> Annuler
+                    </button>
+                    <button type="submit" class="btn btn-danger">
+                        <i class="fas fa-ban"></i> Confirmer l'annulation
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+<script>
+// Définir la date d'aujourd'hui par défaut pour le champ date_paiement
+document.addEventListener('DOMContentLoaded', function() {
+    const today = new Date().toISOString().split('T')[0];
+    const datePaiementInput = document.getElementById('date_paiement_tranche');
+    if (datePaiementInput) {
+        datePaiementInput.value = today;
+    }
+
+    // Gérer le modal d'annulation de tranche
+    const annulerTrancheModal = document.getElementById('annulerTrancheModal');
+    if (annulerTrancheModal) {
+        annulerTrancheModal.addEventListener('show.bs.modal', function(event) {
+            const button = event.relatedTarget;
+            const idTranche = button.getAttribute('data-id-tranche');
+            const numeroTranche = button.getAttribute('data-numero-tranche');
+            const montantTranche = button.getAttribute('data-montant-tranche');
+
+            // Mettre à jour le formulaire
+            const form = document.getElementById('annulerTrancheForm');
+            form.action = `/annuler_tranche_kt/${idTranche}`;
+
+            // Mettre à jour les informations affichées
+            document.getElementById('modal-numero-tranche').textContent = numeroTranche;
+            document.getElementById('modal-montant-tranche').textContent = parseFloat(montantTranche).toLocaleString('fr-FR', {minimumFractionDigits: 2});
+        });
+    }
+});
+</script>
+
+{% endblock %}

@@ -1,0 +1,613 @@
+/* ============================================================================
+   VARIABLES CSS ET THÈME - FACTURATION ÉDITER
+   ============================================================================ */
+:root {
+    --primary-color: #520091;
+    --primary-dark: #390049;
+    --accent-color: #E8505B;
+    --success-color: #00b09b;
+    --success-light: #96c93d;
+    --warning-color: #f39c12;
+    --danger-color: #e74c3c;
+    --info-color: #3498db;
+    --light-bg: #f8f9fa;
+    --border-radius: 0.75rem;
+    --border-radius-sm: 0.5rem;
+    --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    --shadow-sm: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    --shadow-md: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+    --shadow-lg: 0 1rem 3rem rgba(0, 0, 0, 0.175);
+    --z-tooltip: 1000;
+    --z-modal: 1050;
+    --z-dropdown: 1060;
+}
+
+[data-theme="dark"] {
+    --primary-color: #b388eb;
+    --primary-dark: #8c5fb5;
+    --light-bg: #1e1e1e;
+    --text-color: #e0e0e0;
+    --border-color: #404040;
+    --shadow-sm: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.5);
+    --shadow-md: 0 0.5rem 1rem rgba(0, 0, 0, 0.6);
+    --shadow-lg: 0 1rem 3rem rgba(0, 0, 0, 0.7);
+    --bg-card: #1e1e1e;
+    --bg-body: #121212;
+}
+
+
+/* ============================================================================
+   CARDS AMÉLIORÉES
+   ============================================================================ */
+
+.card {
+    border-radius: var(--border-radius);
+    border: none;
+    box-shadow: var(--shadow-sm);
+    transition: var(--transition);
+    overflow: hidden;
+    background-color: var(--bg-card);
+    color: var(--text-main);
+}
+
+
+.card:hover {
+    box-shadow: var(--shadow-md);
+    transform: translateY(-2px);
+}
+
+.card-header {
+    border-radius: var(--border-radius) var(--border-radius) 0 0 !important;
+    font-weight: 600;
+    padding: 1.25rem 1.5rem;
+    border-bottom: 3px solid rgba(0, 0, 0, 0.05);
+}
+
+.card-body {
+    padding: 1.5rem;
+}
+
+/* Effet de brillance sur les cards */
+.card::before {
+    display: none;
+}
+
+.card:hover::before {
+    display: none;
+}
+
+/* ============================================================================
+   BADGES MODERNISÉS
+   ============================================================================ */
+
+.badge {
+    padding: 0.5rem 0.875rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+    border-radius: 2rem;
+    letter-spacing: 0.3px;
+    text-transform: uppercase;
+    transition: var(--transition);
+}
+
+.badge:hover {
+    transform: scale(1.05);
+}
+
+/* ============================================================================
+   TABLEAUX AMÉLIORÉS
+   ============================================================================ */
+.table {
+    border-collapse: separate;
+    border-spacing: 0;
+}
+
+.table thead th {
+    font-weight: 700;
+    text-transform: uppercase;
+    font-size: 0.8125rem;
+    letter-spacing: 0.5px;
+    padding: 1rem 0.75rem;
+    border-bottom: 2px solid currentColor;
+    background: linear-gradient(135deg, rgba(0, 0, 0, 0.03) 0%, rgba(0, 0, 0, 0.01) 100%);
+}
+
+.table tbody tr {
+    transition: var(--transition);
+    cursor: default;
+}
+
+.table tbody tr:hover {
+    background: linear-gradient(90deg, rgba(82, 0, 145, 0.02), transparent);
+    box-shadow: inset 3px 0 0 var(--primary-color);
+}
+
+.table tbody td {
+    padding: 1rem 0.75rem;
+    vertical-align: middle;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+/* Ligne débours avec style distinctif */
+.table tbody tr.table-warning {
+    background: linear-gradient(90deg, #fff3cd 0%, rgba(255, 243, 205, 0.3) 100%) !important;
+    border-left: 4px solid var(--warning-color);
+}
+
+.table tbody tr.table-warning:hover {
+    background: linear-gradient(90deg, #ffe69c 0%, rgba(255, 243, 205, 0.5) 100%) !important;
+}
+
+/* Footer du tableau */
+.table tfoot tr {
+    font-weight: 600;
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+}
+
+.table tfoot .table-primary {
+    background: linear-gradient(135deg, #cfe2ff 0%, #e7f1ff 100%) !important;
+}
+
+.table tfoot .table-success {
+    background: linear-gradient(135deg, #d1e7dd 0%, #f1f8f4 100%) !important;
+    font-size: 1.1rem;
+}
+
+/* ============================================================================
+   FORMULAIRES STYLISÉS
+   ============================================================================ */
+
+.form-control,
+.form-select {
+    border-radius: var(--border-radius-sm);
+    border: 2px solid var(--border-color, #e0e0e0);
+    transition: var(--transition);
+    padding: 0.625rem 0.875rem;
+    background-color: var(--input-bg, #fff);
+    color: var(--input-text, #000);
+}
+
+
+.form-control:focus,
+.form-select:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 0.25rem rgba(82, 0, 145, 0.15);
+    transform: translateY(-1px);
+}
+
+.form-control:hover:not(:focus),
+.form-select:hover:not(:focus) {
+    border-color: #bbb;
+}
+
+.form-label {
+    font-weight: 600;
+    margin-bottom: 0.625rem;
+    color: var(--text-main, #2c3e50);
+    display: flex;
+
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.form-label i {
+    color: var(--primary-color);
+}
+
+/* Input groups améliorés */
+.input-group-text {
+    background: linear-gradient(135deg, var(--light-bg) 0%, #e9ecef 100%);
+    border: 2px solid var(--border-color, #e0e0e0);
+    font-weight: 600;
+    color: var(--text-main, #495057);
+}
+
+
+.input-group:focus-within .input-group-text {
+    border-color: var(--primary-color);
+    background: linear-gradient(135deg, rgba(82, 0, 145, 0.1) 0%, rgba(82, 0, 145, 0.05) 100%);
+    color: var(--primary-color);
+}
+
+/* ============================================================================
+   BOUTONS MODERNISÉS
+   ============================================================================ */
+
+.btn {
+    border-radius: var(--border-radius-sm);
+    font-weight: 600;
+    padding: 0.625rem 1.25rem;
+    transition: var(--transition);
+    border: none;
+    position: relative;
+    overflow: hidden;
+}
+
+.btn::before {
+    display: none;
+}
+
+.btn:hover::before {
+    display: none;
+}
+
+.btn:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+}
+
+.btn:active {
+    transform: translateY(0);
+}
+
+.btn i {
+    margin-right: 0.5rem;
+    transition: var(--transition);
+}
+
+.btn:hover i {
+    transform: scale(1.1);
+}
+
+/* Gradients pour les boutons */
+.btn-primary {
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
+    box-shadow: 0 4px 15px rgba(82, 0, 145, 0.3);
+}
+
+.btn-primary:hover {
+    box-shadow: 0 6px 20px rgba(82, 0, 145, 0.4);
+}
+
+.btn-success {
+    background: linear-gradient(135deg, var(--success-color) 0%, var(--success-light) 100%);
+    box-shadow: 0 4px 15px rgba(0, 176, 155, 0.3);
+}
+
+.btn-danger {
+    background: linear-gradient(135deg, #f85032 0%, #e73827 100%);
+    box-shadow: 0 4px 15px rgba(248, 80, 50, 0.3);
+}
+
+.btn-warning {
+    background: linear-gradient(135deg, var(--warning-color) 0%, #e67e22 100%);
+    color: white;
+    box-shadow: 0 4px 15px rgba(243, 156, 18, 0.3);
+}
+
+.btn-info {
+    background: linear-gradient(135deg, var(--info-color) 0%, #2563eb 100%);
+    box-shadow: 0 4px 15px rgba(52, 152, 219, 0.3);
+}
+
+/* Bouton historique HIS */
+.btn-history-his {
+    padding: 0.5rem 1rem;
+    font-size: 0.875rem;
+    background: linear-gradient(135deg, var(--info-color) 0%, #2563eb 100%);
+    border: none;
+    color: white;
+    border-radius: var(--border-radius-sm);
+    transition: var(--transition);
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    box-shadow: 0 4px 12px rgba(52, 152, 219, 0.3);
+}
+
+.btn-history-his:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 20px rgba(52, 152, 219, 0.4);
+}
+
+.btn-history-his i {
+    margin: 0;
+    transition: var(--transition);
+}
+
+/* Badge HIS */
+.his-info-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.625rem;
+    padding: 0.75rem 1rem;
+    background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+    border: 2px solid var(--info-color);
+    border-radius: var(--border-radius);
+    font-size: 0.875rem;
+    margin-top: 0.75rem;
+    transition: var(--transition);
+}
+
+.his-info-badge:hover {
+    transform: scale(1.02);
+    box-shadow: 0 4px 12px rgba(52, 152, 219, 0.2);
+}
+
+/* ============================================================================
+   ALERTES AMÉLIORÉES
+   ============================================================================ */
+.alert {
+    border-radius: var(--border-radius);
+    border-left-width: 4px;
+    box-shadow: var(--shadow-sm);
+    border-right: none;
+    border-top: none;
+    border-bottom: none;
+    padding: 1.25rem 1.5rem;
+}
+
+.alert i {
+    margin-right: 0.75rem;
+    font-size: 1.25rem;
+}
+
+.alert-success {
+    background: linear-gradient(90deg, #d1e7dd 0%, rgba(209, 231, 221, 0.3) 100%);
+    border-left-color: var(--success-color);
+}
+
+.alert-warning {
+    background: linear-gradient(90deg, #fff3cd 0%, rgba(255, 243, 205, 0.3) 100%);
+    border-left-color: var(--warning-color);
+}
+
+.alert-info {
+    background: linear-gradient(90deg, #cfe2ff 0%, rgba(207, 226, 255, 0.3) 100%);
+    border-left-color: var(--info-color);
+}
+
+.alert-danger {
+    background: linear-gradient(90deg, #f8d7da 0%, rgba(248, 215, 218, 0.3) 100%);
+    border-left-color: var(--danger-color);
+}
+
+/* ============================================================================
+   MODAL AMÉLIORÉ
+   ============================================================================ */
+.modal-content {
+    border-radius: var(--border-radius);
+    border: none;
+    box-shadow: var(--shadow-lg);
+}
+
+.modal-header {
+    border-bottom: 2px solid rgba(0, 0, 0, 0.1);
+    padding: 1.5rem 2rem;
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
+    z-index: var(--z-modal);
+    color: white;
+}
+
+
+.modal-body {
+    padding: 2rem;
+    max-height: calc(100vh - 250px);
+    overflow-y: auto;
+}
+
+.modal-footer {
+    border-top: 2px solid rgba(0, 0, 0, 0.1);
+    padding: 1.25rem 2rem;
+    background: var(--light-bg);
+    color: var(--text-main);
+}
+
+
+/* Scrollbar personnalisée pour le modal */
+.modal-body::-webkit-scrollbar {
+    width: 8px;
+}
+
+.modal-body::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 10px;
+}
+
+.modal-body::-webkit-scrollbar-thumb {
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
+    border-radius: 10px;
+}
+
+.modal-body::-webkit-scrollbar-thumb:hover {
+    background: var(--primary-dark);
+}
+
+/* ============================================================================
+   TEMPLATE DESCRIPTION
+   ============================================================================ */
+#description_textarea.template-loaded {
+    border-color: var(--success-color) !important;
+    box-shadow: 0 0 0 0.25rem rgba(0, 176, 155, 0.25);
+}
+
+#description_hint {
+    transition: var(--transition);
+    font-size: 0.875rem;
+    padding: 0.5rem 0.75rem;
+    background: rgba(82, 0, 145, 0.05);
+    border-radius: var(--border-radius-sm);
+    margin-top: 0.5rem;
+    display: inline-block;
+}
+
+#description_hint .fa-lightbulb {
+    transition: var(--transition);
+}
+
+#btn_recharger_template {
+    padding: 0.375rem 0.75rem;
+    font-size: 0.8125rem;
+    transition: var(--transition);
+}
+
+#btn_recharger_template:hover {
+    transform: rotate(180deg) scale(1.1);
+}
+
+/* ============================================================================
+   MONTANT CAISSE - SECTION AMÉLIORÉE
+   ============================================================================ */
+.montant-caisse-section {
+    background: linear-gradient(135deg, var(--bg-card, #ffffff) 0%, var(--bg-body, #f8f9fa) 100%);
+    border: 2px solid var(--success-color);
+    border-radius: var(--border-radius);
+    padding: 1.5rem;
+    position: relative;
+    overflow: hidden;
+    color: var(--text-main);
+}
+
+
+.montant-caisse-section::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 4px;
+    background: linear-gradient(90deg, var(--success-color) 0%, var(--success-light) 100%);
+}
+
+.alert-metric {
+    border-radius: var(--border-radius);
+    padding: 1.25rem;
+    text-align: center;
+    transition: var(--transition);
+    position: relative;
+    overflow: hidden;
+}
+
+.alert-metric::before {
+    display: none;
+}
+
+.alert-metric:hover::before {
+    display: none;
+}
+
+.alert-metric:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.1);
+}
+
+.alert-metric small {
+    display: block;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.alert-metric .fs-5,
+.alert-metric .fs-4 {
+    font-weight: 700;
+    font-family: 'Courier New', monospace;
+}
+
+/* ============================================================================
+   LOADING STATES
+   ============================================================================ */
+
+.btn.loading {
+    position: relative;
+    color: transparent !important;
+    pointer-events: none;
+}
+
+.btn.loading::after {
+    content: "";
+    position: absolute;
+    width: 18px;
+    height: 18px;
+    top: 50%;
+    left: 50%;
+    margin-left: -9px;
+    margin-top: -9px;
+    border: 3px solid transparent;
+    border-top-color: currentColor;
+    border-radius: 50%;
+}
+
+/* ============================================================================
+   UTILITAIRES
+   ============================================================================ */
+/* Tooltips personnalisés */
+[data-tooltip] {
+    position: relative;
+    cursor: help;
+}
+
+[data-tooltip]::before {
+    content: attr(data-tooltip);
+    position: absolute;
+    bottom: 125%;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 0.625rem 1rem;
+    background-color: #2c3e50;
+    color: white;
+    font-size: 0.8125rem;
+    border-radius: var(--border-radius-sm);
+    white-space: nowrap;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s, bottom 0.3s;
+    z-index: var(--z-tooltip);
+}
+
+[data-tooltip]:hover::before {
+    opacity: 1;
+    bottom: 150%;
+}
+
+/* Print styles */
+@media print {
+
+    .btn,
+    .card-header button,
+    .no-print,
+    .btn-history-his {
+        display: none !important;
+    }
+
+    .card {
+        box-shadow: none !important;
+        border: 1px solid #dee2e6 !important;
+    }
+
+    .table {
+        font-size: 10pt;
+    }
+}
+
+/* ============================================================================
+   RESPONSIVE
+   ============================================================================ */
+@media (max-width: 768px) {
+    .card-body {
+        padding: 1rem;
+    }
+
+    .table {
+        font-size: 0.875rem;
+    }
+
+    .btn {
+        padding: 0.5rem 0.875rem;
+        font-size: 0.875rem;
+    }
+
+    .modal-body {
+        padding: 1.5rem;
+    }
+
+    .btn-history-his {
+        padding: 0.375rem 0.625rem;
+        font-size: 0.8125rem;
+    }
+
+    .alert-metric {
+        margin-bottom: 1rem;
+    }
+}

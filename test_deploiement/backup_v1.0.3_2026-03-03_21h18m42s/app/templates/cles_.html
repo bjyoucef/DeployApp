@@ -1,0 +1,249 @@
+{% extends "layout.html" %}
+{% block content %}
+<div class="d-flex justify-content-center">
+
+    <a href="{{ url_for('cles_') }}"
+       class="btn btn-secondary mr-2 {% if request.path == url_for('cles_') %}active{% endif %}"
+       aria-label="Gestion des clés">Gestion des clés</a>
+    <a href="{{ url_for('mvm_cles') }}"
+       class="btn btn-secondary mr-2 {% if request.path == url_for('mvm_cles') %}active{% endif %}"
+       aria-label="Prêts en cours">Mouvement des clés</a>
+</div>
+<div class="container">
+    <button type="button" class="btn btn-success mb-1" data-bs-toggle="modal" data-bs-target="#ajouterModal">
+        <i class="fas fa-plus"></i> Ajouter une Clé
+    </button>
+    <!-- Section des clés disponibles -->
+    <table class="table table-hover" id="myTable">
+        <thead>
+        <tr>
+            <th><i class="fas fa-key"></i> Numéro de clé</th>
+            <th><i class="fas fa-info-circle"></i> Description</th>
+            <th><i class="fas fa-cogs"></i> Prêter</th>
+            <th><i class="fas fa-cogs"></i> Modifier</th>
+            <th><i class="fas fa-cogs"></i>Mouvement</th>
+        </tr>
+
+        </thead>
+        <tbody>
+        {% for cle in cles %}
+        <tr class="{% if cle.qte > 0 %}text-success{% else %}text-danger{% endif %}">
+            <td>{{ cle.numero_cle }}</td>
+            <td>{{ cle.description }}</td>
+            <td>
+                <div class="d-flex">
+                    <!-- Boutons pour afficher les modals de prêt ou Marquer manquant -->
+                    {% if cle.qte > 0 %}
+                    <button type="button" class="btn btn-primary btn-sm mr-2" data-bs-toggle="modal"
+                            data-bs-target="#empruntModal{{ cle.id }}">
+                        <i class="fas fa-edit"></i> Prêter
+                    </button>
+                    <!-- Modal d'emprunt -->
+                    <div class="modal fade" id="empruntModal{{ cle.id }}" tabindex="-1" role="dialog"
+                         aria-labelledby="empruntModalLabel{{ cle.id }}" aria-hidden="true">
+                        <div class="modal-dialog" role="document">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 class="modal-title" id="empruntModalLabel{{ cle.id }}">Prêter une clé {{
+                                        cle.numero_cle }}</h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal"
+                                            aria-label="Close"></button>
+
+                                </div>
+                                <div class="modal-body">
+                                    <form action="{{ url_for('emprunt_key', id=cle.id) }}" method="POST">
+                                        <div class="form-group">
+                                            <label for="personne_id_prend{{ cle.id }}">Personne</label>
+                                            <select id="personne_id_prend{{ cle.id }}" name="personne_id_prend"
+                                                    class="form-control" required>
+                                                <option value="" disabled selected>-- Sélectionnez une personne --
+                                                </option>
+                                                {% for personne in personnes %}
+                                                <option value="{{ personne.id_personnel }}">{{ personne.nom + ' ' +
+                                                    personne.prenom }}
+                                                </option>
+                                                {% endfor %}
+                                            </select>
+                                        </div>
+                                        <button type="submit" class="btn btn-success">Enregistrer</button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                </div>
+            </td>
+            <td>
+                <div class="d-flex">
+                    <!-- Modifier bouton avec modal -->
+                    <button type="button" class="btn btn-primary btn-sm mr-2" data-bs-toggle="modal"
+                            data-bs-target="#modifierModal{{ cle.id }}">
+                        <i class="fas fa-edit"></i> Modifier
+                    </button>
+
+                    <!-- Modal pour modifier la clé -->
+                    <div class="modal fade" id="modifierModal{{ cle.id }}" tabindex="-1" role="dialog"
+                         aria-labelledby="modifierModalLabel{{ cle.id }}" aria-hidden="true">
+                        <div class="modal-dialog" role="document">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 class="modal-title" id="modifierModalLabel{{ cle.id }}">Modifier la clé {{
+                                        cle.numero_cle }}</h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal"
+                                            aria-label="Close"></button>
+                                </div>
+                                <div class="modal-body">
+                                    <form action="{{ url_for('modifier_key', id=cle.id) }}" method="POST">
+                                        <div class="form-group">
+                                            <label for="numero_cle">Numéro de clé</label>
+                                            <input type="text" class="form-control" name="numero_cle"
+                                                   placeholder="Nouveau numéro de clé" value="{{ cle.numero_cle }}">
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="description">Description</label>
+                                            <input type="text" class="form-control" name="description"
+                                                   placeholder="Nouvelle description" value="{{ cle.description }}">
+                                        </div>
+
+                                        <div class="form-group">
+                                            <label for="quantite">Quantité</label>
+                                            <input type="number" class="form-control" name="quantite"
+                                                   placeholder="Nouvelle quantité" min="0" value="{{ cle.quantite }}">
+                                        </div>
+                                        <button type="submit" class="btn btn-success">Enregistrer les modifications
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </td>
+            <td>
+                <div class="d-flex">
+                    <!-- Bouton pour afficher le mouvement de la clé -->
+                    <button type="button" class="btn btn-info btn-sm mr-2" data-bs-toggle="modal"
+                            data-bs-target="#mouvementModal{{ cle.id }}">
+                        <i class="fas fa-history"></i> Mouvement
+                    </button>
+
+                    <!-- Modal pour afficher le mouvement de la clé -->
+                    <div class="modal fade" id="mouvementModal{{ cle.id }}" tabindex="-1" role="dialog"
+                         aria-labelledby="mouvementModalLabel{{ cle.id }}" aria-hidden="true">
+                        <div class="modal-dialog" role="document">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 class="modal-title" id="mouvementModalLabel{{ cle.id }}">
+                                        Mouvement de la clé {{ cle.numero_cle }}
+                                    </h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal"
+                                            aria-label="Close"></button>
+                                </div>
+                                <div class="modal-body">
+                                    <div class="table-responsive">
+                                        <table class="table table-striped table-hover">
+                                            <thead class="table-dark">
+                                            <tr>
+                                                <th class="text-center">Type</th>
+                                                <th class="text-left">Détails</th>
+                                                <th class="text-center">Date</th>
+                                            </tr>
+                                            </thead>
+                                            <tbody>
+                                            {% for mouvement in mouvements[cle.id] %}
+                                            <tr class="{% if mouvement.description == 'Emprunt' %}table-primary{% elif mouvement.description == 'Retour' %}table-success{% elif mouvement.description == 'Manquante' %}table-danger{% else %}table-info{% endif %}">
+                                                <!-- Type Column -->
+                                                <td class="text-center">
+                                                    {% if mouvement.description == 'Emprunt' %}
+                                                    <span class="badge bg-primary">
+                                                    <i class="fas fa-hand-holding"></i> Emprunt
+                                                    </span>
+                                                    {% elif mouvement.description == 'Retour' %}
+                                                    <span class="badge bg-success">
+                                                    <i class="fas fa-handshake"></i> Retour
+                                                    </span>
+                                                    {% elif mouvement.description == 'Manquante' %}
+                                                    <span class="badge bg-danger">
+                                                    <i class="fas fa-exclamation-triangle"></i> Manquante
+                                                    </span>
+                                                    {% else %}
+                                                    <span class="badge bg-info">
+                                                    <i class="fas fa-check-circle"></i> Retrouvée
+                                                    </span>
+                                                    {% endif %}
+                                                </td>
+
+                                                <!-- Details Column -->
+                                                <td class="text-left">
+                                                    {% if mouvement.description == 'Emprunt' %}
+                                                    <strong>Emprunteur</strong>: {{ mouvement.emprunteur }}<br>
+                                                    <strong>Donneur</strong>: {{ mouvement.donneur }}
+                                                    {% elif mouvement.description == 'Retour' %}
+                                                    <strong>Retourneur</strong>: {{ mouvement.retourneur }}<br>
+                                                    <strong>Receveur</strong>: {{ mouvement.receveur }}
+                                                    {% elif mouvement.description == 'Manquante' %}
+                                                    <strong>Marqué par</strong>: {{ mouvement.marqueur_manque }}<br>
+                                                    <strong>Perte par</strong>: {{ mouvement.personne_perte }}
+                                                    {% else %}
+                                                    <strong>Marqué retrouvé par</strong>: {{ mouvement.marqueur_retrouve
+                                                    }}<br>
+                                                    <strong>Retrouvé par</strong>: {{ mouvement.personne_retrouve }}
+                                                    {% endif %}
+                                                </td>
+
+                                                <!-- Date Column -->
+                                                <td class="text-center">{{ mouvement.date }}</td>
+                                            </tr>
+                                            {% endfor %}
+                                            </tbody>
+                                        </table>
+                                    </div>
+
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </td>
+
+        </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<div class="modal fade" id="ajouterModal" tabindex="-1" role="dialog" aria-labelledby="ajouterModalLabel"
+     aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="ajouterModalLabel">Ajouter une Clé</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form action="{{ url_for('add_key') }}" method="POST">
+                    <div class="form-group">
+                        <label for="numero_cle">Numéro de clé:</label>
+                        <input type="text" id="numero_cle" name="numero_cle" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="description">Description:</label>
+                        <input type="text" id="description" name="description" class="form-control">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="quantite">Quantité:</label>
+                        <input type="number" id="quantite" name="quantite" class="form-control" value="1" min="1"
+                               required>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Ajouter</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

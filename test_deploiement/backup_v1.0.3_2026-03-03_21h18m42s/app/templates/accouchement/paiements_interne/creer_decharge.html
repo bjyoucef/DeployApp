@@ -1,0 +1,425 @@
+{% extends "layout.html" %} {% block style %}
+<style>
+  :root {
+    --primary: #10b981;
+    --danger: #ef4444;
+  }
+
+  .page-header {
+    background: linear-gradient(135deg, var(--primary), #059669);
+    color: white;
+    padding: 2rem;
+    border-radius: 12px;
+    margin-bottom: 2rem;
+  }
+
+  .form-card {
+    background: white;
+    border-radius: 12px;
+    padding: 2rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  }
+
+  .dossier-checkbox {
+    display: none;
+  }
+
+  .dossier-label {
+    background: white;
+    border: 2px solid #e5e7eb;
+    border-radius: 8px;
+    padding: 1rem;
+    margin-bottom: 0.75rem;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .dossier-label:hover {
+    border-color: var(--primary);
+    background: #ecfdf5;
+  }
+
+  .dossier-checkbox:checked+.dossier-label {
+    border-color: var(--primary);
+    background: #d1fae5;
+    border-width: 3px;
+  }
+
+  .summary-box {
+    position: sticky;
+    top: 20px;
+    background: linear-gradient(135deg, #d1fae5, #ecfdf5);
+    border: 2px solid var(--primary);
+    border-radius: 12px;
+    padding: 1.5rem;
+  }
+
+  .summary-value {
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--primary);
+  }
+
+  .btn-submit {
+    background: linear-gradient(135deg, var(--primary), #059669);
+    color: white;
+    border: none;
+    padding: 1rem 2rem;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 1.1rem;
+    width: 100%;
+  }
+
+  .btn-submit:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+
+  .dossier-label.disabled {
+    opacity: 0.5;
+    cursor: not-allowed !important;
+  }
+
+  .badge-already-discharged {
+    background: #fef3c7;
+    color: #92400e;
+    border: 1px solid #f59e0b;
+  }
+
+  .alert-sticky {
+    position: sticky;
+    top: 20px;
+    z-index: 100;
+    animation: slideDown 0.3s ease-out;
+  }
+
+  @keyframes slideDown {
+    from {
+      opacity: 0;
+      transform: translateY(-20px);
+    }
+
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  /* Style pour les dossiers désactivés */
+  .dossier-checkbox:disabled+.dossier-label {
+    background: #f3f4f6;
+    border-color: #d1d5db;
+    opacity: 0.6;
+  }
+
+  .dossier-checkbox:disabled+.dossier-label:hover {
+    border-color: #d1d5db;
+    background: #f3f4f6;
+    transform: none;
+  }
+</style>
+
+{% endblock %} {% block content %}
+<div class="container-fluid py-4">
+  <!-- Header -->
+  <div class="page-header">
+    <nav aria-label="breadcrumb" class="mb-2">
+      <ol class="breadcrumb" style="--bs-breadcrumb-divider-color: rgba(255, 255, 255, 0.5)">
+        <li class="breadcrumb-item">
+          <a href="{{ url_for('gyneco_interne_paiements_list') }}" class="text-white-50">Paiements</a>
+        </li>
+        <li class="breadcrumb-item active text-white">Nouvelle décharge</li>
+      </ol>
+    </nav>
+    <h1>
+      <i class="fas fa-file-invoice me-2"></i>Créer une décharge de paiement
+    </h1>
+    <p class="mb-0 opacity-75">{{ gyneco.nom_complet }}</p>
+  </div>
+
+  <form method="POST" id="formDecharge">
+    <div class="row">
+      <!-- Liste des dossiers -->
+      <div class="col-lg-8">
+        <div class="form-card">
+          <h4 class="mb-4">
+            <i class="fas fa-list-check me-2"></i>
+            Sélectionner les dossiers à inclure ({{ dossiers|length }})
+          </h4>
+
+          {% if dossiers %}
+          <div class="mb-3">
+            <button type="button" class="btn btn-sm btn-outline-primary" onclick="toggleAll(true)">
+              <i class="fas fa-check-square me-1"></i>Tout sélectionner
+            </button>
+            <button type="button" class="btn btn-sm btn-outline-secondary ms-2" onclick="toggleAll(false)">
+              <i class="fas fa-square me-1"></i>Tout désélectionner
+            </button>
+          </div>
+
+          {% for d in dossiers %}
+          <input type="checkbox" class="dossier-checkbox" id="dossier_{{ d.id_dossier }}" name="dossiers[]"
+            value="{{ d.id_dossier }}" data-montant="{{ d.part_gyneco }}" onchange="updateSummary()" checked />
+          <label for="dossier_{{ d.id_dossier }}" class="dossier-label">
+            <div class="d-flex justify-content-between align-items-center">
+              <div>
+                <div class="d-flex align-items-center mb-1">
+                  <i class="fas fa-check-circle text-primary me-2"></i>
+                  <strong>#{{ d.id_dossier }}</strong>
+                  <span class="mx-2">•</span>
+                  <span>{{ d.patiente }}</span>
+                </div>
+                <small class="text-muted">
+                  <i class="fas fa-calendar me-1"></i>
+                  {{ d.date_accouchement.strftime('%d/%m/%Y') }}
+                  <span class="badge bg-info ms-2">{{ d.type_accouchement }}</span>
+                  <span class="badge bg-secondary ms-1">{{ d.type_tarification }}</span>
+                </small>
+              </div>
+              <div class="text-end">
+                <div class="text-muted small">Honoraires</div>
+                <strong style="font-size: 1.2rem; color: var(--primary)">
+                  {{ "{:,.2f}".format(d.part_gyneco).replace(",", " ") }} DA
+                </strong>
+              </div>
+            </div>
+          </label>
+          {% endfor %} {% else %}
+          <div class="alert alert-info">
+            <i class="fas fa-info-circle me-2"></i>
+            Aucun dossier non payé pour cette période
+          </div>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- Formulaire et résumé -->
+      <div class="col-lg-4">
+        <div class="summary-box mb-3">
+          <h5 class="mb-3"><i class="fas fa-calculator me-2"></i>Résumé</h5>
+
+          <div class="mb-3">
+            <div class="text-muted small">Dossiers sélectionnés</div>
+            <div class="summary-value" id="nbDossiers">
+              {{ dossiers|length }}
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <div class="text-muted small">Montant total</div>
+            <div class="summary-value" id="montantTotal">
+              {{
+              "{:,.2f}".format(dossiers|sum(attribute='part_gyneco')).replace(",",
+              " ") }}
+            </div>
+            <small class="text-muted">DA</small>
+          </div>
+        </div>
+
+        <div class="form-card">
+          <h5 class="mb-3">
+            <i class="fas fa-info-circle me-2"></i>Informations décharge
+          </h5>
+
+          <input type="hidden" name="id_gyneco" value="{{ gyneco.id }}" />
+
+          <div class="mb-3">
+            <label class="form-label">Date de décharge</label>
+            <input type="date" name="date_decharge" class="form-control"
+              value="{{ datetime.now().strftime('%Y-%m-%d') }}" required />
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Période</label>
+            <div class="row g-2">
+              <div class="col-6">
+                <input type="date" name="periode_debut" class="form-control" value="{{ date_debut }}" required />
+              </div>
+              <div class="col-6">
+                <input type="date" name="periode_fin" class="form-control" value="{{ date_fin }}" required />
+              </div>
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Mode de paiement</label>
+            <select name="mode_paiement" class="form-select" required>
+              <option value="ESPECES">Espèces</option>
+              <option value="CHEQUE">Chèque</option>
+              <option value="VIREMENT">Virement</option>
+              <option value="AUTRE">Autre</option>
+            </select>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Référence paiement</label>
+            <input type="text" name="reference_paiement" class="form-control"
+              placeholder="N° chèque, référence virement..." />
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Observations</label>
+            <textarea name="observations" class="form-control" rows="3"></textarea>
+          </div>
+
+          <button type="submit" class="btn btn-submit" id="btnSubmit">
+            <i class="fas fa-save me-2"></i>Créer la décharge
+          </button>
+        </div>
+      </div>
+    </div>
+  </form>
+</div>
+
+<script>
+  function updateSummary() {
+    const checkboxes = document.querySelectorAll(".dossier-checkbox:checked");
+    const nbDossiers = checkboxes.length;
+    let total = 0;
+
+    checkboxes.forEach((cb) => {
+      total += parseFloat(cb.dataset.montant);
+    });
+
+    document.getElementById("nbDossiers").textContent = nbDossiers;
+    document.getElementById("montantTotal").textContent = total
+      .toFixed(2)
+      .replace(/\B(?=(\d{3})+(?!\d))/g, " ");
+
+    document.getElementById("btnSubmit").disabled = nbDossiers === 0;
+  }
+
+  function toggleAll(checked) {
+    document.querySelectorAll(".dossier-checkbox").forEach((cb) => {
+      cb.checked = checked;
+    });
+    updateSummary();
+  }
+
+  // Validation du formulaire
+  document
+    .getElementById("formDecharge")
+    .addEventListener("submit", function (e) {
+      const checkboxes = document.querySelectorAll(".dossier-checkbox:checked");
+      if (checkboxes.length === 0) {
+        e.preventDefault();
+        alert("Veuillez sélectionner au moins un dossier");
+        return false;
+      }
+    });
+
+  // Validation améliorée du formulaire avec vérification des dossiers déjà déchargés
+  document
+    .getElementById("formDecharge")
+    .addEventListener("submit", function (e) {
+      const checkboxes = document.querySelectorAll(".dossier-checkbox:checked");
+
+      if (checkboxes.length === 0) {
+        e.preventDefault();
+        alert("❌ Veuillez sélectionner au moins un dossier");
+        return false;
+      }
+
+      // Vérification supplémentaire côté client (optionnel)
+      const dossierIds = Array.from(checkboxes).map((cb) => cb.value);
+
+      // Afficher une confirmation avec le nombre de dossiers
+      const montantTotal = document
+        .getElementById("montantTotal")
+        .textContent.trim();
+      const confirmation = confirm(
+        `Confirmer la création de la décharge?\n\n` +
+        `• ${checkboxes.length} dossier(s) sélectionné(s)\n` +
+        `• Montant total: ${montantTotal} DA\n\n` +
+        `Cette action va réserver ces dossiers pour cette décharge.`
+      );
+
+      if (!confirmation) {
+        e.preventDefault();
+        return false;
+      }
+
+      // Désactiver le bouton pour éviter les doubles soumissions
+      const btnSubmit = document.getElementById("btnSubmit");
+      btnSubmit.disabled = true;
+      btnSubmit.innerHTML =
+        '<i class="fas fa-spinner fa-spin me-2"></i>Création en cours...';
+    });
+
+  // Ajouter un indicateur visuel pour les dossiers déjà dans une décharge (si applicable)
+  // Cette fonction peut être appelée si vous récupérez ces infos via AJAX
+  function marquerDossiersDejaDecharges(dossierIds) {
+    dossierIds.forEach((id) => {
+      const checkbox = document.getElementById(`dossier_${id}`);
+      if (checkbox) {
+        checkbox.disabled = true;
+        const label = checkbox.nextElementSibling;
+        label.style.opacity = "0.5";
+        label.style.cursor = "not-allowed";
+
+        // Ajouter un badge d'avertissement
+        const badge = document.createElement("span");
+        badge.className = "badge bg-warning ms-2";
+        badge.innerHTML =
+          '<i class="fas fa-exclamation-triangle me-1"></i>Déjà déchargé';
+        label.querySelector(".d-flex").appendChild(badge);
+      }
+    });
+  }
+
+  // Fonction pour vérifier en temps réel si des dossiers sont déjà déchargés (optionnel)
+  async function verifierDossiersDisponibles() {
+    const dossierIds = Array.from(
+      document.querySelectorAll(".dossier-checkbox")
+    ).map((cb) => cb.value);
+
+    if (dossierIds.length === 0) return;
+
+    try {
+      const response = await fetch(
+        "/api/gyneco-interne/verifier-dossiers-disponibles",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ dossier_ids: dossierIds }),
+        }
+      );
+
+      const data = await response.json();
+
+      if (
+        data.dossiers_indisponibles &&
+        data.dossiers_indisponibles.length > 0
+      ) {
+        marquerDossiersDejaDecharges(data.dossiers_indisponibles);
+
+        // Afficher un message d'avertissement
+        const alertDiv = document.createElement("div");
+        alertDiv.className = "alert alert-warning alert-dismissible fade show";
+        alertDiv.innerHTML = `
+                <i class="fas fa-exclamation-triangle me-2"></i>
+                <strong>Attention:</strong> ${data.dossiers_indisponibles.length} dossier(s)
+                sont déjà inclus dans une autre décharge et ne peuvent pas être sélectionnés.
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+
+        document
+          .querySelector(".form-card")
+          .insertBefore(
+            alertDiv,
+            document.querySelector(".form-card").firstChild
+          );
+      }
+    } catch (error) {
+      console.error("Erreur lors de la vérification des dossiers:", error);
+    }
+  }
+
+  // Appeler la vérification au chargement de la page (optionnel)
+  // document.addEventListener('DOMContentLoaded', verifierDossiersDisponibles);
+</script>
+
+{% endblock %}

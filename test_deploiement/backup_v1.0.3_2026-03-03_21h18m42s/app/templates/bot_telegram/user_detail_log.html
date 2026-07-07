@@ -1,0 +1,629 @@
+{% extends "admin/admin_layout.html" %}
+
+{% block title %}Détail Utilisateur - Bot Telegram{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <!-- En-tête -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h2>
+                        <i class="fas fa-user-circle"></i>
+                        Détail Utilisateur Bot Telegram
+                    </h2>
+                    <p class="text-muted mb-0">
+                        Statistiques et activité de
+                        <strong>{{ stats.session.first_name }} {{ stats.session.last_name }}</strong>
+                    </p>
+                </div>
+                <div>
+                    <a href="{{ url_for('bot_logs_index', user_id=user_id) }}"
+                       class="btn btn-primary">
+                        <i class="fas fa-list"></i> Tous les logs
+                    </a>
+                    <a href="{{ url_for('bot_logs_dashboard') }}"
+                       class="btn btn-secondary">
+                        <i class="fas fa-chart-bar"></i> Dashboard global
+                    </a>
+                    <a href="{{ url_for('bot_logs_index') }}"
+                       class="btn btn-outline-secondary">
+                        <i class="fas fa-arrow-left"></i> Retour
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Carte d'information utilisateur -->
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="card border-primary">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="fas fa-id-card"></i> Informations</h5>
+                </div>
+                <div class="card-body">
+                    <div class="text-center mb-3">
+                        <i class="fas fa-user-circle fa-5x text-primary"></i>
+                    </div>
+
+                    <table class="table table-sm table-borderless">
+                        <tr>
+                            <td class="text-muted"><strong>Nom complet:</strong></td>
+                            <td>
+                                {{ stats.session.first_name }} {{ stats.session.last_name }}
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="text-muted"><strong>Username:</strong></td>
+                            <td>
+                                {% if stats.session.username %}
+                                <a href="https://t.me/{{ stats.session.username }}" target="_blank">
+                                    @{{ stats.session.username }}
+                                    <i class="fas fa-external-link-alt fa-xs"></i>
+                                </a>
+                                {% else %}
+                                <span class="text-muted">-</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="text-muted"><strong>ID Telegram:</strong></td>
+                            <td><code>{{ stats.session.user_id }}</code></td>
+                        </tr>
+                        <tr>
+                            <td class="text-muted"><strong>Première connexion:</strong></td>
+                            <td>
+                                {{ stats.session.first_login.strftime('%d/%m/%Y à %H:%M') }}
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="text-muted"><strong>Dernière activité:</strong></td>
+                            <td>
+                                {{ stats.session.last_login.strftime('%d/%m/%Y à %H:%M') }}
+                                <br>
+                                <small class="text-muted">
+                                    {% set delta = (datetime.now() - stats.session.last_login).total_seconds() %}
+                                    {% if delta < 60 %}
+                                    Il y a {{ delta|int }} secondes
+                                    {% elif delta < 3600 %}
+                                    Il y a {{ (delta/60)|int }} minutes
+                                    {% elif delta < 86400 %}
+                                    Il y a {{ (delta/3600)|int }} heures
+                                    {% else %}
+                                    Il y a {{ (delta/86400)|int }} jours
+                                    {% endif %}
+                                </small>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="text-muted"><strong>Statut:</strong></td>
+                            <td>
+                                {% if stats.session.is_active %}
+                                <span class="badge badge-success">
+                                    <i class="fas fa-check-circle"></i> Actif
+                                </span>
+                                {% else %}
+                                <span class="badge badge-danger">
+                                    <i class="fas fa-times-circle"></i> Inactif
+                                </span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Statistiques d'utilisation -->
+        <div class="col-md-8">
+            <div class="row">
+                <!-- Total Commandes -->
+                <div class="col-md-4 mb-3">
+                    <div class="card bg-primary text-white h-100">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="mb-0">Commandes</h6>
+                                    <h2 class="mb-0">{{ stats.session.total_commands }}</h2>
+                                </div>
+                                <div>
+                                    <i class="fas fa-keyboard fa-3x opacity-50"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Total Boutons -->
+                <div class="col-md-4 mb-3">
+                    <div class="card bg-info text-white h-100">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="mb-0">Boutons cliqués</h6>
+                                    <h2 class="mb-0">{{ stats.session.total_buttons }}</h2>
+                                </div>
+                                <div>
+                                    <i class="fas fa-hand-pointer fa-3x opacity-50"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Total Actions -->
+                <div class="col-md-4 mb-3">
+                    <div class="card bg-success text-white h-100">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="mb-0">Total actions</h6>
+                                    <h2 class="mb-0">{{ stats.session.total_commands + stats.session.total_buttons }}</h2>
+                                </div>
+                                <div>
+                                    <i class="fas fa-chart-line fa-3x opacity-50"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Répartition par type -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-chart-pie"></i> Répartition par type d'action</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <canvas id="actionTypeChart"></canvas>
+                        </div>
+                        <div class="col-md-6">
+                            <table class="table table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>Type</th>
+                                        <th class="text-right">Nombre</th>
+                                        <th class="text-right">%</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% set total_actions = stats.by_type | sum(attribute='count') %}
+                                    {% for type_stat in stats.by_type %}
+                                    <tr>
+                                        <td>
+                                            {% if type_stat.action_type == 'command' %}
+                                            <span class="badge badge-primary">⌨️ Commandes</span>
+                                            {% elif type_stat.action_type == 'button' %}
+                                            <span class="badge badge-info">🔘 Boutons</span>
+                                            {% elif type_stat.action_type == 'login' %}
+                                            <span class="badge badge-success">🔑 Connexions</span>
+                                            {% elif type_stat.action_type == 'error' %}
+                                            <span class="badge badge-danger">⚠️ Erreurs</span>
+                                            {% else %}
+                                            <span class="badge badge-secondary">{{ type_stat.action_type }}</span>
+                                            {% endif %}
+                                        </td>
+                                        <td class="text-right"><strong>{{ type_stat.count }}</strong></td>
+                                        <td class="text-right">
+                                            {{ "%.1f"|format((type_stat.count / total_actions * 100) if total_actions > 0 else 0) }}%
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Graphique d'activité quotidienne -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-calendar-alt"></i> Activité quotidienne (30 derniers jours)
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% if stats.daily_activity %}
+                    <canvas id="dailyActivityChart" height="80"></canvas>
+                    {% else %}
+                    <p class="text-center text-muted mb-0">Aucune donnée d'activité disponible</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Actions favorites et erreurs récentes -->
+    <div class="row mb-4">
+        <!-- Actions favorites -->
+        <div class="col-md-6">
+            <div class="card h-100">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0"><i class="fas fa-star"></i> Top 10 Actions favorites</h5>
+                </div>
+                <div class="card-body p-0">
+                    {% if stats.favorite_actions %}
+                    <table class="table table-hover mb-0">
+                        <thead>
+                            <tr>
+                                <th style="width: 50px;">#</th>
+                                <th>Action</th>
+                                <th class="text-right">Utilisations</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for action in stats.favorite_actions %}
+                            <tr>
+                                <td>
+                                    {% if loop.index == 1 %}
+                                    <span class="badge badge-warning">🥇</span>
+                                    {% elif loop.index == 2 %}
+                                    <span class="badge badge-secondary">🥈</span>
+                                    {% elif loop.index == 3 %}
+                                    <span class="badge badge-warning" style="background-color: #CD7F32;">🥉</span>
+                                    {% else %}
+                                    {{ loop.index }}
+                                    {% endif %}
+                                </td>
+                                <td><strong>{{ action.action_name }}</strong></td>
+                                <td class="text-right">
+                                    <span class="badge badge-primary badge-pill">{{ action.count }}</span>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                    {% else %}
+                    <p class="text-center text-muted p-3 mb-0">Aucune action enregistrée</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Erreurs récentes -->
+        <div class="col-md-6">
+            <div class="card h-100">
+                <div class="card-header bg-danger text-white">
+                    <h5 class="mb-0"><i class="fas fa-exclamation-triangle"></i> Erreurs récentes</h5>
+                </div>
+                <div class="card-body p-0">
+                    {% if stats.recent_errors %}
+                    <div class="list-group list-group-flush">
+                        {% for error in stats.recent_errors %}
+                        <div class="list-group-item">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div>
+                                    <h6 class="mb-1">{{ error.action_name }}</h6>
+                                    <p class="mb-1 text-danger">
+                                        <small>{{ error.error_message[:100] }}{% if error.error_message|length > 100 %}...{% endif %}</small>
+                                    </p>
+                                    <small class="text-muted">
+                                        <i class="far fa-clock"></i>
+                                        {{ error.created_at.strftime('%d/%m/%Y à %H:%M:%S') }}
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <p class="text-center text-muted p-3 mb-0">
+                        <i class="fas fa-check-circle fa-3x mb-2"></i><br>
+                        Aucune erreur enregistrée
+                    </p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Historique récent des actions -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-history"></i> Historique récent des actions
+                        <span class="badge badge-secondary">{{ logs|length }}</span>
+                    </h5>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-striped table-hover mb-0">
+                            <thead class="thead-dark">
+                                <tr>
+                                    <th style="width: 140px;">Date/Heure</th>
+                                    <th style="width: 100px;">Type</th>
+                                    <th>Action</th>
+                                    <th>Message</th>
+                                    <th style="width: 80px;">Statut</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for log in logs %}
+                                <tr class="{% if not log.success %}table-danger{% endif %}">
+                                    <td>
+                                        <small>
+                                            {{ log.created_at.strftime('%d/%m/%Y') }}<br>
+                                            {{ log.created_at.strftime('%H:%M:%S') }}
+                                        </small>
+                                    </td>
+                                    <td>
+                                        {% if log.action_type == 'command' %}
+                                        <span class="badge badge-primary">⌨️ CMD</span>
+                                        {% elif log.action_type == 'button' %}
+                                        <span class="badge badge-info">🔘 BTN</span>
+                                        {% elif log.action_type == 'login' %}
+                                        <span class="badge badge-success">🔑 LOGIN</span>
+                                        {% elif log.action_type == 'error' %}
+                                        <span class="badge badge-danger">⚠️ ERR</span>
+                                        {% else %}
+                                        <span class="badge badge-secondary">{{ log.action_type }}</span>
+                                        {% endif %}
+                                    </td>
+                                    <td><strong>{{ log.action_name }}</strong></td>
+                                    <td>
+                                        {% if log.message_text %}
+                                        <small class="text-muted">{{ log.message_text[:60] }}{% if log.message_text|length > 60 %}...{% endif %}</small>
+                                        {% else %}
+                                        <span class="text-muted">-</span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="text-center">
+                                        {% if log.success %}
+                                        <span class="badge badge-success">✓</span>
+                                        {% else %}
+                                        <span class="badge badge-danger"
+                                              title="{{ log.error_message }}"
+                                              data-toggle="tooltip">
+                                            ✗
+                                        </span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="card-footer text-center">
+                    <a href="{{ url_for('bot_logs_index', user_id=user_id) }}" class="btn btn-primary">
+                        <i class="fas fa-list"></i> Voir tous les logs de cet utilisateur
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistiques supplémentaires -->
+    <div class="row mt-4">
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <i class="fas fa-calendar-day fa-3x text-primary mb-2"></i>
+                    <h6 class="text-muted">Jours d'activité</h6>
+                    <h3>{{ stats.daily_activity|length }}</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <i class="fas fa-chart-line fa-3x text-success mb-2"></i>
+                    <h6 class="text-muted">Moyenne actions/jour</h6>
+                    <h3>
+                        {% if stats.daily_activity %}
+                        {{ "%.1f"|format((stats.session.total_commands + stats.session.total_buttons) / stats.daily_activity|length) }}
+                        {% else %}
+                        0
+                        {% endif %}
+                    </h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <i class="fas fa-star fa-3x text-warning mb-2"></i>
+                    <h6 class="text-muted">Action préférée</h6>
+                    <h6>
+                        {% if stats.favorite_actions %}
+                        {{ stats.favorite_actions[0].action_name[:20] }}
+                        {% else %}
+                        -
+                        {% endif %}
+                    </h6>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <i class="fas fa-exclamation-circle fa-3x text-danger mb-2"></i>
+                    <h6 class="text-muted">Taux d'erreur</h6>
+                    <h3>
+                        {% set error_count = stats.by_type | selectattr('action_type', 'equalto', 'error') | map(attribute='count') | sum %}
+                        {% set total_count = stats.by_type | sum(attribute='count') %}
+                        {{ "%.1f"|format((error_count / total_count * 100) if total_count > 0 else 0) }}%
+                    </h3>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+
+<script>
+// Activer les tooltips Bootstrap
+$(function () {
+    $('[data-toggle="tooltip"]').tooltip()
+});
+
+// Graphique par type d'action
+{% if stats.by_type %}
+const actionTypeCtx = document.getElementById('actionTypeChart').getContext('2d');
+const actionTypeData = {
+    labels: [
+        {% for type_stat in stats.by_type %}
+        '{{ type_stat.action_type }}'{% if not loop.last %},{% endif %}
+        {% endfor %}
+    ],
+    datasets: [{
+        data: [
+            {% for type_stat in stats.by_type %}
+            {{ type_stat.count }}{% if not loop.last %},{% endif %}
+            {% endfor %}
+        ],
+        backgroundColor: [
+            'rgba(54, 162, 235, 0.8)',   // command - bleu
+            'rgba(23, 162, 184, 0.8)',   // button - info
+            'rgba(40, 167, 69, 0.8)',    // login - vert
+            'rgba(220, 53, 69, 0.8)',    // error - rouge
+            'rgba(108, 117, 125, 0.8)'   // autres - gris
+        ],
+        borderWidth: 2,
+        borderColor: '#fff'
+    }]
+};
+
+new Chart(actionTypeCtx, {
+    type: 'doughnut',
+    data: actionTypeData,
+    options: {
+        responsive: true,
+        maintainAspectRatio: true,
+        plugins: {
+            legend: {
+                position: 'bottom'
+            },
+            tooltip: {
+                callbacks: {
+                    label: function(context) {
+                        const label = context.label || '';
+                        const value = context.parsed || 0;
+                        const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                        const percentage = ((value / total) * 100).toFixed(1);
+                        return `${label}: ${value} (${percentage}%)`;
+                    }
+                }
+            }
+        }
+    }
+});
+{% endif %}
+
+// Graphique d'activité quotidienne
+{% if stats.daily_activity %}
+const dailyActivityCtx = document.getElementById('dailyActivityChart').getContext('2d');
+const dailyActivityData = {
+    labels: [
+        {% for day in stats.daily_activity %}
+        '{{ day.date.strftime('%d/%m') }}'{% if not loop.last %},{% endif %}
+        {% endfor %}
+    ],
+    datasets: [{
+        label: 'Actions par jour',
+        data: [
+            {% for day in stats.daily_activity %}
+            {{ day.count }}{% if not loop.last %},{% endif %}
+            {% endfor %}
+        ],
+        backgroundColor: 'rgba(54, 162, 235, 0.2)',
+        borderColor: 'rgba(54, 162, 235, 1)',
+        borderWidth: 2,
+        tension: 0.4,
+        fill: true,
+        pointRadius: 4,
+        pointHoverRadius: 6,
+        pointBackgroundColor: 'rgba(54, 162, 235, 1)',
+        pointBorderColor: '#fff',
+        pointBorderWidth: 2
+    }]
+};
+
+new Chart(dailyActivityCtx, {
+    type: 'line',
+    data: dailyActivityData,
+    options: {
+        responsive: true,
+        maintainAspectRatio: true,
+        plugins: {
+            legend: {
+                display: false
+            },
+            tooltip: {
+                mode: 'index',
+                intersect: false
+            }
+        },
+        scales: {
+            y: {
+                beginAtZero: true,
+                ticks: {
+                    stepSize: 1
+                }
+            }
+        },
+        interaction: {
+            mode: 'nearest',
+            axis: 'x',
+            intersect: false
+        }
+    }
+});
+{% endif %}
+</script>
+
+<style>
+.opacity-50 {
+    opacity: 0.5;
+}
+
+.card {
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+}
+
+.card-header {
+    border-bottom: 2px solid rgba(0, 0, 0, 0.125);
+}
+
+.table th {
+    font-weight: 600;
+}
+
+.badge-pill {
+    padding: 0.35em 0.65em;
+}
+
+/* Animation pour les cartes au survol */
+.card:hover {
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+    transition: box-shadow 0.3s ease-in-out;
+}
+
+/* Style pour les statistiques */
+.card-body h2 {
+    font-weight: 700;
+}
+
+/* Liste d'erreurs */
+.list-group-item {
+    border-left: 3px solid #dc3545;
+}
+
+.list-group-item:hover {
+    background-color: #f8f9fa;
+}
+</style>
+{% endblock %}

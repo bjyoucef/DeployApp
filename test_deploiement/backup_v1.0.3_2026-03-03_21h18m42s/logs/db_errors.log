@@ -1,0 +1,2034 @@
+[2026-02-04 01:21:02,661] ERROR in error: 
+Timestamp: 2026-02-04 01:21:02
+User: badjadi (ID: 1)
+IP Address: 127.0.0.1
+Browser/OS: Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:147.0) Gecko/20100101 Firefox/147.0
+Path: /export/situation_medecins/liste/BLOC
+Method: GET
+Error Message: (1064, "You have an error in your SQL syntax; check the manual that corresponds to your MariaDB server version for the right syntax to use near 'dec,\n                    COALESCE((SELECT SUM(ds.compensation) FROM location_...' at line 8")
+Traceback:
+Traceback (most recent call last):
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\flask\app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\flask\app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+  File "C:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\app\utiles.py", line 25, in decorated_function
+    return f(*args, **kwargs)
+  File "C:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\app\utiles.py", line 36, in wrapped
+    return f(*args, **kwargs)
+  File "C:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\app\prestation_location_bloc\situation_medecin.py", line 937, in export_situation_medecins_liste
+    cursor.execute(query)
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\cursors.py", line 153, in execute
+    result = self._query(query)
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\cursors.py", line 322, in _query
+    conn.query(q)
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\connections.py", line 563, in query
+    self._affected_rows = self._read_query_result(unbuffered=unbuffered)
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\connections.py", line 825, in _read_query_result
+    result.read()
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\connections.py", line 1199, in read
+    first_packet = self.connection._read_packet()
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\connections.py", line 775, in _read_packet
+    packet.raise_for_error()
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\protocol.py", line 219, in raise_for_error
+    err.raise_mysql_exception(self._data)
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\err.py", line 150, in raise_mysql_exception
+    raise errorclass(errno, errval)
+pymysql.err.ProgrammingError: (1064, "You have an error in your SQL syntax; check the manual that corresponds to your MariaDB server version for the right syntax to use near 'dec,\n                    COALESCE((SELECT SUM(ds.compensation) FROM location_...' at line 8")
+
+--------------------------------------------------------------------------------
+[2026-02-04 01:26:27,874] ERROR in error: 
+Timestamp: 2026-02-04 01:26:27
+User: badjadi (ID: 1)
+IP Address: 127.0.0.1
+Browser/OS: Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:147.0) Gecko/20100101 Firefox/147.0
+Path: /export/situation_medecins/liste/BLOC
+Method: GET
+Error Message: (1064, "You have an error in your SQL syntax; check the manual that corresponds to your MariaDB server version for the right syntax to use near 'dec,\n                    COALESCE((SELECT SUM(ds.compensation) FROM location_...' at line 8")
+Traceback:
+Traceback (most recent call last):
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\flask\app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\flask\app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+  File "C:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\app\utiles.py", line 25, in decorated_function
+    return f(*args, **kwargs)
+  File "C:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\app\utiles.py", line 36, in wrapped
+    return f(*args, **kwargs)
+  File "C:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\app\prestation_location_bloc\situation_medecin.py", line 937, in export_situation_medecins_liste
+    cursor.execute(query)
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\cursors.py", line 153, in execute
+    result = self._query(query)
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\cursors.py", line 322, in _query
+    conn.query(q)
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\connections.py", line 563, in query
+    self._affected_rows = self._read_query_result(unbuffered=unbuffered)
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\connections.py", line 825, in _read_query_result
+    result.read()
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\connections.py", line 1199, in read
+    first_packet = self.connection._read_packet()
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\connections.py", line 775, in _read_packet
+    packet.raise_for_error()
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\protocol.py", line 219, in raise_for_error
+    err.raise_mysql_exception(self._data)
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\err.py", line 150, in raise_mysql_exception
+    raise errorclass(errno, errval)
+pymysql.err.ProgrammingError: (1064, "You have an error in your SQL syntax; check the manual that corresponds to your MariaDB server version for the right syntax to use near 'dec,\n                    COALESCE((SELECT SUM(ds.compensation) FROM location_...' at line 8")
+
+--------------------------------------------------------------------------------
+[2026-02-04 01:26:59,029] ERROR in error: 
+Timestamp: 2026-02-04 01:26:59
+User: badjadi (ID: 1)
+IP Address: 127.0.0.1
+Browser/OS: Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:147.0) Gecko/20100101 Firefox/147.0
+Path: /export/situation_medecins/liste/ACCOUCHEMENT
+Method: GET
+Error Message: (1064, "You have an error in your SQL syntax; check the manual that corresponds to your MariaDB server version for the right syntax to use near 'dec,\n                    COALESCE((SELECT SUM(s.compensation) FROM accoucheme...' at line 8")
+Traceback:
+Traceback (most recent call last):
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\flask\app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\flask\app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+  File "C:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\app\utiles.py", line 25, in decorated_function
+    return f(*args, **kwargs)
+  File "C:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\app\utiles.py", line 36, in wrapped
+    return f(*args, **kwargs)
+  File "C:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\app\prestation_location_bloc\situation_medecin.py", line 937, in export_situation_medecins_liste
+    cursor.execute(query)
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\cursors.py", line 153, in execute
+    result = self._query(query)
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\cursors.py", line 322, in _query
+    conn.query(q)
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\connections.py", line 563, in query
+    self._affected_rows = self._read_query_result(unbuffered=unbuffered)
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\connections.py", line 825, in _read_query_result
+    result.read()
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\connections.py", line 1199, in read
+    first_packet = self.connection._read_packet()
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\connections.py", line 775, in _read_packet
+    packet.raise_for_error()
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\protocol.py", line 219, in raise_for_error
+    err.raise_mysql_exception(self._data)
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\err.py", line 150, in raise_mysql_exception
+    raise errorclass(errno, errval)
+pymysql.err.ProgrammingError: (1064, "You have an error in your SQL syntax; check the manual that corresponds to your MariaDB server version for the right syntax to use near 'dec,\n                    COALESCE((SELECT SUM(s.compensation) FROM accoucheme...' at line 8")
+
+--------------------------------------------------------------------------------
+[2026-02-04 01:27:17,916] ERROR in error: 
+Timestamp: 2026-02-04 01:27:17
+User: badjadi (ID: 1)
+IP Address: 127.0.0.1
+Browser/OS: Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:147.0) Gecko/20100101 Firefox/147.0
+Path: /export/situation_medecins/liste/ACCOUCHEMENT
+Method: GET
+Error Message: (1064, "You have an error in your SQL syntax; check the manual that corresponds to your MariaDB server version for the right syntax to use near 'dec,\n                    COALESCE((SELECT SUM(s.compensation) FROM accoucheme...' at line 8")
+Traceback:
+Traceback (most recent call last):
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\flask\app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\flask\app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+  File "C:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\app\utiles.py", line 25, in decorated_function
+    return f(*args, **kwargs)
+  File "C:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\app\utiles.py", line 36, in wrapped
+    return f(*args, **kwargs)
+  File "C:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\app\prestation_location_bloc\situation_medecin.py", line 937, in export_situation_medecins_liste
+    cursor.execute(query)
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\cursors.py", line 153, in execute
+    result = self._query(query)
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\cursors.py", line 322, in _query
+    conn.query(q)
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\connections.py", line 563, in query
+    self._affected_rows = self._read_query_result(unbuffered=unbuffered)
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\connections.py", line 825, in _read_query_result
+    result.read()
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\connections.py", line 1199, in read
+    first_packet = self.connection._read_packet()
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\connections.py", line 775, in _read_packet
+    packet.raise_for_error()
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\protocol.py", line 219, in raise_for_error
+    err.raise_mysql_exception(self._data)
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\err.py", line 150, in raise_mysql_exception
+    raise errorclass(errno, errval)
+pymysql.err.ProgrammingError: (1064, "You have an error in your SQL syntax; check the manual that corresponds to your MariaDB server version for the right syntax to use near 'dec,\n                    COALESCE((SELECT SUM(s.compensation) FROM accoucheme...' at line 8")
+
+--------------------------------------------------------------------------------
+[2026-02-04 01:27:55,744] ERROR in error: 
+Timestamp: 2026-02-04 01:27:55
+User: badjadi (ID: 1)
+IP Address: 127.0.0.1
+Browser/OS: Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:147.0) Gecko/20100101 Firefox/147.0
+Path: /export/situation_medecins/liste/ACCOUCHEMENT
+Method: GET
+Error Message: (1054, "Unknown column 'a.id' in 'on clause'")
+Traceback:
+Traceback (most recent call last):
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\flask\app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\flask\app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+  File "C:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\app\utiles.py", line 25, in decorated_function
+    return f(*args, **kwargs)
+  File "C:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\app\utiles.py", line 36, in wrapped
+    return f(*args, **kwargs)
+  File "C:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\app\prestation_location_bloc\situation_medecin.py", line 937, in export_situation_medecins_liste
+    cursor.execute(query)
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\cursors.py", line 153, in execute
+    result = self._query(query)
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\cursors.py", line 322, in _query
+    conn.query(q)
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\connections.py", line 563, in query
+    self._affected_rows = self._read_query_result(unbuffered=unbuffered)
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\connections.py", line 825, in _read_query_result
+    result.read()
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\connections.py", line 1199, in read
+    first_packet = self.connection._read_packet()
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\connections.py", line 775, in _read_packet
+    packet.raise_for_error()
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\protocol.py", line 219, in raise_for_error
+    err.raise_mysql_exception(self._data)
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\err.py", line 150, in raise_mysql_exception
+    raise errorclass(errno, errval)
+pymysql.err.OperationalError: (1054, "Unknown column 'a.id' in 'on clause'")
+
+--------------------------------------------------------------------------------
+[2026-02-04 08:35:50,956] ERROR in error: 
+Timestamp: 2026-02-04 08:35:50
+User: badjadi (ID: 1)
+IP Address: 127.0.0.1
+Browser/OS: Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:147.0) Gecko/20100101 Firefox/147.0
+Path: /accouchement/151
+Method: GET
+Error Message: (1054, "Unknown column 'm.apgar_score' in 'field list'")
+Traceback:
+Traceback (most recent call last):
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\flask\app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\flask\app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+  File "C:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\app\utiles.py", line 25, in decorated_function
+    return f(*args, **kwargs)
+  File "C:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\app\utiles.py", line 36, in wrapped
+    return f(*args, **kwargs)
+  File "C:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\app\accouchements\accouchements.py", line 1069, in accouchement_detail
+    cursor.execute(
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\cursors.py", line 153, in execute
+    result = self._query(query)
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\cursors.py", line 322, in _query
+    conn.query(q)
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\connections.py", line 563, in query
+    self._affected_rows = self._read_query_result(unbuffered=unbuffered)
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\connections.py", line 825, in _read_query_result
+    result.read()
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\connections.py", line 1199, in read
+    first_packet = self.connection._read_packet()
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\connections.py", line 775, in _read_packet
+    packet.raise_for_error()
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\protocol.py", line 219, in raise_for_error
+    err.raise_mysql_exception(self._data)
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\err.py", line 150, in raise_mysql_exception
+    raise errorclass(errno, errval)
+pymysql.err.OperationalError: (1054, "Unknown column 'm.apgar_score' in 'field list'")
+
+--------------------------------------------------------------------------------
+[2026-02-04 11:19:14,136] ERROR in error: 
+Timestamp: 2026-02-04 11:19:14
+User: badjadi (ID: 1)
+IP Address: 127.0.0.1
+Browser/OS: Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:147.0) Gecko/20100101 Firefox/147.0
+Path: /accouchement/151
+Method: GET
+Error Message: (1054, "Unknown column 'm.apgar_score' in 'field list'")
+Traceback:
+Traceback (most recent call last):
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\flask\app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\flask\app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+  File "C:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\app\utiles.py", line 25, in decorated_function
+    return f(*args, **kwargs)
+  File "C:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\app\utiles.py", line 36, in wrapped
+    return f(*args, **kwargs)
+  File "C:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\app\accouchements\accouchements.py", line 1069, in accouchement_detail
+    cursor.execute(
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\cursors.py", line 153, in execute
+    result = self._query(query)
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\cursors.py", line 322, in _query
+    conn.query(q)
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\connections.py", line 563, in query
+    self._affected_rows = self._read_query_result(unbuffered=unbuffered)
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\connections.py", line 825, in _read_query_result
+    result.read()
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\connections.py", line 1199, in read
+    first_packet = self.connection._read_packet()
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\connections.py", line 775, in _read_packet
+    packet.raise_for_error()
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\protocol.py", line 219, in raise_for_error
+    err.raise_mysql_exception(self._data)
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\err.py", line 150, in raise_mysql_exception
+    raise errorclass(errno, errval)
+pymysql.err.OperationalError: (1054, "Unknown column 'm.apgar_score' in 'field list'")
+
+--------------------------------------------------------------------------------
+[2026-02-04 11:19:17,832] ERROR in error: 
+Timestamp: 2026-02-04 11:19:17
+User: badjadi (ID: 1)
+IP Address: 127.0.0.1
+Browser/OS: Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:147.0) Gecko/20100101 Firefox/147.0
+Path: /accouchement/150
+Method: GET
+Error Message: (1054, "Unknown column 'm.apgar_score' in 'field list'")
+Traceback:
+Traceback (most recent call last):
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\flask\app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\flask\app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+  File "C:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\app\utiles.py", line 25, in decorated_function
+    return f(*args, **kwargs)
+  File "C:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\app\utiles.py", line 36, in wrapped
+    return f(*args, **kwargs)
+  File "C:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\app\accouchements\accouchements.py", line 1069, in accouchement_detail
+    cursor.execute(
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\cursors.py", line 153, in execute
+    result = self._query(query)
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\cursors.py", line 322, in _query
+    conn.query(q)
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\connections.py", line 563, in query
+    self._affected_rows = self._read_query_result(unbuffered=unbuffered)
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\connections.py", line 825, in _read_query_result
+    result.read()
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\connections.py", line 1199, in read
+    first_packet = self.connection._read_packet()
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\connections.py", line 775, in _read_packet
+    packet.raise_for_error()
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\protocol.py", line 219, in raise_for_error
+    err.raise_mysql_exception(self._data)
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\err.py", line 150, in raise_mysql_exception
+    raise errorclass(errno, errval)
+pymysql.err.OperationalError: (1054, "Unknown column 'm.apgar_score' in 'field list'")
+
+--------------------------------------------------------------------------------
+[2026-02-04 11:19:19,841] ERROR in error: 
+Timestamp: 2026-02-04 11:19:19
+User: badjadi (ID: 1)
+IP Address: 127.0.0.1
+Browser/OS: Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:147.0) Gecko/20100101 Firefox/147.0
+Path: /accouchement/149
+Method: GET
+Error Message: (1054, "Unknown column 'm.apgar_score' in 'field list'")
+Traceback:
+Traceback (most recent call last):
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\flask\app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\flask\app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+  File "C:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\app\utiles.py", line 25, in decorated_function
+    return f(*args, **kwargs)
+  File "C:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\app\utiles.py", line 36, in wrapped
+    return f(*args, **kwargs)
+  File "C:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\app\accouchements\accouchements.py", line 1069, in accouchement_detail
+    cursor.execute(
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\cursors.py", line 153, in execute
+    result = self._query(query)
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\cursors.py", line 322, in _query
+    conn.query(q)
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\connections.py", line 563, in query
+    self._affected_rows = self._read_query_result(unbuffered=unbuffered)
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\connections.py", line 825, in _read_query_result
+    result.read()
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\connections.py", line 1199, in read
+    first_packet = self.connection._read_packet()
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\connections.py", line 775, in _read_packet
+    packet.raise_for_error()
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\protocol.py", line 219, in raise_for_error
+    err.raise_mysql_exception(self._data)
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\err.py", line 150, in raise_mysql_exception
+    raise errorclass(errno, errval)
+pymysql.err.OperationalError: (1054, "Unknown column 'm.apgar_score' in 'field list'")
+
+--------------------------------------------------------------------------------
+[2026-02-04 11:19:22,001] ERROR in error: 
+Timestamp: 2026-02-04 11:19:22
+User: badjadi (ID: 1)
+IP Address: 127.0.0.1
+Browser/OS: Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:147.0) Gecko/20100101 Firefox/147.0
+Path: /accouchement/148
+Method: GET
+Error Message: (1054, "Unknown column 'm.apgar_score' in 'field list'")
+Traceback:
+Traceback (most recent call last):
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\flask\app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\flask\app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+  File "C:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\app\utiles.py", line 25, in decorated_function
+    return f(*args, **kwargs)
+  File "C:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\app\utiles.py", line 36, in wrapped
+    return f(*args, **kwargs)
+  File "C:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\app\accouchements\accouchements.py", line 1069, in accouchement_detail
+    cursor.execute(
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\cursors.py", line 153, in execute
+    result = self._query(query)
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\cursors.py", line 322, in _query
+    conn.query(q)
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\connections.py", line 563, in query
+    self._affected_rows = self._read_query_result(unbuffered=unbuffered)
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\connections.py", line 825, in _read_query_result
+    result.read()
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\connections.py", line 1199, in read
+    first_packet = self.connection._read_packet()
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\connections.py", line 775, in _read_packet
+    packet.raise_for_error()
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\protocol.py", line 219, in raise_for_error
+    err.raise_mysql_exception(self._data)
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\err.py", line 150, in raise_mysql_exception
+    raise errorclass(errno, errval)
+pymysql.err.OperationalError: (1054, "Unknown column 'm.apgar_score' in 'field list'")
+
+--------------------------------------------------------------------------------
+[2026-02-06 10:23:58,608] ERROR in error: 
+Timestamp: 2026-02-06 10:23:58
+User: badjadi (ID: 1)
+IP Address: 127.0.0.1
+Browser/OS: Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:147.0) Gecko/20100101 Firefox/147.0
+Path: /accouchement/155
+Method: GET
+Error Message: (1146, "Table 'dbsmart2026.accouchement_informations_medicales' doesn't exist")
+Traceback:
+Traceback (most recent call last):
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\flask\app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\flask\app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+  File "C:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\app\utiles.py", line 25, in decorated_function
+    return f(*args, **kwargs)
+  File "C:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\app\utiles.py", line 36, in wrapped
+    return f(*args, **kwargs)
+  File "C:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\app\accouchements\accouchements.py", line 1061, in accouchement_detail
+    cursor.execute(
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\cursors.py", line 153, in execute
+    result = self._query(query)
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\cursors.py", line 322, in _query
+    conn.query(q)
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\connections.py", line 563, in query
+    self._affected_rows = self._read_query_result(unbuffered=unbuffered)
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\connections.py", line 825, in _read_query_result
+    result.read()
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\connections.py", line 1199, in read
+    first_packet = self.connection._read_packet()
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\connections.py", line 775, in _read_packet
+    packet.raise_for_error()
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\protocol.py", line 219, in raise_for_error
+    err.raise_mysql_exception(self._data)
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\err.py", line 150, in raise_mysql_exception
+    raise errorclass(errno, errval)
+pymysql.err.ProgrammingError: (1146, "Table 'dbsmart2026.accouchement_informations_medicales' doesn't exist")
+
+--------------------------------------------------------------------------------
+[2026-02-06 10:24:55,700] ERROR in error: 
+Timestamp: 2026-02-06 10:24:55
+User: badjadi (ID: 1)
+IP Address: 127.0.0.1
+Browser/OS: Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:147.0) Gecko/20100101 Firefox/147.0
+Path: /accouchement/155
+Method: GET
+Error Message: (1146, "Table 'dbsmart2026.accouchement_informations_medicales' doesn't exist")
+Traceback:
+Traceback (most recent call last):
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\flask\app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\flask\app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+  File "C:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\app\utiles.py", line 25, in decorated_function
+    return f(*args, **kwargs)
+  File "C:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\app\utiles.py", line 36, in wrapped
+    return f(*args, **kwargs)
+  File "C:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\app\accouchements\accouchements.py", line 1061, in accouchement_detail
+    cursor.execute(
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\cursors.py", line 153, in execute
+    result = self._query(query)
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\cursors.py", line 322, in _query
+    conn.query(q)
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\connections.py", line 563, in query
+    self._affected_rows = self._read_query_result(unbuffered=unbuffered)
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\connections.py", line 825, in _read_query_result
+    result.read()
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\connections.py", line 1199, in read
+    first_packet = self.connection._read_packet()
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\connections.py", line 775, in _read_packet
+    packet.raise_for_error()
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\protocol.py", line 219, in raise_for_error
+    err.raise_mysql_exception(self._data)
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\err.py", line 150, in raise_mysql_exception
+    raise errorclass(errno, errval)
+pymysql.err.ProgrammingError: (1146, "Table 'dbsmart2026.accouchement_informations_medicales' doesn't exist")
+
+--------------------------------------------------------------------------------
+[2026-02-06 10:32:58,589] ERROR in error: 
+Timestamp: 2026-02-06 10:32:58
+User: badjadi (ID: 1)
+IP Address: 127.0.0.1
+Browser/OS: Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:147.0) Gecko/20100101 Firefox/147.0
+Path: /accouchement/155
+Method: GET
+Error Message: (1146, "Table 'dbsmart2026.accouchement_informations_medicales' doesn't exist")
+Traceback:
+Traceback (most recent call last):
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\flask\app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\flask\app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+  File "C:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\app\utiles.py", line 25, in decorated_function
+    return f(*args, **kwargs)
+  File "C:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\app\utiles.py", line 36, in wrapped
+    return f(*args, **kwargs)
+  File "C:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\app\accouchements\accouchements.py", line 1061, in accouchement_detail
+    conn = get_db_connection()
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\cursors.py", line 153, in execute
+    result = self._query(query)
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\cursors.py", line 322, in _query
+    conn.query(q)
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\connections.py", line 563, in query
+    self._affected_rows = self._read_query_result(unbuffered=unbuffered)
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\connections.py", line 825, in _read_query_result
+    result.read()
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\connections.py", line 1199, in read
+    first_packet = self.connection._read_packet()
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\connections.py", line 775, in _read_packet
+    packet.raise_for_error()
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\protocol.py", line 219, in raise_for_error
+    err.raise_mysql_exception(self._data)
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\err.py", line 150, in raise_mysql_exception
+    raise errorclass(errno, errval)
+pymysql.err.ProgrammingError: (1146, "Table 'dbsmart2026.accouchement_informations_medicales' doesn't exist")
+
+--------------------------------------------------------------------------------
+[2026-02-11 15:46:08,232] ERROR in error: 
+Timestamp: 2026-02-11 15:46:08
+User: badjadi (ID: 1)
+IP Address: 127.0.0.1
+Browser/OS: Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:147.0) Gecko/20100101 Firefox/147.0
+Path: /archivage/plan
+Method: GET
+Error Message: (1146, "Table 'dbsmart2026.archivage_rayonnages' doesn't exist")
+Traceback:
+Traceback (most recent call last):
+  File "C:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\app\error.py", line 154, in wrapped
+    return f(*args, **kwargs)
+  File "C:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\app\archivage\routes.py", line 62, in archivage_plan_visuel
+    cursor.execute("SELECT * FROM archivage_rayonnages ORDER BY code_etagere")
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\cursors.py", line 153, in execute
+    result = self._query(query)
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\cursors.py", line 322, in _query
+    conn.query(q)
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\connections.py", line 563, in query
+    self._affected_rows = self._read_query_result(unbuffered=unbuffered)
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\connections.py", line 825, in _read_query_result
+    result.read()
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\connections.py", line 1199, in read
+    first_packet = self.connection._read_packet()
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\connections.py", line 775, in _read_packet
+    packet.raise_for_error()
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\protocol.py", line 219, in raise_for_error
+    err.raise_mysql_exception(self._data)
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\err.py", line 150, in raise_mysql_exception
+    raise errorclass(errno, errval)
+pymysql.err.ProgrammingError: (1146, "Table 'dbsmart2026.archivage_rayonnages' doesn't exist")
+
+--------------------------------------------------------------------------------
+[2026-02-11 15:49:45,101] ERROR in error: 
+Timestamp: 2026-02-11 15:49:45
+User: badjadi (ID: 1)
+IP Address: 127.0.0.1
+Browser/OS: Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:147.0) Gecko/20100101 Firefox/147.0
+Path: /archivage/plan/detail/3
+Method: GET
+Error Message: Already closed
+Traceback:
+Traceback (most recent call last):
+  File "C:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\app\error.py", line 154, in wrapped
+    return f(*args, **kwargs)
+  File "C:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\app\archivage\routes.py", line 177, in archivage_detail_rayonnage
+    conn.close()
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\connections.py", line 414, in close
+    raise err.Error("Already closed")
+pymysql.err.Error: Already closed
+
+--------------------------------------------------------------------------------
+[2026-02-11 15:49:50,402] ERROR in error: 
+Timestamp: 2026-02-11 15:49:50
+User: badjadi (ID: 1)
+IP Address: 127.0.0.1
+Browser/OS: Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:147.0) Gecko/20100101 Firefox/147.0
+Path: /archivage/plan/detail/3
+Method: GET
+Error Message: Already closed
+Traceback:
+Traceback (most recent call last):
+  File "C:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\app\error.py", line 154, in wrapped
+    return f(*args, **kwargs)
+  File "C:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\app\archivage\routes.py", line 177, in archivage_detail_rayonnage
+    conn.close()
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\connections.py", line 414, in close
+    raise err.Error("Already closed")
+pymysql.err.Error: Already closed
+
+--------------------------------------------------------------------------------
+[2026-02-11 15:49:55,650] ERROR in error: 
+Timestamp: 2026-02-11 15:49:55
+User: badjadi (ID: 1)
+IP Address: 127.0.0.1
+Browser/OS: Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:147.0) Gecko/20100101 Firefox/147.0
+Path: /archivage/plan/detail/3
+Method: GET
+Error Message: Already closed
+Traceback:
+Traceback (most recent call last):
+  File "C:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\app\error.py", line 154, in wrapped
+    return f(*args, **kwargs)
+  File "C:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\app\archivage\routes.py", line 177, in archivage_detail_rayonnage
+    conn.close()
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\connections.py", line 414, in close
+    raise err.Error("Already closed")
+pymysql.err.Error: Already closed
+
+--------------------------------------------------------------------------------
+[2026-02-11 15:50:00,450] ERROR in error: 
+Timestamp: 2026-02-11 15:50:00
+User: badjadi (ID: 1)
+IP Address: 127.0.0.1
+Browser/OS: Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:147.0) Gecko/20100101 Firefox/147.0
+Path: /archivage/plan/detail/3
+Method: GET
+Error Message: Already closed
+Traceback:
+Traceback (most recent call last):
+  File "C:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\app\error.py", line 154, in wrapped
+    return f(*args, **kwargs)
+  File "C:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\app\archivage\routes.py", line 177, in archivage_detail_rayonnage
+    conn.close()
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\connections.py", line 414, in close
+    raise err.Error("Already closed")
+pymysql.err.Error: Already closed
+
+--------------------------------------------------------------------------------
+[2026-02-12 17:55:52,073] ERROR in error: 
+Timestamp: 2026-02-12 17:55:52
+User: badjadi (ID: 1)
+IP Address: 127.0.0.1
+Browser/OS: Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:147.0) Gecko/20100101 Firefox/147.0
+Path: /archivage/plan
+Method: GET
+Error Message: (1146, "Table 'dbsmart2026.specialties' doesn't exist")
+Traceback:
+Traceback (most recent call last):
+  File "C:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\app\error.py", line 154, in wrapped
+    return f(*args, **kwargs)
+  File "C:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\app\archivage\routes.py", line 142, in archivage_plan_visuel
+    cursor.execute("""
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\cursors.py", line 153, in execute
+    result = self._query(query)
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\cursors.py", line 322, in _query
+    conn.query(q)
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\connections.py", line 563, in query
+    self._affected_rows = self._read_query_result(unbuffered=unbuffered)
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\connections.py", line 825, in _read_query_result
+    result.read()
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\connections.py", line 1199, in read
+    first_packet = self.connection._read_packet()
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\connections.py", line 775, in _read_packet
+    packet.raise_for_error()
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\protocol.py", line 219, in raise_for_error
+    err.raise_mysql_exception(self._data)
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\err.py", line 150, in raise_mysql_exception
+    raise errorclass(errno, errval)
+pymysql.err.ProgrammingError: (1146, "Table 'dbsmart2026.specialties' doesn't exist")
+
+--------------------------------------------------------------------------------
+[2026-02-12 17:56:46,763] ERROR in error: 
+Timestamp: 2026-02-12 17:56:46
+User: badjadi (ID: 1)
+IP Address: 127.0.0.1
+Browser/OS: Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:147.0) Gecko/20100101 Firefox/147.0
+Path: /archivage/plan
+Method: GET
+Error Message: (1054, "Unknown column 'd.title' in 'field list'")
+Traceback:
+Traceback (most recent call last):
+  File "C:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\app\error.py", line 154, in wrapped
+    return f(*args, **kwargs)
+  File "C:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\app\archivage\routes.py", line 142, in archivage_plan_visuel
+    cursor.execute("""
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\cursors.py", line 153, in execute
+    result = self._query(query)
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\cursors.py", line 322, in _query
+    conn.query(q)
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\connections.py", line 563, in query
+    self._affected_rows = self._read_query_result(unbuffered=unbuffered)
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\connections.py", line 825, in _read_query_result
+    result.read()
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\connections.py", line 1199, in read
+    first_packet = self.connection._read_packet()
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\connections.py", line 775, in _read_packet
+    packet.raise_for_error()
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\protocol.py", line 219, in raise_for_error
+    err.raise_mysql_exception(self._data)
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\err.py", line 150, in raise_mysql_exception
+    raise errorclass(errno, errval)
+pymysql.err.OperationalError: (1054, "Unknown column 'd.title' in 'field list'")
+
+--------------------------------------------------------------------------------
+[2026-02-15 12:09:11,147] ERROR in error: 
+Timestamp: 2026-02-15 12:09:11
+User: badjadi (ID: 1)
+IP Address: 127.0.0.1
+Browser/OS: Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:147.0) Gecko/20100101 Firefox/147.0
+Path: /kt_dossier_patient/create
+Method: GET
+Error Message: (1146, "Table 'dbsmart2026.kt_conventions' doesn't exist")
+Traceback:
+Traceback (most recent call last):
+  File "C:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\app\error.py", line 162, in wrapped
+    return f(*args, **kwargs)
+  File "C:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\app\utiles.py", line 41, in wrapped
+    return f(*args, **kwargs)
+  File "C:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\app\prestation_kt\kt_dossier_patient.py", line 48, in kt_dossier_create
+    cursor.execute("SELECT * FROM kt_conventions WHERE est_active = 1 ORDER BY nom_convention")
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\cursors.py", line 153, in execute
+    result = self._query(query)
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\cursors.py", line 322, in _query
+    conn.query(q)
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\connections.py", line 563, in query
+    self._affected_rows = self._read_query_result(unbuffered=unbuffered)
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\connections.py", line 825, in _read_query_result
+    result.read()
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\connections.py", line 1199, in read
+    first_packet = self.connection._read_packet()
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\connections.py", line 775, in _read_packet
+    packet.raise_for_error()
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\protocol.py", line 219, in raise_for_error
+    err.raise_mysql_exception(self._data)
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\err.py", line 150, in raise_mysql_exception
+    raise errorclass(errno, errval)
+pymysql.err.ProgrammingError: (1146, "Table 'dbsmart2026.kt_conventions' doesn't exist")
+
+--------------------------------------------------------------------------------
+[2026-02-17 23:17:16,279] ERROR in error: 
+Timestamp: 2026-02-17 23:17:16
+User: badjadi (ID: 1)
+IP Address: 127.0.0.1
+Browser/OS: Werkzeug/3.1.5
+Path: /manage_employees
+Method: GET
+Error Message: (1060, "Duplicate column name 'telephone'")
+Traceback:
+Traceback (most recent call last):
+  File "C:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\app\error.py", line 162, in wrapped
+    return f(*args, **kwargs)
+  File "C:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\app\utiles.py", line 41, in wrapped
+    return f(*args, **kwargs)
+  File "C:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\app\personnel.py", line 134, in manage_employees
+    cursor.execute(count_query, tuple(params))
+    ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\badja\AppData\Local\Programs\Python\Python313\Lib\site-packages\pymysql\cursors.py", line 153, in execute
+    result = self._query(query)
+  File "C:\Users\badja\AppData\Local\Programs\Python\Python313\Lib\site-packages\pymysql\cursors.py", line 322, in _query
+    conn.query(q)
+    ~~~~~~~~~~^^^
+  File "C:\Users\badja\AppData\Local\Programs\Python\Python313\Lib\site-packages\pymysql\connections.py", line 575, in query
+    self._affected_rows = self._read_query_result(unbuffered=unbuffered)
+                          ~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\badja\AppData\Local\Programs\Python\Python313\Lib\site-packages\pymysql\connections.py", line 826, in _read_query_result
+    result.read()
+    ~~~~~~~~~~~^^
+  File "C:\Users\badja\AppData\Local\Programs\Python\Python313\Lib\site-packages\pymysql\connections.py", line 1203, in read
+    first_packet = self.connection._read_packet()
+  File "C:\Users\badja\AppData\Local\Programs\Python\Python313\Lib\site-packages\pymysql\connections.py", line 782, in _read_packet
+    packet.raise_for_error()
+    ~~~~~~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\badja\AppData\Local\Programs\Python\Python313\Lib\site-packages\pymysql\protocol.py", line 219, in raise_for_error
+    err.raise_mysql_exception(self._data)
+    ~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^
+  File "C:\Users\badja\AppData\Local\Programs\Python\Python313\Lib\site-packages\pymysql\err.py", line 150, in raise_mysql_exception
+    raise errorclass(errno, errval)
+pymysql.err.OperationalError: (1060, "Duplicate column name 'telephone'")
+
+--------------------------------------------------------------------------------
+[2026-02-17 23:17:16,333] ERROR in error: 
+Timestamp: 2026-02-17 23:17:16
+User: badjadi (ID: 1)
+IP Address: 127.0.0.1
+Browser/OS: Werkzeug/3.1.5
+Path: /manage_employees
+Method: GET
+Error Message: (1060, "Duplicate column name 'telephone'")
+Traceback:
+Traceback (most recent call last):
+  File "C:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\app\error.py", line 162, in wrapped
+    return f(*args, **kwargs)
+  File "C:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\app\utiles.py", line 41, in wrapped
+    return f(*args, **kwargs)
+  File "C:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\app\personnel.py", line 134, in manage_employees
+    cursor.execute(count_query, tuple(params))
+    ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\badja\AppData\Local\Programs\Python\Python313\Lib\site-packages\pymysql\cursors.py", line 153, in execute
+    result = self._query(query)
+  File "C:\Users\badja\AppData\Local\Programs\Python\Python313\Lib\site-packages\pymysql\cursors.py", line 322, in _query
+    conn.query(q)
+    ~~~~~~~~~~^^^
+  File "C:\Users\badja\AppData\Local\Programs\Python\Python313\Lib\site-packages\pymysql\connections.py", line 575, in query
+    self._affected_rows = self._read_query_result(unbuffered=unbuffered)
+                          ~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\badja\AppData\Local\Programs\Python\Python313\Lib\site-packages\pymysql\connections.py", line 826, in _read_query_result
+    result.read()
+    ~~~~~~~~~~~^^
+  File "C:\Users\badja\AppData\Local\Programs\Python\Python313\Lib\site-packages\pymysql\connections.py", line 1203, in read
+    first_packet = self.connection._read_packet()
+  File "C:\Users\badja\AppData\Local\Programs\Python\Python313\Lib\site-packages\pymysql\connections.py", line 782, in _read_packet
+    packet.raise_for_error()
+    ~~~~~~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\badja\AppData\Local\Programs\Python\Python313\Lib\site-packages\pymysql\protocol.py", line 219, in raise_for_error
+    err.raise_mysql_exception(self._data)
+    ~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^
+  File "C:\Users\badja\AppData\Local\Programs\Python\Python313\Lib\site-packages\pymysql\err.py", line 150, in raise_mysql_exception
+    raise errorclass(errno, errval)
+pymysql.err.OperationalError: (1060, "Duplicate column name 'telephone'")
+
+--------------------------------------------------------------------------------
+[2026-02-18 12:03:16,303] ERROR in error: 
+Timestamp: 2026-02-18 12:03:16
+User: badjadi (ID: 1)
+IP Address: 127.0.0.1
+Browser/OS: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36
+Path: /gestion_medecins
+Method: GET
+Error Message: (1064, "You have an error in your SQL syntax; check the manual that corresponds to your MariaDB server version for the right syntax to use near 'FROM doctors d\n                     LEFT JOIN specialty s ON d.id_specialty =...' at line 16")
+Traceback:
+Traceback (most recent call last):
+  File "C:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\app\error.py", line 162, in wrapped
+    return f(*args, **kwargs)
+  File "C:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\app\utiles.py", line 41, in wrapped
+    return f(*args, **kwargs)
+  File "C:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\app\admin\manage_doctors.py", line 191, in gestion_medecins
+    cursor.execute("""
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\cursors.py", line 153, in execute
+    result = self._query(query)
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\cursors.py", line 322, in _query
+    conn.query(q)
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\connections.py", line 563, in query
+    self._affected_rows = self._read_query_result(unbuffered=unbuffered)
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\connections.py", line 825, in _read_query_result
+    result.read()
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\connections.py", line 1199, in read
+    first_packet = self.connection._read_packet()
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\connections.py", line 775, in _read_packet
+    packet.raise_for_error()
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\protocol.py", line 219, in raise_for_error
+    err.raise_mysql_exception(self._data)
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\err.py", line 150, in raise_mysql_exception
+    raise errorclass(errno, errval)
+pymysql.err.ProgrammingError: (1064, "You have an error in your SQL syntax; check the manual that corresponds to your MariaDB server version for the right syntax to use near 'FROM doctors d\n                     LEFT JOIN specialty s ON d.id_specialty =...' at line 16")
+
+--------------------------------------------------------------------------------
+[2026-02-18 12:03:46,152] ERROR in error: 
+Timestamp: 2026-02-18 12:03:46
+User: badjadi (ID: 1)
+IP Address: 127.0.0.1
+Browser/OS: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36
+Path: /gestion_medecins
+Method: GET
+Error Message: (1064, "You have an error in your SQL syntax; check the manual that corresponds to your MariaDB server version for the right syntax to use near 'FROM doctors d\n                     LEFT JOIN specialty s ON d.id_specialty =...' at line 16")
+Traceback:
+Traceback (most recent call last):
+  File "C:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\app\error.py", line 162, in wrapped
+    return f(*args, **kwargs)
+  File "C:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\app\utiles.py", line 41, in wrapped
+    return f(*args, **kwargs)
+  File "C:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\app\admin\manage_doctors.py", line 191, in gestion_medecins
+    cursor.execute("""
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\cursors.py", line 153, in execute
+    result = self._query(query)
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\cursors.py", line 322, in _query
+    conn.query(q)
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\connections.py", line 563, in query
+    self._affected_rows = self._read_query_result(unbuffered=unbuffered)
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\connections.py", line 825, in _read_query_result
+    result.read()
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\connections.py", line 1199, in read
+    first_packet = self.connection._read_packet()
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\connections.py", line 775, in _read_packet
+    packet.raise_for_error()
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\protocol.py", line 219, in raise_for_error
+    err.raise_mysql_exception(self._data)
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\err.py", line 150, in raise_mysql_exception
+    raise errorclass(errno, errval)
+pymysql.err.ProgrammingError: (1064, "You have an error in your SQL syntax; check the manual that corresponds to your MariaDB server version for the right syntax to use near 'FROM doctors d\n                     LEFT JOIN specialty s ON d.id_specialty =...' at line 16")
+
+--------------------------------------------------------------------------------
+[2026-02-20 20:32:22,268] ERROR in error: 
+Timestamp: 2026-02-20 20:32:22
+User: badjadi (ID: 1)
+IP Address: 127.0.0.1
+Browser/OS: Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:147.0) Gecko/20100101 Firefox/147.0
+Path: /archivage/dossiers_cliniques
+Method: GET
+Error Message: (1054, "Unknown column 'id' in 'field list'")
+Traceback:
+Traceback (most recent call last):
+  File "C:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\app\error.py", line 162, in wrapped
+    return f(*args, **kwargs)
+  File "C:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\app\archivage\routes.py", line 1139, in archivage_dossiers_cliniques
+    cursor.execute(count_query, params)
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\cursors.py", line 153, in execute
+    result = self._query(query)
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\cursors.py", line 322, in _query
+    conn.query(q)
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\connections.py", line 563, in query
+    self._affected_rows = self._read_query_result(unbuffered=unbuffered)
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\connections.py", line 825, in _read_query_result
+    result.read()
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\connections.py", line 1199, in read
+    first_packet = self.connection._read_packet()
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\connections.py", line 775, in _read_packet
+    packet.raise_for_error()
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\protocol.py", line 219, in raise_for_error
+    err.raise_mysql_exception(self._data)
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\err.py", line 150, in raise_mysql_exception
+    raise errorclass(errno, errval)
+pymysql.err.OperationalError: (1054, "Unknown column 'id' in 'field list'")
+
+--------------------------------------------------------------------------------
+[2026-02-20 20:35:04,918] ERROR in error: 
+Timestamp: 2026-02-20 20:35:04
+User: badjadi (ID: 1)
+IP Address: 127.0.0.1
+Browser/OS: Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:147.0) Gecko/20100101 Firefox/147.0
+Path: /archivage/dossiers_cliniques
+Method: GET
+Error Message: (1054, "Unknown column 'id' in 'field list'")
+Traceback:
+Traceback (most recent call last):
+  File "C:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\app\error.py", line 162, in wrapped
+    return f(*args, **kwargs)
+  File "C:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\app\archivage\routes.py", line 1139, in archivage_dossiers_cliniques
+    cursor.execute(count_query, params)
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\cursors.py", line 153, in execute
+    result = self._query(query)
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\cursors.py", line 322, in _query
+    conn.query(q)
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\connections.py", line 563, in query
+    self._affected_rows = self._read_query_result(unbuffered=unbuffered)
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\connections.py", line 825, in _read_query_result
+    result.read()
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\connections.py", line 1199, in read
+    first_packet = self.connection._read_packet()
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\connections.py", line 775, in _read_packet
+    packet.raise_for_error()
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\protocol.py", line 219, in raise_for_error
+    err.raise_mysql_exception(self._data)
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\err.py", line 150, in raise_mysql_exception
+    raise errorclass(errno, errval)
+pymysql.err.OperationalError: (1054, "Unknown column 'id' in 'field list'")
+
+--------------------------------------------------------------------------------
+[2026-02-20 20:35:29,147] ERROR in error: 
+Timestamp: 2026-02-20 20:35:29
+User: badjadi (ID: 1)
+IP Address: 127.0.0.1
+Browser/OS: Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:147.0) Gecko/20100101 Firefox/147.0
+Path: /archivage/dossiers_cliniques
+Method: GET
+Error Message: (1054, "Unknown column 'patient_name' in 'field list'")
+Traceback:
+Traceback (most recent call last):
+  File "C:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\app\error.py", line 162, in wrapped
+    return f(*args, **kwargs)
+  File "C:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\app\archivage\routes.py", line 1139, in archivage_dossiers_cliniques
+    cursor.execute(count_query, params)
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\cursors.py", line 153, in execute
+    result = self._query(query)
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\cursors.py", line 322, in _query
+    conn.query(q)
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\connections.py", line 563, in query
+    self._affected_rows = self._read_query_result(unbuffered=unbuffered)
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\connections.py", line 825, in _read_query_result
+    result.read()
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\connections.py", line 1199, in read
+    first_packet = self.connection._read_packet()
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\connections.py", line 775, in _read_packet
+    packet.raise_for_error()
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\protocol.py", line 219, in raise_for_error
+    err.raise_mysql_exception(self._data)
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\err.py", line 150, in raise_mysql_exception
+    raise errorclass(errno, errval)
+pymysql.err.OperationalError: (1054, "Unknown column 'patient_name' in 'field list'")
+
+--------------------------------------------------------------------------------
+[2026-02-20 20:38:08,581] ERROR in error: 
+Timestamp: 2026-02-20 20:38:08
+User: badjadi (ID: 1)
+IP Address: 127.0.0.1
+Browser/OS: Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:147.0) Gecko/20100101 Firefox/147.0
+Path: /archivage/dossiers_cliniques
+Method: GET
+Error Message: (1271, "Illegal mix of collations for operation 'UNION'")
+Traceback:
+Traceback (most recent call last):
+  File "C:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\app\error.py", line 162, in wrapped
+    return f(*args, **kwargs)
+  File "C:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\app\archivage\routes.py", line 1139, in archivage_dossiers_cliniques
+    cursor.execute(count_query, params)
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\cursors.py", line 153, in execute
+    result = self._query(query)
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\cursors.py", line 322, in _query
+    conn.query(q)
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\connections.py", line 563, in query
+    self._affected_rows = self._read_query_result(unbuffered=unbuffered)
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\connections.py", line 825, in _read_query_result
+    result.read()
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\connections.py", line 1199, in read
+    first_packet = self.connection._read_packet()
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\connections.py", line 775, in _read_packet
+    packet.raise_for_error()
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\protocol.py", line 219, in raise_for_error
+    err.raise_mysql_exception(self._data)
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\err.py", line 150, in raise_mysql_exception
+    raise errorclass(errno, errval)
+pymysql.err.OperationalError: (1271, "Illegal mix of collations for operation 'UNION'")
+
+--------------------------------------------------------------------------------
+[2026-02-20 20:39:03,059] ERROR in error: 
+Timestamp: 2026-02-20 20:39:03
+User: badjadi (ID: 1)
+IP Address: 127.0.0.1
+Browser/OS: Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:147.0) Gecko/20100101 Firefox/147.0
+Path: /archivage/dossiers_cliniques
+Method: GET
+Error Message: (1271, "Illegal mix of collations for operation 'UNION'")
+Traceback:
+Traceback (most recent call last):
+  File "C:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\app\error.py", line 162, in wrapped
+    return f(*args, **kwargs)
+  File "C:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\app\archivage\routes.py", line 1139, in archivage_dossiers_cliniques
+    cursor.execute(count_query, params)
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\cursors.py", line 153, in execute
+    result = self._query(query)
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\cursors.py", line 322, in _query
+    conn.query(q)
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\connections.py", line 563, in query
+    self._affected_rows = self._read_query_result(unbuffered=unbuffered)
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\connections.py", line 825, in _read_query_result
+    result.read()
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\connections.py", line 1199, in read
+    first_packet = self.connection._read_packet()
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\connections.py", line 775, in _read_packet
+    packet.raise_for_error()
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\protocol.py", line 219, in raise_for_error
+    err.raise_mysql_exception(self._data)
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\err.py", line 150, in raise_mysql_exception
+    raise errorclass(errno, errval)
+pymysql.err.OperationalError: (1271, "Illegal mix of collations for operation 'UNION'")
+
+--------------------------------------------------------------------------------
+[2026-02-20 20:39:04,889] ERROR in error: 
+Timestamp: 2026-02-20 20:39:04
+User: badjadi (ID: 1)
+IP Address: 127.0.0.1
+Browser/OS: Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:147.0) Gecko/20100101 Firefox/147.0
+Path: /archivage/dossiers_cliniques
+Method: GET
+Error Message: (1271, "Illegal mix of collations for operation 'UNION'")
+Traceback:
+Traceback (most recent call last):
+  File "C:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\app\error.py", line 162, in wrapped
+    return f(*args, **kwargs)
+  File "C:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\app\archivage\routes.py", line 1139, in archivage_dossiers_cliniques
+    cursor.execute(count_query, params)
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\cursors.py", line 153, in execute
+    result = self._query(query)
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\cursors.py", line 322, in _query
+    conn.query(q)
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\connections.py", line 563, in query
+    self._affected_rows = self._read_query_result(unbuffered=unbuffered)
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\connections.py", line 825, in _read_query_result
+    result.read()
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\connections.py", line 1199, in read
+    first_packet = self.connection._read_packet()
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\connections.py", line 775, in _read_packet
+    packet.raise_for_error()
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\protocol.py", line 219, in raise_for_error
+    err.raise_mysql_exception(self._data)
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\err.py", line 150, in raise_mysql_exception
+    raise errorclass(errno, errval)
+pymysql.err.OperationalError: (1271, "Illegal mix of collations for operation 'UNION'")
+
+--------------------------------------------------------------------------------
+[2026-02-20 20:41:51,024] ERROR in error: 
+Timestamp: 2026-02-20 20:41:51
+User: badjadi (ID: 1)
+IP Address: 127.0.0.1
+Browser/OS: Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:147.0) Gecko/20100101 Firefox/147.0
+Path: /archivage/dossiers_cliniques
+Method: GET
+Error Message: (1054, "Unknown column 'ad.id_dossier' in 'field list'")
+Traceback:
+Traceback (most recent call last):
+  File "C:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\app\error.py", line 162, in wrapped
+    return f(*args, **kwargs)
+  File "C:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\app\archivage\routes.py", line 1172, in archivage_dossiers_cliniques
+    cursor.execute(full_query, params)
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\cursors.py", line 153, in execute
+    result = self._query(query)
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\cursors.py", line 322, in _query
+    conn.query(q)
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\connections.py", line 563, in query
+    self._affected_rows = self._read_query_result(unbuffered=unbuffered)
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\connections.py", line 825, in _read_query_result
+    result.read()
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\connections.py", line 1199, in read
+    first_packet = self.connection._read_packet()
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\connections.py", line 775, in _read_packet
+    packet.raise_for_error()
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\protocol.py", line 219, in raise_for_error
+    err.raise_mysql_exception(self._data)
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\err.py", line 150, in raise_mysql_exception
+    raise errorclass(errno, errval)
+pymysql.err.OperationalError: (1054, "Unknown column 'ad.id_dossier' in 'field list'")
+
+--------------------------------------------------------------------------------
+[2026-02-21 19:41:45,188] ERROR in error: 
+Timestamp: 2026-02-21 19:41:45
+User: badjadi (ID: 1)
+IP Address: 127.0.0.1
+Browser/OS: Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:147.0) Gecko/20100101 Firefox/147.0
+Path: /archivage/api/box/15/details
+Method: GET
+Error Message: (1054, "Unknown column 'a.nom_acte' in 'field list'")
+Traceback:
+Traceback (most recent call last):
+  File "C:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\app\error.py", line 162, in wrapped
+    return f(*args, **kwargs)
+  File "C:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\app\archivage\routes.py", line 483, in archivage_api_box_details
+    cursor.execute("""
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\cursors.py", line 153, in execute
+    result = self._query(query)
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\cursors.py", line 322, in _query
+    conn.query(q)
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\connections.py", line 563, in query
+    self._affected_rows = self._read_query_result(unbuffered=unbuffered)
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\connections.py", line 825, in _read_query_result
+    result.read()
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\connections.py", line 1199, in read
+    first_packet = self.connection._read_packet()
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\connections.py", line 775, in _read_packet
+    packet.raise_for_error()
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\protocol.py", line 219, in raise_for_error
+    err.raise_mysql_exception(self._data)
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\err.py", line 150, in raise_mysql_exception
+    raise errorclass(errno, errval)
+pymysql.err.OperationalError: (1054, "Unknown column 'a.nom_acte' in 'field list'")
+
+--------------------------------------------------------------------------------
+[2026-02-21 19:41:51,833] ERROR in error: 
+Timestamp: 2026-02-21 19:41:51
+User: badjadi (ID: 1)
+IP Address: 127.0.0.1
+Browser/OS: Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:147.0) Gecko/20100101 Firefox/147.0
+Path: /archivage/api/box/15/details
+Method: GET
+Error Message: (1054, "Unknown column 'a.nom_acte' in 'field list'")
+Traceback:
+Traceback (most recent call last):
+  File "C:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\app\error.py", line 162, in wrapped
+    return f(*args, **kwargs)
+  File "C:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\app\archivage\routes.py", line 483, in archivage_api_box_details
+    cursor.execute("""
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\cursors.py", line 153, in execute
+    result = self._query(query)
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\cursors.py", line 322, in _query
+    conn.query(q)
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\connections.py", line 563, in query
+    self._affected_rows = self._read_query_result(unbuffered=unbuffered)
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\connections.py", line 825, in _read_query_result
+    result.read()
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\connections.py", line 1199, in read
+    first_packet = self.connection._read_packet()
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\connections.py", line 775, in _read_packet
+    packet.raise_for_error()
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\protocol.py", line 219, in raise_for_error
+    err.raise_mysql_exception(self._data)
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\err.py", line 150, in raise_mysql_exception
+    raise errorclass(errno, errval)
+pymysql.err.OperationalError: (1054, "Unknown column 'a.nom_acte' in 'field list'")
+
+--------------------------------------------------------------------------------
+[2026-02-21 19:41:56,091] ERROR in error: 
+Timestamp: 2026-02-21 19:41:56
+User: badjadi (ID: 1)
+IP Address: 127.0.0.1
+Browser/OS: Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:147.0) Gecko/20100101 Firefox/147.0
+Path: /archivage/dossiers_cliniques
+Method: GET
+Error Message: (1146, "Table 'dbsmart2026.conventions' doesn't exist")
+Traceback:
+Traceback (most recent call last):
+  File "C:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\app\error.py", line 162, in wrapped
+    return f(*args, **kwargs)
+  File "C:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\app\archivage\routes.py", line 1298, in archivage_dossiers_cliniques
+    cursor.execute("""
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\cursors.py", line 153, in execute
+    result = self._query(query)
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\cursors.py", line 322, in _query
+    conn.query(q)
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\connections.py", line 563, in query
+    self._affected_rows = self._read_query_result(unbuffered=unbuffered)
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\connections.py", line 825, in _read_query_result
+    result.read()
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\connections.py", line 1199, in read
+    first_packet = self.connection._read_packet()
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\connections.py", line 775, in _read_packet
+    packet.raise_for_error()
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\protocol.py", line 219, in raise_for_error
+    err.raise_mysql_exception(self._data)
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\err.py", line 150, in raise_mysql_exception
+    raise errorclass(errno, errval)
+pymysql.err.ProgrammingError: (1146, "Table 'dbsmart2026.conventions' doesn't exist")
+
+--------------------------------------------------------------------------------
+[2026-02-21 19:43:56,833] ERROR in error: 
+Timestamp: 2026-02-21 19:43:56
+User: badjadi (ID: 1)
+IP Address: 127.0.0.1
+Browser/OS: Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:147.0) Gecko/20100101 Firefox/147.0
+Path: /archivage/api/box/15/details
+Method: GET
+Error Message: (1054, "Unknown column 'a.nom_acte' in 'field list'")
+Traceback:
+Traceback (most recent call last):
+  File "C:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\app\error.py", line 162, in wrapped
+    return f(*args, **kwargs)
+  File "C:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\app\archivage\routes.py", line 483, in archivage_api_box_details
+    cursor.execute("""
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\cursors.py", line 153, in execute
+    result = self._query(query)
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\cursors.py", line 322, in _query
+    conn.query(q)
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\connections.py", line 563, in query
+    self._affected_rows = self._read_query_result(unbuffered=unbuffered)
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\connections.py", line 825, in _read_query_result
+    result.read()
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\connections.py", line 1199, in read
+    first_packet = self.connection._read_packet()
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\connections.py", line 775, in _read_packet
+    packet.raise_for_error()
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\protocol.py", line 219, in raise_for_error
+    err.raise_mysql_exception(self._data)
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\err.py", line 150, in raise_mysql_exception
+    raise errorclass(errno, errval)
+pymysql.err.OperationalError: (1054, "Unknown column 'a.nom_acte' in 'field list'")
+
+--------------------------------------------------------------------------------
+[2026-02-21 19:44:00,890] ERROR in error: 
+Timestamp: 2026-02-21 19:44:00
+User: badjadi (ID: 1)
+IP Address: 127.0.0.1
+Browser/OS: Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:147.0) Gecko/20100101 Firefox/147.0
+Path: /archivage/dossiers_cliniques
+Method: GET
+Error Message: (1054, "Unknown column 'a.nom_acte' in 'field list'")
+Traceback:
+Traceback (most recent call last):
+  File "C:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\app\error.py", line 162, in wrapped
+    return f(*args, **kwargs)
+  File "C:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\app\archivage\routes.py", line 1298, in archivage_dossiers_cliniques
+    cursor.execute("""
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\cursors.py", line 153, in execute
+    result = self._query(query)
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\cursors.py", line 322, in _query
+    conn.query(q)
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\connections.py", line 563, in query
+    self._affected_rows = self._read_query_result(unbuffered=unbuffered)
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\connections.py", line 825, in _read_query_result
+    result.read()
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\connections.py", line 1199, in read
+    first_packet = self.connection._read_packet()
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\connections.py", line 775, in _read_packet
+    packet.raise_for_error()
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\protocol.py", line 219, in raise_for_error
+    err.raise_mysql_exception(self._data)
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\err.py", line 150, in raise_mysql_exception
+    raise errorclass(errno, errval)
+pymysql.err.OperationalError: (1054, "Unknown column 'a.nom_acte' in 'field list'")
+
+--------------------------------------------------------------------------------
+[2026-02-23 00:01:49,152] ERROR in error: 
+Timestamp: 2026-02-23 00:01:49
+User: badjadi (ID: 1)
+IP Address: 127.0.0.1
+Browser/OS: Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:147.0) Gecko/20100101 Firefox/147.0
+Path: /archivage/boites
+Method: GET
+Error Message: (1146, "Table 'dbsmart2026.medecins' doesn't exist")
+Traceback:
+Traceback (most recent call last):
+  File "C:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\app\error.py", line 162, in wrapped
+    return f(*args, **kwargs)
+  File "C:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\app\archivage\routes.py", line 1996, in archivage_boites_list
+    cursor.execute(f"SELECT COUNT(*) as total {base_query}", params)
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\cursors.py", line 153, in execute
+    result = self._query(query)
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\cursors.py", line 322, in _query
+    conn.query(q)
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\connections.py", line 563, in query
+    self._affected_rows = self._read_query_result(unbuffered=unbuffered)
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\connections.py", line 825, in _read_query_result
+    result.read()
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\connections.py", line 1199, in read
+    first_packet = self.connection._read_packet()
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\connections.py", line 775, in _read_packet
+    packet.raise_for_error()
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\protocol.py", line 219, in raise_for_error
+    err.raise_mysql_exception(self._data)
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\err.py", line 150, in raise_mysql_exception
+    raise errorclass(errno, errval)
+pymysql.err.ProgrammingError: (1146, "Table 'dbsmart2026.medecins' doesn't exist")
+
+--------------------------------------------------------------------------------
+[2026-02-23 00:04:05,155] ERROR in error: 
+Timestamp: 2026-02-23 00:04:05
+User: badjadi (ID: 1)
+IP Address: 127.0.0.1
+Browser/OS: Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:147.0) Gecko/20100101 Firefox/147.0
+Path: /archivage/boites
+Method: GET
+Error Message: (1146, "Table 'dbsmart2026.archivage_specialites' doesn't exist")
+Traceback:
+Traceback (most recent call last):
+  File "C:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\app\error.py", line 162, in wrapped
+    return f(*args, **kwargs)
+  File "C:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\app\archivage\routes.py", line 1996, in archivage_boites_list
+    cursor.execute(f"SELECT COUNT(*) as total {base_query}", params)
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\cursors.py", line 153, in execute
+    result = self._query(query)
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\cursors.py", line 322, in _query
+    conn.query(q)
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\connections.py", line 563, in query
+    self._affected_rows = self._read_query_result(unbuffered=unbuffered)
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\connections.py", line 825, in _read_query_result
+    result.read()
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\connections.py", line 1199, in read
+    first_packet = self.connection._read_packet()
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\connections.py", line 775, in _read_packet
+    packet.raise_for_error()
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\protocol.py", line 219, in raise_for_error
+    err.raise_mysql_exception(self._data)
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\err.py", line 150, in raise_mysql_exception
+    raise errorclass(errno, errval)
+pymysql.err.ProgrammingError: (1146, "Table 'dbsmart2026.archivage_specialites' doesn't exist")
+
+--------------------------------------------------------------------------------
+[2026-02-23 00:08:38,717] ERROR in error: 
+Timestamp: 2026-02-23 00:08:38
+User: badjadi (ID: 1)
+IP Address: 127.0.0.1
+Browser/OS: Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:147.0) Gecko/20100101 Firefox/147.0
+Path: /archivage/boites
+Method: GET
+Error Message: (1146, "Table 'dbsmart2026.archivage_specialites' doesn't exist")
+Traceback:
+Traceback (most recent call last):
+  File "C:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\app\error.py", line 162, in wrapped
+    return f(*args, **kwargs)
+  File "C:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\app\archivage\routes.py", line 1996, in archivage_boites_list
+    cursor.execute(f"SELECT COUNT(*) as total {base_query}", params)
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\cursors.py", line 153, in execute
+    result = self._query(query)
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\cursors.py", line 322, in _query
+    conn.query(q)
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\connections.py", line 563, in query
+    self._affected_rows = self._read_query_result(unbuffered=unbuffered)
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\connections.py", line 825, in _read_query_result
+    result.read()
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\connections.py", line 1199, in read
+    first_packet = self.connection._read_packet()
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\connections.py", line 775, in _read_packet
+    packet.raise_for_error()
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\protocol.py", line 219, in raise_for_error
+    err.raise_mysql_exception(self._data)
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\err.py", line 150, in raise_mysql_exception
+    raise errorclass(errno, errval)
+pymysql.err.ProgrammingError: (1146, "Table 'dbsmart2026.archivage_specialites' doesn't exist")
+
+--------------------------------------------------------------------------------
+[2026-02-23 00:09:07,791] ERROR in error: 
+Timestamp: 2026-02-23 00:09:07
+User: badjadi (ID: 1)
+IP Address: 127.0.0.1
+Browser/OS: Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:147.0) Gecko/20100101 Firefox/147.0
+Path: /archivage/boites
+Method: GET
+Error Message: (1146, "Table 'dbsmart2026.archivage_specialites' doesn't exist")
+Traceback:
+Traceback (most recent call last):
+  File "C:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\app\error.py", line 162, in wrapped
+    return f(*args, **kwargs)
+  File "C:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\app\archivage\routes.py", line 1996, in archivage_boites_list
+    cursor.execute(f"SELECT COUNT(*) as total {base_query}", params)
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\cursors.py", line 153, in execute
+    result = self._query(query)
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\cursors.py", line 322, in _query
+    conn.query(q)
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\connections.py", line 563, in query
+    self._affected_rows = self._read_query_result(unbuffered=unbuffered)
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\connections.py", line 825, in _read_query_result
+    result.read()
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\connections.py", line 1199, in read
+    first_packet = self.connection._read_packet()
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\connections.py", line 775, in _read_packet
+    packet.raise_for_error()
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\protocol.py", line 219, in raise_for_error
+    err.raise_mysql_exception(self._data)
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\err.py", line 150, in raise_mysql_exception
+    raise errorclass(errno, errval)
+pymysql.err.ProgrammingError: (1146, "Table 'dbsmart2026.archivage_specialites' doesn't exist")
+
+--------------------------------------------------------------------------------
+[2026-02-23 00:10:47,619] ERROR in error: 
+Timestamp: 2026-02-23 00:10:47
+User: badjadi (ID: 1)
+IP Address: 127.0.0.1
+Browser/OS: Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:147.0) Gecko/20100101 Firefox/147.0
+Path: /archivage/boites
+Method: GET
+Error Message: (1146, "Table 'dbsmart2026.accouchement_dossier_patient' doesn't exist")
+Traceback:
+Traceback (most recent call last):
+  File "C:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\app\error.py", line 162, in wrapped
+    return f(*args, **kwargs)
+  File "C:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\app\archivage\routes.py", line 2015, in archivage_boites_list
+    doctors = cursor.fetchall()
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\cursors.py", line 153, in execute
+    result = self._query(query)
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\cursors.py", line 322, in _query
+    conn.query(q)
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\connections.py", line 563, in query
+    self._affected_rows = self._read_query_result(unbuffered=unbuffered)
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\connections.py", line 825, in _read_query_result
+    result.read()
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\connections.py", line 1199, in read
+    first_packet = self.connection._read_packet()
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\connections.py", line 775, in _read_packet
+    packet.raise_for_error()
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\protocol.py", line 219, in raise_for_error
+    err.raise_mysql_exception(self._data)
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\err.py", line 150, in raise_mysql_exception
+    raise errorclass(errno, errval)
+pymysql.err.ProgrammingError: (1146, "Table 'dbsmart2026.accouchement_dossier_patient' doesn't exist")
+
+--------------------------------------------------------------------------------
+[2026-02-25 02:18:24,950] ERROR in error: 
+Timestamp: 2026-02-25 02:18:24
+User: badjadi (ID: 1)
+IP Address: 127.0.0.1
+Browser/OS: Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:147.0) Gecko/20100101 Firefox/147.0
+Path: /dossier/PRESTATION_KT/print-qr-mass
+Method: POST
+Error Message: (1054, "Unknown column 'd.date_creation' in 'field list'")
+Traceback:
+Traceback (most recent call last):
+  File "C:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\app\error.py", line 162, in wrapped
+    return f(*args, **kwargs)
+  File "C:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\app\archivage\qr_routes.py", line 344, in dossier_print_qr_mass
+    cursor.execute(f"""
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\cursors.py", line 153, in execute
+    result = self._query(query)
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\cursors.py", line 322, in _query
+    conn.query(q)
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\connections.py", line 563, in query
+    self._affected_rows = self._read_query_result(unbuffered=unbuffered)
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\connections.py", line 825, in _read_query_result
+    result.read()
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\connections.py", line 1199, in read
+    first_packet = self.connection._read_packet()
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\connections.py", line 775, in _read_packet
+    packet.raise_for_error()
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\protocol.py", line 219, in raise_for_error
+    err.raise_mysql_exception(self._data)
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\err.py", line 150, in raise_mysql_exception
+    raise errorclass(errno, errval)
+pymysql.err.OperationalError: (1054, "Unknown column 'd.date_creation' in 'field list'")
+
+--------------------------------------------------------------------------------
+[2026-02-26 20:51:19,826] ERROR in error: 
+Timestamp: 2026-02-26 20:51:19
+User: badjadi (ID: 1)
+IP Address: 127.0.0.1
+Browser/OS: Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:148.0) Gecko/20100101 Firefox/148.0
+Path: /hospitalisation/floor_plan/32
+Method: GET
+Error Message: (1054, "Unknown column 'doc.nom' in 'field list'")
+Traceback:
+Traceback (most recent call last):
+  File "C:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\app\error.py", line 162, in wrapped
+    return f(*args, **kwargs)
+  File "C:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\app\hospitalisation\routes.py", line 322, in hospitalisation_floor_plan
+    cursor.execute("""
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\cursors.py", line 153, in execute
+    result = self._query(query)
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\cursors.py", line 322, in _query
+    conn.query(q)
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\connections.py", line 563, in query
+    self._affected_rows = self._read_query_result(unbuffered=unbuffered)
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\connections.py", line 825, in _read_query_result
+    result.read()
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\connections.py", line 1199, in read
+    first_packet = self.connection._read_packet()
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\connections.py", line 775, in _read_packet
+    packet.raise_for_error()
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\protocol.py", line 219, in raise_for_error
+    err.raise_mysql_exception(self._data)
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\err.py", line 150, in raise_mysql_exception
+    raise errorclass(errno, errval)
+pymysql.err.OperationalError: (1054, "Unknown column 'doc.nom' in 'field list'")
+
+--------------------------------------------------------------------------------
+[2026-02-27 01:57:00,851] ERROR in error: 
+Timestamp: 2026-02-27 01:57:00
+User: Anonyme
+IP Address: 127.0.0.1
+Browser/OS: Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:148.0) Gecko/20100101 Firefox/148.0
+Path: /login
+Method: POST
+Error Message: (1054, "Unknown column 'last_login' in 'field list'")
+Traceback:
+Traceback (most recent call last):
+  File "C:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\app\error.py", line 162, in wrapped
+    return f(*args, **kwargs)
+  File "C:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\app\auth.py", line 84, in login
+    cursor.execute('UPDATE personnel SET last_login = NOW() WHERE id_personnel = %s', (user['id_personnel'],))
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\cursors.py", line 153, in execute
+    result = self._query(query)
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\cursors.py", line 322, in _query
+    conn.query(q)
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\connections.py", line 563, in query
+    self._affected_rows = self._read_query_result(unbuffered=unbuffered)
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\connections.py", line 825, in _read_query_result
+    result.read()
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\connections.py", line 1199, in read
+    first_packet = self.connection._read_packet()
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\connections.py", line 775, in _read_packet
+    packet.raise_for_error()
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\protocol.py", line 219, in raise_for_error
+    err.raise_mysql_exception(self._data)
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\err.py", line 150, in raise_mysql_exception
+    raise errorclass(errno, errval)
+pymysql.err.OperationalError: (1054, "Unknown column 'last_login' in 'field list'")
+
+--------------------------------------------------------------------------------
+[2026-03-01 02:14:13,046] ERROR in error: 
+Timestamp: 2026-03-01 02:14:13
+User: badjadi (ID: 1)
+IP Address: 127.0.0.1
+Browser/OS: Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:148.0) Gecko/20100101 Firefox/148.0
+Path: /hospitalisation/api/admit_patient
+Method: POST
+Error Message: (1054, "Unknown column 's.tarif_fixe_sejour_court' in 'field list'")
+Traceback:
+Traceback (most recent call last):
+  File "C:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\app\error.py", line 162, in wrapped
+    return f(*args, **kwargs)
+  File "C:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\app\hospitalisation\routes.py", line 457, in hospitalisation_admit_patient
+    cursor.execute("""
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\cursors.py", line 153, in execute
+    result = self._query(query)
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\cursors.py", line 322, in _query
+    conn.query(q)
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\connections.py", line 563, in query
+    self._affected_rows = self._read_query_result(unbuffered=unbuffered)
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\connections.py", line 825, in _read_query_result
+    result.read()
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\connections.py", line 1199, in read
+    first_packet = self.connection._read_packet()
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\connections.py", line 775, in _read_packet
+    packet.raise_for_error()
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\protocol.py", line 219, in raise_for_error
+    err.raise_mysql_exception(self._data)
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\err.py", line 150, in raise_mysql_exception
+    raise errorclass(errno, errval)
+pymysql.err.OperationalError: (1054, "Unknown column 's.tarif_fixe_sejour_court' in 'field list'")
+
+--------------------------------------------------------------------------------
+[2026-03-01 02:32:35,725] ERROR in error: 
+Timestamp: 2026-03-01 02:32:35
+User: badjadi (ID: 1)
+IP Address: 127.0.0.1
+Browser/OS: Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:148.0) Gecko/20100101 Firefox/148.0
+Path: /hospitalisation/api/transfer_patient
+Method: POST
+Error Message: (1054, "Unknown column 's.tarif_fixe_sejour_court' in 'field list'")
+Traceback:
+Traceback (most recent call last):
+  File "C:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\app\error.py", line 162, in wrapped
+    return f(*args, **kwargs)
+  File "C:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\app\hospitalisation\routes.py", line 735, in hospitalisation_transfer_patient
+    result = _close_attribution(
+  File "C:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\app\hospitalisation\routes.py", line 144, in _close_attribution
+    cursor.execute(
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\cursors.py", line 153, in execute
+    result = self._query(query)
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\cursors.py", line 322, in _query
+    conn.query(q)
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\connections.py", line 563, in query
+    self._affected_rows = self._read_query_result(unbuffered=unbuffered)
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\connections.py", line 825, in _read_query_result
+    result.read()
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\connections.py", line 1199, in read
+    first_packet = self.connection._read_packet()
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\connections.py", line 775, in _read_packet
+    packet.raise_for_error()
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\protocol.py", line 219, in raise_for_error
+    err.raise_mysql_exception(self._data)
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\err.py", line 150, in raise_mysql_exception
+    raise errorclass(errno, errval)
+pymysql.err.OperationalError: (1054, "Unknown column 's.tarif_fixe_sejour_court' in 'field list'")
+
+--------------------------------------------------------------------------------
+[2026-03-01 02:33:43,333] ERROR in error: 
+Timestamp: 2026-03-01 02:33:43
+User: badjadi (ID: 1)
+IP Address: 127.0.0.1
+Browser/OS: Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:148.0) Gecko/20100101 Firefox/148.0
+Path: /hospitalisation/api/transfer_patient
+Method: POST
+Error Message: (1054, "Unknown column 's.tarif_fixe_sejour_court' in 'field list'")
+Traceback:
+Traceback (most recent call last):
+  File "C:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\app\error.py", line 162, in wrapped
+    return f(*args, **kwargs)
+  File "C:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\app\hospitalisation\routes.py", line 735, in hospitalisation_transfer_patient
+    result = _close_attribution(
+  File "C:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\app\hospitalisation\routes.py", line 144, in _close_attribution
+    cursor.execute(
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\cursors.py", line 153, in execute
+    result = self._query(query)
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\cursors.py", line 322, in _query
+    conn.query(q)
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\connections.py", line 563, in query
+    self._affected_rows = self._read_query_result(unbuffered=unbuffered)
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\connections.py", line 825, in _read_query_result
+    result.read()
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\connections.py", line 1199, in read
+    first_packet = self.connection._read_packet()
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\connections.py", line 775, in _read_packet
+    packet.raise_for_error()
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\protocol.py", line 219, in raise_for_error
+    err.raise_mysql_exception(self._data)
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\err.py", line 150, in raise_mysql_exception
+    raise errorclass(errno, errval)
+pymysql.err.OperationalError: (1054, "Unknown column 's.tarif_fixe_sejour_court' in 'field list'")
+
+--------------------------------------------------------------------------------
+[2026-03-01 02:33:56,266] ERROR in error: 
+Timestamp: 2026-03-01 02:33:56
+User: badjadi (ID: 1)
+IP Address: 127.0.0.1
+Browser/OS: Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:148.0) Gecko/20100101 Firefox/148.0
+Path: /hospitalisation/api/transfer_patient
+Method: POST
+Error Message: (1054, "Unknown column 's.tarif_fixe_sejour_court' in 'field list'")
+Traceback:
+Traceback (most recent call last):
+  File "C:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\app\error.py", line 162, in wrapped
+    return f(*args, **kwargs)
+  File "C:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\app\hospitalisation\routes.py", line 735, in hospitalisation_transfer_patient
+    result = _close_attribution(
+  File "C:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\app\hospitalisation\routes.py", line 144, in _close_attribution
+    cursor.execute(
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\cursors.py", line 153, in execute
+    result = self._query(query)
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\cursors.py", line 322, in _query
+    conn.query(q)
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\connections.py", line 563, in query
+    self._affected_rows = self._read_query_result(unbuffered=unbuffered)
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\connections.py", line 825, in _read_query_result
+    result.read()
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\connections.py", line 1199, in read
+    first_packet = self.connection._read_packet()
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\connections.py", line 775, in _read_packet
+    packet.raise_for_error()
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\protocol.py", line 219, in raise_for_error
+    err.raise_mysql_exception(self._data)
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\err.py", line 150, in raise_mysql_exception
+    raise errorclass(errno, errval)
+pymysql.err.OperationalError: (1054, "Unknown column 's.tarif_fixe_sejour_court' in 'field list'")
+
+--------------------------------------------------------------------------------
+[2026-03-01 02:34:23,283] ERROR in error: 
+Timestamp: 2026-03-01 02:34:23
+User: badjadi (ID: 1)
+IP Address: 127.0.0.1
+Browser/OS: Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:148.0) Gecko/20100101 Firefox/148.0
+Path: /hospitalisation/api/transfer_patient
+Method: POST
+Error Message: (1054, "Unknown column 's.tarif_fixe_sejour_court' in 'field list'")
+Traceback:
+Traceback (most recent call last):
+  File "C:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\app\error.py", line 162, in wrapped
+    return f(*args, **kwargs)
+  File "C:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\app\hospitalisation\routes.py", line 735, in hospitalisation_transfer_patient
+    result = _close_attribution(
+  File "C:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\app\hospitalisation\routes.py", line 144, in _close_attribution
+    cursor.execute(
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\cursors.py", line 153, in execute
+    result = self._query(query)
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\cursors.py", line 322, in _query
+    conn.query(q)
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\connections.py", line 563, in query
+    self._affected_rows = self._read_query_result(unbuffered=unbuffered)
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\connections.py", line 825, in _read_query_result
+    result.read()
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\connections.py", line 1199, in read
+    first_packet = self.connection._read_packet()
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\connections.py", line 775, in _read_packet
+    packet.raise_for_error()
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\protocol.py", line 219, in raise_for_error
+    err.raise_mysql_exception(self._data)
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\err.py", line 150, in raise_mysql_exception
+    raise errorclass(errno, errval)
+pymysql.err.OperationalError: (1054, "Unknown column 's.tarif_fixe_sejour_court' in 'field list'")
+
+--------------------------------------------------------------------------------
+[2026-03-01 05:49:02,450] ERROR in error: 
+Timestamp: 2026-03-01 05:49:02
+User: badjadi (ID: 1)
+IP Address: 127.0.0.1
+Browser/OS: Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:148.0) Gecko/20100101 Firefox/148.0
+Path: /hospitalisation/api/admission_detail/1
+Method: GET
+Error Message: (1054, "Unknown column 's.tarif_fixe_sejour_court' in 'field list'")
+Traceback:
+Traceback (most recent call last):
+  File "C:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\app\error.py", line 162, in wrapped
+    return f(*args, **kwargs)
+  File "C:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\app\hospitalisation\routes.py", line 1024, in hospitalisation_admission_detail
+    cursor.execute(
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\cursors.py", line 153, in execute
+    result = self._query(query)
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\cursors.py", line 322, in _query
+    conn.query(q)
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\connections.py", line 563, in query
+    self._affected_rows = self._read_query_result(unbuffered=unbuffered)
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\connections.py", line 825, in _read_query_result
+    result.read()
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\connections.py", line 1199, in read
+    first_packet = self.connection._read_packet()
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\connections.py", line 775, in _read_packet
+    packet.raise_for_error()
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\protocol.py", line 219, in raise_for_error
+    err.raise_mysql_exception(self._data)
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\err.py", line 150, in raise_mysql_exception
+    raise errorclass(errno, errval)
+pymysql.err.OperationalError: (1054, "Unknown column 's.tarif_fixe_sejour_court' in 'field list'")
+
+--------------------------------------------------------------------------------
+[2026-03-01 05:58:03,175] ERROR in error: 
+Timestamp: 2026-03-01 05:58:03
+User: badjadi (ID: 1)
+IP Address: 127.0.0.1
+Browser/OS: Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:148.0) Gecko/20100101 Firefox/148.0
+Path: /hospitalisation/api/admission_detail/1
+Method: GET
+Error Message: (1054, "Unknown column 's.tarif_fixe_sejour_court' in 'field list'")
+Traceback:
+Traceback (most recent call last):
+  File "C:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\app\error.py", line 162, in wrapped
+    return f(*args, **kwargs)
+  File "C:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\app\hospitalisation\routes.py", line 1024, in hospitalisation_admission_detail
+    cursor.execute(
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\cursors.py", line 153, in execute
+    result = self._query(query)
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\cursors.py", line 322, in _query
+    conn.query(q)
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\connections.py", line 563, in query
+    self._affected_rows = self._read_query_result(unbuffered=unbuffered)
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\connections.py", line 825, in _read_query_result
+    result.read()
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\connections.py", line 1199, in read
+    first_packet = self.connection._read_packet()
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\connections.py", line 775, in _read_packet
+    packet.raise_for_error()
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\protocol.py", line 219, in raise_for_error
+    err.raise_mysql_exception(self._data)
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\err.py", line 150, in raise_mysql_exception
+    raise errorclass(errno, errval)
+pymysql.err.OperationalError: (1054, "Unknown column 's.tarif_fixe_sejour_court' in 'field list'")
+
+--------------------------------------------------------------------------------
+[2026-03-01 05:58:11,171] ERROR in error: 
+Timestamp: 2026-03-01 05:58:11
+User: badjadi (ID: 1)
+IP Address: 127.0.0.1
+Browser/OS: Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:148.0) Gecko/20100101 Firefox/148.0
+Path: /hospitalisation/api/admission_detail/1
+Method: GET
+Error Message: (1054, "Unknown column 's.tarif_fixe_sejour_court' in 'field list'")
+Traceback:
+Traceback (most recent call last):
+  File "C:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\app\error.py", line 162, in wrapped
+    return f(*args, **kwargs)
+  File "C:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\app\hospitalisation\routes.py", line 1024, in hospitalisation_admission_detail
+    cursor.execute(
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\cursors.py", line 153, in execute
+    result = self._query(query)
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\cursors.py", line 322, in _query
+    conn.query(q)
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\connections.py", line 563, in query
+    self._affected_rows = self._read_query_result(unbuffered=unbuffered)
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\connections.py", line 825, in _read_query_result
+    result.read()
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\connections.py", line 1199, in read
+    first_packet = self.connection._read_packet()
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\connections.py", line 775, in _read_packet
+    packet.raise_for_error()
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\protocol.py", line 219, in raise_for_error
+    err.raise_mysql_exception(self._data)
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\err.py", line 150, in raise_mysql_exception
+    raise errorclass(errno, errval)
+pymysql.err.OperationalError: (1054, "Unknown column 's.tarif_fixe_sejour_court' in 'field list'")
+
+--------------------------------------------------------------------------------
+[2026-03-01 05:58:29,278] ERROR in error: 
+Timestamp: 2026-03-01 05:58:29
+User: badjadi (ID: 1)
+IP Address: 127.0.0.1
+Browser/OS: Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:148.0) Gecko/20100101 Firefox/148.0
+Path: /hospitalisation/api/admission_detail/1
+Method: GET
+Error Message: (1054, "Unknown column 's.tarif_fixe_sejour_court' in 'field list'")
+Traceback:
+Traceback (most recent call last):
+  File "C:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\app\error.py", line 162, in wrapped
+    return f(*args, **kwargs)
+  File "C:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\app\hospitalisation\routes.py", line 1024, in hospitalisation_admission_detail
+    cursor.execute(
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\cursors.py", line 153, in execute
+    result = self._query(query)
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\cursors.py", line 322, in _query
+    conn.query(q)
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\connections.py", line 563, in query
+    self._affected_rows = self._read_query_result(unbuffered=unbuffered)
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\connections.py", line 825, in _read_query_result
+    result.read()
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\connections.py", line 1199, in read
+    first_packet = self.connection._read_packet()
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\connections.py", line 775, in _read_packet
+    packet.raise_for_error()
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\protocol.py", line 219, in raise_for_error
+    err.raise_mysql_exception(self._data)
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\err.py", line 150, in raise_mysql_exception
+    raise errorclass(errno, errval)
+pymysql.err.OperationalError: (1054, "Unknown column 's.tarif_fixe_sejour_court' in 'field list'")
+
+--------------------------------------------------------------------------------
+[2026-03-01 06:42:36,531] ERROR in error: 
+Timestamp: 2026-03-01 06:42:36
+User: badjadi (ID: 1)
+IP Address: 127.0.0.1
+Browser/OS: Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:148.0) Gecko/20100101 Firefox/148.0
+Path: /hospitalisation/api/admission_detail/1
+Method: GET
+Error Message: (1146, "Table 'dbsmartv6.hosp_consommations' doesn't exist")
+Traceback:
+Traceback (most recent call last):
+  File "C:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\app\error.py", line 162, in wrapped
+    return f(*args, **kwargs)
+  File "C:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\app\hospitalisation\routes.py", line 1265, in hospitalisation_admission_detail
+    cursor.execute(
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\cursors.py", line 153, in execute
+    result = self._query(query)
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\cursors.py", line 322, in _query
+    conn.query(q)
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\connections.py", line 563, in query
+    self._affected_rows = self._read_query_result(unbuffered=unbuffered)
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\connections.py", line 825, in _read_query_result
+    result.read()
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\connections.py", line 1199, in read
+    first_packet = self.connection._read_packet()
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\connections.py", line 775, in _read_packet
+    packet.raise_for_error()
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\protocol.py", line 219, in raise_for_error
+    err.raise_mysql_exception(self._data)
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\err.py", line 150, in raise_mysql_exception
+    raise errorclass(errno, errval)
+pymysql.err.ProgrammingError: (1146, "Table 'dbsmartv6.hosp_consommations' doesn't exist")
+
+--------------------------------------------------------------------------------
+[2026-03-01 06:42:37,533] ERROR in error: 
+Timestamp: 2026-03-01 06:42:37
+User: badjadi (ID: 1)
+IP Address: 127.0.0.1
+Browser/OS: Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:148.0) Gecko/20100101 Firefox/148.0
+Path: /hospitalisation/api/admission_detail/1
+Method: GET
+Error Message: (1146, "Table 'dbsmartv6.hosp_consommations' doesn't exist")
+Traceback:
+Traceback (most recent call last):
+  File "C:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\app\error.py", line 162, in wrapped
+    return f(*args, **kwargs)
+  File "C:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\app\hospitalisation\routes.py", line 1265, in hospitalisation_admission_detail
+    cursor.execute(
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\cursors.py", line 153, in execute
+    result = self._query(query)
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\cursors.py", line 322, in _query
+    conn.query(q)
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\connections.py", line 563, in query
+    self._affected_rows = self._read_query_result(unbuffered=unbuffered)
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\connections.py", line 825, in _read_query_result
+    result.read()
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\connections.py", line 1199, in read
+    first_packet = self.connection._read_packet()
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\connections.py", line 775, in _read_packet
+    packet.raise_for_error()
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\protocol.py", line 219, in raise_for_error
+    err.raise_mysql_exception(self._data)
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\err.py", line 150, in raise_mysql_exception
+    raise errorclass(errno, errval)
+pymysql.err.ProgrammingError: (1146, "Table 'dbsmartv6.hosp_consommations' doesn't exist")
+
+--------------------------------------------------------------------------------
+[2026-03-01 06:43:04,889] ERROR in error: 
+Timestamp: 2026-03-01 06:43:04
+User: badjadi (ID: 1)
+IP Address: 127.0.0.1
+Browser/OS: Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:148.0) Gecko/20100101 Firefox/148.0
+Path: /hospitalisation/api/admission_detail/2
+Method: GET
+Error Message: (1146, "Table 'dbsmartv6.hosp_consommations' doesn't exist")
+Traceback:
+Traceback (most recent call last):
+  File "C:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\app\error.py", line 162, in wrapped
+    return f(*args, **kwargs)
+  File "C:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\app\hospitalisation\routes.py", line 1265, in hospitalisation_admission_detail
+    cursor.execute(
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\cursors.py", line 153, in execute
+    result = self._query(query)
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\cursors.py", line 322, in _query
+    conn.query(q)
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\connections.py", line 563, in query
+    self._affected_rows = self._read_query_result(unbuffered=unbuffered)
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\connections.py", line 825, in _read_query_result
+    result.read()
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\connections.py", line 1199, in read
+    first_packet = self.connection._read_packet()
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\connections.py", line 775, in _read_packet
+    packet.raise_for_error()
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\protocol.py", line 219, in raise_for_error
+    err.raise_mysql_exception(self._data)
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\err.py", line 150, in raise_mysql_exception
+    raise errorclass(errno, errval)
+pymysql.err.ProgrammingError: (1146, "Table 'dbsmartv6.hosp_consommations' doesn't exist")
+
+--------------------------------------------------------------------------------
+[2026-03-01 06:43:27,281] ERROR in error: 
+Timestamp: 2026-03-01 06:43:27
+User: badjadi (ID: 1)
+IP Address: 127.0.0.1
+Browser/OS: Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:148.0) Gecko/20100101 Firefox/148.0
+Path: /hospitalisation/api/admission_detail/2
+Method: GET
+Error Message: (1146, "Table 'dbsmartv6.hosp_consommations' doesn't exist")
+Traceback:
+Traceback (most recent call last):
+  File "C:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\app\error.py", line 162, in wrapped
+    return f(*args, **kwargs)
+  File "C:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\app\hospitalisation\routes.py", line 1265, in hospitalisation_admission_detail
+    cursor.execute(
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\cursors.py", line 153, in execute
+    result = self._query(query)
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\cursors.py", line 322, in _query
+    conn.query(q)
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\connections.py", line 563, in query
+    self._affected_rows = self._read_query_result(unbuffered=unbuffered)
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\connections.py", line 825, in _read_query_result
+    result.read()
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\connections.py", line 1199, in read
+    first_packet = self.connection._read_packet()
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\connections.py", line 775, in _read_packet
+    packet.raise_for_error()
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\protocol.py", line 219, in raise_for_error
+    err.raise_mysql_exception(self._data)
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\err.py", line 150, in raise_mysql_exception
+    raise errorclass(errno, errval)
+pymysql.err.ProgrammingError: (1146, "Table 'dbsmartv6.hosp_consommations' doesn't exist")
+
+--------------------------------------------------------------------------------
+[2026-03-01 06:44:12,062] ERROR in error: 
+Timestamp: 2026-03-01 06:44:12
+User: badjadi (ID: 1)
+IP Address: 127.0.0.1
+Browser/OS: Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:148.0) Gecko/20100101 Firefox/148.0
+Path: /hospitalisation/api/admission_detail/2
+Method: GET
+Error Message: (1054, "Unknown column 'p.first_name' in 'field list'")
+Traceback:
+Traceback (most recent call last):
+  File "C:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\app\error.py", line 162, in wrapped
+    return f(*args, **kwargs)
+  File "C:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\app\hospitalisation\routes.py", line 1265, in hospitalisation_admission_detail
+    cursor.execute(
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\cursors.py", line 153, in execute
+    result = self._query(query)
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\cursors.py", line 322, in _query
+    conn.query(q)
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\connections.py", line 563, in query
+    self._affected_rows = self._read_query_result(unbuffered=unbuffered)
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\connections.py", line 825, in _read_query_result
+    result.read()
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\connections.py", line 1199, in read
+    first_packet = self.connection._read_packet()
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\connections.py", line 775, in _read_packet
+    packet.raise_for_error()
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\protocol.py", line 219, in raise_for_error
+    err.raise_mysql_exception(self._data)
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\err.py", line 150, in raise_mysql_exception
+    raise errorclass(errno, errval)
+pymysql.err.OperationalError: (1054, "Unknown column 'p.first_name' in 'field list'")
+
+--------------------------------------------------------------------------------
+[2026-03-01 06:48:25,424] ERROR in error: 
+Timestamp: 2026-03-01 06:48:25
+User: badjadi (ID: 1)
+IP Address: 127.0.0.1
+Browser/OS: Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:148.0) Gecko/20100101 Firefox/148.0
+Path: /hospitalisation/api/add_consommation
+Method: POST
+Error Message: (1054, "Unknown column 'al.id_chambre' in 'field list'")
+Traceback:
+Traceback (most recent call last):
+  File "C:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\app\error.py", line 162, in wrapped
+    return f(*args, **kwargs)
+  File "C:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\app\hospitalisation\routes.py", line 1507, in hospitalisation_add_consommation
+    new_total = _recalculate_admission_cost(cursor, id_admission)
+  File "C:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\app\hospitalisation\routes.py", line 313, in _recalculate_admission_cost
+    cursor.execute(
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\cursors.py", line 153, in execute
+    result = self._query(query)
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\cursors.py", line 322, in _query
+    conn.query(q)
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\connections.py", line 563, in query
+    self._affected_rows = self._read_query_result(unbuffered=unbuffered)
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\connections.py", line 825, in _read_query_result
+    result.read()
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\connections.py", line 1199, in read
+    first_packet = self.connection._read_packet()
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\connections.py", line 775, in _read_packet
+    packet.raise_for_error()
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\protocol.py", line 219, in raise_for_error
+    err.raise_mysql_exception(self._data)
+  File "c:\Users\badja\SynologyDrive\Coding\CODDING\web server\11 2025\.venv\lib\site-packages\pymysql\err.py", line 150, in raise_mysql_exception
+    raise errorclass(errno, errval)
+pymysql.err.OperationalError: (1054, "Unknown column 'al.id_chambre' in 'field list'")
+
+--------------------------------------------------------------------------------

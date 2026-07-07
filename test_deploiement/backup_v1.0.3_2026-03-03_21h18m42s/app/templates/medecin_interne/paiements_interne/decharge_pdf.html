@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Décharge {{ decharge.numero_decharge }}</title>
+    <style>
+        @page {
+            size: A4;
+            margin: 1.5cm;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            font-size: 11pt;
+            line-height: 1.6;
+            color: #333;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 2cm;
+            padding-bottom: 1cm;
+            border-bottom: 3px solid #3b82f6;
+        }
+
+        .clinique-name {
+            font-size: 22pt;
+            font-weight: bold;
+            color: #3b82f6;
+            margin-bottom: 0.3cm;
+        }
+
+        .document-title {
+            font-size: 18pt;
+            font-weight: bold;
+            color: #1f2937;
+            margin-top: 1cm;
+            text-transform: uppercase;
+        }
+
+        .numero-decharge {
+            font-size: 14pt;
+            color: #6b7280;
+            margin-top: 0.3cm;
+        }
+
+        .section {
+            margin-bottom: 1.5cm;
+        }
+
+        .section-title {
+            font-size: 13pt;
+            font-weight: bold;
+            color: #3b82f6;
+            padding-bottom: 0.3cm;
+            margin-bottom: 0.5cm;
+            border-bottom: 2px solid #dbeafe;
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.5cm;
+            margin-bottom: 1cm;
+        }
+
+        .info-item {
+            padding: 0.4cm;
+            background: #f9fafb;
+            border-radius: 6px;
+            border-left: 3px solid #3b82f6;
+        }
+
+        .info-label {
+            font-size: 9pt;
+            color: #6b7280;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .info-value {
+            font-size: 11pt;
+            font-weight: 600;
+            color: #1f2937;
+            margin-top: 0.2cm;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 1cm;
+        }
+
+        thead {
+            background: #3b82f6;
+            color: white;
+        }
+
+        th {
+            padding: 0.4cm;
+            text-align: left;
+            font-weight: 600;
+            font-size: 9pt;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        td {
+            padding: 0.35cm 0.4cm;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        tbody tr:nth-child(even) {
+            background: #f9fafb;
+        }
+
+        .text-right {
+            text-align: right;
+        }
+
+        .text-center {
+            text-align: center;
+        }
+
+        .total-box {
+            background: linear-gradient(135deg, #dbeafe, #eff6ff);
+            border: 3px solid #3b82f6;
+            border-radius: 8px;
+            padding: 0.8cm;
+            text-align: center;
+            margin: 1cm 0;
+        }
+
+        .total-label {
+            font-size: 10pt;
+            color: #6b7280;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .total-value {
+            font-size: 24pt;
+            font-weight: 700;
+            color: #3b82f6;
+            margin-top: 0.3cm;
+        }
+
+        .signature-section {
+            margin-top: 3cm;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2cm;
+        }
+
+        .signature-box {
+            text-align: center;
+        }
+
+        .signature-title {
+            font-weight: 600;
+            margin-bottom: 2cm;
+            color: #6b7280;
+        }
+
+        .signature-line {
+            border-top: 2px solid #1f2937;
+            padding-top: 0.3cm;
+            font-weight: 600;
+            color: #1f2937;
+        }
+
+        .footer {
+            margin-top: 2cm;
+            padding-top: 0.5cm;
+            border-top: 1px solid #d1d5db;
+            text-align: center;
+            font-size: 9pt;
+            color: #6b7280;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 0.15cm 0.3cm;
+            border-radius: 50px;
+            font-size: 8pt;
+            font-weight: 600;
+        }
+
+        .badge-ortho {
+            background: #e0e7ff;
+            color: #4338ca;
+        }
+
+        .badge-chirurgie {
+            background: #fce7f3;
+            color: #be185d;
+        }
+
+        .legal-notice {
+            background: #fef3c7;
+            padding: 0.5cm;
+            border-radius: 6px;
+            border-left: 4px solid #f59e0b;
+            font-size: 9pt;
+            color: #92400e;
+            margin: 1cm 0;
+        }
+
+        @media print {
+            .no-print {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <div class="header">
+        <div class="clinique-name">CLINIQUE INAYA</div>
+        <div style="color: #6b7280; font-size: 10pt;">
+            Adresse de la clinique • Téléphone • Email
+        </div>
+        <div class="document-title">Décharge de Paiement</div>
+        <div class="numero-decharge">{{ decharge.numero_decharge }}</div>
+    </div>
+
+    <!-- Informations générales -->
+    <div class="section">
+        <h2 class="section-title">Informations Générales</h2>
+        <div class="info-grid">
+            <div class="info-item">
+                <div class="info-label">Médecin</div>
+                <div class="info-value">{{ decharge.medecin_name }}</div>
+            </div>
+            <div class="info-item">
+                <div class="info-label">Date de décharge</div>
+                <div class="info-value">{{ decharge.date_decharge.strftime('%d/%m/%Y') }}</div>
+            </div>
+            <div class="info-item">
+                <div class="info-label">Période couverte</div>
+                <div class="info-value">
+                    Du {{ decharge.periode_debut.strftime('%d/%m/%Y') }}
+                    au {{ decharge.periode_fin.strftime('%d/%m/%Y') }}
+                </div>
+            </div>
+            <div class="info-item">
+                <div class="info-label">Mode de paiement</div>
+                <div class="info-value">{{ decharge.mode_paiement }}</div>
+            </div>
+            {% if decharge.reference_paiement %}
+            <div class="info-item">
+                <div class="info-label">Référence</div>
+                <div class="info-value">{{ decharge.reference_paiement }}</div>
+            </div>
+            {% endif %}
+            <div class="info-item">
+                <div class="info-label">Nombre d'actes</div>
+                <div class="info-value">{{ decharge.nb_actes }} acte(s)</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Détail des actes -->
+    <div class="section">
+        <h2 class="section-title">Détail des Actes Médicaux</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th style="width: 8%;">#</th>
+                    <th style="width: 12%;">Date</th>
+                    <th style="width: 30%;">Patient</th>
+                    <th style="width: 30%;">Acte</th>
+                    <th class="text-right" style="width: 20%;">Honoraires</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for a in actes %}
+                <tr>
+                    <td><strong>#{{ a.id_acte }}</strong></td>
+                    <td>{{ a.date_acte.strftime('%d/%m/%Y') }}</td>
+                    <td>{{ a.patient }}</td>
+                    <td>{{ a.nom_acte or 'Acte médical' }}</td>
+                    <td class="text-right">
+                        <strong>{{ "{:,.2f}".format(a.montant_honoraires).replace(",", " ") }} DA</strong>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+            <tfoot style="background: #f3f4f6; font-weight: bold;">
+                <tr>
+                    <td colspan="4" class="text-right" style="padding: 0.6cm 0.4cm;">TOTAL:</td>
+                    <td class="text-right" style="padding: 0.6cm 0.4cm; font-size: 13pt; color: #3b82f6;">
+                        {{ "{:,.2f}".format(decharge.montant_total).replace(",", " ") }} DA
+                    </td>
+                </tr>
+            </tfoot>
+        </table>
+    </div>
+
+    <!-- Montant total en évidence -->
+    <div class="total-box">
+        <div class="total-label">Montant Total à Payer</div>
+        <div class="total-value">{{ "{:,.2f}".format(decharge.montant_total).replace(",", " ") }} DA</div>
+        <div style="margin-top: 0.5cm; font-size: 10pt; color: #6b7280;">
+            ({{ decharge.nb_actes }} acte{% if decharge.nb_actes > 1 %}s{% endif %})
+        </div>
+    </div>
+
+    {% if decharge.observations %}
+    <!-- Observations -->
+    <div class="section">
+        <h2 class="section-title">Observations</h2>
+        <div style="background: #f9fafb; padding: 0.5cm; border-radius: 6px; border-left: 3px solid #3b82f6;">
+            {{ decharge.observations }}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Notice légale -->
+    <div class="legal-notice">
+        <strong>Note importante :</strong> Ce document constitue une décharge de paiement pour les honoraires
+        de médecin interne pour la période du {{ decharge.periode_debut.strftime('%d/%m/%Y') }}
+        au {{ decharge.periode_fin.strftime('%d/%m/%Y') }}. Le paiement de ce montant libère la clinique
+        de toute obligation financière envers le médecin pour les actes mentionnés ci-dessus.
+    </div>
+
+    <!-- Signatures -->
+    <div class="signature-section">
+        <div class="signature-box">
+            <div class="signature-title">Le Médecin</div>
+            <div style="height: 2cm;"></div>
+            <div class="signature-line">{{ decharge.medecin_name }}</div>
+            <div style="margin-top: 0.3cm; font-size: 9pt; color: #6b7280;">
+                Date et signature
+            </div>
+        </div>
+        <div class="signature-box">
+            <div class="signature-title">La Direction de la Clinique</div>
+            <div style="height: 2cm;"></div>
+            <div class="signature-line">Signature et Cachet</div>
+            <div style="margin-top: 0.3cm; font-size: 9pt; color: #6b7280;">
+                Date et cachet officiel
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="footer">
+        <p><strong>Clinique INAYA</strong> - Document généré le {{ date_generation }}</p>
+        <p style="margin-top: 0.3cm;">
+            Ce document est confidentiel et destiné uniquement au médecin mentionné
+        </p>
+        <p style="margin-top: 0.5cm; font-size: 8pt; color: #9ca3af;">
+            Numéro de décharge: {{ decharge.numero_decharge }}
+        </p>
+    </div>
+
+    <!-- Bouton d'impression (masqué à l'impression) -->
+    <div class="no-print" style="position: fixed; bottom: 20px; right: 20px; z-index: 1000;">
+        <button onclick="window.print()"
+                style="background: #3b82f6; color: white; border: none; padding: 1rem 2rem;
+                       border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 11pt;
+                       box-shadow: 0 4px 12px rgba(0,0,0,0.2);">
+            <span style="margin-right: 0.5rem;">🖨️</span> Imprimer
+        </button>
+    </div>
+</body>
+</html>

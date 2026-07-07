@@ -1,0 +1,1392 @@
+<!-- editer.html OPTIMISÉ -->
+{% extends "layout.html" %}
+{% import 'his/macros/his_direct_selector.html' as his_selector %}
+
+{% block style %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/facturation-editer.css') }}">
+{% endblock %}
+
+{% block content %}
+
+<div class="container-fluid py-4">
+    <!-- En-tête avec gradient -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="mb-0">
+            <i class="fas fa-file-invoice text-primary"></i>
+            <span class="ms-2">Éditer Facture</span>
+            <span class="badge bg-primary ms-2">{{ facture.numero_facture }}</span>
+
+            {# ✅ AJOUT : Badge statut #}
+            {% if facture.statut == 'valide' %}
+            <span class="badge bg-success ms-2">VALIDÉE</span>
+            {% elif facture.statut == 'annule' %}
+            <span class="badge bg-danger ms-2">ANNULÉE</span>
+            {% else %}
+            <span class="badge bg-secondary ms-2">BROUILLON</span>
+            {% endif %}
+        </h2>
+        <div class="d-flex gap-2">
+            <a href="{{ url_for('voir_facture', facture_id=facture.id) }}" class="btn btn-secondary">
+                <i class="fas fa-eye"></i> Voir
+            </a>
+
+            {# ✅ MODIFICATION : Valider uniquement pour brouillon #}
+            {% if facture.statut == 'brouillon' %}
+            <button type="button" class="btn btn-success" id="btn-valider-facture" onclick="validerFacture()">
+                <i class="fas fa-check"></i> Valider
+            </button>
+            {% endif %}
+
+            {% if facture.statut == 'brouillon' %}
+            <button type="button" class="btn btn-light" id="btn-mod-patient-draft" onclick="openModifierPatientModal()">
+                <i class="fas fa-user-edit"></i> Modifier Patient
+            </button>
+            {% elif facture.statut == 'valide' %}
+            <button type="button" class="btn btn-light" id="btn-mod-patient-valid" onclick="openModifierPatientModal()">
+                <i class="fas fa-user-edit"></i> Modifier Patient
+            </button>
+            {% endif %}
+            {# ✅ AJOUT : Avertissement si facture validée #}
+            {% if facture.statut == 'valide' %}
+            <span class="badge bg-warning text-dark" id="badge-warn-valid">
+                <i class="fas fa-exclamation-triangle"></i> Facture validée
+            </span>
+            {% endif %}
+        </div>
+    </div>
+
+    {# ✅ AJOUT : Alerte avertissement si édition de facture validée #}
+    {% if facture.statut == 'valide' %}
+    <div class="alert alert-warning" role="alert">
+        <div class="d-flex align-items-start">
+            <i class="fas fa-exclamation-triangle fa-2x me-3"></i>
+            <div>
+                <h5 class="alert-heading mb-2">
+                    <i class="fas fa-shield-alt"></i> Modification de facture validée
+                </h5>
+                <p class="mb-0">
+                    Cette facture est <strong>validée</strong>. Toute modification sera enregistrée
+                    dans l'historique et peut avoir des implications comptables et légales.
+                    <br>
+                    <strong>Soyez vigilant lors de vos modifications.</strong>
+                </p>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+
+    <!-- Informations Générales -->
+    <div class="row g-3 mb-4">
+        <!-- Card 1: Informations -->
+        <div class="col-md-4">
+            <div class="card h-100">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="fas fa-info-circle"></i> Informations Générales</h5>
+                </div>
+                <div class="card-body">
+                    <dl class="row mb-0">
+                        <dt class="col-sm-5 text-muted">N° Facture:</dt>
+                        <dd class="col-sm-7 fw-bold">{{ facture.numero_facture }}</dd>
+
+                        <dt class="col-sm-5 text-muted">Type:</dt>
+                        <dd class="col-sm-7">
+                            <span
+                                class="badge {% if facture.type_facture == 'proforma' %}bg-info{% else %}bg-primary{% endif %}">
+                                {{ facture.type_facture|upper }}
+                            </span>
+                        </dd>
+
+                        <dt class="col-sm-5 text-muted">Date:</dt>
+                        <dd class="col-sm-7">
+                            <i class="fas fa-calendar-alt text-primary"></i>
+                            {{ facture.date_facture.strftime('%d/%m/%Y') }}
+                        </dd>
+
+                        <dt class="col-sm-5 text-muted">Statut:</dt>
+                        <dd class="col-sm-7">
+                            <span class="badge
+                                {% if facture.statut == 'brouillon' %}bg-secondary
+                                {% elif facture.statut == 'valide' %}bg-success
+                                {% else %}bg-danger{% endif %}">
+                                <i class="fas fa-circle me-1" style="font-size: 0.5rem;"></i>
+                                {{ facture.statut|upper }}
+                            </span>
+                        </dd>
+
+                        <dt class="col-sm-5 text-muted">Créé par:</dt>
+                        <dd class="col-sm-7">
+                            <i class="fas fa-user text-primary"></i>
+                            {{ facture.createur_nom }}
+                        </dd>
+
+                        {% if facture.validateur_nom %}
+                        <dt class="col-sm-5 text-muted">Validé par:</dt>
+                        <dd class="col-sm-7">
+                            <i class="fas fa-user-check text-success"></i>
+                            {{ facture.validateur_nom }}
+                        </dd>
+                        {% endif %}
+                    </dl>
+                </div>
+            </div>
+        </div>
+
+        <!-- Card 2: Mode de Paiement -->
+        <div class="col-md-4">
+            <div class="card h-100">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0"><i class="fas fa-credit-card"></i> Mode de Paiement</h5>
+                </div>
+                <div class="card-body">
+                    <!-- SECTION MODE DE PAIEMENT -->
+                    {% if facture.statut == 'brouillon' %}
+                    <!-- EDITABLE DRAFT -->
+                    <div id="payment-editable-draft">
+                        <div class="mb-3">
+                            <label class="form-label">
+                                <i class="fas fa-money-bill-wave"></i> Mode de paiement
+                            </label>
+                            <select id="mode_paiement" class="form-select" onchange="changerModePaiement()">
+                                <option value="especes" {% if facture.mode_paiement=='especes' %}selected{% endif %}>💵
+                                    Espèces</option>
+                                <option value="cheque" {% if facture.mode_paiement=='cheque' %}selected{% endif %}>📝
+                                    Chèque</option>
+                                <option value="carte" {% if facture.mode_paiement=='carte' %}selected{% endif %}>💳
+                                    Carte bancaire</option>
+                                <option value="virement" {% if facture.mode_paiement=='virement' %}selected{% endif %}>
+                                    🏦 Virement</option>
+                                <option value="autre" {% if facture.mode_paiement=='autre' %}selected{% endif %}>➕ Autre
+                                </option>
+                            </select>
+                        </div>
+                        <div id="numeroChequeGroup" class=""
+                            style="{% if facture.mode_paiement != 'cheque' %}display: none;{% endif %}">
+                            <label class="form-label"><i class="fas fa-receipt"></i> Numéro de chèque</label>
+                            <div class="input-group">
+                                <input type="text" id="numero_cheque" class="form-control"
+                                    value="{{ facture.numero_cheque or '' }}" placeholder="Ex: 1234567">
+                                <button type="button" class="btn btn-primary" onclick="updateNumeroCheque()"><i
+                                        class="fas fa-save"></i></button>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- READONLY FALLBACK DRAFT -->
+                    <div id="payment-readonly-draft" data-fallback-for="#payment-editable-draft" style="display:none;">
+                        <div class="alert alert-light border mb-0">
+                            <div class="d-flex align-items-center mb-2">
+                                <i class="fas fa-check-circle text-success me-2 fs-4"></i>
+                                <strong class="fs-5">{{ facture.mode_paiement|capitalize }}</strong>
+                            </div>
+                            {% if facture.numero_cheque %}
+                            <div class="mt-2 p-2 bg-light rounded">
+                                <small class="d-block"><i class="fas fa-money-check text-primary"></i> Chèque N°:
+                                    <strong>{{ facture.numero_cheque }}</strong></small>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    {% elif facture.statut == 'valide' %}
+                    <!-- EDITABLE VALID -->
+                    <div id="payment-editable-valid">
+                        <div class="mb-3">
+                            <label class="form-label">
+                                <i class="fas fa-money-bill-wave"></i> Mode de paiement
+                            </label>
+                            <select id="mode_paiement_valid" class="form-select" onchange="changerModePaiement()">
+                                <option value="especes" {% if facture.mode_paiement=='especes' %}selected{% endif %}>💵
+                                    Espèces</option>
+                                <option value="cheque" {% if facture.mode_paiement=='cheque' %}selected{% endif %}>📝
+                                    Chèque</option>
+                                <option value="carte" {% if facture.mode_paiement=='carte' %}selected{% endif %}>💳
+                                    Carte bancaire</option>
+                                <option value="virement" {% if facture.mode_paiement=='virement' %}selected{% endif %}>
+                                    🏦 Virement</option>
+                                <option value="autre" {% if facture.mode_paiement=='autre' %}selected{% endif %}>➕ Autre
+                                </option>
+                            </select>
+                        </div>
+                        <div id="numeroChequeGroupValid" class=""
+                            style="{% if facture.mode_paiement != 'cheque' %}display: none;{% endif %}">
+                            <label class="form-label"><i class="fas fa-receipt"></i> Numéro de chèque</label>
+                            <div class="input-group">
+                                <input type="text" id="numero_cheque_valid" class="form-control"
+                                    value="{{ facture.numero_cheque or '' }}" placeholder="Ex: 1234567">
+                                <button type="button" class="btn btn-primary" onclick="updateNumeroCheque()"><i
+                                        class="fas fa-save"></i></button>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- READONLY FALLBACK VALID -->
+                    <div id="payment-readonly-valid" data-fallback-for="#payment-editable-valid" style="display:none;">
+                        <div class="alert alert-light border mb-0">
+                            <div class="d-flex align-items-center mb-2">
+                                <i class="fas fa-check-circle text-success me-2 fs-4"></i>
+                                <strong class="fs-5">{{ facture.mode_paiement|capitalize }}</strong>
+                            </div>
+                            {% if facture.numero_cheque %}
+                            <div class="mt-2 p-2 bg-light rounded">
+                                <small class="d-block"><i class="fas fa-money-check text-primary"></i> Chèque N°:
+                                    <strong>{{ facture.numero_cheque }}</strong></small>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% else %}
+                    <!-- READONLY ALWAYS (Annulée) -->
+                    <div class="alert alert-light border mb-0">
+                        <div class="d-flex align-items-center mb-2">
+                            <i class="fas fa-check-circle text-success me-2 fs-4"></i>
+                            <strong class="fs-5">{{ facture.mode_paiement|capitalize }}</strong>
+                        </div>
+                        {% if facture.numero_cheque %}
+                        <div class="mt-2 p-2 bg-light rounded">
+                            <small class="d-block"><i class="fas fa-money-check text-primary"></i> Chèque N°: <strong>{{
+                                    facture.numero_cheque }}</strong></small>
+                        </div>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+
+                    {% if facture.droit_timbre > 0 %}
+                    <div class="alert alert-warning mt-3 mb-0">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span><i class="fas fa-stamp"></i> <strong>Droit de timbre</strong></span>
+                            <strong>{{ "%.2f"|format(facture.droit_timbre) }} DA</strong>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Card 3: Patient avec HIS -->
+        <div class="col-md-4">
+            <div class="card h-100">
+                <div class="card-header bg-info text-white d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i class="fas fa-user"></i> Patient
+                    </h5>
+                    {% if facture.patient_oid_his %}
+                    <button type="button" class="btn btn-sm btn-light btn-history-his"
+                        onclick="showPatientHistoryDirect('{{ facture.patient_oid_his }}')"
+                        title="Voir l'historique HIS du patient">
+                        <i class="fas fa-history"></i>
+                        <span class="d-none d-lg-inline">Historique</span>
+                    </button>
+                    {% endif %}
+                </div>
+                <div class="card-body">
+                    {% if facture.patient_raison_sociale %}
+                    <h6 class="text-primary mb-2">
+                        <i class="fas fa-building"></i>
+                        {{ facture.patient_raison_sociale }}
+                    </h6>
+                    {% if facture.patient_nom and facture.patient_prenom %}
+                    <p class="text-muted mb-2">
+                        <i class="fas fa-user-tie"></i>
+                        Contact: {{ facture.patient_nom }} {{ facture.patient_prenom }}
+                    </p>
+                    {% endif %}
+                    {% else %}
+                    <h6 class="text-primary mb-2">
+                        <i class="fas fa-user"></i>
+                        {{ facture.patient_nom }} {{ facture.patient_prenom }}
+                    </h6>
+                    {% endif %}
+
+                    {% if facture.patient_code_his %}
+                    <div class="his-info-badge">
+                        <i class="fas fa-database text-info"></i>
+                        <span><strong>Code HIS:</strong> {{ facture.patient_code_his }}</span>
+                    </div>
+                    {% endif %}
+
+                    {% if facture.patient_adresse or facture.patient_telephone %}
+                    <hr class="my-3">
+                    {% if facture.patient_adresse %}
+                    <p class="mb-2">
+                        <i class="fas fa-map-marker-alt text-danger"></i> {{ facture.patient_adresse }}
+                    </p>
+                    {% endif %}
+                    {% if facture.patient_telephone %}
+                    <p class="mb-0">
+                        <i class="fas fa-phone text-success"></i> {{ facture.patient_telephone }}
+                    </p>
+                    {% endif %}
+                    {% endif %}
+
+                    {% if facture.patient_nif or facture.patient_rc %}
+                    <hr class="my-3">
+                    <div class="alert alert-light border mb-0">
+                        <small class="d-block fw-bold mb-2 text-muted">
+                            <i class="fas fa-file-contract"></i>
+                            Coordonnées fiscales
+                        </small>
+                        {% if facture.patient_nif %}
+                        <small class="d-block mb-1">
+                            <strong>NIF:</strong> {{ facture.patient_nif }}
+                        </small>
+                        {% endif %}
+                        {% if facture.patient_rc %}
+                        <small class="d-block">
+                            <strong>RC:</strong> {{ facture.patient_rc }}
+                        </small>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Montant Payé en Caisse -->
+    {% if facture.statut == 'brouillon' %}
+    <div class="card mb-4 montant-caisse-section" id="caisse-section-draft">
+        {% elif facture.statut == 'valide' %}
+        <div class="card mb-4 montant-caisse-section" id="caisse-section-valid">
+            {% endif %}
+            {% if facture.statut == 'brouillon' or facture.statut == 'valide' %}
+            <div class="card-header bg-success text-white">
+                <h5 class="mb-0"><i class="fas fa-cash-register"></i> Montant Payé en Caisse</h5>
+            </div>
+            <div class="card-body">
+                <div class="row align-items-center g-3">
+                    <div class="col-md-3">
+                        <label class="form-label">
+                            <i class="fas fa-coins"></i>
+                            Montant TTC
+                        </label>
+                        <div class="input-group input-group-lg">
+                            <input type="number" id="montant_paye_caisse" class="form-control" step="0.01" min="0"
+                                placeholder="0.00" value="{{ facture.montant_paye_caisse or '' }}">
+                            <span class="input-group-text fw-bold">DA</span>
+                        </div>
+                        <small class="text-muted d-block mt-2">
+                            <i class="fas fa-info-circle"></i>
+                            Le droit de timbre sera calculé automatiquement
+                        </small>
+                        <button type="button" class="btn btn-primary mt-3 w-100" onclick="saveMontantCaisse()">
+                            <i class="fas fa-save"></i> Enregistrer
+                        </button>
+                    </div>
+
+                    <div class="col-md-9">
+                        <div class="row g-3">
+                            <div class="col-md-4">
+                                <div class="alert alert-info alert-metric mb-0">
+                                    <small>Timbre global calculé</small>
+                                    <strong class="fs-5 d-block" id="timbre_calcule">0.00 DA</strong>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="alert alert-primary alert-metric mb-0">
+                                    <small>Montant facturable (sans timbre)</small>
+                                    <strong class="fs-5 d-block" id="montant_ttc_sans_timbre">0.00 DA</strong>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="alert alert-warning alert-metric mb-0">
+                                    <small>📊 Reste à facturer</small>
+                                    <strong class="fs-4 text-primary d-block reste-a-facturer">0.00 DA</strong>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="alerte_complet" class="col-12" style="display: none;">
+                        <div class="alert alert-success mb-0">
+                            <div class="d-flex align-items-center">
+                                <i class="fas fa-check-circle fs-3 me-3"></i>
+                                <div>
+                                    <strong class="d-block mb-1">Facturation complète !</strong>
+                                    <small>Le montant total a été entièrement facturé.</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Lignes de facturation -->
+        <div class="card mb-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0"><i class="fas fa-list"></i> Lignes de Facturation</h5>
+                {% if facture.statut == 'brouillon' %}
+                <button type="button" class="btn btn-light" id="btn-add-line-draft" data-bs-toggle="modal"
+                    data-bs-target="#ajouterLigneModal">
+                    <i class="fas fa-plus"></i> Ajouter une ligne
+                </button>
+                {% elif facture.statut == 'valide' %}
+                <button type="button" class="btn btn-light" id="btn-add-line-valid" data-bs-toggle="modal"
+                    data-bs-target="#ajouterLigneModal">
+                    <i class="fas fa-plus"></i> Ajouter une ligne
+                </button>
+                {% endif %}
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover table-bordered mb-0">
+                        <thead>
+                            <tr>
+                                <th style="width: 30%">
+                                    <i class="fas fa-tag me-2"></i>Désignation
+                                </th>
+                                <th style="width: 10%" class="text-center">
+                                    <i class="fas fa-sort-numeric-up me-2"></i>Quantité
+                                </th>
+                                <th style="width: 12%" class="text-end">
+                                    <i class="fas fa-money-bill me-2"></i>Prix U.
+                                </th>
+                                <th style="width: 12%" class="text-end">
+                                    <i class="fas fa-calculator me-2"></i>Montant HT
+                                </th>
+                                <th style="width: 8%" class="text-center">
+                                    <i class="fas fa-percent me-2"></i>TVA
+                                </th>
+                                <th style="width: 13%" class="text-end">
+                                    <i class="fas fa-cash-register me-2"></i>Montant TTC
+                                </th>
+                                <th style="width: 10%" class="text-center">
+                                    <i class="fas fa-cog me-2"></i>Actions
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody id="lignesTableBody">
+                            {% include "facturation/lignes_table.html" %}
+                        </tbody>
+                        <tfoot class="table-light">
+                            <tr>
+                                <td colspan="5" class="text-end fw-bold">Total HT (hors débours):</td>
+                                <td class="text-end fw-bold">{{ "%.2f"|format(facture.total_ht) }} DA</td>
+                                <td></td>
+                            </tr>
+                            <tr>
+                                <td colspan="5" class="text-end">TVA 9%:</td>
+                                <td class="text-end">{{ "%.2f"|format(facture.total_tva_9) }} DA</td>
+                                <td></td>
+                            </tr>
+                            <tr>
+                                <td colspan="5" class="text-end">TVA 19%:</td>
+                                <td class="text-end">{{ "%.2f"|format(facture.total_tva_19) }} DA</td>
+                                <td></td>
+                            </tr>
+                            <tr>
+                                <td colspan="5" class="text-end fw-bold">Total TVA:</td>
+                                <td class="text-end fw-bold">{{ "%.2f"|format(facture.total_tva) }} DA</td>
+                                <td></td>
+                            </tr>
+                            <tr class="table-primary">
+                                <td colspan="5" class="text-end fw-bold fs-5">TOTAL TTC:</td>
+                                <td class="text-end fw-bold fs-5">{{ "%.2f"|format(facture.total_ttc) }} DA</td>
+                                <td></td>
+                            </tr>
+                            {% if facture.total_debours > 0 %}
+                            <tr class="table-warning">
+                                <td colspan="5" class="text-end fw-bold">
+                                    <i class="fas fa-file-invoice me-2"></i>+ Débours (sans TVA):
+                                    <br><small class="text-muted fw-normal">Frais avancés pour le compte du
+                                        patient</small>
+                                </td>
+                                <td class="text-end fw-bold">{{ "%.2f"|format(facture.total_debours) }} DA</td>
+                                <td></td>
+                            </tr>
+                            {% endif %}
+                            {% if facture.droit_timbre > 0 %}
+                            <tr class="table-warning">
+                                <td colspan="5" class="text-end fw-bold">
+                                    <i class="fas fa-stamp me-2"></i>+ Droit de timbre:
+                                    <br><small class="text-muted fw-normal">Paiement en espèces</small>
+                                </td>
+                                <td class="text-end fw-bold" id="droit_timbre_cell">{{
+                                    "%.2f"|format(facture.droit_timbre)
+                                    }} DA
+                                </td>
+                                <td></td>
+                            </tr>
+                            {% endif %}
+                            <tr class="table-success">
+                                <td colspan="5" class="text-end fw-bold fs-4">
+                                    <i class="fas fa-money-check-alt me-2"></i>TOTAL NET À PAYER:
+                                </td>
+                                <td class="text-end fw-bold fs-4" id="total_net_cell">{{
+                                    "%.2f"|format(facture.total_net) }}
+                                    DA
+                                </td>
+                                <td></td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal Ajouter Ligne -->
+        {% include "facturation/modal_ajouter_ligne.html" %}
+
+        <!-- Modifier Patient - Inclure pour brouillon OU validée -->
+        {% include "facturation/modifier_patient.html" %}
+    </div>
+
+    <!-- Modal Historique HIS -->
+    {{ his_selector.render_modal('modalPatientHistoryDirect') }}
+
+    {% endblock %}
+
+    {% block scripts %}
+    <script>
+        // ============================================================================
+        // GESTIONNAIRE DE FACTURE - VERSION CORRIGÉE
+        // ============================================================================
+
+        class FactureManager {
+            constructor(factureId) {
+                this.factureId = factureId;
+                this.state = {
+                    montantPayeCaisse: 0,
+                    timbreCalcule: 0,
+                    totalTTC: 0,
+                    totalDebours: 0,
+                    resteAFacturer: 0
+                };
+
+                this.descriptionTemplates = {};
+                this.debounceTimers = {};
+                this.init();
+            }
+
+            // ========================================================================
+            // INITIALISATION
+            // ========================================================================
+
+            init() {
+                this.cacheElements();
+                this.bindEvents();
+                this.chargerEtatInitial();
+            }
+
+            cacheElements() {
+                this.$ = {
+                    montantPayeCaisse: $('#montant_paye_caisse'),
+                    modePaiement: $('#mode_paiement'),
+                    timbreCalcule: $('#timbre_calcule'),
+                    montantTTCSansTimbre: $('#montant_ttc_sans_timbre'),
+                    resteAFacturer: $('.reste-a-facturer'),
+                    alerteComplet: $('#alerte_complet'),
+                    btnAjouter: $('#btn_ajouter_ligne'),
+                    modal: $('#ajouterLigneModal'),
+                    form: $('#ajouterLigneForm'),
+                    designationSelect: $('#designation_select'),
+                    typeLigneHidden: $('#type_ligne_hidden'),
+                    quantite: $('#quantite'),
+                    prixHT: $('#prix_ht'),
+                    prixTTC: $('#prix_ttc'),
+                    tauxTVA: $('#taux_tva_input'),
+                    previewHT: $('#preview_ht'),
+                    previewTVA: $('#preview_tva'),
+                    previewTTC: $('#preview_ttc'),
+                    deboursInfo: $('#debours_info'),
+                    autreInfo: $('#autre_info'),
+                    referenceJustificatif: $('#reference_justificatif_group'),
+                    customTVA: $('#custom_tva_group')
+                };
+            }
+
+            bindEvents() {
+                // Montant caisse
+                this.$.montantPayeCaisse.on('input', () => this.updateMontantCaisse());
+                this.$.modePaiement.on('change', () => this.updateMontantCaisse());
+
+                // Formulaire ligne
+                this.$.designationSelect.on('change', (e) => this.handleDesignationChange(e));
+                $('input[name="mode_prix"]').on('change', () => this.calculatePrix());
+
+                $('#quantite, #prix_ht, #prix_ttc').on('input', () => {
+                    this.debounce('calcul', () => this.calculatePrix(), 200);
+                });
+
+                // ✅ CORRECTION : Synchroniser le select ET l'input avec le champ caché
+                $('#taux_tva_select').on('change', () => {
+                    const valeur = $('#taux_tva_select').val();
+                    $('#taux_tva_hidden').val(valeur);
+                    this.calculatePrix();
+                });
+
+                $('#taux_tva_input').on('input', () => {
+                    const valeur = $('#taux_tva_input').val();
+                    $('#taux_tva_hidden').val(valeur);
+                    this.calculatePrix();
+                });
+
+                // Modal
+                this.$.modal.on('hidden.bs.modal', () => this.resetForm());
+
+                // Bouton recharger template
+                $('#btn_recharger_template').on('click', () => {
+                    const $option = this.$.designationSelect.find('option:selected');
+                    const code = $option.data('code');
+
+                    if (code && this.descriptionTemplates[code]) {
+                        if (confirm('Voulez-vous recharger le template de description ?\nVos modifications seront perdues.')) {
+                            this.applyDescriptionTemplate(code);
+                        }
+                    } else {
+                        this.showToast('Veuillez d\'abord sélectionner un type de prestation', 'warning');
+                    }
+                });
+
+                // Patient entreprise
+                $('#estEntreprise').on('change', (e) => this.toggleEntreprise(e));
+            }
+
+            // ========================================================================
+            // GESTION TEMPLATES
+            // ========================================================================
+
+            applyDescriptionTemplate(code) {
+                const template = this.descriptionTemplates[code];
+                const $textarea = $('#description_textarea');
+                const $btnReload = $('#btn_recharger_template');
+
+                if (template && template.trim()) {
+                    $textarea.val(template);
+
+                    $btnReload.fadeIn();
+                    $textarea.focus();
+                    $textarea[0].setSelectionRange(0, 0);
+                } else {
+                    $textarea.val('');
+                    $('#description_hint').html(
+                        '<i class="fas fa-info-circle"></i> Cette description apparaîtra sur la facture sous la désignation'
+                    );
+                    $btnReload.fadeOut();
+                }
+            }
+
+            // ========================================================================
+            // CHARGEMENT ÉTAT INITIAL
+            // ========================================================================
+
+            async chargerEtatInitial() {
+                try {
+                    const data = await $.ajax({
+                        url: '/facturation/totaux/' + this.factureId,
+                        method: 'GET'
+                    });
+
+                    if (data.success) {
+                        this.state.totalTTC = data.total_ttc;
+                        this.state.totalDebours = data.total_debours;
+                        this.state.timbreCalcule = data.droit_timbre;
+                        this.state.montantPayeCaisse = parseFloat(this.$.montantPayeCaisse.val()) || 0;
+
+
+                        // ✅ Calcul avec un léger délai pour que le DOM soit prêt
+                        setTimeout(() => {
+                            this.calculateResteAFacturer();
+                        }, 100);
+                    }
+                } catch (error) {
+                    console.error('Erreur chargement état initial:', error);
+                }
+            }
+
+            // ========================================================================
+            // SAUVEGARDE MONTANT CAISSE - CORRIGÉ
+            // ========================================================================
+
+            updateMontantCaisse() {
+                const montantSaisi = parseFloat(this.$.montantPayeCaisse.val()) || 0;
+                const modePaiement = this.$.modePaiement.val();
+
+                // Mise à jour immédiate de l'état
+                this.state.montantPayeCaisse = montantSaisi;
+
+                // Calcul immédiat du reste à facturer avec les valeurs actuelles
+                this.calculateResteAFacturer(modePaiement, montantSaisi);
+
+                // Sauvegarde différée
+                this.debounce('saveCaisse', async () => {
+                    await this.saveMontantCaisse();
+                }, 1000);
+            }
+
+            calculerDroitTimbre(montantTTCSansTimbre) {
+                // ✅ Pas de timbre si montant <= 300 DA
+                if (montantTTCSansTimbre <= 300) return 0;
+
+                // ✅ CORRECTION : Calcul direct sur le montant exact (sans arrondi préalable)
+                const montant = montantTTCSansTimbre;
+                let taux;
+
+                if (montant <= 30000) {
+                    taux = 0.01;        // 1%
+                } else if (montant <= 100000) {
+                    taux = 0.015;       // 1.5%
+                } else {
+                    taux = 0.02;        // 2%
+                }
+
+                const timbre = montant * taux;
+
+                // Arrondir à 2 décimales et appliquer le minimum de 5 DA
+                const resultat = Math.max(Math.round(timbre * 100) / 100, 5);
+
+                console.log('💰 Calcul timbre:', {
+                    montant: montant,
+                    taux: taux,
+                    timbre_brut: timbre,
+                    resultat: resultat
+                });
+
+                return resultat;
+            }
+
+            async saveMontantCaisse() {
+                try {
+                    const response = await $.ajax({
+                        url: '/facturation/update_montant_caisse/' + this.factureId,
+                        method: 'POST',
+                        data: {
+                            montant_paye_caisse: this.state.montantPayeCaisse
+                        }
+                    });
+
+                    if (response.success) {
+                        // ✅ Mise à jour du timbre après sauvegarde
+                        this.state.timbreCalcule = response.droit_timbre;
+
+                        // Recalcul pour prendre en compte le nouveau timbre
+                        this.calculateResteAFacturer();
+
+                        this.showToast('Montant enregistré', 'success');
+                    }
+                } catch (error) {
+                    console.error('Erreur sauvegarde montant caisse:', error);
+                    this.showToast('Erreur lors de la sauvegarde', 'error');
+                }
+            }
+
+            // ========================================================================
+            // CALCUL RESTE À FACTURER
+            // ========================================================================
+
+
+            calculateResteAFacturer(modePaiement = null, montantPayeSaisi = null) {
+                const montantPaye = montantPayeSaisi !== null ? montantPayeSaisi : this.state.montantPayeCaisse;
+                const mode = modePaiement || this.$.modePaiement.val();
+
+                // ✅ CORRECTION : Lire le TOTAL TTC depuis le bon élément du DOM
+                let totalTTC = 0;
+                let totalDebours = 0;
+
+                // Chercher la ligne "TOTAL TTC:" dans le tfoot
+                $('table tfoot tr').each(function () {
+                    const $row = $(this);
+                    const firstCell = $row.find('td:first').text().trim();
+
+                    if (firstCell.includes('TOTAL TTC')) {
+                        const montantText = $row.find('td:eq(1)').text().replace(/[^\d.-]/g, '');
+                        totalTTC = parseFloat(montantText) || 0;
+                        console.log('✅ TOTAL TTC trouvé:', totalTTC);
+                    }
+
+                    if (firstCell.includes('Débours')) {
+                        const montantText = $row.find('td:eq(1)').text().replace(/[^\d.-]/g, '');
+                        totalDebours = parseFloat(montantText) || 0;
+                        console.log('✅ Débours trouvé:', totalDebours);
+                    }
+                });
+
+                const totalDejaFacture = totalTTC + totalDebours;
+                console.log('📊 Total déjà facturé:', totalDejaFacture);
+
+                if (montantPaye <= 0) {
+                    this.state.resteAFacturer = -totalDejaFacture;
+                    this.$.timbreCalcule.text(this.formatMontant(0));
+                    this.$.montantTTCSansTimbre.text(this.formatMontant(0));
+                } else {
+                    let montantFacturable = montantPaye;
+                    let timbreGlobal = 0;
+
+                    if (mode === 'especes') {
+                        // Calcul itératif du timbre
+                        for (let i = 0; i < 10; i++) {
+                            timbreGlobal = this.calculerDroitTimbre(montantFacturable);
+                            const nouveauMontantFacturable = montantPaye - timbreGlobal;
+
+                            if (Math.abs(nouveauMontantFacturable - montantFacturable) < 0.01) {
+                                montantFacturable = nouveauMontantFacturable;
+                                break;
+                            }
+                            montantFacturable = nouveauMontantFacturable;
+                        }
+                        montantFacturable = Math.round(montantFacturable * 100) / 100;
+                        timbreGlobal = Math.round(timbreGlobal * 100) / 100;
+                    }
+
+                    // ✅ FORMULE CORRECTE
+                    this.state.resteAFacturer = montantFacturable - totalDejaFacture;
+
+                    console.log('💰 Montant payé:', montantPaye);
+                    console.log('🏷️ Timbre global:', timbreGlobal);
+                    console.log('📦 Montant facturable:', montantFacturable);
+                    console.log('📊 TTC déjà facturé:', totalDejaFacture);
+                    console.log('✨ RESTE À FACTURER:', this.state.resteAFacturer);
+
+                    this.$.timbreCalcule.text(this.formatMontant(timbreGlobal));
+                    this.$.montantTTCSansTimbre.text(this.formatMontant(montantFacturable));
+                }
+
+                // Affichage
+                this.$.resteAFacturer.each((i, el) => {
+                    const $el = $(el);
+                    $el.text(this.formatMontant(this.state.resteAFacturer));
+
+                    $el.removeClass('text-danger text-success text-primary');
+                    if (this.state.resteAFacturer < -0.01) {
+                        $el.addClass('text-danger');
+                    } else if (this.state.resteAFacturer > 0.01) {
+                        $el.addClass('text-primary');
+                    } else {
+                        $el.addClass('text-success');
+                    }
+                });
+
+                // Alerte
+                const TOLERANCE = 1.0;
+                if (Math.abs(this.state.resteAFacturer) <= TOLERANCE && montantPaye > 0) {
+                    this.$.alerteComplet.slideDown();
+                    this.$.btnAjouter.prop('disabled', true);
+                } else {
+                    this.$.alerteComplet.slideUp();
+                    this.$.btnAjouter.prop('disabled', false);
+                }
+            }
+
+            // ========================================================================
+            // GESTION FORMULAIRE LIGNE
+            // ========================================================================
+
+            handleDesignationChange(e) {
+                const $option = $(e.target).find('option:selected');
+                const type = $option.data('type');
+                const tva = parseFloat($option.data('tva')) || 0;
+                const code = $option.data('code');
+                const templateDesc = $option.data('template') || '';
+
+                this.$.typeLigneHidden.val(type);
+
+                const isDebours = type === 'debours';
+                const isAutre = type === 'autre';
+
+                this.$.deboursInfo.toggle(isDebours);
+                this.$.autreInfo.toggle(isAutre);
+                this.$.referenceJustificatif.toggle(isDebours);
+
+                $('#reference_justificatif').prop('required', isDebours);
+                $('#mode_ttc').prop('disabled', isDebours);
+
+                if (isDebours && $('#mode_ttc').is(':checked')) {
+                    $('#mode_ht').prop('checked', true);
+                }
+
+                if (isAutre) {
+                    // Type "Autre" : afficher le select
+                    $('#taux_tva_input_group').hide();
+                    $('#taux_tva_select').show().val(tva);
+                    $('#taux_tva_input').val(tva);
+                    $('#taux_tva_hidden').val(tva);  // ✅ Champ caché
+                    $('#tva_info_text').text('Sélectionnez le taux de TVA à appliquer');
+                } else {
+                    // Autres types : afficher l'input readonly
+                    $('#taux_tva_select').hide();
+                    $('#taux_tva_input_group').show();
+                    $('#taux_tva_input').val(tva);
+                    $('#taux_tva_hidden').val(tva);  // ✅ Champ caché
+
+                    if (isDebours) {
+                        $('#tva_info_text').text('Les débours ne sont pas soumis à la TVA');
+                    } else {
+                        $('#tva_info_text').text('TVA ' + tva + '% appliquée automatiquement (' + code + ')');
+                    }
+                }
+
+                if (code && templateDesc) {
+                    this.descriptionTemplates[code] = templateDesc;
+                    this.applyDescriptionTemplate(code);
+                } else {
+                    $('#description_textarea').val('');
+                    $('#description_hint').html(
+                        '<i class="fas fa-info-circle"></i> Cette description apparaîtra sur la facture sous la désignation'
+                    );
+                    $('#btn_recharger_template').fadeOut();
+                }
+
+                this.calculatePrix();
+            }
+
+            calculatePrix() {
+                const quantite = parseFloat(this.$.quantite.val()) || 0;
+
+                // ✅ TOUJOURS utiliser le champ caché comme source unique
+                const tauxTva = parseFloat($('#taux_tva_hidden').val()) || 0;
+
+                const type = this.$.typeLigneHidden.val();
+                const mode = $('input[name="mode_prix"]:checked').val();
+
+                let montantHT, montantTVA, montantTTC;
+
+                if (mode === 'ht') {
+                    const prixHT = parseFloat(this.$.prixHT.val()) || 0;
+
+                    if (type === 'debours') {
+                        this.$.prixTTC.val(prixHT.toFixed(2));
+                        montantHT = quantite * prixHT;
+                        montantTVA = 0;
+                        montantTTC = montantHT;
+                    } else {
+                        const prixTTC = prixHT * (1 + tauxTva / 100);
+                        this.$.prixTTC.val(prixTTC.toFixed(2));
+
+                        montantHT = quantite * prixHT;
+                        montantTVA = montantHT * (tauxTva / 100);
+                        montantTTC = montantHT + montantTVA;
+                    }
+                } else {
+                    const prixTTC = parseFloat(this.$.prixTTC.val()) || 0;
+
+                    if (type === 'debours') {
+                        this.$.prixHT.val(prixTTC.toFixed(2));
+                        montantTTC = quantite * prixTTC;
+                        montantHT = montantTTC;
+                        montantTVA = 0;
+                    } else {
+                        const prixHT = prixTTC / (1 + tauxTva / 100);
+                        this.$.prixHT.val(prixHT.toFixed(2));
+
+                        montantTTC = quantite * prixTTC;
+                        const montantHT_precise = montantTTC / (1 + tauxTva / 100);
+                        montantHT = Math.round(montantHT_precise * 100) / 100;
+                        montantTVA = montantTTC - montantHT;
+                    }
+                }
+
+                montantHT = Math.round(montantHT * 100) / 100;
+                montantTVA = Math.round(montantTVA * 100) / 100;
+                montantTTC = Math.round(montantTTC * 100) / 100;
+
+                $('#prix_unitaire_hidden').val(parseFloat(this.$.prixHT.val()).toFixed(2));
+                $('#montant_ttc_hidden').val(montantTTC.toFixed(2));
+                $('#montant_tva_hidden').val(montantTVA.toFixed(2));
+                $('#mode_calcul_hidden').val(mode);
+
+                this.$.previewHT.text(montantHT.toFixed(2));
+                this.$.previewTVA.text(montantTVA.toFixed(2));
+                this.$.previewTTC.text(montantTTC.toFixed(2));
+            }
+
+            toggleTVALock(e) {
+                const isUnlocked = $(e.target).is(':checked');
+                this.$.tauxTVA.prop('readonly', !isUnlocked);
+                if (!isUnlocked) {
+                    this.$.tauxTVA.val(0);
+                }
+                this.calculatePrix();
+            }
+
+            toggleEntreprise(e) {
+                const isEntreprise = $(e.target).is(':checked');
+                $('#raisonSocialeGroup').toggle(isEntreprise);
+
+                if (isEntreprise) {
+                    $('#labelEditNom').html('Nom du contact <span class="text-muted">(optionnel)</span>');
+                    $('#labelEditPrenom').html('Prénom du contact <span class="text-muted">(optionnel)</span>');
+                    $('#edit_patient_nom, #edit_patient_prenom').prop('required', false);
+                } else {
+                    $('#labelEditNom').html('Nom <span class="text-danger">*</span>');
+                    $('#labelEditPrenom').html('Prénom <span class="text-danger">*</span>');
+                    $('#edit_patient_nom, #edit_patient_prenom').prop('required', true);
+                }
+            }
+
+            resetForm() {
+                this.$.form[0].reset();
+                this.$.designationSelect.val('').trigger('change');
+                $('#mode_ht').prop('checked', true);
+                this.$.prixHT.val('');
+                this.$.prixTTC.val('');
+
+                // ✅ Réinitialiser tous les champs TVA
+                $('#taux_tva_select').hide();
+                $('#taux_tva_input_group').show();
+                $('#taux_tva_input').val(0);
+                $('#taux_tva_hidden').val(0);
+                $('#tva_info_text').text('TVA appliquée automatiquement selon le type');
+
+                $('#btn_recharger_template').fadeOut();
+                $('#description_textarea').val('');
+                $('#description_hint').html(
+                    '<i class="fas fa-info-circle"></i> Cette description apparaîtra sur la facture sous la désignation'
+                );
+
+                this.calculatePrix();
+                this.$.btnAjouter.prop('disabled', false).html('<i class="fas fa-plus"></i> Ajouter la ligne');
+            }
+
+            // ========================================================================
+            // COLLER RESTE À FACTURER
+            // ========================================================================
+
+            collerResteAFacturer() {
+                const resteAFacturer = this.state.resteAFacturer;
+
+                // Vérifier si on a un reste positif à facturer
+                if (resteAFacturer <= 0) {
+                    this.showToast('Aucun montant restant à facturer', 'warning');
+                    return;
+                }
+
+                // Basculer en mode TTC
+                $('#mode_ttc').prop('checked', true);
+
+                // Remplir le champ prix TTC avec le reste à facturer
+                this.$.prixTTC.val(resteAFacturer.toFixed(2));
+
+                // Déclencher le calcul
+                this.calculatePrix();
+
+                // Afficher une info visuelle
+                $('#reste_info').show();
+                $('#reste_montant_text').html(
+                    `<strong>${this.formatMontant(resteAFacturer)}</strong> collé depuis le reste à facturer`
+                );
+
+                this.showToast(`${this.formatMontant(resteAFacturer)} collé dans Prix TTC`, 'success');
+            }
+
+            // ========================================================================
+            // ACTIONS AJAX
+            // ========================================================================
+
+            async rechargerLignes() {
+                try {
+                    const html = await $.ajax({
+                        url: '/facturation/lignes/' + this.factureId,
+                        method: 'GET'
+                    });
+                    $('#lignesTableBody').html(html);
+                    await this.rechargerTotaux();
+                } catch (error) {
+                    console.error('Erreur rechargement lignes:', error);
+                    this.showToast('Erreur lors du rechargement. La page va se rafraîchir.', 'error');
+                    setTimeout(() => location.reload(), 2000);
+                }
+            }
+
+            async rechargerTotaux() {
+                try {
+                    const data = await $.ajax({
+                        url: '/facturation/totaux/' + this.factureId,
+                        method: 'GET'
+                    });
+
+                    if (!data.success) return;
+
+                    // Mise à jour du DOM
+                    $('table tfoot tr').each(function () {
+                        const $row = $(this);
+                        const firstCell = $row.find('td:first').text().trim();
+
+                        if (firstCell.includes('Total HT (hors débours)')) {
+                            $row.find('td:eq(1)').html('<strong>' + data.total_ht.toFixed(2) + ' DA</strong>');
+                        } else if (firstCell.includes('TVA 9%')) {
+                            $row.find('td:eq(1)').text(data.total_tva_9.toFixed(2) + ' DA');
+                        } else if (firstCell.includes('TVA 19%')) {
+                            $row.find('td:eq(1)').text(data.total_tva_19.toFixed(2) + ' DA');
+                        } else if (firstCell.includes('Total TVA')) {
+                            $row.find('td:eq(1)').html('<strong>' + data.total_tva.toFixed(2) + ' DA</strong>');
+                        } else if (firstCell.includes('TOTAL TTC')) {
+                            $row.find('td:eq(1)').html('<strong>' + data.total_ttc.toFixed(2) + ' DA</strong>');
+                        } else if (firstCell.includes('Débours')) {
+                            $row.find('td:eq(1)').html('<strong>' + data.total_debours.toFixed(2) + ' DA</strong>');
+                        }
+                    });
+
+                    if (data.total_debours > 0) {
+                        $('tfoot tr.table-warning td:eq(1)').html('<strong>' + data.total_debours.toFixed(2) + ' DA</strong>');
+                    }
+
+                    $('#droit_timbre_cell').html('<strong>' + data.droit_timbre.toFixed(2) + ' DA</strong>');
+                    $('#total_net_cell').html('<strong style="font-size: 1.3em">' + data.total_net.toFixed(2) + ' DA</strong>');
+
+                    // ✅ Mise à jour de l'état
+                    this.state.totalTTC = data.total_ttc;
+                    this.state.totalDebours = data.total_debours;
+                    this.state.timbreCalcule = data.droit_timbre;
+
+                    // ✅ IMPORTANT : Recalcul après mise à jour du DOM
+                    setTimeout(() => {
+                        this.calculateResteAFacturer();
+                    }, 100);
+
+                } catch (error) {
+                    console.error('Erreur rechargement totaux:', error);
+                    this.showToast('Erreur de synchronisation', 'error');
+                }
+            }
+
+            async supprimerLigne(ligneId) {
+                if (!confirm('Êtes-vous sûr de vouloir supprimer cette ligne ?')) return;
+
+                try {
+                    const response = await $.ajax({
+                        url: '/facturation/supprimer_ligne/' + ligneId,
+                        method: 'POST'
+                    });
+
+                    if (response.success) {
+                        this.showToast(response.message, 'success');
+                        location.reload();
+                    }
+                } catch (error) {
+                    const message = error.responseJSON?.message || 'Erreur lors de la suppression';
+                    this.showToast(message, 'error');
+                }
+            }
+
+            async modifierPatient() {
+                const estEntreprise = $('#estEntreprise').is(':checked');
+                const patientData = {
+                    patient_nom: $('#edit_patient_nom').val(),
+                    patient_prenom: $('#edit_patient_prenom').val(),
+                    patient_adresse: $('#edit_patient_adresse').val(),
+                    patient_telephone: $('#edit_patient_telephone').val(),
+                    patient_raison_sociale: $('#edit_patient_raison_sociale').val(),
+                    patient_nif: $('#edit_patient_nif').val(),
+                    patient_rc: $('#edit_patient_rc').val(),
+                    patient_article: $('#edit_patient_article').val(),
+                    // ✅ AJOUT : Références HIS
+                    patient_oid_his: $('#edit_patient_oid_his').val(),
+                    patient_code_his: $('#edit_patient_code_his').val()
+                };
+
+                if (estEntreprise && !patientData.patient_raison_sociale) {
+                    this.showToast('La raison sociale est obligatoire pour une entreprise', 'error');
+                    return;
+                }
+
+                if (!estEntreprise && (!patientData.patient_nom || !patientData.patient_prenom)) {
+                    this.showToast('Le nom et prénom sont obligatoires', 'error');
+                    return;
+                }
+
+                try {
+                    const response = await $.ajax({
+                        url: '/facturation/modifier_patient/' + this.factureId,
+                        method: 'POST',
+                        data: patientData
+                    });
+
+                    if (response.success) {
+                        this.showToast(response.message, 'success');
+                        setTimeout(() => location.reload(), 1500);
+                    }
+                } catch (error) {
+                    const message = error.responseJSON?.message || 'Erreur lors de la modification';
+                    this.showToast(message, 'error');
+                }
+            }
+
+            async changerModePaiement() {
+                const mode = this.$.modePaiement.val();
+                $('#numeroChequeGroup').toggle(mode === 'cheque');
+
+                try {
+                    const response = await $.ajax({
+                        url: '/facturation/changer_mode_paiement/' + this.factureId,
+                        method: 'POST',
+                        data: {
+                            mode_paiement: mode
+                        }
+                    });
+
+                    if (response.success) {
+                        this.showToast(response.message, 'success');
+                        setTimeout(() => location.reload(), 1000);
+                    }
+                } catch (error) {
+                    const message = error.responseJSON?.message || 'Erreur lors du changement';
+                    this.showToast(message, 'error');
+                }
+            }
+
+            async updateNumeroCheque() {
+                const numeroCheque = $('#numero_cheque').val().trim();
+
+                try {
+                    const response = await $.ajax({
+                        url: '/facturation/changer_mode_paiement/' + this.factureId,
+                        method: 'POST',
+                        data: {
+                            mode_paiement: 'cheque',
+                            numero_cheque: numeroCheque
+                        }
+                    });
+
+                    if (response.success) {
+                        this.showToast('Numéro de chèque enregistré', 'success');
+                    }
+                } catch (error) {
+                    const message = error.responseJSON?.message || 'Erreur lors de l\'enregistrement';
+                    this.showToast(message, 'error');
+                }
+            }
+
+            async validerFacture() {
+                if (!confirm('Êtes-vous sûr de vouloir valider cette facture ? Elle ne pourra plus être modifiée.')) return;
+
+                try {
+                    await $.ajax({
+                        url: '/facturation/valider/' + this.factureId,
+                        method: 'POST'
+                    });
+                    location.reload();
+                } catch (error) {
+                    alert('Erreur lors de la validation');
+                }
+            }
+
+            // ========================================================================
+            // UTILITAIRES
+            // ========================================================================
+
+            debounce(key, func, wait) {
+                clearTimeout(this.debounceTimers[key]);
+                this.debounceTimers[key] = setTimeout(func, wait);
+            }
+
+            formatMontant(montant) {
+                return montant.toFixed(2) + ' DA';
+            }
+
+            showToast(message, type) {
+                type = type || 'info';
+
+                const backgrounds = {
+                    'success': 'linear-gradient(to right, #00b09b, #96c93d)',
+                    'error': 'linear-gradient(to right, #f85032, #e73827)',
+                    'warning': 'linear-gradient(to right, #f39c12, #e67e22)',
+                    'info': 'linear-gradient(to right, #2196F3, #1976D2)'
+                };
+
+                Toastify({
+                    text: message,
+                    duration: 3000,
+                    gravity: 'bottom',
+                    position: 'right',
+                    style: {
+                        background: backgrounds[type] || backgrounds['info']
+                    }
+                }).showToast();
+            }
+        }
+
+        // ============================================================================
+        // FONCTION GLOBALE HISTORIQUE HIS
+        // ============================================================================
+
+        window.showPatientHistoryDirect = function (patientOid) {
+            if (typeof PatientHistoryModal !== 'undefined' && PatientHistoryModal.show) {
+                PatientHistoryModal.show(patientOid);
+            } else {
+                console.error('PatientHistoryModal not loaded');
+                alert('Le module d\'historique HIS n\'est pas chargé.');
+            }
+        };
+
+        // ============================================================================
+        // INITIALISATION
+        // ============================================================================
+        // ============================================================================
+        // FIX : Ouverture manuelle du modal
+        // ============================================================================
+        function openModifierPatientModal() {
+            const modalElement = document.getElementById('modifierPatientModal');
+
+            if (!modalElement) {
+                alert('Modal introuvable');
+                return;
+            }
+
+            // Nettoyer les instances précédentes
+            const existingInstance = bootstrap.Modal.getInstance(modalElement);
+            if (existingInstance) {
+                existingInstance.dispose();
+            }
+
+            // Retirer les backdrops résiduels
+            document.querySelectorAll('.modal-backdrop').forEach(b => b.remove());
+            document.body.classList.remove('modal-open');
+            document.body.style.removeProperty('overflow');
+
+            // Créer et afficher le modal
+            const modal = new bootstrap.Modal(modalElement, {
+                backdrop: 'static',
+                keyboard: true
+            });
+
+            modal.show();
+
+            // Initialiser le sélecteur HIS après ouverture
+            modalElement.addEventListener('shown.bs.modal', function () {
+                if (typeof initPatientHisSelectorModal === 'function') {
+                    initPatientHisSelectorModal();
+                }
+            }, { once: true });
+        }
+
+        let factureManager;
+
+        $(document).ready(function () {
+            const factureId = {{ facture.id| tojson
+        }};
+        factureManager = new FactureManager(factureId);
+
+        // Exposer les méthodes pour les onclick HTML
+        window.supprimerLigne = function (id) {
+            factureManager.supprimerLigne(id);
+        };
+
+        window.modifierPatient = function () {
+            factureManager.modifierPatient();
+        };
+
+        window.changerModePaiement = function () {
+            factureManager.changerModePaiement();
+        };
+
+        window.updateNumeroCheque = function () {
+            factureManager.updateNumeroCheque();
+        };
+
+        window.validerFacture = function () {
+            factureManager.validerFacture();
+        };
+
+        window.saveMontantCaisse = function () {
+            factureManager.saveMontantCaisse();
+            factureManager.showToast('Montant enregistré', 'success');
+        };
+        window.collerResteAFacturer = function () {
+            factureManager.collerResteAFacturer();
+        };
+
+        console.log('✅ Facture Manager initialisé avec succès');
+        });
+    </script>
+
+    {% endblock %}

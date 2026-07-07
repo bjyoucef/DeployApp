@@ -1,0 +1,41 @@
+{% extends 'layout.html' %}
+{% block content %}
+
+<!-- Section des boutons de navigation -->
+<div class="d-flex justify-content-center">
+    <a href="{{ url_for('stock') }}" class="btn btn-primary mr-2 {% if request.path == '/stock' %}active{% endif %}">Stock</a>
+    <a href="{{ url_for('view_movements_stock') }}"
+       class="btn btn-primary {% if request.path == '/movements_stock' %}active{% endif %}">Movements Stock</a>
+</div>
+<div class="scrollable-table mb-3" tabindex="0"
+     style="box-shadow: 0px 0px 5px var(--primary-color); border-radius: 25px; overflow-x: auto;">
+    <table id="myTable" class="table table-hover">
+        <thead>
+        <tr>
+            <th class="icon-cell"><i class="fas fa-box"></i> Product Name</th>
+            <th class="icon-cell"><i class="fas fa-exchange-alt"></i> Movement Type</th>
+            <th class="icon-cell"><i class="fas fa-cogs"></i> Quantity</th>
+            <th class="icon-cell"><i class="fas fa-user"></i> Person</th>
+            <th class="icon-cell"><i class="fas fa-briefcase"></i> Service</th>
+            <th class="icon-cell"><i class="fas fa-truck"></i> Supplier</th>
+            <th class="icon-cell"><i class="fas fa-calendar-alt"></i> Date</th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for movement_stock in movements_stock %}
+        <tr>
+            <td>{{ movement_stock['item'] }}</td>
+            <td>{{ movement_stock['movement_type'] }}</td>
+            <td>{{ movement_stock['quantity'] }}</td>
+            <td>{{ movement_stock['person'] if movement_stock['person'] else '-' }}</td>
+            <td>{{ movement_stock['service'] if movement_stock['service'] else '-' }}</td>
+            <td>{{ movement_stock['supplier'] if movement_stock['supplier'] else '-' }}</td>
+            <td>{{ movement_stock['date'] }}</td>
+        </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+
+{% endblock %}

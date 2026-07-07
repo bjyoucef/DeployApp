@@ -1,0 +1,937 @@
+{% extends 'layout.html' %}
+{% import 'his/macros/his_direct_selector.html' as his_selector %}
+
+{% block title %}Gestion des Dossiers Patients KT{% endblock %}
+
+{% block style %}
+<style>
+    /* ========================================
+       THEME & VARIABLES LOCALES
+       ======================================== */
+    :root {
+        --primary-gradient: linear-gradient(135deg, #450A54 0%, #2e0538 100%);
+        --glass-bg: rgba(255, 255, 255, 0.95);
+        --glass-border: 1px solid rgba(255, 255, 255, 0.2);
+        --glass-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.15);
+
+        --card-radius: 16px;
+        --input-radius: 10px;
+        --btn-radius: 10px;
+
+        --table-header-bg: #f8f9fa;
+        --table-hover-bg: #f1f3f9;
+        --text-muted: #6c757d;
+    }
+
+    [data-theme="dark"] {
+        --glass-bg: rgba(30, 30, 30, 0.95);
+        --glass-border: 1px solid rgba(255, 255, 255, 0.05);
+        --table-header-bg: #2c2c2c;
+        --table-hover-bg: #3a3a3a;
+        --text-muted: #adb5bd;
+    }
+
+    /* ========================================
+       PAGE HEADER
+       ======================================== */
+    .page-header {
+        background: var(--primary-gradient);
+        padding: 2.5rem 2rem;
+        border-radius: var(--card-radius);
+        margin-bottom: 2rem;
+        box-shadow: var(--shadow-lg);
+        position: relative;
+        overflow: hidden;
+        color: white;
+    }
+
+    .page-header::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M54.627 0l.83.828-1.415 1.415L51.8 0h2.827zM5.373 0l-.83.828L5.96 2.243 8.2 0H5.374zM48.97 0l3.657 3.657-1.414 1.414L46.143 0h2.828zM11.03 0L7.372 3.657 8.787 5.07 13.857 0H11.03zm32.284 0L49.8 6.485 48.384 7.9l-7.9-7.9h2.83zM16.686 0L10.2 6.485 11.616 7.9l7.9-7.9h-2.83zm20.97 0l9.315 9.314-1.414 1.414L34.828 0h2.83zM22.344 0L13.03 9.314l1.414 1.414L25.172 0h-2.83zM32 0l12.142 12.142-1.414 1.414L30 .828 17.272 13.556 15.858 12.14 28 0zm0 10.343l9.899 9.899-1.414 1.414L32 13.172l-8.485 8.484-1.414-1.414L32 10.343zm0 10.344l7.071 7.07-1.414 1.415L32 23.516l-5.657 5.656-1.414-1.414L32 20.687z' fill='%23ffffff' fill-opacity='0.1' fill-rule='evenodd'/%3E%3C/svg%3E");
+        z-index: 0;
+    }
+
+    .page-header-content {
+        position: relative;
+        z-index: 1;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 1rem;
+    }
+
+    .page-title {
+        font-size: 2rem;
+        font-weight: 700;
+        margin: 0;
+        line-height: 1.2;
+    }
+
+    .page-subtitle {
+        font-size: 1rem;
+        opacity: 0.9;
+        font-weight: 400;
+    }
+
+    /* ========================================
+       ACTIONS BAR & FILTRES
+       ======================================== */
+    .filter-card {
+        background: var(--glass-bg);
+        backdrop-filter: blur(10px);
+        border: var(--glass-border);
+        border-radius: var(--card-radius);
+        padding: 1.5rem;
+        box-shadow: var(--glass-shadow);
+        margin-bottom: 2rem;
+    }
+
+    .search-input-group {
+        position: relative;
+        flex-grow: 1;
+    }
+
+    .search-input-group input {
+        padding-left: 2.8rem;
+        height: 50px;
+        border-radius: var(--input-radius);
+        font-size: 1rem;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.02);
+        border: 1px solid var(--border-color);
+        transition: all 0.3s ease;
+    }
+
+    .search-input-group input:focus {
+        border-color: var(--local-primary);
+        box-shadow: 0 0 0 0.2rem rgba(69, 10, 84, 0.15);
+    }
+
+    .search-input-group i {
+        position: absolute;
+        left: 1rem;
+        top: 50%;
+        transform: translateY(-50%);
+        color: var(--text-muted);
+        font-size: 1.1rem;
+    }
+
+    .filter-group-label {
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        font-weight: 700;
+        color: var(--text-muted);
+        margin-bottom: 0.5rem;
+        display: block;
+    }
+
+    /* DATE RANGEPICKER CUSTOMIZATION */
+    .daterangepicker {
+        font-family: inherit;
+        border: none;
+        box-shadow: var(--shadow-lg);
+        border-radius: 12px;
+    }
+
+    .daterangepicker .ranges li.active {
+        background-color: var(--local-primary);
+    }
+
+    .daterangepicker td.active,
+    .daterangepicker td.active:hover {
+        background-color: var(--local-primary);
+    }
+
+    /* ========================================
+       TABLEAU MODERNE
+       ======================================== */
+    .modern-table-container {
+        background: var(--bg-card);
+        border-radius: var(--card-radius);
+        box-shadow: var(--shadow-sm);
+        overflow: hidden;
+        border: 1px solid var(--border-color);
+    }
+
+    .table {
+        margin-bottom: 0;
+    }
+
+    .table thead th {
+        background: var(--table-header-bg);
+        text-transform: uppercase;
+        font-size: 0.75rem;
+        letter-spacing: 0.8px;
+        font-weight: 700;
+        color: var(--text-muted);
+        border-bottom: 2px solid var(--border-color);
+        padding: 1rem 1.2rem;
+        vertical-align: middle;
+    }
+
+    .table tbody td {
+        padding: 1rem 1.2rem;
+        vertical-align: middle;
+        border-bottom: 1px solid var(--border-color);
+        font-size: 0.95rem;
+    }
+
+    .table tbody tr {
+        transition: background-color 0.2s;
+    }
+
+    .table tbody tr:hover {
+        background-color: var(--table-hover-bg);
+    }
+
+    .table tbody tr:last-child td {
+        border-bottom: none;
+    }
+
+    /* BADGES & STATUTS */
+    .badge-soft-primary {
+        background: rgba(69, 10, 84, 0.1);
+        color: var(--local-primary);
+    }
+
+    .badge-soft-success {
+        background: rgba(40, 167, 69, 0.1);
+        color: #28a745;
+    }
+
+    .badge-soft-danger {
+        background: rgba(220, 53, 69, 0.1);
+        color: #dc3545;
+    }
+
+    .badge-soft-warning {
+        background: rgba(255, 193, 7, 0.1);
+        color: #856404;
+    }
+
+    .badge-soft-info {
+        background: rgba(23, 162, 184, 0.1);
+        color: #17a2b8;
+    }
+
+    .badge-pill {
+        padding: 0.4em 0.8em;
+        border-radius: 50rem;
+        font-weight: 600;
+        font-size: 0.75rem;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+    }
+
+    /* AVATAR / ICONE DOCTEUR */
+    .doc-avatar {
+        width: 40px;
+        height: 40px;
+        background: var(--primary-gradient);
+        color: white;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        font-size: 1rem;
+        margin-right: 1rem;
+        box-shadow: 0 3px 6px rgba(0, 0, 0, 0.1);
+        flex-shrink: 0;
+    }
+
+    .patient-cell {
+        display: flex;
+        align-items: center;
+    }
+
+    .price-cell {
+        font-family: 'JetBrains Mono', 'Consolas', monospace;
+        font-weight: 600;
+        white-space: nowrap;
+    }
+
+    /* ========================================
+       MODAL CUSTOMISATIONS
+       ======================================== */
+    .modal-content {
+        border: none;
+        border-radius: 20px;
+        box-shadow: var(--shadow-lg);
+        background-color: var(--bg-card);
+    }
+
+    .modal-header {
+        background: var(--primary-gradient);
+        color: white;
+        border-radius: 20px 20px 0 0;
+        border-bottom: none;
+    }
+
+    .modal-title {
+        font-weight: 700;
+    }
+
+    .btn-close-white {
+        filter: invert(1) grayscale(100%) brightness(200%);
+    }
+
+    /* Responsive Adjustments */
+    @media (max-width: 768px) {
+        .page-header {
+            padding: 1.5rem;
+        }
+
+        .page-title {
+            font-size: 1.5rem;
+        }
+
+        .filter-card {
+            padding: 1rem;
+        }
+
+        .modern-table-container {
+            border-radius: 0;
+            box-shadow: none;
+            border: none;
+            background: transparent;
+        }
+
+        /* Mobile Card View for Table */
+        .table thead {
+            display: none;
+        }
+
+        .table tbody tr {
+            display: block;
+            background: var(--bg-card);
+            border-radius: 12px;
+            margin-bottom: 1rem;
+            box-shadow: var(--shadow-sm);
+            border: 1px solid var(--border-color);
+            padding: 1rem;
+        }
+
+        .table tbody td {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.5rem 0;
+            border: none;
+            text-align: right;
+        }
+
+        .table tbody td::before {
+            content: attr(data-label);
+            font-weight: 700;
+            color: var(--text-muted);
+            text-align: left;
+            margin-right: 1rem;
+        }
+
+        .table tbody td:last-child {
+            padding-top: 1rem;
+            border-top: 1px solid var(--border-color);
+            justify-content: flex-end;
+        }
+
+        .doc-avatar {
+            width: 32px;
+            height: 32px;
+            font-size: 0.8rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- HEADER -->
+<div class="page-header">
+    <div class="page-header-content">
+        <div>
+            <h1 class="page-title"><i class="fas fa-heartbeat me-3"></i>Dossiers KT</h1>
+            <p class="page-subtitle mt-2 mb-0">Gestion centralisée des admissions, actes et facturation cathétérisme.
+            </p>
+        </div>
+        <div class="d-flex gap-3 mt-3 mt-md-0 flex-wrap">
+            <a href="{{ url_for('kt_situation_medecin') }}" class="btn btn-light shadow-sm">
+                <i class="fas fa-chart-line me-2 text-primary"></i>Situation
+            </a>
+            <a href="{{ url_for('kt_decharges') }}" class="btn btn-light shadow-sm">
+                <i class="fas fa-receipt me-2 text-primary"></i>Décharges
+            </a>
+            {% if 'ADD_DOSSIERS_PATIENTS_KT' in session.privileges %}
+            <a href="{{ url_for('kt_dossier_create') }}" class="btn btn-warning shadow-sm fw-bold">
+                <i class="fas fa-plus me-2"></i>Nouveau Dossier
+            </a>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- FILTRES ET RECHERCHE -->
+<div class="filter-card">
+    <div class="row g-4 align-items-end">
+
+        <!-- Recherche Texte -->
+        <div class="col-lg-4 col-md-12">
+            <label class="filter-group-label"><i class="fas fa-search me-1"></i> Recherche Globale</label>
+            <div class="search-input-group">
+                <input type="text" id="searchInput" class="form-control"
+                    placeholder="Patient, médecin, code CNAS, acte..." autocomplete="off">
+            </div>
+        </div>
+
+        <!-- Filtre Médecin -->
+        <div class="col-lg-3 col-md-6">
+            <label class="filter-group-label"><i class="fas fa-user-md me-1"></i> Médecin Intervenant</label>
+            <select id="doctorFilter" class="form-select">
+                <option value="all">Tous les Médecins</option>
+                {% for doctor in doctors %}
+                <option value="{{ doctor.id }}">{{ doctor.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <!-- Filtre Date (Période) -->
+        <div class="col-lg-5 col-md-12">
+            <label class="filter-group-label mb-2"><i class="far fa-calendar-alt me-1"></i> Période d'Acte</label>
+            <div class="input-group">
+                <span class="input-group-text bg-white"><i class="far fa-calendar text-primary"></i></span>
+                <input type="text" class="form-control" id="dateRangePicker" placeholder="Sélectionner une période">
+            </div>
+        </div>
+
+    </div>
+
+    <div class="d-flex justify-content-between align-items-center mt-4 pt-3 border-top">
+        <div class="text-muted small">
+            <i class="fas fa-info-circle me-1"></i>
+            <span id="resultCount">Chargement des résultats...</span>
+        </div>
+        <div class="d-flex gap-2">
+            <button class="btn btn-outline-secondary btn-sm" onclick="resetFilters()">
+                <i class="fas fa-undo me-2"></i>Réinitialiser
+            </button>
+            <button class="btn btn-success btn-sm text-white" onclick="exportTable()">
+                <i class="fas fa-file-excel me-2"></i>Exporter Excel
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- TABLEAU -->
+<div class="modern-table-container">
+    <div class="table-responsive">
+        <table class="table align-middle" id="dossiersTable">
+            <thead>
+                <tr>
+                    <th style="width: 25%;">Médecin / Patient</th>
+                    <th style="width: 30%;">Acte Réalisé</th>
+                    <th style="width: 15%;" class="text-end">Part Opérateur</th>
+                    <th style="width: 15%;" class="text-end">Total Espèce</th>
+                    <th style="width: 15%;" class="text-end">Actions</th>
+                </tr>
+            </thead>
+            <tbody id="dossiersTableBody">
+                <!-- Data loaded via JS -->
+            </tbody>
+        </table>
+    </div>
+
+    <!-- PAGINATION -->
+    <div class="d-flex justify-content-between align-items-center p-3 border-top bg-light">
+        <div class="d-flex align-items-center gap-2">
+            <select class="form-select form-select-sm" style="width: 70px;" id="perPageSelect">
+                <option value="10">10</option>
+                <option value="25">25</option>
+                <option value="50" selected>50</option>
+                <option value="100">100</option>
+            </select>
+            <span class="text-muted small">lignes par page</span>
+        </div>
+        <nav aria-label="Navigation">
+            <ul class="pagination pagination-sm mb-0" id="paginationControls"></ul>
+        </nav>
+    </div>
+</div>
+
+<!-- MODAL UPLOAD COMPTE-RENDU -->
+<div class="modal fade" id="uploadCompteRenduModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="fas fa-file-upload me-2"></i>Upload Compte-Rendu</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="uploadCompteRenduForm" enctype="multipart/form-data">
+                <div class="modal-body">
+                    <input type="hidden" id="upload_id_dossier" name="id_dossier">
+                    <div class="alert alert-soft-primary d-flex align-items-center mb-4">
+                        <i class="fas fa-user-circle fa-2x me-3 text-primary"></i>
+                        <div>
+                            <small class="text-muted text-uppercase fw-bold">Patient Concerné</small>
+                            <h5 class="alert-heading mb-0" id="upload_patient_name"></h5>
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="form-label fw-bold">Fichier Compte-Rendu (.doc, .docx)</label>
+                        <input type="file" class="form-control" name="compte_rendu_file"
+                            accept=".doc,.docx,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                            required>
+                    </div>
+
+                    <div id="upload_current_file" class="alert alert-warning d-flex align-items-center"
+                        style="display: none;">
+                        <i class="fas fa-exclamation-triangle fa-2x me-3"></i>
+                        <div>
+                            <strong>Attention :</strong> Un fichier existe déjà. L'uploader remplacera l'ancien.
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer bg-light rounded-bottom">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Annuler</button>
+                    <button type="submit" class="btn btn-primary" id="uploadSubmitBtn">
+                        <i class="fas fa-cloud-upload-alt me-2"></i>Envoyer le fichier
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- ✅ AJOUTER LE MODAL HIS -->
+{{ his_selector.render_modal('modalPatientHistoryDirect') }}
+{% endblock %}
+
+{% block scripts %}
+<!-- DateRangePicker Dependencies -->
+<script src="{{ url_for('static', filename='js/moment.min.js') }}"></script>
+<script src="{{ url_for('static', filename='js/daterangepicker.min.js') }}"></script>
+<link rel="stylesheet" href="{{ url_for('static', filename='css/daterangepicker.css') }}" />
+<script>
+    'use strict';
+
+    /* ========================================
+       CONFIGURATION & STATE
+       ======================================== */
+    const AppState = {
+        currentPage: 1,
+        perPage: 50,
+        filters: {
+            doctor: 'all',
+            search: '',
+            startDate: '',
+            endDate: ''
+        }
+    };
+
+    /* ========================================
+       FORMATTERS & UTILS
+       ======================================== */
+    const Utils = {
+        debounce(func, delay) {
+            let timeoutId;
+            return function (...args) {
+                clearTimeout(timeoutId);
+                timeoutId = setTimeout(() => func.apply(this, args), delay);
+            };
+        },
+
+        formatPrice(value) {
+            if (value === null || value === undefined) return '0,00';
+            return new Intl.NumberFormat('fr-DZ', {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            }).format(value);
+        },
+
+        getInitials(name) {
+            if (!name) return 'UNK';
+            return name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
+        }
+    };
+
+    /* ========================================
+       DATA MANAGEMENT
+       ======================================== */
+    const DataManager = {
+        async fetchDossiers() {
+            // Update UI state to loading
+            const tbody = document.getElementById('dossiersTableBody');
+            tbody.innerHTML = `<tr><td colspan="6" class="text-center py-5"><div class="spinner-border text-primary" role="status"></div><p class="text-muted mt-2">Chargement des dossiers...</p></td></tr>`;
+
+            // Prepare params, handling empty dates for 'all'
+            const params = new URLSearchParams({
+                page: AppState.currentPage,
+                per_page: AppState.perPage,
+                doctor: document.getElementById('doctorFilter').value,
+                search: document.getElementById('searchInput').value
+            });
+
+            // Get dates from picker data
+            const picker = $('#dateRangePicker').data('daterangepicker');
+            let start = '', end = '';
+
+            if (picker && document.getElementById('dateRangePicker').value) {
+                start = picker.startDate.format('YYYY-MM-DD');
+                end = picker.endDate.format('YYYY-MM-DD');
+            }
+
+            if (start) params.append('start_date', start);
+            if (end) params.append('end_date', end);
+
+            try {
+                const response = await fetch(`/api/kt_dossiers?${params}`);
+                const data = await response.json();
+
+                if (data.success) {
+                    this.renderDossiers(data.dossiers);
+                    this.renderPagination(data.pagination);
+                    document.getElementById('resultCount').textContent = `${data.pagination.total_records} dossiers trouvés`;
+                } else {
+                    this.renderError(data.error);
+                }
+            } catch (error) {
+                console.error(error);
+                this.renderError("Erreur de connexion au serveur.");
+            }
+        },
+
+        renderDossiers(dossiers) {
+            const tbody = document.getElementById('dossiersTableBody');
+
+            if (dossiers.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="6" class="text-center py-5"><i class="fas fa-inbox fa-3x text-muted mb-3 opacity-50"></i><h5 class="text-muted">Aucun résultat trouvé</h5></td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = dossiers.map(d => {
+                // Calculations
+                const partOperateurExtraTotal = (d.part_operateur_extrat || 0) + (d.part_operateur_up_medecin || 0) + (d.part_operateur_up_clinique || 0);
+                const totalPartOperateur = (d.part_operateur_acte || 0) + partOperateurExtraTotal;
+
+                // Payment Status Badge
+                let paymentBadge = '';
+                if (d.part_operateur > 0) {
+                    if (d.payment >= d.part_operateur) {
+                         paymentBadge = `<div class="mt-1"><span class="badge bg-success rounded-pill"><i class="fas fa-check-circle"></i> Payé</span></div>`;
+                    } else if (d.payment > 0) {
+                         paymentBadge = `<div class="mt-1"><span class="badge bg-warning text-dark rounded-pill"><i class="fas fa-adjust"></i> Partiel</span></div>`;
+                    } else {
+                         paymentBadge = `<div class="mt-1"><span class="badge bg-danger rounded-pill"><i class="fas fa-times-circle"></i> Non payé</span></div>`;
+                    }
+                }
+
+                // Badges
+                let badges = '';
+                if (d.vip) badges += `<span class="badge badge-pill badge-warning border border-warning text-dark me-1"><i class="fas fa-crown"></i> VIP</span> `;
+                if (d.urgence) badges += `<span class="badge badge-pill bg-danger border border-danger me-1"><i class="fas fa-exclamation-circle"></i> Urgence</span> `;
+                if (d.convention === 'payante') badges += `<span class="badge badge-pill bg-dark text-white me-1">Payante</span>`;
+                else badges += `<span class="badge badge-pill bg-primary text-white me-1">${d.convention}</span>`;
+
+                // Anesthesia icons
+                let anesthesiaIcons = '';
+                if (d.anesthesiste_name) anesthesiaIcons += `<span class="text-info me-2" data-bs-toggle="tooltip" title="Anesthésiste: ${d.anesthesiste_name}"><i class="fas fa-syringe"></i></span>`;
+                if (d.reanimateur_name) anesthesiaIcons += `<span class="text-success me-2" data-bs-toggle="tooltip" title="Réanimateur: ${d.reanimateur_name}"><i class="fas fa-heartbeat"></i></span>`;
+
+                return `
+                <tr>
+                    <td data-label="Médecin / Patient">
+                        <div class="d-flex align-items-center">
+                            <div class="doc-avatar" title="${d.doctor_name}">${Utils.getInitials(d.doctor_name)}</div>
+                            <div>
+                                <div class="fw-bold text-dark">${d.doctor_name}</div>
+                                <div class="small text-muted mb-1">
+                                    ${d.patient_oid_his ? `
+                                        <div class="icon-wrapper icon-wrapper-info d-inline-block me-1">
+                                            <button class="btn btn-sm btn-info py-0 px-1"
+                                                    style="width: 20px; height: 20px; line-height: 1;"
+                                                    onclick="event.stopPropagation(); showPatientHistoryDirect('${d.patient_oid_his}')"
+                                                    title="Historique HIS">
+                                                <i class="fas fa-history text-white" style="font-size: 0.7rem;"></i>
+                                            </button>
+                                        </div>
+                                    ` : ''}
+                                    <i class="fas fa-user-injured me-1"></i>${d.patient_name}</div>
+                                <div>${badges}</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td data-label="Acte Réalisé">
+                        <div class="small text-muted">#${d.id_dossier}</div>
+                        <div class="fw-semibold text-primary mb-1 text-wrap" style="max-width: 300px;">${d.name_acte_kt || 'Acte non spécifié'}</div>
+                        <div class="small text-muted"><strong class="text-dark">Code:</strong> ${d.code_cnas || '-'}</div>
+                        <div class="mt-1">${anesthesiaIcons}</div>
+<div class="fw-bold"><i class="far fa-calendar-alt me-1 text-muted"></i>${d.acte_date}</div>
+                        ${d.duree_operation ? `<div class="badge badge-soft-info mt-1"><i class="far fa-clock me-1"></i>${d.duree_operation} min</div>` : ''}
+                    </td>
+
+                    <td class="text-end" data-label="Part Opérateur">
+                         <div class="price-cell text-dark">${Utils.formatPrice(d.part_operateur_acte)}</div>
+                         ${partOperateurExtraTotal > 0 ? `<div class="small text-success">+ ${Utils.formatPrice(partOperateurExtraTotal)} (Sup)</div>` : ''}
+                         <div class="price-cell text-primary border-top mt-1 pt-1 fw-bold">${Utils.formatPrice(totalPartOperateur)}</div>
+                         ${paymentBadge}
+                    </td>
+                    <td class="text-end" data-label="Total Espèce">
+                        <div class="price-cell fw-bold text-success fs-6">${Utils.formatPrice(d.prix_dossier_esp)}</div>
+                    </td>
+                    <td class="text-end" data-label="Actions">
+                        <div class="btn-group btn-group-sm shadow-sm" role="group">
+                            {% if 'ACCES_AUX_DOSSIERS_PATIENTS_KT' in session.privileges %}
+                            <a href="/kt_dossier_detail/${d.id_dossier}" class="btn btn-outline-primary" data-bs-toggle="tooltip" title="Détails">
+                                <i class="fas fa-eye"></i>
+                            </a>
+                            <a href="/kt_dossier/${d.id_dossier}/export-pdf" class="btn btn-outline-secondary" data-bs-toggle="tooltip" title="Exporter PDF">
+                                <i class="fas fa-file-pdf"></i>
+                            </a>
+                            <a href="/dossier/PRESTATION_KT/${d.id_dossier}/print-qr" class="btn btn-outline-secondary" data-bs-toggle="tooltip" title="Imprimer QR Code" target="_blank">
+                                <i class="fas fa-qrcode"></i>
+                            </a>
+                            {% endif %}
+                            
+                            {% if 'MODIFIER_DOSSIERS_PATIENTS_KT' in session.privileges %}
+                            <button type="button" class="btn btn-outline-info" onclick="openUploadModal(${d.id_dossier}, '${d.patient_name}')" data-bs-toggle="tooltip" title="Uploader Compte-Rendu">
+                                <i class="fas fa-file-upload"></i>
+                            </button>
+                            {% endif %}
+                            
+                            ${d.compte_rendu_path ? `<a href="/uploads/${d.compte_rendu_path}?download_name=${encodeURIComponent(d.compte_rendu_nom_original)}" target="_blank" class="btn btn-outline-success" data-bs-toggle="tooltip" title="Télécharger CR"><i class="fas fa-download"></i></a>` : ''}
+                            
+                            {% if 'DELETE_DOSSIERS_PATIENTS_KT' in session.privileges %}
+                            <button type="button" class="btn btn-outline-danger" onclick="confirmDelete(${d.id_dossier}, '${d.patient_name}')" data-bs-toggle="tooltip" title="Supprimer">
+                                <i class="fas fa-trash-alt"></i>
+                            </button>
+                            {% endif %}
+                        </div>
+                    </td>
+                </tr>
+                `;
+            }).join('');
+
+            // Re-init Bootstrap tooltips
+            var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+            var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+                return new bootstrap.Tooltip(tooltipTriggerEl)
+            })
+        },
+
+        renderPagination(pagination) {
+            const controls = document.getElementById('paginationControls');
+            let html = '';
+
+            // Previous
+            html += `<li class="page-item ${pagination.page === 1 ? 'disabled' : ''}">
+                        <a class="page-link" href="#" onclick="changePage(${pagination.page - 1}); return false;"><i class="fas fa-chevron-left"></i></a>
+                     </li>`;
+
+            // Pages
+            for (let i = 1; i <= pagination.total_pages; i++) {
+                if (i === 1 || i === pagination.total_pages || (i >= pagination.page - 2 && i <= pagination.page + 2)) {
+                    html += `<li class="page-item ${i === pagination.page ? 'active' : ''}">
+                                <a class="page-link" href="#" onclick="changePage(${i}); return false;">${i}</a>
+                             </li>`;
+                } else if (i === pagination.page - 3 || i === pagination.page + 3) {
+                    html += `<li class="page-item disabled"><span class="page-link">...</span></li>`;
+                }
+            }
+
+            // Next
+            html += `<li class="page-item ${pagination.page === pagination.total_pages ? 'disabled' : ''}">
+                        <a class="page-link" href="#" onclick="changePage(${pagination.page + 1}); return false;"><i class="fas fa-chevron-right"></i></a>
+                     </li>`;
+
+            controls.innerHTML = html;
+        },
+
+        renderError(message) {
+            document.getElementById('dossiersTableBody').innerHTML = `<tr><td colspan="6" class="text-center py-5 text-danger"><i class="fas fa-exclamation-triangle fa-2x mb-3"></i><h5>Erreur</h5><p>${message}</p></td></tr>`;
+        }
+    };
+
+    /* ========================================
+       ACTIONS & HANDLERS
+       ======================================== */
+    function changePage(page) {
+        if (page < 1) return;
+        AppState.currentPage = page;
+        DataManager.fetchDossiers();
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function resetFilters() {
+        document.getElementById('searchInput').value = '';
+        if (window.doctorChoices) window.doctorChoices.setChoiceByValue('all');
+
+        // Reset picker to This Month
+        const picker = $('#dateRangePicker').data('daterangepicker');
+        if (picker) {
+            picker.setStartDate(moment().startOf('month'));
+            picker.setEndDate(moment().endOf('month'));
+            document.getElementById('dateRangePicker').value =
+                `${moment().startOf('month').format('DD/MM/YYYY')} - ${moment().endOf('month').format('DD/MM/YYYY')}`;
+        }
+
+        AppState.currentPage = 1;
+        DataManager.fetchDossiers();
+    }
+
+    function exportTable() {
+        const picker = $('#dateRangePicker').data('daterangepicker');
+        const params = new URLSearchParams({
+            doctor: document.getElementById('doctorFilter').value,
+            start_date: picker ? picker.startDate.format('YYYY-MM-DD') : '',
+            end_date: picker ? picker.endDate.format('YYYY-MM-DD') : '',
+            search: document.getElementById('searchInput').value
+        });
+        window.location.href = `/export_kt_dossiers?${params}`;
+    }
+
+    function confirmDelete(id, name) {
+        if (confirm(`Voulez-vous vraiment supprimer le dossier de ${name}?`)) {
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = '/supprimer_dossier_kt';
+            const input = document.createElement('input');
+            input.type = 'hidden';
+            input.name = 'id_dossier';
+            input.value = id;
+            form.appendChild(input);
+            document.body.appendChild(form);
+            form.submit();
+        }
+    }
+
+    // Modal Functions
+    function openUploadModal(id, name) {
+        document.getElementById('upload_id_dossier').value = id;
+        document.getElementById('upload_patient_name').textContent = name;
+        document.getElementById('upload_current_file').style.display = 'none';
+
+        // Check existing file
+        fetch(`/api/check_compte_rendu_kt/${id}`)
+            .then(r => r.json())
+            .then(data => {
+                document.getElementById('upload_current_file').style.display = data.exists ? 'flex' : 'none';
+            });
+
+        new bootstrap.Modal(document.getElementById('uploadCompteRenduModal')).show();
+    }
+
+    // Upload Handler
+    document.getElementById('uploadCompteRenduForm').addEventListener('submit', async function (e) {
+        e.preventDefault();
+        const btn = document.getElementById('uploadSubmitBtn');
+        const originalText = btn.innerHTML;
+
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Envoi...';
+
+        try {
+            const formData = new FormData(this);
+            const res = await fetch('/upload_compte_rendu_kt', { method: 'POST', body: formData });
+            const data = await res.json();
+
+            if (data.success) {
+                bootstrap.Modal.getInstance(document.getElementById('uploadCompteRenduModal')).hide();
+                Toastify({ text: "Compte-rendu uploadé avec succès!", style: { background: "linear-gradient(to right, #00b09b, #96c93d)" } }).showToast();
+                DataManager.fetchDossiers();
+                this.reset();
+            } else {
+                showToast(data.error || "Erreur lors de l'upload", "error");
+            }
+        } catch (err) {
+            console.error(err);
+            showToast("Erreur technique", "error");
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = originalText;
+        }
+    });
+
+    /* ========================================
+       INITIALIZATION
+       ======================================== */
+    document.addEventListener('DOMContentLoaded', () => {
+
+        // 1. Initialize DateRangePicker
+        $('#dateRangePicker').daterangepicker({
+            startDate: moment().startOf('month'),
+            endDate: moment().endOf('month'),
+            locale: {
+                format: 'DD/MM/YYYY',
+                separator: ' - ',
+                applyLabel: 'Appliquer',
+                cancelLabel: 'Annuler',
+                fromLabel: 'De',
+                toLabel: 'À',
+                customRangeLabel: 'Personnalisé',
+                daysOfWeek: ['Di', 'Lu', 'Ma', 'Me', 'Je', 'Ve', 'Sa'],
+                monthNames: ['Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'],
+                firstDay: 1
+            },
+            ranges: {
+                'Aujourd\'hui': [moment(), moment()],
+                'Hier': [moment().subtract(1, 'days'), moment().subtract(1, 'days')],
+                'Les 7 derniers jours': [moment().subtract(6, 'days'), moment()],
+                'Ce mois': [moment().startOf('month'), moment().endOf('month')],
+                'Mois dernier': [moment().subtract(1, 'month').startOf('month'), moment().subtract(1, 'month').endOf('month')],
+                'Tout ce temps': [moment().subtract(5, 'years'), moment()]
+            },
+            opens: 'left',
+            autoUpdateInput: true
+        }, function (start, end, label) {
+            // Callback when date changes via ranges or selection
+            AppState.currentPage = 1;
+            // Use setTimeout to allow the input value to update befor fetching? 
+            // Actually daterangepicker updates input then calls callback
+            DataManager.fetchDossiers();
+        });
+
+        // 2. Initialize Choices.js
+        const element = document.getElementById('doctorFilter');
+        if (element) {
+            window.doctorChoices = new Choices(element, {
+                searchEnabled: true,
+                itemSelectText: '',
+                placeholder: true,
+                placeholderValue: 'Tous les médecins'
+            });
+        }
+
+        // 3. Event Listeners for Filters
+        const debouncedFetch = Utils.debounce(() => {
+            AppState.currentPage = 1;
+            DataManager.fetchDossiers();
+        }, 500);
+
+        document.getElementById('searchInput').addEventListener('input', debouncedFetch);
+        document.getElementById('doctorFilter').addEventListener('change', () => { AppState.currentPage = 1; DataManager.fetchDossiers(); });
+
+        document.getElementById('perPageSelect').addEventListener('change', function () {
+            AppState.perPage = this.value;
+            AppState.currentPage = 1;
+            DataManager.fetchDossiers();
+        });
+
+        // 4. Initial Fetch
+        DataManager.fetchDossiers();
+    });
+    // ✅ Fonction globale pour afficher l'historique patient
+    window.showPatientHistoryDirect = function (patientOid) {
+        if (typeof PatientHistoryModal !== 'undefined' && PatientHistoryModal.show) {
+            PatientHistoryModal.show(patientOid);
+        } else {
+            console.error('PatientHistoryModal not loaded');
+        }
+    };
+</script>
+{% endblock %}

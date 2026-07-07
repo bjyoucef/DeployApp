@@ -1,0 +1,2038 @@
+{% extends "layout.html" %}
+
+{% block title %}Plan du Rayonnage - Vue Salle{% endblock %}
+
+{% block style %}
+<style>
+    :root {
+        /* Base Colors & Backgrounds */
+        --bg-body: #f8fafc;
+        --room-bg: #e0e7ff;
+        --room-gradient: radial-gradient(circle at 50% 50%, rgba(99, 102, 241, 0.05) 0%, transparent 70%);
+        --text-primary: #1e293b;
+        --text-secondary: #64748b;
+
+        /* Glassmorphism System */
+        --glass-surface: rgba(255, 255, 255, 0.65);
+        --glass-border: rgba(255, 255, 255, 0.8);
+        --glass-highlight: rgba(255, 255, 255, 0.9);
+        --glass-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+        --backdrop-blur: blur(12px);
+
+        /* Shelf Aesthetic */
+        --shelf-bg: rgba(255, 255, 255, 0.5);
+        --shelf-hover-bg: rgba(255, 255, 255, 0.8);
+        --shelf-border: rgba(148, 163, 184, 0.4);
+        --shelf-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+
+        /* Status Indicators */
+        --status-free: #cbd5e1;
+        --status-occupied: #10b981;
+        --status-full: #ef4444;
+
+        /* Brand Identity */
+        --accent: #7c3aed;
+        --accent-hover: #6d28d9;
+        --accent-glow: rgba(124, 58, 237, 0.3);
+    }
+
+    [data-theme="dark"] {
+        --bg-body: #0f172a;
+        --room-bg: #020617;
+        --room-gradient: radial-gradient(circle at 50% 50%, rgba(124, 58, 237, 0.1) 0%, transparent 70%);
+        --text-primary: #f8fafc;
+        --text-secondary: #94a3b8;
+        --glass-surface: rgba(30, 41, 59, 0.7);
+        --glass-border: rgba(255, 255, 255, 0.08);
+        --glass-highlight: rgba(255, 255, 255, 0.15);
+        --glass-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+        --shelf-bg: rgba(15, 23, 42, 0.6);
+        --shelf-hover-bg: rgba(30, 41, 59, 0.9);
+        --shelf-border: rgba(255, 255, 255, 0.1);
+        --shelf-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
+        --status-free: #334155;
+    }
+
+    /* === Global Layout === */
+    main {
+        padding: 0 !important;
+        overflow: hidden !important;
+        height: 100vh;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .plan-container {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        background-color: var(--room-bg);
+        background-image: var(--room-gradient);
+        position: relative;
+        overflow: hidden;
+    }
+
+    /* === Controls & Tools === */
+
+    .legend {
+        display: flex;
+        gap: 1px;
+        padding: 6px 16px;
+        background: rgba(0, 0, 0, 0.03);
+        border-radius: 99px;
+        margin-right: 12px;
+    }
+
+    .legend-item {
+        display: flex;
+        align-items: center;
+        gap: 1px;
+        font-size: 0.75rem;
+        color: var(--text-secondary);
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+
+    .legend-dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.1);
+    }
+
+    .legend-dot.free {
+        background: var(--status-free);
+    }
+
+    .legend-dot.occupied {
+        background: var(--status-occupied);
+        box-shadow: 0 0 8px rgba(16, 185, 129, 0.4);
+    }
+
+    .legend-dot.full {
+        background: var(--status-full);
+        box-shadow: 0 0 8px rgba(239, 68, 68, 0.4);
+    }
+
+    /* Floating Toolbar */
+    .floating-toolbar {
+        position: sticky;
+        top: 20px;
+        z-index: 1000;
+        background: rgba(255, 255, 255, 0.9); /* Changed to white glass */
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(0, 0, 0, 0.1);
+        border-radius: 50px;
+        padding: 10px 20px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+        margin-bottom: 20px;
+        color: var(--accent-violet, #450A54); /* Dark text */
+    }
+
+    .toolbar-title {
+        font-size: 1.25rem;
+        font-weight: bold;
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .toolbar-actions {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+    }
+
+    .toolbar-btn {
+        background: rgba(69, 10, 84, 0.05); /* Light violet bg */
+        color: var(--accent-violet, #450A54);
+        border: 1px solid rgba(69, 10, 84, 0.2);
+        border-radius: 50px;
+        padding: 6px 16px;
+        font-size: 0.85rem;
+        transition: all 0.2s;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .toolbar-btn:hover {
+        background: var(--accent-violet, #450A54);
+        color: white;
+        transform: translateY(-2px);
+    }
+
+    /* Search Box */
+    .search-wrapper {
+        position: relative;
+        width: 320px;
+    }
+
+    .search-input {
+        width: 100%;
+        padding: 8px 40px 8px 40px;
+        border-radius: 50px;
+        border: 1px solid rgba(0, 0, 0, 0.1);
+        background: rgba(0, 0, 0, 0.03); /* Slightly darker bg for contrast */
+        color: var(--text-primary);
+        font-size: 0.9rem;
+        box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.05);
+        transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.27);
+    }
+
+    .search-input::placeholder {
+        color: rgba(0, 0, 0, 0.4);
+        font-weight: 400;
+    }
+
+    .search-input:focus {
+        background: #ffffff;
+        border-color: rgba(69, 10, 84, 0.5);
+        box-shadow: 0 0 15px rgba(69, 10, 84, 0.2);
+        outline: none;
+    }
+
+    .search-icon {
+        position: absolute;
+        left: 14px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: var(--accent-violet, #450A54);
+        pointer-events: none;
+        font-size: 1rem;
+        transition: 0.3s;
+        opacity: 0.7;
+    }
+
+    .search-input:focus ~ .search-icon {
+        opacity: 1;
+        transform: translateY(-50%) scale(1.1);
+    }
+
+    .search-clear {
+        position: absolute;
+        right: 14px;
+        top: 50%;
+        transform: translateY(-50%) scale(0.8);
+        color: #94a3b8;
+        cursor: pointer;
+        padding: 4px;
+        border-radius: 50%;
+        opacity: 0;
+        pointer-events: none;
+        transition: all 0.2s;
+        background: transparent;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .search-wrapper.has-text .search-clear {
+        opacity: 1;
+        pointer-events: auto;
+        transform: translateY(-50%) scale(1);
+    }
+
+    .search-clear:hover {
+        background: rgba(0, 0, 0, 0.05);
+        color: #ef4444;
+    }
+
+    [data-theme="dark"] .search-input {
+        background: rgba(0, 0, 0, 0.2);
+    }
+
+    [data-theme="dark"] .search-input:focus {
+        background: rgba(0, 0, 0, 0.5);
+    }
+
+    /* === Mode Toggle === */
+    .mode-switch {
+        display: flex;
+        align-items: center;
+        gap: 1px;
+        padding: 6px 6px 6px 14px;
+        background: var(--glass-surface);
+        border: 1px solid var(--glass-border);
+        border-radius: 30px;
+        cursor: pointer;
+        transition: 0.2s;
+        user-select: none;
+    }
+
+    .mode-switch:hover {
+        background: var(--glass-highlight);
+    }
+
+    .switch-label {
+        font-size: 0.8rem;
+        font-weight: 600;
+        color: var(--text-secondary);
+    }
+
+    .toggle-checkbox {
+        display: none;
+    }
+
+    .toggle-track {
+        position: relative;
+        width: 44px;
+        height: 24px;
+        background: var(--status-free);
+        border-radius: 24px;
+        transition: 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+
+    .toggle-track::after {
+        content: '';
+        position: absolute;
+        top: 2px;
+        left: 2px;
+        width: 20px;
+        height: 20px;
+        background: white;
+        border-radius: 50%;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        transition: 0.3s;
+    }
+
+    .toggle-checkbox:checked+.toggle-track {
+        background: var(--accent);
+    }
+
+    .toggle-checkbox:checked+.toggle-track::after {
+        transform: translateX(20px);
+    }
+
+    /* === ROOM GRID LAYOUT === */
+    .plan-body {
+        flex: 1;
+        position: relative;
+        overflow: auto;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        padding: 10px;
+    }
+
+    .archive-room {
+        display: grid;
+        width: fit-content;
+        height: auto;
+        grid-template-columns: min-content min-content min-content;
+        grid-template-rows: min-content min-content min-content;
+        gap: 1px;
+        margin: auto;
+    }
+
+    /* Zones */
+    .zone {
+        position: relative;
+        border-radius: 2px;
+        transition: all 0.3s ease;
+        padding: 4px;
+    }
+
+    /* Edit Mode Visuals */
+    body.edit-mode-active .zone {
+        background: rgba(124, 58, 237, 0.05);
+        border: 2px dashed rgba(124, 58, 237, 0.3);
+    }
+
+    body.edit-mode-active .archive-room {
+        /* Grid Editor Visualization */
+        grid-template-columns: repeat(6, 1fr) !important;
+        grid-template-rows: repeat(6, 150px) !important;
+        background-size: 16.66% 16.66%;
+        background-image:
+            linear-gradient(to right, rgba(124, 58, 237, 0.1) 1px, transparent 1px),
+            linear-gradient(to bottom, rgba(124, 58, 237, 0.1) 1px, transparent 1px);
+        min-height: 800px;
+        border: 2px solid var(--glass-border);
+    }
+
+    .is-dragging {
+        opacity: 0.8;
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2) !important;
+        border-color: var(--accent) !important;
+        z-index: 1000 !important;
+    }
+
+    body.edit-mode-active .zone::after {
+        content: attr(data-zone-name);
+        position: absolute;
+        top: -10px;
+        left: 10%;
+        transform: translateX(-50%);
+        background: var(--accent);
+        color: white;
+        font-size: 0.7rem;
+        padding: 2px 8px;
+        border-radius: 4px;
+        font-weight: bold;
+        opacity: 0.8;
+        pointer-events: none;
+        white-space: nowrap;
+    }
+
+    /* droite */
+    .zone-west {
+        grid-area: 2 / 4 / 5 / 5;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-evenly;
+        align-items: stretch;
+        gap: 1px;
+    }
+
+    .zone-west,
+    .zone-east {
+        grid-area: 2 / 5 / 4 / 6;
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-start;
+        align-items: stretch;
+        gap: 1px;
+        padding: 0 !important;
+    }
+
+    /* gauche */
+    .zone-east {
+        grid-area: 2 / 1 / 5 / 2;
+
+    }
+
+    .zone-north-container {
+        grid-area: 1 / 1 / 2 / 5;
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr;
+        gap: 1px;
+    }
+
+    .zone-north-left,
+    .zone-north-center,
+    .zone-north-right {
+        display: flex;
+        justify-content: center;
+        /* Pack them tight */
+        align-items: stretch;
+        gap: 1px;
+        /* Added gap */
+        height: 100%;
+        padding: 0 !important;
+    }
+
+    .zone-south-container {
+        grid-area: 4 / 1 / 5 / 5;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+
+    .zone-south-east {
+        display: flex;
+        gap: 1px;
+        justify-content: center;
+        width: 100%;
+    }
+
+    .zone-center {
+        grid-area: 2 / 2 / 4 / 5;
+        background: rgba(255, 255, 255, 0.02);
+        border-radius: 20px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        gap: 1px;
+        padding: 1px;
+    }
+
+    .center-row,
+    .center-subzone {
+        gap: 1px;
+    }
+
+    /* === ADD SHELF BUTTONS === */
+    .add-shelf-btn {
+        display: none;
+        flex: 1;
+        min-height: 40px;
+        background: rgba(255, 255, 255, 0.1);
+        border: 2px dashed var(--accent);
+        border-radius: 8px;
+        color: var(--accent);
+        font-size: 1.2rem;
+        cursor: pointer;
+        transition: all 0.2s;
+        justify-content: center;
+        align-items: center;
+        font-weight: 700;
+    }
+
+    body.edit-mode-active .add-shelf-btn {
+        display: flex;
+        opacity: 0.6;
+    }
+
+    .add-shelf-btn:hover {
+        opacity: 1;
+        background: rgba(124, 58, 237, 0.1);
+        transform: scale(1.05);
+    }
+
+    /* === MODALS === */
+    .custom-modal {
+        display: none;
+        position: fixed;
+        inset: 0;
+        z-index: 2000;
+        background: rgba(0, 0, 0, 0.6);
+        backdrop-filter: blur(8px);
+        align-items: center;
+        justify-content: center;
+    }
+
+    .custom-modal.show {
+        display: flex;
+        animation: fadeIn 0.2s ease-out;
+    }
+
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+        }
+
+        to {
+            opacity: 1;
+        }
+    }
+
+    .modal-content {
+        background: var(--glass-surface);
+        border: 1px solid var(--glass-border);
+        border-radius: 16px;
+        padding: 24px;
+        width: 90%;
+        max-width: 500px;
+        box-shadow: var(--glass-shadow);
+        backdrop-filter: blur(20px);
+        transform: translateY(0);
+        animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    @keyframes slideUp {
+        from {
+            transform: translateY(20px);
+            opacity: 0;
+        }
+
+        to {
+            transform: translateY(0);
+            opacity: 1;
+        }
+    }
+
+    .modal-header {
+        margin-bottom: 20px;
+    }
+
+    .modal-header h3 {
+        margin: 5px;
+        font-size: 1.3rem;
+    }
+
+    .form-group {
+        margin-bottom: 16px;
+    }
+
+    .form-label {
+        display: block;
+        margin-bottom: 6px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        color: var(--text-secondary);
+    }
+
+    .form-input {
+        width: 100%;
+        padding: 10px 12px;
+        border-radius: 8px;
+        border: 1px solid var(--glass-border);
+        background: rgba(255, 255, 255, 0.5);
+        color: var(--text-primary);
+        font-size: 0.95rem;
+        transition: all 0.2s;
+    }
+
+    [data-theme="dark"] .form-input {
+        background: rgba(0, 0, 0, 0.3);
+    }
+
+    .form-input:focus {
+        outline: none;
+        border-color: var(--accent);
+        box-shadow: 0 0 0 3px var(--accent-glow);
+    }
+
+    .form-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1px;
+    }
+
+    .modal-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 1px;
+        margin-top: 24px;
+    }
+
+    .btn {
+        padding: 10px 20px;
+        border-radius: 8px;
+        font-weight: 600;
+        cursor: pointer;
+        border: none;
+        font-size: 0.9rem;
+        transition: all 0.2s;
+    }
+
+    .btn-primary {
+        background: var(--accent);
+        color: white;
+        box-shadow: 0 4px 10px var(--accent-glow);
+    }
+
+    .btn-primary:hover {
+        background: var(--accent-hover);
+        transform: translateY(-1px);
+    }
+
+    .btn-danger {
+        background: #ef4444;
+        color: white;
+    }
+
+    .btn-danger:hover {
+        background: #dc2626;
+    }
+
+    .btn-cancel {
+        background: transparent;
+        color: var(--text-secondary);
+        border: 1px solid var(--glass-border);
+    }
+
+    .btn-cancel:hover {
+        background: rgba(0, 0, 0, 0.05);
+    }
+
+    /* === SHELF COMPONENT (Fixed) === */
+    .shelf {
+        position: relative;
+        background: var(--shelf-bg);
+        border: 1px solid var(--shelf-border);
+        border-radius: 8px;
+        padding: 8px;
+        box-shadow: var(--shelf-shadow);
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        cursor: pointer;
+        display: flex;
+        flex-direction: column;
+        gap: 1px;
+        backdrop-filter: blur(4px);
+        width: fit-content;
+        /* Hug the grid content */
+        /* Hug the grid content */
+        margin: 0 !important;
+        /* Remove external margins */
+        /* min-width removed to prevent oversized single-col shelves */
+        /* Ensure visibility */
+        min-height: 60px;
+        border-radius: 0;
+        /* Remove radius for seamless look */
+    }
+
+    .shelf:first-child {
+        border-top-left-radius: 8px;
+        border-bottom-left-radius: 8px;
+    }
+
+    .shelf:last-child {
+        border-top-right-radius: 8px;
+        border-bottom-right-radius: 8px;
+    }
+
+    .zone-west .shelf,
+    .zone-east .shelf {
+        /* Vertical stacks reset radii */
+        border-radius: 0;
+    }
+
+    .zone-west .shelf:first-child,
+    .zone-east .shelf:first-child {
+        border-top-left-radius: 8px;
+        border-top-right-radius: 8px;
+    }
+
+    .zone-west .shelf:last-child,
+    .zone-east .shelf:last-child {
+        border-bottom-left-radius: 8px;
+        border-bottom-right-radius: 8px;
+    }
+
+    .shelf:hover {
+        transform: translateY(-4px) scale(1.02);
+        background: var(--shelf-hover-bg);
+        box-shadow: 0 12px 20px -5px rgba(0, 0, 0, 0.15);
+        border-color: var(--accent);
+        z-index: 10;
+    }
+
+    .shelf-header {
+        font-size: 0.8rem;
+        font-weight: 800;
+        text-align: center;
+        color: var(--text-secondary);
+        letter-spacing: 0.05em;
+        text-shadow: 0 1px 0 rgba(255, 255, 255, 0.5);
+    }
+
+    [data-theme="dark"] .shelf-header {
+        text-shadow: none;
+    }
+
+    .shelf:hover .shelf-header {
+        color: var(--accent);
+    }
+
+    .shelf-grid {
+        display: grid;
+        gap: 1px;
+        width: 100%;
+        height: auto;
+    }
+
+    .shelf-cell {
+        background: var(--status-free);
+        border-radius: 3px;
+        height: 20px;
+        /* Agrandir height */
+        width: 100%;
+        transition: 0.2s;
+        opacity: 0.8;
+        box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.1);
+        border: 1px solid rgba(0, 0, 0, 0.05);
+    }
+
+    .shelf:hover .shelf-cell {
+        opacity: 0.9;
+    }
+
+    .shelf-cell.occupied {
+        background: var(--status-occupied);
+        box-shadow: 0 0 6px rgba(16, 185, 129, 0.5), inset 0 1px 2px rgba(255, 255, 255, 0.2);
+    }
+
+    .shelf-cell.full {
+        background: var(--status-full);
+        box-shadow: 0 0 6px rgba(239, 68, 68, 0.5), inset 0 1px 2px rgba(255, 255, 255, 0.2);
+    }
+
+    /* Vertical Shelves */
+    .shelf-vertical {
+        flex-direction: row;
+        align-items: center;
+    }
+
+    .shelf-vertical .shelf-header {
+        writing-mode: vertical-rl;
+        text-orientation: mixed;
+        transform: rotate(180deg);
+        margin-left: 4px;
+        margin-bottom: 0;
+    }
+
+    /* Edit Mode Highlights */
+    body.edit-mode-active .shelf {
+        border: 2px dashed var(--accent);
+        background: rgba(124, 58, 237, 0.05);
+        animation: pulseBorder 2s infinite;
+    }
+
+    @keyframes pulseBorder {
+        0% {
+            border-color: rgba(124, 58, 237, 0.3);
+        }
+
+        50% {
+            border-color: rgba(124, 58, 237, 0.8);
+        }
+
+        100% {
+            border-color: rgba(124, 58, 237, 0.3);
+        }
+    }
+
+    /* Responsive */
+    @media (max-width: 1024px) {
+        .legend {
+            display: none;
+        }
+
+        .search-wrapper {
+            width: 200px;
+        }
+    }
+
+    @media (max-width: 768px) {
+        .archive-room {
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+            padding-bottom: 100px;
+        }
+
+        .zone {
+            min-height: 150px;
+        }
+    }
+
+    /* Loading indicator */
+    .loading-overlay {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: 3000;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .loading-overlay.active {
+        display: flex;
+    }
+
+    .spinner {
+        width: 48px;
+        height: 48px;
+        border: 4px solid rgba(255, 255, 255, 0.3);
+        border-top-color: white;
+        border-radius: 50%;
+        animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin {
+        to {
+            transform: rotate(360deg);
+        }
+    }
+
+    .view-zone-btn {
+        position: absolute;
+        top: -12px;
+        right: -12px;
+        background: var(--accent);
+        color: white;
+        border-radius: 50%;
+        width: 32px;
+        height: 32px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        font-size: 0.85rem;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+        opacity: 0;
+        transition: 0.2s;
+        z-index: 20;
+        text-decoration: none;
+    }
+
+    .zone:hover .view-zone-btn {
+        opacity: 1;
+        transform: scale(1.1);
+    }
+
+    .view-zone-btn:hover {
+        background: var(--accent-hover);
+        color: white;
+    }
+
+    body.edit-mode-active .view-zone-btn {
+        display: none !important;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="plan-container">
+    <!-- Floating Toolbar En-tête -->
+    <div class="floating-toolbar">
+        <h4 class="toolbar-title" style="color: var(--accent-violet, #450A54);">
+            <i class="fas fa-map" style="color: var(--accent-violet, #450A54); opacity: 0.8;"></i> Plan des Archives
+        </h4>
+
+        <div class="toolbar-actions">
+            <!-- Mode Switch -->
+            <label class="mode-switch mb-0" title="Activer le mode édition" style="margin-right: 10px;">
+                <span class="switch-label text-dark fw-bold" style="font-size: 0.8rem;">Édition</span>
+                <input type="checkbox" id="editModeToggle" class="toggle-checkbox">
+                <div class="toggle-track"></div>
+            </label>
+
+            <!-- Search -->
+            <div class="search-wrapper" id="searchWrapper">
+                <input type="text" id="searchInput" class="search-input"
+                    placeholder="Patient, Boîte, Réf..." aria-label="Rechercher" autocomplete="off">
+                <i class="fas fa-search search-icon"></i>
+                <div class="search-clear" id="searchClearBtn" title="Effacer la recherche" style="color: #ef4444;">
+                    <i class="fas fa-times"></i>
+                </div>
+            </div>
+
+            <!-- Navigation -->
+            <a href="{{ url_for('archivage_dossiers_cliniques') }}" class="toolbar-btn">
+                <i class="fas fa-folder-open"></i> Dossiers
+            </a>
+            <a href="{{ url_for('archivage_index') }}" class="toolbar-btn">
+                <i class="fas fa-arrow-left"></i> Retour
+            </a>
+            
+            <button id="saveLayoutBtn" class="toolbar-btn" style="display:none; background: #10b981; border-color: #10b981; color: white;" onclick="saveLayout()">
+                <i class="fas fa-save"></i> Sauvegarder
+            </button>
+        </div>
+    </div>
+
+    <!-- Plan Body -->
+    <div class="plan-body">
+        {% set z_gauche = [] %}
+        {% set z_droite = [] %}
+        {% set z_haut = [] %}
+        {% set z_face_gauche = [] %}
+        {% set z_face_milieu = [] %}
+        {% set z_face_droite = [] %}
+        {% set z_centre_face = [] %}
+        {% set z_centre_dos = [] %}
+        {% set z_centre = [] %}
+        {% set z_entree_gauche = [] %}
+        {% set z_entree_droite = [] %}
+        {% set z_bas = [] %}
+
+        {% for name, shelves in zones.items() %}
+        {% set n = name|lower %}
+
+        {# 1. Face (North) Left/Right/Middle #}
+        {% if 'face' in n and 'gauche' in n %}
+        {% set _ = z_face_gauche.extend(shelves) %}
+        {% elif 'face' in n and ('milieu' in n or 'millieur' in n or 'centre' in n) and 'centre' not in n %} {# Avoid
+        confusion with Centre Face #}
+        {% set _ = z_face_milieu.extend(shelves) %}
+        {% elif 'face' in n and ('droit' in n or 'droite' in n) %}
+        {% set _ = z_face_droite.extend(shelves) %}
+
+        {# 2. Centre Face/Dos #}
+        {% elif 'centre' in n and 'face' in n %}
+        {% set _ = z_centre_face.extend(shelves) %}
+        {% elif 'centre' in n and 'dos' in n %}
+        {% set _ = z_centre_dos.extend(shelves) %}
+
+        {# 3. Entrée (South) Left/Right - MUST BE CHECKED BEFORE GENERIC GAUCHE/DROITE #}
+        {% elif ('entrée' in n or 'entree' in n) and 'gauche' in n %}
+        {% set _ = z_entree_gauche.extend(shelves) %}
+        {% elif ('entrée' in n or 'entree' in n) and ('droit' in n or 'droite' in n) %}
+        {% set _ = z_entree_droite.extend(shelves) %}
+
+        {# 4. Generic Sides #}
+        {% elif 'gauche' in n %}
+        {% set _ = z_gauche.extend(shelves) %}
+        {% elif ('droit' in n or 'droite' in n) and 'face' not in n %}
+        {% set _ = z_droite.extend(shelves) %}
+
+        {# 5. Generic Others #}
+        {% elif 'face' in n %}
+        {% set _ = z_haut.extend(shelves) %}
+        {% elif 'entrée' in n or 'entree' in n %}
+        {% set _ = z_bas.extend(shelves) %}
+        {% else %}
+        {% set _ = z_centre.extend(shelves) %}
+        {% endif %}
+        {% endfor %}
+
+        {% set milieu_centre = (z_centre|length / 2)|round(0, 'ceil')|int %}
+
+        <div class="archive-room">
+            <!-- Zone Face (Split L/R) -->
+            <div id="zone-north-container" class="zone-north-container draggable-zone"
+                style="grid-area: {{ layout_config.get('zone-north-container', '') }}">
+                <div class="zone zone-north-left" data-zone-name="Face Gauche">
+                    <a href="{{ url_for('archivage_detail_zone', nom_zone='Face Gauche') }}" class="view-zone-btn"
+                        title="Ouvrir la zone Face Gauche"><i class="fas fa-expand-arrows-alt"></i></a>
+                    <div class="add-shelf-btn" onclick="openNewShelfModal('Face Gauche')" title="Ajouter un rayonnage">+
+                    </div>
+                    {% for r in z_face_gauche %}
+                    {% with rayonnage=r, type='horizontal' %}
+                    {% include "archivage/fragments/_shelf_render.html" %}
+                    {% endwith %}
+                    {% endfor %}
+                    <!-- If generic "Face" shelves exist without specific side, put half here -->
+                    {% set milieu_haut = (z_haut|length / 2)|round(0, 'ceil')|int %}
+                    {% for r in z_haut[:milieu_haut] %}
+                    {% with rayonnage=r, type='horizontal' %}
+                    {% include "archivage/fragments/_shelf_render.html" %}
+                    {% endwith %}
+                    {% endfor %}
+                </div>
+
+                <!-- Face Milieu -->
+                <div class="zone zone-north-center" data-zone-name="Face Milieu"
+                    style="border-left: 1px dashed rgba(255,255,255,0.1); border-right: 1px dashed rgba(255,255,255,0.1);">
+                    <a href="{{ url_for('archivage_detail_zone', nom_zone='Face Milieu') }}" class="view-zone-btn"
+                        title="Ouvrir la zone Face Milieu"><i class="fas fa-expand-arrows-alt"></i></a>
+                    <div class="add-shelf-btn" onclick="openNewShelfModal('Face Milieu')" title="Ajouter Face Milieu">+
+                    </div>
+                    {% for r in z_face_milieu %}
+                    {% with rayonnage=r, type='vertical' %}
+                    {% include "archivage/fragments/_shelf_render.html" %}
+                    {% endwith %}
+                    {% endfor %}
+                </div>
+
+                <div class="zone zone-north-right" data-zone-name="Face Droite">
+                    <a href="{{ url_for('archivage_detail_zone', nom_zone='Face Droite') }}" class="view-zone-btn"
+                        title="Ouvrir la zone Face Droite"><i class="fas fa-expand-arrows-alt"></i></a>
+                    <!-- Generic "Face" shelves - second half -->
+                    {% for r in z_haut[milieu_haut:] %}
+                    {% with rayonnage=r, type='horizontal' %}
+                    {% include "archivage/fragments/_shelf_render.html" %}
+                    {% endwith %}
+                    {% endfor %}
+
+                    {% for r in z_face_droite %}
+                    {% with rayonnage=r, type='horizontal' %}
+                    {% include "archivage/fragments/_shelf_render.html" %}
+                    {% endwith %}
+                    {% endfor %}
+                    <div class="add-shelf-btn" onclick="openNewShelfModal('Face Droite')" title="Ajouter un rayonnage">+
+                    </div>
+                </div>
+            </div>
+
+            <!-- Zone Gauche -->
+            <div id="zone-west" class="zone zone-west draggable-zone" data-zone-name="Gauche"
+                style="grid-area: {{ layout_config.get('zone-west', '') }}">
+                <a href="{{ url_for('archivage_detail_zone', nom_zone='Gauche') }}" class="view-zone-btn"
+                    title="Ouvrir la zone Gauche"><i class="fas fa-expand-arrows-alt"></i></a>
+                <div class="add-shelf-btn" onclick="openNewShelfModal('Gauche')" title="Ajouter un rayonnage">+</div>
+                {% for r in z_gauche %}
+                {% with rayonnage=r, type='vertical' %}
+                {% include "archivage/fragments/_shelf_render.html" %}
+                {% endwith %}
+                {% endfor %}
+            </div>
+
+            <!-- Center -->
+            <div id="zone-center" class="zone zone-center draggable-zone" data-zone-name="Centre"
+                style="display: flex; flex-direction: column; justify-content: space-around; gap: 1px; grid-area: {{ layout_config.get('zone-center', '') }}">
+
+                <!-- Centre Dos (Derrière) -->
+                <div class="zone center-subzone" data-zone-name="Centre Dos"
+                    style="width: 100%; display: flex; justify-content: center; align-items: center; gap: 1px; padding: 1px; border-bottom: 1px dashed rgba(255,255,255,0.1); position: relative;">
+                    <a href="{{ url_for('archivage_detail_zone', nom_zone='Centre Dos') }}" class="view-zone-btn"
+                        title="Ouvrir la zone Centre Dos"><i class="fas fa-expand-arrows-alt"></i></a>
+                    <div class="add-shelf-btn" style="min-width: 40px; height: 100%;"
+                        onclick="openNewShelfModal('Centre Dos')" title="Ajouter Centre Dos">+</div>
+                    {% for r in z_centre_dos %}
+                    {% with rayonnage=r, type='horizontal' %}
+                    {% include "archivage/fragments/_shelf_render.html" %}
+                    {% endwith %}
+                    {% endfor %}
+                </div>
+
+                <!-- Centre Reste (Fallback) -->
+                {% if z_centre %}
+                <div class="center-subzone"
+                    style="width: 100%; display: flex; justify-content: center; align-items: center; gap: 1px;">
+                    {% for r in z_centre %}
+                    {% with rayonnage=r, type='horizontal' %}
+                    {% include "archivage/fragments/_shelf_render.html" %}
+                    {% endwith %}
+                    {% endfor %}
+                </div>
+                {% endif %}
+
+                <!-- Centre Face (Devant) -->
+                <div class="zone center-subzone" data-zone-name="Centre Face"
+                    style="width: 100%; display: flex; justify-content: center; align-items: center; gap: 1px; padding: 1px; border-top: 1px dashed rgba(255,255,255,0.1); position: relative;">
+                    <a href="{{ url_for('archivage_detail_zone', nom_zone='Centre Face') }}" class="view-zone-btn"
+                        title="Ouvrir la zone Centre Face"><i class="fas fa-expand-arrows-alt"></i></a>
+                    {% for r in z_centre_face %}
+                    {% with rayonnage=r, type='horizontal' %}
+                    {% include "archivage/fragments/_shelf_render.html" %}
+                    {% endwith %}
+                    {% endfor %}
+                    <div class="add-shelf-btn" style="min-width: 40px; height: 100%;"
+                        onclick="openNewShelfModal('Centre Face')" title="Ajouter Centre Face">+</div>
+                </div>
+
+            </div>
+
+            <!-- Zone Droite -->
+            <div id="zone-east" class="zone zone-east draggable-zone" data-zone-name="Droite"
+                style="grid-area: {{ layout_config.get('zone-east', '') }}">
+                <a href="{{ url_for('archivage_detail_zone', nom_zone='Droite') }}" class="view-zone-btn"
+                    title="Ouvrir la zone Droite"><i class="fas fa-expand-arrows-alt"></i></a>
+                <div class="add-shelf-btn" onclick="openNewShelfModal('Droite')" title="Ajouter un rayonnage">+</div>
+                {% for r in z_droite %}
+                {% with rayonnage=r, type='vertical' %}
+                {% include "archivage/fragments/_shelf_render.html" %}
+                {% endwith %}
+                {% endfor %}
+            </div>
+
+            <!-- Zone Entrée -->
+            <div id="zone-south-container" class="zone-south-container draggable-zone"
+                style="display: flex; gap: 1px; width: 100%; grid-area: {{ layout_config.get('zone-south-container', '') }}">
+
+                <!-- Entrée Gauche -->
+                <div class="zone zone-south-left" data-zone-name="Entrée Gauche"
+                    style="flex: 1; display: flex; justify-content: center; gap: 1px; padding: 1px; border-right: 1px dashed rgba(255,255,255,0.1);">
+                    <a href="{{ url_for('archivage_detail_zone', nom_zone='Entrée Gauche') }}" class="view-zone-btn"
+                        title="Ouvrir la zone Entrée Gauche"><i class="fas fa-expand-arrows-alt"></i></a>
+                    <div class="add-shelf-btn" onclick="openNewShelfModal('Entrée Gauche')"
+                        title="Ajouter Entrée Gauche">+</div>
+                    {% for r in z_entree_gauche %}
+                    {% with rayonnage=r, type='horizontal' %}
+                    {% include "archivage/fragments/_shelf_render.html" %}
+                    {% endwith %}
+                    {% endfor %}
+
+                    <!-- Split generic Entrée (Left Half) -->
+                    {% set milieu_bas = (z_bas|length / 2)|round(0, 'ceil')|int %}
+                    {% for r in z_bas[:milieu_bas] %}
+                    {% with rayonnage=r, type='horizontal' %}
+                    {% include "archivage/fragments/_shelf_render.html" %}
+                    {% endwith %}
+                    {% endfor %}
+                </div>
+
+                <!-- Entrée Droite -->
+                <div class="zone zone-south-right" data-zone-name="Entrée Droite"
+                    style="flex: 1; display: flex; justify-content: center; gap: 1px; padding: 1px;">
+                    <a href="{{ url_for('archivage_detail_zone', nom_zone='Entrée Droite') }}" class="view-zone-btn"
+                        title="Ouvrir la zone Entrée Droite"><i class="fas fa-expand-arrows-alt"></i></a>
+                    <!-- Split generic Entrée (Right Half) -->
+                    {% for r in z_bas[milieu_bas:] %}
+                    {% with rayonnage=r, type='horizontal' %}
+                    {% include "archivage/fragments/_shelf_render.html" %}
+                    {% endwith %}
+                    {% endfor %}
+
+                    {% for r in z_entree_droite %}
+                    {% with rayonnage=r, type='horizontal' %}
+                    {% include "archivage/fragments/_shelf_render.html" %}
+                    {% endwith %}
+                    {% endfor %}
+                    <div class="add-shelf-btn" onclick="openNewShelfModal('Entrée Droite')"
+                        title="Ajouter Entrée Droite">+</div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Shelf Modal -->
+<div id="editShelfModal" class="custom-modal" role="dialog" aria-labelledby="editModalTitle" aria-hidden="true">
+    <div class="modal-content" style="width: 95%; max-width: 1100px;">
+        <div class="modal-header" style="background-color: var(--primary); color: white;">
+            <h3 id="editModalTitle">Modifier Rayonnage</h3>
+            <button type="button" class="btn-close-white" onclick="closeEditModal()"
+                style="background:none; border:none; color:white; font-size:1.5rem;"
+                id="plan_visuel_button_1">&times;</button>
+        </div>
+        <form action="{{ url_for('archivage_modifier_rayonnage') }}" method="POST" onsubmit="return validateEditForm()">
+            <input type="hidden" name="id" id="edit_shelf_id">
+
+            <div class="row g-4">
+                <!-- COLONNE GAUCHE: Paramètres Généraux -->
+                <div class="col-md-4 border-end">
+                    <h5 class="mb-3 text-secondary"><i class="fas fa-sliders-h me-2"></i>Général</h5>
+
+                    <div class="form-group mb-3">
+                        <label class="form-label" for="edit_shelf_zone">Zone</label>
+                        <input type="text" name="nom_zone" id="edit_shelf_zone" class="form-input" readonly
+                            style="background-color: var(--background-secondary); cursor: not-allowed; color: var(--text-secondary);">
+                    </div>
+
+                    <div class="form-row mb-3">
+                        <div class="form-group col me-2">
+                            <label class="form-label" for="edit_shelf_rows">Lignes</label>
+                            <input type="number" name="nb_lignes" id="edit_shelf_rows" class="form-input" min="1"
+                                max="30" required onchange="generateRowConfigRows()">
+                        </div>
+                        <div class="form-group col">
+                            <label class="form-label" for="edit_shelf_width">Largeur (cm)</label>
+                            <input type="number" name="largeur_cm" id="edit_shelf_width" class="form-input" min="10"
+                                max="500" value="100" required>
+                        </div>
+                    </div>
+
+                    <div class="form-group mb-3">
+                        <label class="form-label" for="edit_shelf_specialty">Spécialité Réservée</label>
+                        <select name="id_specialty[]" id="edit_shelf_specialty" class="form-select specialty-multiple"
+                            multiple>
+                            {% for s in all_specialties %}
+                            <option value="{{ s.id_specialty }}">{{ s.name_specialty }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="form-row mb-3">
+                        <div class="form-group col me-2">
+                            <label class="form-label" for="edit_shelf_interne">Type Médecin</label>
+                            <select name="est_interne" id="edit_shelf_interne" class="form-input">
+                                <option value="0">Externe</option>
+                                <option value="1">Interne</option>
+                            </select>
+                        </div>
+                        <div class="form-group col">
+                            <label class="form-label" for="edit_shelf_partageable">Partage</label>
+                            <select name="est_partageable" id="edit_shelf_partageable" class="form-input">
+                                <option value="1">Oui</option>
+                                <option value="0">Non</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- COLONNE DROITE: Configuration des Lignes -->
+                <div class="col-md-8">
+                    <h5 class="mb-3 text-secondary d-flex justify-content-between align-items-center">
+                        <span><i class="fas fa-layer-group me-2"></i>Configuration par Étage</span>
+                        <small class="text-muted" style="font-size:0.6em; font-weight:normal;">(Modifiez le nombre de
+                            lignes à gauche pour mettre à jour)</small>
+                    </h5>
+
+                    <div id="row-config-loading" class="text-center py-5 text-muted" style="display:none;">
+                        <i class="fas fa-spinner fa-spin fa-2x"></i>
+                        <p class="mt-2">Chargement de la configuration...</p>
+                    </div>
+
+                    <div id="row-config-container"
+                        style="max-height: 450px; overflow-y: auto; overflow-x: hidden; padding-right: 5px;">
+                        <table class="table table-sm table-hover align-middle mb-0" style="width:100%;">
+                            <thead class="bg-light text-muted small sticky-top">
+                                <tr>
+                                    <th style="width: 50px;" class="text-center">Étage</th>
+                                    <th>Médecins Autorisés</th>
+                                    <th style="width: 140px;">Mode</th>
+                                </tr>
+                            </thead>
+                            <tbody id="row-config-tbody">
+                                <!-- Generated by JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal-actions mt-4 pt-3 border-top">
+                <a href="#" id="delete_shelf_btn" class="btn btn-danger" style="margin-right: auto;"
+                    onclick="return confirm('Êtes-vous sûr de vouloir supprimer ce rayonnage ? Cette action est irréversible.');">
+                    <i class="fas fa-trash"></i> Supprimer
+                </a>
+
+                <button type="button" class="btn btn-cancel" onclick="closeEditModal()"
+                    id="plan_visuel_button_2">Annuler</button>
+                <button type="submit" class="btn btn-primary px-4" id="plan_visuel_button_3">Enregistrer Tout</button>
+            </div>
+        </form>
+
+        <!-- Choices.js -->
+        <link rel="stylesheet" href="{{ url_for('static', filename='css/choices.min.css') }}" />
+        <script src="{{ url_for('static', filename='js/choices.min.js') }}"></script>
+
+        <!-- HIDDEN: Template for Doctor Select -->
+        <select id="doctor_select_template_source" style="display:none">
+            {% for doc in all_doctors %}
+            <option value="{{ doc.id }}">
+                Dr. {{ doc.last_name }} {{ doc.first_name }}
+                {% if doc.name_specialty %}- {{ doc.name_specialty }}{% endif %}
+            </option>
+            {% endfor %}
+        </select>
+    </div>
+</div>
+
+<!-- New Shelf Modal -->
+<div id="newShelfModal" class="custom-modal" role="dialog" aria-labelledby="newModalTitle" aria-hidden="true">
+    <div class="modal-content">
+        <div class="modal-header" style="background-color: var(--accent); color: white;">
+            <h3 id="newModalTitle">Nouveau Rayonnage <span id="display_new_zone"></span>
+            </h3>
+        </div>
+        <form action="{{ url_for('archivage_nouveau_rayonnage') }}" method="POST" onsubmit="return validateNewForm()">
+            <input type="hidden" name="redirect_to" value="plan" id="plan_visuel_input_4">
+            <input type="hidden" name="nom_zone" id="new_shelf_zone">
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label class="form-label" for="new_shelf_rows">Lignes</label>
+                    <input type="number" name="nb_lignes" id="new_shelf_rows" class="form-input" value="7" min="1"
+                        max="13" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="new_shelf_width">Largeur (cm)</label>
+                    <input type="number" name="largeur_cm" id="new_shelf_width" class="form-input" value="100" min="10"
+                        max="500" required>
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label class="form-label" for="new_shelf_specialty">Spécialité Réservée</label>
+                    <select name="id_specialty[]" id="new_shelf_specialty" class="form-select specialty-multiple"
+                        multiple>
+                        {% for s in all_specialties %}
+                        <option value="{{ s.id_specialty }}">{{ s.name_specialty }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="new_shelf_interne">Type Médecin</label>
+                    <select name="est_interne" id="new_shelf_interne" class="form-input">
+                        <option value="0">Externe</option>
+                        <option value="1">Interne</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="new_shelf_partageable">Cellules partagées (Plusieurs Médecins)</label>
+                <select name="est_partageable" id="new_shelf_partageable" class="form-input">
+                    <option value="1" selected>Oui (Optimisé)</option>
+                    <option value="0">Non (1 Cellule = 1 Médecin)</option>
+                </select>
+            </div>
+
+            <div class="modal-actions">
+                <button type="button" class="btn btn-cancel" onclick="closeNewShelfModal()"
+                    id="plan_visuel_button_5">Annuler</button>
+                <button type="submit" class="btn btn-primary" id="plan_visuel_button_6">Créer</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Loading Overlay -->
+<div class="loading-overlay" id="loadingOverlay">
+    <div class="spinner"></div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<!-- Interact.js for Drag & Drop -->
+<script src="{{ url_for('static', filename='js/interact.min.js') }}"></script>
+
+<script>
+    (function () {
+        // === TOAST SYSTEM ===
+        function showToast(message, type) {
+            var bg = type === 'error'
+                ? "linear-gradient(to right, #ef4444, #b91c1c)"
+                : "linear-gradient(to right, #10b981, #059669)";
+
+            if (typeof Toastify === 'function') {
+                Toastify({
+                    text: message,
+                    duration: 3000,
+                    close: true,
+                    gravity: "top",
+                    position: "center",
+                    style: { background: bg, borderRadius: "10px", boxShadow: "0 4px 12px rgba(0,0,0,0.15)" },
+                    stopOnFocus: true
+                }).showToast();
+            } else {
+                alert(message);
+            }
+        }
+
+        // === GRID EDITOR SYSTEM ===
+        var editMode = localStorage.getItem('archive_edit_mode') === 'true';
+        var editModeToggle = document.getElementById('editModeToggle');
+        var saveBtn = document.getElementById('saveLayoutBtn');
+
+        function toggleEditMode(active) {
+            editMode = active;
+            localStorage.setItem('archive_edit_mode', editMode);
+            document.body.classList.toggle('edit-mode-active', editMode);
+
+            if (saveBtn) saveBtn.style.display = editMode ? 'inline-flex' : 'none';
+
+            if (editMode) {
+                initInteract();
+                console.log('Mode Édition Activé'); // Replaced Toast to prevent spam on load
+            } else {
+                removeInteract();
+                console.log('Mode Visualisation');
+            }
+        }
+
+        if (editModeToggle) {
+            editModeToggle.checked = editMode;
+            // Delay toggle slightly to ensure DOM is ready for Interact.js if loaded as active
+            setTimeout(() => toggleEditMode(editMode), 100);
+
+            editModeToggle.addEventListener('change', function () {
+                toggleEditMode(this.checked);
+                showToast(this.checked ? 'Mode Édition Activé - Déplacez les zones' : 'Mode Visualisation', 'info');
+            });
+        }
+
+        window.saveLayout = function () {
+            var layoutData = {};
+            var zones = ['zone-north-container', 'zone-west', 'zone-center', 'zone-east', 'zone-south-container'];
+
+            zones.forEach(function (id) {
+                var el = document.getElementById(id);
+                if (el) {
+                    layoutData[id] = el.style.gridArea; // Get current style
+                }
+            });
+
+            // Send to server
+            fetch('/archivage/api/layout/save', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(layoutData)
+            })
+                .then(r => r.json())
+                .then(data => {
+                    if (data.success) {
+                        showToast('Plan sauvegardé avec succès!', 'success');
+                        setTimeout(() => location.reload(), 1000); // Reload to apply clean state
+                    } else {
+                        showToast('Erreur sauvegarde: ' + data.message, 'error');
+                    }
+                })
+                .catch(e => {
+                    console.error(e);
+                    showToast('Erreur de connexion', 'error');
+                });
+        };
+
+        // --- Interact.js Logic ---
+        function initInteract() {
+            // Define grid size for snapping
+            var gridCols = 6;
+            var gridRows = 6;
+
+            // We need to know the container size to calculate cell size
+            var container = document.querySelector('.archive-room');
+            if (!container) return;
+
+            interact('.draggable-zone')
+                .draggable({
+                    inertia: true,
+                    modifiers: [
+                        interact.modifiers.restrictRect({
+                            restriction: 'parent',
+                            endOnly: true
+                        }),
+                        interact.modifiers.snap({
+                            targets: [
+                                interact.createSnapGrid({ x: 50, y: 50 }) // Rough snapping, refinement below
+                            ],
+                            range: Infinity,
+                            relativePoints: [{ x: 0, y: 0 }]
+                        })
+                    ],
+                    autoScroll: true,
+                    listeners: {
+                        start(event) {
+                            event.target.classList.add('is-dragging');
+                        },
+                        move(event) {
+                            var target = event.target;
+                            // Keep the dragged position in the data-x/data-y attributes
+                            var x = (parseFloat(target.getAttribute('data-x')) || 0) + event.dx;
+                            var y = (parseFloat(target.getAttribute('data-y')) || 0) + event.dy;
+
+                            // Translate the element
+                            target.style.transform = 'translate(' + x + 'px, ' + y + 'px)';
+
+                            // Update the posiion attributes
+                            target.setAttribute('data-x', x);
+                            target.setAttribute('data-y', y);
+
+                            // Visual Feedback of Grid Position
+                            updateGridFeedback(target, x, y);
+                        },
+                        end(event) {
+                            event.target.classList.remove('is-dragging');
+                            applyGridPosition(event.target);
+
+                            // Reset transform so grid-area takes over
+                            event.target.style.transform = '';
+                            event.target.setAttribute('data-x', 0);
+                            event.target.setAttribute('data-y', 0);
+                        }
+                    }
+                })
+                .resizable({
+                    edges: { left: true, right: true, bottom: true, top: true },
+                    listeners: {
+                        move: function (event) {
+                            var target = event.target;
+                            var x = (parseFloat(target.getAttribute('data-x')) || 0);
+                            var y = (parseFloat(target.getAttribute('data-y')) || 0);
+
+                            // updating style
+                            target.style.width = event.rect.width + 'px';
+                            target.style.height = event.rect.height + 'px';
+
+                            // translate when resizing from top or left edges
+                            x += event.deltaRect.left;
+                            y += event.deltaRect.top;
+
+                            target.style.transform = 'translate(' + x + 'px,' + y + 'px)';
+
+                            target.setAttribute('data-x', x);
+                            target.setAttribute('data-y', y);
+                        },
+                        end(event) {
+                            applyGridPosition(event.target);
+                            event.target.style.width = '';
+                            event.target.style.height = '';
+                            event.target.style.transform = '';
+                            event.target.setAttribute('data-x', 0);
+                            event.target.setAttribute('data-y', 0);
+                        }
+                    }
+                });
+        }
+
+        function removeInteract() {
+            interact('.draggable-zone').unset();
+        }
+
+        function applyGridPosition(target) {
+            // Calculate grid area based on position relative to container
+            var container = document.querySelector('.archive-room');
+            var rect = target.getBoundingClientRect();
+            var contRect = container.getBoundingClientRect();
+
+            // Assume 6x6 grid
+            var colWidth = contRect.width / 6;
+            var rowHeight = contRect.height / 6;
+
+            var relativeX = rect.left - contRect.left;
+            var relativeY = rect.top - contRect.top;
+
+            // 1-based index
+            var colStart = Math.max(1, Math.round(relativeX / colWidth) + 1);
+            var rowStart = Math.max(1, Math.round(relativeY / rowHeight) + 1);
+
+            var colSpan = Math.max(1, Math.round(rect.width / colWidth));
+            var rowSpan = Math.max(1, Math.round(rect.height / rowHeight));
+
+            // Limit to 6
+            colStart = Math.min(6, colStart);
+            rowStart = Math.min(6, rowStart);
+
+            var colEnd = Math.min(7, colStart + colSpan);
+            var rowEnd = Math.min(7, rowStart + rowSpan);
+
+            var gridArea = `${rowStart} / ${colStart} / ${rowEnd} / ${colEnd}`;
+            target.style.gridArea = gridArea;
+
+            showToast(`${target.dataset.zoneName}: ${gridArea}`, 'info');
+        }
+
+        function updateGridFeedback(target, x, y) {
+            // Optional: Display current coordinates
+        }
+
+
+
+        // === SHELF INTERACTION ===
+        // Global exposure specifically for the HTML click attributes
+        window.handleShelfClick = function (event, element) {
+            // Prevent default if strictly necessary, but allow propagation to not block other checks
+            // event.preventDefault();
+
+            var id = element.dataset.id;
+            var href = element.dataset.href;
+
+            if (editMode) {
+                // Edit Mode: Open Modal
+                var zone = element.dataset.zone;
+                var rows = element.dataset.rows;
+                var width = element.dataset.width;
+                var specialty = element.dataset.specialties;
+                var interne = element.dataset.interne;
+                var partageable = element.dataset.partageable;
+                openEditModal(id, zone, rows, width, specialty, interne, partageable);
+            } else {
+                // View Mode: Navigate
+                window.location.href = href;
+            }
+        };
+
+        // === MODAL LOGIC ===
+        // Open Edit Modal
+        window.openEditModal = function (id, zone, rows, width, specialty, interne, partageable) {
+            document.getElementById('edit_shelf_id').value = id;
+            document.getElementById('edit_shelf_zone').value = zone;
+            document.getElementById('edit_shelf_rows').value = rows;
+            document.getElementById('edit_shelf_width').value = width || 100;
+            document.getElementById('edit_shelf_interne').value = interne || "0";
+            document.getElementById('edit_shelf_partageable').value = partageable || "1";
+
+            var specSelect = document.getElementById('edit_shelf_specialty');
+            if (specSelect && specSelect.choicesInstance) {
+                var specs = specialty ? specialty.split(',') : [];
+                specSelect.choicesInstance.removeActiveItems();
+                if (specs.length > 0) {
+                    specSelect.choicesInstance.setChoiceByValue(specs);
+                }
+            }
+
+            var deleteBtn = document.getElementById('delete_shelf_btn');
+            deleteBtn.href = "/archivage/config/rayonnages/supprimer/" + id;
+
+            // Remove old button logic if present, we use integrated table now
+            var configRowsBtn = document.getElementById('btn_config_rows');
+            if (configRowsBtn) configRowsBtn.style.display = 'none';
+
+            document.getElementById('editShelfModal').classList.add('show');
+
+            // Load Row Config
+            if (typeof loadRowConfig === 'function') {
+                loadRowConfig(id);
+            }
+        };
+
+        window.loadRowConfig = function (shelfId) {
+            var loading = document.getElementById('row-config-loading');
+            var container = document.getElementById('row-config-container');
+            var tbody = document.getElementById('row-config-tbody');
+
+            if (!loading || !container || !tbody) return;
+
+            tbody.innerHTML = '';
+            loading.style.display = 'block';
+            container.style.display = 'none';
+
+            // Reset config logic
+            window.currentShelfRowConfig = {};
+
+            fetch('/archivage/api/rayonnage/' + shelfId + '/config-lignes')
+                .then(response => response.json())
+                .then(data => {
+                    loading.style.display = 'none';
+                    container.style.display = 'block';
+                    window.currentShelfRowConfig = data;
+
+                    // Ensure doctors are loaded initially
+                    if (!window.availableDoctors || window.availableDoctors.length === 0) {
+                        initAvailableDoctors();
+                    }
+
+                    // Trigger filter immediately based on current modal inputs?
+                    fetchFilteredDoctors().then(() => {
+                        generateRowConfigRows(); // Build table AFTER doctors loaded
+                    });
+                })
+                .catch(err => {
+                    console.error(err);
+                    loading.innerHTML = '<p class="text-danger small">Erreur chargement config.</p>';
+                });
+        };
+
+        window.generateRowConfigRows = function () {
+            var numRows = parseInt(document.getElementById('edit_shelf_rows').value) || 0;
+            var tbody = document.getElementById('row-config-tbody');
+            var config = window.currentShelfRowConfig || {};
+            // We use window.availableDoctors now
+
+            if (!tbody) return;
+            tbody.innerHTML = '';
+
+            // Render from Top (max) to Bottom (1)
+            for (var i = numRows; i >= 1; i--) {
+                var rowConfig = config[i] || { medecin_ids: [], est_partageable: null };
+                var tr = document.createElement('tr');
+
+                // Create Select Element
+                // We don't render options here, Choices.js will do it from JSON
+                var doctorSelectHtml = '<select name="medecins_ligne_' + i + '" class="form-select choices-doctors-modal" multiple id="plan_visuel_select_7"></select>';
+
+                var modeSelectHtml = `
+                    <select name="partageable_ligne_${i}" class="form-select form-select-sm" style="font-size:0.85rem;" id="plan_visuel_select_8">
+                        <option value="" ${rowConfig.est_partageable === null ? 'selected' : ''}>Défaut</option>
+                        <option value="1" ${rowConfig.est_partageable === 1 ? 'selected' : ''}>Partagé</option>
+                        <option value="0" ${rowConfig.est_partageable === 0 ? 'selected' : ''}>Exclusif</option>
+                    </select>
+                `;
+
+                tr.innerHTML = `
+                    <td class="text-center fw-bold text-secondary text-nowrap">E-${i}</td>
+                    <td style="min-width: 200px;">${doctorSelectHtml}</td>
+                    <td>${modeSelectHtml}</td>
+                `;
+                tbody.appendChild(tr);
+
+                // Init Choices
+                var selectEl = tr.querySelector('.choices-doctors-modal');
+                if (selectEl) {
+                    var instance = new Choices(selectEl, {
+                        removeItemButton: true,
+                        searchEnabled: true,
+                        placeholder: true,
+                        placeholderValue: 'Rechercher médecins...',
+                        shouldSort: false, // Keep original order (Alpha)
+                        choices: window.availableDoctors || [], // Use loaded choices
+                        itemSelectText: '',
+                    });
+
+                    // Attach instance
+                    selectEl.choicesInstance = instance;
+
+                    // Set Selection
+                    if (rowConfig.medecin_ids && rowConfig.medecin_ids.length > 0) {
+                        try {
+                            instance.setChoiceByValue(rowConfig.medecin_ids);
+                        } catch (e) { console.warn("Failed to set values", e); }
+                    }
+                }
+            }
+        };
+
+        // === DOCTOR FILTER LOGIC ===
+        window.availableDoctors = [];
+
+        function initAvailableDoctors() {
+            var template = document.getElementById('doctor_select_template_source');
+            if (template) {
+                window.availableDoctors = Array.from(template.options).map(opt => ({
+                    value: parseInt(opt.value),
+                    label: opt.text.trim(),
+                    selected: false,
+                    disabled: false
+                }));
+            }
+        }
+
+        window.fetchFilteredDoctors = function () {
+            var specSelect = document.getElementById('edit_shelf_specialty');
+            var specs = [];
+
+            if (specSelect && specSelect.choicesInstance) {
+                specs = specSelect.choicesInstance.getValue(true);
+            } else if (specSelect) {
+                specs = Array.from(specSelect.selectedOptions).map(opt => opt.value);
+            }
+
+            var type = document.getElementById('edit_shelf_interne').value;
+
+            var params = new URLSearchParams();
+            if (specs && Array.isArray(specs)) {
+                specs.forEach(s => { if (s) params.append('specialty_id', s); });
+            }
+            if (type) params.append('est_interne', type);
+
+            var url = '/archivage/api/doctors/filter?' + params.toString();
+
+            return fetch(url)
+                .then(r => r.json())
+                .then(data => {
+                    // Update Global
+                    window.availableDoctors = data;
+
+                    // Update Existing Instances
+                    document.querySelectorAll('.choices-doctors-modal').forEach(el => {
+                        if (el.choicesInstance) {
+                            var inst = el.choicesInstance;
+                            // var currentSelection = inst.getValue(true);
+
+                            var merged = [...data];
+                            var currentObjects = inst.getValue();
+                            if (currentObjects && currentObjects.length) {
+                                currentObjects.forEach(obj => {
+                                    if (!merged.find(m => m.value == obj.value)) {
+                                        merged.push({ value: obj.value, label: obj.label });
+                                    }
+                                });
+                            }
+                            inst.setChoices(merged, 'value', 'label', true); // replace
+                        }
+                    });
+                });
+        };
+
+        // Listeners
+        document.addEventListener('DOMContentLoaded', function () {
+            var s1 = document.getElementById('edit_shelf_specialty');
+            var s2 = document.getElementById('edit_shelf_interne');
+            var s3 = document.getElementById('new_shelf_specialty');
+
+            if (typeof Choices !== 'undefined') {
+                if (s1) {
+                    s1.choicesInstance = new Choices(s1, {
+                        removeItemButton: true,
+                        searchEnabled: true,
+                        placeholderValue: 'Sélectionnez des spécialités...',
+                        itemSelectText: ''
+                    });
+                    s1.addEventListener('addItem', fetchFilteredDoctors);
+                    s1.addEventListener('removeItem', fetchFilteredDoctors);
+                }
+                if (s3) {
+                    s3.choicesInstance = new Choices(s3, {
+                        removeItemButton: true,
+                        searchEnabled: true,
+                        placeholderValue: 'Sélectionnez des spécialités...',
+                        itemSelectText: ''
+                    });
+                }
+            } else {
+                if (s1) s1.addEventListener('change', fetchFilteredDoctors);
+            }
+            if (s2) s2.addEventListener('change', fetchFilteredDoctors);
+
+            initAvailableDoctors();
+        });
+
+        window.closeEditModal = function () {
+            document.getElementById('editShelfModal').classList.remove('show');
+        };
+
+        // Open New Modal
+        window.openNewShelfModal = function (zoneName) {
+            if (zoneName) {
+                document.getElementById('new_shelf_zone').value = zoneName;
+                document.getElementById('display_new_zone').innerText = zoneName;
+            }
+            document.getElementById('newShelfModal').classList.add('show');
+        };
+
+        window.closeNewShelfModal = function () {
+            document.getElementById('newShelfModal').classList.remove('show');
+        };
+
+        // Click Outside to Close
+        window.onclick = function (event) {
+            if (event.target.classList.contains('custom-modal')) {
+                event.target.classList.remove('show');
+            }
+        };
+
+        // === SEARCH LOGIC ===
+        var searchInput = document.getElementById('searchInput');
+        var searchWrapper = document.getElementById('searchWrapper');
+        var searchClearBtn = document.getElementById('searchClearBtn');
+        var searchDebounce;
+
+        // Add dynamic styles for search visually
+        if (!document.getElementById('search-styles-plan')) {
+            const style = document.createElement('style');
+            style.id = 'search-styles-plan';
+            style.innerHTML = `
+                .shelf { transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.27) !important; }
+                .shelf.dimmed-shelf {
+                    opacity: 0.3 !important;
+                    filter: grayscale(80%) !important;
+                    pointer-events: none !important;
+                }
+                .shelf.highlight-shelf {
+                    border-color: var(--accent-violet, #450A54) !important;
+                    box-shadow: 0 0 25px 5px rgba(69, 10, 84, 0.5) !important;
+                    transform: scale(1.02) !important;
+                    z-index: 10 !important;
+                }
+                .shelf-cell.highlight-cell {
+                    background-color: var(--accent-violet, #450A54) !important;
+                    box-shadow: 0 0 15px rgba(69, 10, 84, 0.8) !important;
+                    border: 2px solid white !important;
+                    transform: scale(1.2) !important;
+                    z-index: 15 !important;
+                    animation: pulseCell 1.5s infinite alternate !important;
+                    opacity: 1 !important; /* Override filled opacity */
+                }
+                @keyframes pulseCell {
+                    0% { box-shadow: 0 0 10px rgba(69, 10, 84, 0.5); transform: scale(1.1); }
+                    100% { box-shadow: 0 0 25px rgba(69, 10, 84, 1); transform: scale(1.3); }
+                }
+            `;
+            document.head.appendChild(style);
+        }
+
+        if (searchInput) {
+            searchInput.addEventListener('keydown', function (e) {
+                if (e.key === 'Enter') performSearch(); // Trigger on Enter
+            });
+
+            searchInput.addEventListener('input', function () {
+                // Handle clear button visibility
+                if (this.value.trim().length > 0) {
+                    searchWrapper.classList.add('has-text');
+                } else {
+                    searchWrapper.classList.remove('has-text');
+                }
+                
+                clearTimeout(searchDebounce);
+                searchDebounce = setTimeout(performSearch, 400);
+
+                if (!this.value.trim()) {
+                    sessionStorage.removeItem('archivageSearchQuery');
+                    clearSearchVisuals();
+                }
+            });
+            
+            if(searchClearBtn) {
+                searchClearBtn.addEventListener('click', function() {
+                    searchInput.value = '';
+                    searchWrapper.classList.remove('has-text');
+                    sessionStorage.removeItem('archivageSearchQuery');
+                    clearSearchVisuals();
+                    searchInput.focus();
+                });
+            }
+
+            // Restore search querying when page loads
+            document.addEventListener('DOMContentLoaded', function() {
+                var savedQuery = sessionStorage.getItem('archivageSearchQuery');
+                if (savedQuery) {
+                    searchInput.value = savedQuery;
+                    searchWrapper.classList.add('has-text');
+                    // Timeout to ensure DOM is fully rendered before highlighting
+                    setTimeout(performSearch, 500); 
+                }
+            });
+        }
+
+        function clearSearchVisuals() {
+            document.querySelectorAll('.shelf').forEach(el => {
+                el.classList.remove('highlight-shelf', 'dimmed-shelf');
+            });
+            document.querySelectorAll('.highlight-cell').forEach(el => {
+                el.classList.remove('highlight-cell');
+            });
+        }
+
+        function performSearch() {
+            var query = searchInput.value.trim();
+            if (!query) {
+                sessionStorage.removeItem('archivageSearchQuery');
+                clearSearchVisuals();
+                return;
+            }
+
+            sessionStorage.setItem('archivageSearchQuery', query);
+
+            fetch('/archivage/api/search-location?q=' + encodeURIComponent(query))
+                .then(r => r.json())
+                .then(data => {
+                    // Clear previous state first!
+                    clearSearchVisuals();
+                    
+                    if (data.found) {
+                        var rawResults = data.multiple ? data.results : [data];
+                        
+                        // Deduplicate by rayonnage_id because this view highlights whole shelves
+                        // BUT preserve the rawResults to highlight the specific cells
+                        var uniqueShelves = {};
+                        var results = [];
+                        rawResults.forEach(r => {
+                            if (!uniqueShelves[r.rayonnage_id]) {
+                                uniqueShelves[r.rayonnage_id] = true;
+                                results.push(r);
+                            }
+                        });
+
+                        var foundOnPage = 0;
+                        var foundElsewhere = 0;
+                        var lastElsewhereLocation = "";
+
+                        // Dim all shelves initially
+                        document.querySelectorAll('.shelf').forEach(el => {
+                            el.classList.add('dimmed-shelf');
+                        });
+
+                        // Now we process the UNIQUE shelves for counting and scrolling
+                        results.forEach((res, index) => {
+                            var shelf = document.getElementById('shelf-' + res.rayonnage_id);
+                            if (shelf) {
+                                foundOnPage++;
+                                if (foundOnPage === 1) shelf.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                                
+                                // Remove dim and apply highlight
+                                shelf.classList.remove('dimmed-shelf');
+                                shelf.classList.add('highlight-shelf');
+                            } else {
+                                foundElsewhere++;
+                                lastElsewhereLocation = res.location_text || (res.zone ? (res.zone + ' - ' + res.rayonnage) : "Ailleurs");
+                            }
+                        });
+                        
+                        // Finally, loop through ALL raw results and highlight the specific CELLS inside those shelves
+                        rawResults.forEach(res => {
+                            if (res.ligne !== undefined && res.col !== undefined) {
+                                var shelf = document.getElementById('shelf-' + res.rayonnage_id);
+                                if (shelf) {
+                                    var cell = shelf.querySelector('.shelf-cell[data-ligne="' + res.ligne + '"][data-col="' + res.col + '"]');
+                                    if (cell) {
+                                        cell.classList.add('highlight-cell');
+                                    }
+                                }
+                            }
+                        });
+
+                        if (foundOnPage > 0 && foundElsewhere === 0) {
+                            let txt = foundOnPage > 1 ? `${foundOnPage} rayonnages trouvés ici.` : `1 rayonnage trouvé ici.`;
+                            if (typeof Toastify === 'function') {
+                                Toastify({ text: txt, duration: 3000, style: { background: "linear-gradient(to right, #10b981, #059669)", borderRadius: "10px" } }).showToast();
+                            } else { showToast(txt, 'success'); }
+                        } else if (foundOnPage > 0 && foundElsewhere > 0) {
+                            let txt = `${foundOnPage} rayonnage(s) ici, ${foundElsewhere} ailleurs.`;
+                            if (typeof Toastify === 'function') {
+                                Toastify({ text: txt, duration: 4000, style: { background: "linear-gradient(to right, #10b981, #059669)", borderRadius: "10px" } }).showToast();
+                            } else { showToast(txt, 'success'); }
+                        } else if (foundOnPage === 0 && foundElsewhere > 0) {
+                            let txt = foundElsewhere > 1 ? `${foundElsewhere} rayonnages trouvés ailleurs.` : `Trouvé ailleurs : ${lastElsewhereLocation}`;
+                            if (typeof Toastify === 'function') {
+                                Toastify({ text: txt, duration: 4000, style: { background: "linear-gradient(to right, #3b82f6, #2563eb)", borderRadius: "10px" } }).showToast();
+                            } else { showToast(txt, 'success'); }
+                        }
+
+                    } else {
+                        if (typeof Toastify === 'function') {
+                            Toastify({ text: 'Aucun résultat trouvé.', duration: 3000, style: { background: "linear-gradient(to right, #ef4444, #b91c1c)", borderRadius: "10px" } }).showToast();
+                        } else { showToast('Aucun résultat trouvé.', 'error'); }
+                    }
+                })
+                .catch(e => console.error(e));
+        }
+        // === VALIDATION LOGIC ===
+        window.validateNewForm = function () {
+            document.getElementById('loadingOverlay').classList.add('active');
+            return true;
+        };
+
+        window.validateEditForm = function () {
+            document.getElementById('loadingOverlay').classList.add('active');
+            return true;
+        };
+
+    })();
+</script>
+{% endblock %}

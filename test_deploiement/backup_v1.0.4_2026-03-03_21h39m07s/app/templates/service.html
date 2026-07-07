@@ -1,0 +1,86 @@
+{% extends "layout.html" %}
+{% block content %}
+
+
+<button class="btn btn-primary col" data-bs-toggle="modal" data-bs-target="#addModal">Ajouter un service
+</button>
+
+
+<table id="myTable" class="table table-hover">
+    <thead>
+    <tr>
+        <th><i class="fas fa-concierge-bell"></i> Nom du service</th>
+        <th><i class="fas fa-palette"></i> Couleur</th> <!-- New column for color -->
+        <th><i class="fas fa-calendar-day"></i> Prix par jour</th>
+        <th><i class="fas fa-moon"></i> Prix par nuit</th>
+        <th><i class="fas fa-moon"></i> Prix par 24h</th>
+        <th><i class="fas fa-dollar-sign"></i> Salaire</th>
+        <th><i class="fas fa-cogs"></i> Actions</th>
+    </tr>
+    </thead>
+    <tbody>
+    {% for service in services %}
+    <tr>
+        <form method="POST" action="/edit-service/{{ service.id_service }}"> <!-- Adjusted action to match route -->
+            <td><input type="text" name="service_name" value="{{ service.service_name }}" class="form-control"></td>
+            <td><input type="color" name="color" value="{{ service.color }}" class="form-control"></td>
+            <td><input type="number" name="prix_joure" value="{{ service.prix_joure }}" class="form-control"
+                       step="0.01"></td>
+            <td><input type="number" name="prix_nuit" value="{{ service.prix_nuit }}" class="form-control" step="0.01">
+            </td>
+            <td><input type="number" name="prix_24h" value="{{ service.prix_24h }}" class="form-control" step="0.01">
+            </td>
+            <td><input type="number" name="salaire" value="{{ service.salaire }}" class="form-control" step="0.01"></td>
+            <td>
+                <button type="submit" class="btn btn-warning btn-sm">Modifier</button>
+            </td>
+        </form>
+    </tr>
+    {% endfor %}
+    </tbody>
+</table>
+
+<!-- Modal pour Ajouter -->
+<div class="modal fade" id="addModal" tabindex="-1" aria-labelledby="addModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form id="addForm" method="POST" action="/add">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="addModalLabel">Ajouter un service</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="service_name" class="form-label">Nom du service</label>
+                        <input type="text" id="service_name" name="service_name" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="color" class="form-label">Couleur</label>
+                        <input type="color" id="color" name="color" class="form-control" value="#FFFFFF">
+                    </div>
+                    <div class="mb-3">
+                        <label for="prix_joure" class="form-label">Prix par jour</label>
+                        <input type="number" id="prix_joure" name="prix_joure" class="form-control" step="0.01">
+                    </div>
+                    <div class="mb-3">
+                        <label for="prix_nuit" class="form-label">Prix par nuit</label>
+                        <input type="number" id="prix_nuit" name="prix_nuit" class="form-control" step="0.01">
+                    </div>
+                    <div class="mb-3">
+                        <label for="prix_24h" class="form-label">Prix par 24h</label>
+                        <input type="number" id="prix_24h" name="prix_24h" class="form-control" step="0.01">
+                    </div>
+                    <div class="mb-3">
+                        <label for="salaire" class="form-label">Salaire</label>
+                        <input type="number" id="salaire" name="salaire" class="form-control" step="0.01">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fermer</button>
+                    <button type="submit" class="btn btn-primary">Ajouter</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,25 @@
+{% extends "pdf/_base_pdf.html" %}
+{% block content %}
+        <p>Je soussigné(e),
+            <strong>{{ cles_manquantes.nom_marquee_retrevie }} {{ cles_manquantes.prenom_marquee_retrevie }}</strong>,
+            titulaire du rôle de
+            <strong>{{ cles_manquantes.role_marquee_retrevie }}</strong>,
+            atteste par la présente avoir retrouvé la clé numéro
+            <strong>{{ cles_manquantes.numero_cle }}</strong>
+            (clé de <strong>{{ cles_manquantes.description }}</strong>)
+            à la date indiquée :
+            <strong>{{ current_date }}</strong>.
+        </p>
+        <p>Cette clé a été retrouvée par
+            <strong>{{ cles_manquantes.nom_retrevie }} {{ cles_manquantes.prenom_retrevie }}</strong>,
+            qui a agi de manière responsable en assurant la sécurité de la clinique.
+            La perte de cette clé a été signalée antérieurement, et la diligence du retrouvant mérite d'être soulignée. Voici les détails supplémentaires :</p>
+        <ul>
+            <li><strong>Nom du retrouvant :</strong> {{ cles_manquantes.nom_retrevie }} {{ cles_manquantes.prenom_retrevie }}</li>
+            <li><strong>Numéro de clé :</strong> {{ cles_manquantes.numero_cle }}</li>
+            <li><strong>Description de la clé :</strong> {{ cles_manquantes.description }}</li>
+            <li><strong>Date de retrouvaille :</strong> {{ cles_manquantes.date_retrouvie }}</li>
+            <li><strong>Date de perte signalée :</strong> {{ cles_manquantes.date_marquer_manquante }}</li>
+            <li><strong>Retrouvée par :</strong> {{ cles_manquantes.nom_marquee_retrevie }} {{ cles_manquantes.prenom_marquee_retrevie }}</li>
+        </ul>
+{% endblock %}

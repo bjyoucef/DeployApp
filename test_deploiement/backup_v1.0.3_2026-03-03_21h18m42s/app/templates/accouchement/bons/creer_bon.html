@@ -1,0 +1,227 @@
+{% extends "layout.html" %}
+
+{% block style %}
+<style>
+    :root {
+        --pink: #ec4899;
+        --pink-dark: #db2777;
+        --success: #10b981;
+        --warning: #f59e0b;
+        --radius: 12px;
+        --shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+    }
+
+    .page-header {
+        background: linear-gradient(135deg, var(--pink), var(--pink-dark));
+        color: white;
+        padding: 2rem;
+        border-radius: var(--radius);
+        margin-bottom: 2rem;
+    }
+
+    .info-card {
+        background: white;
+        border-radius: var(--radius);
+        box-shadow: var(--shadow);
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .card-title {
+        font-size: 1.1rem;
+        font-weight: 700;
+        margin-bottom: 1.25rem;
+        padding-bottom: 0.75rem;
+        border-bottom: 2px solid #fce7f3;
+    }
+
+    .montant-display {
+        background: linear-gradient(135deg, #fce7f3, #fdf2f8);
+        padding: 1.5rem;
+        border-radius: var(--radius);
+        text-align: center;
+    }
+
+    .montant-value {
+        font-size: 2.5rem;
+        font-weight: 700;
+        color: var(--pink-dark);
+    }
+
+    .montant-label {
+        color: #6b7280;
+        margin-bottom: 0.5rem;
+    }
+
+    .form-control,
+    .form-select {
+        border: 2px solid #e5e7eb;
+        border-radius: 8px;
+        padding: 0.75rem;
+    }
+
+    .form-control:focus,
+    .form-select:focus {
+        border-color: var(--pink);
+        box-shadow: 0 0 0 3px rgba(236, 72, 153, 0.1);
+    }
+
+    .btn-pink {
+        background: linear-gradient(135deg, var(--pink), var(--pink-dark));
+        color: white;
+        border: none;
+        padding: 0.875rem 2rem;
+        border-radius: 8px;
+        font-weight: 600;
+    }
+
+    .btn-pink:hover {
+        color: white;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(236, 72, 153, 0.4);
+    }
+
+    .alert-bon-existant {
+        background: #fef3c7;
+        border-left: 4px solid var(--warning);
+        padding: 1rem;
+        border-radius: 8px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Header -->
+    <div class="page-header">
+        <h1><i class="fas fa-file-invoice-dollar me-2"></i>Créer un bon de paiement</h1>
+        <div class="mt-2">
+            <strong>Patient :</strong> {{ dossier.patiente }} |
+            <strong>Dossier :</strong> #{{ dossier.id_dossier }} |
+            <strong>Date :</strong> {{ dossier.date_accouchement.strftime('%d/%m/%Y') }}
+        </div>
+        <!-- En-tête -->
+        <!-- Retour au dossier -->
+        <a href="{{ url_for('accouchement_detail', id_dossier=dossier.id_dossier) }}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Retour au Dossier
+        </a>
+
+    </div>
+
+    <div class="row">
+        <div class="col-lg-8">
+            {% if bon_existant %}
+            <div class="alert-bon-existant mb-4">
+                <i class="fas fa-exclamation-triangle me-2"></i>
+                <strong>Attention :</strong> Un bon existe déjà pour ce dossier
+                (<a href="{{ url_for('detail_bon_paiement', id_bon=bon_existant.id_bon) }}">{{ bon_existant.numero_bon
+                    }}</a>)
+                - Statut: <strong>{{ bon_existant.statut }}</strong>
+            </div>
+            {% endif %}
+
+            <form method="POST" id="bonForm">
+                <div class="info-card">
+                    <h4 class="card-title"><i class="fas fa-edit me-2"></i>Informations du bon</h4>
+
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Type de bon</label>
+                            <select name="type_bon" class="form-select" required>
+                                <option value="INITIAL" selected>Initial (Première demande)</option>
+                                <option value="COMPLEMENT">Complément (Paiement partiel)</option>
+                                <option value="REMBOURSEMENT">Remboursement (Trop-perçu)</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">
+                                <i class="fas fa-calendar me-1"></i>Date d'échéance
+                                <small class="text-muted">(optionnel)</small>
+                            </label>
+                            <input type="date" name="date_echeance" class="form-control">
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">
+                            <i class="fas fa-money-bill-wave me-1"></i>Montant à payer (DA)
+                        </label>
+                        <input type="number" name="montant_a_payer" id="montantInput" class="form-control" step="0.01"
+                            min="0.01" max="{{ montant_restant }}" value="{{ montant_restant }}" required>
+                        <small class="text-muted">
+                            Montant restant du dossier : <strong>{{ montant_restant|round(2) }} DA</strong>
+                        </small>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">
+                            <i class="far fa-comment-dots me-1"></i>Description
+                            <small class="text-muted">(optionnel)</small>
+                        </label>
+                        <textarea name="description" class="form-control" rows="3"
+                            placeholder="Notes additionnelles, modalités de paiement..."></textarea>
+                    </div>
+                </div>
+
+                <div class="d-flex gap-2">
+                    <button type="submit" class="btn btn-pink">
+                        <i class="fas fa-check me-1"></i>Créer le bon
+                    </button>
+                    <a href="{{ url_for('accouchement_detail', id_dossier=dossier.id_dossier) }}"
+                        class="btn btn-outline-secondary">
+                        <i class="fas fa-times me-1"></i>Annuler
+                    </a>
+                </div>
+            </form>
+        </div>
+
+        <div class="col-lg-4">
+            <!-- Résumé dossier -->
+            <div class="info-card">
+                <h4 class="card-title"><i class="fas fa-calculator me-2"></i>Résumé du dossier</h4>
+
+                <div class="d-flex justify-content-between mb-2">
+                    <span>Prix total</span>
+                    <strong>{{ "{:,.2f}".format(dossier.prix_total or 0).replace(",", " ") }} DA</strong>
+                </div>
+                <div class="d-flex justify-content-between mb-2">
+                    <span>Déjà payé</span>
+                    <strong class="text-success">{{ "{:,.2f}".format(dossier.montant_paye or 0).replace(",", " ") }}
+                        DA</strong>
+                </div>
+                <hr>
+                <div class="montant-display">
+                    <div class="montant-label">Reste à payer</div>
+                    <div class="montant-value">{{ montant_restant|round(2) }}</div>
+                    <div class="text-muted">DA</div>
+                </div>
+            </div>
+
+            <!-- Détails -->
+            <div class="info-card">
+                <h4 class="card-title"><i class="fas fa-info-circle me-2"></i>Détails</h4>
+                <div class="small">
+                    <div class="mb-2"><strong>Type :</strong>
+                        {{ 'Voie Basse' if dossier.type_accouchement == 'VOIE_BASSE' else 'Césarienne' }}
+                    </div>
+                    <div class="mb-2"><strong>Tarification :</strong>
+                        {{ 'Convention' if dossier.type_tarification == 'CONVENTION' else 'Payant' }}
+                    </div>
+                    <div class="mb-2"><strong>Gynécologue :</strong> {{ dossier.gyneco_name }}</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Validation
+    document.getElementById('montantInput').addEventListener('input', function () {
+        const max = parseFloat(this.max);
+        const val = parseFloat(this.value);
+        if (val > max) {
+            this.value = max;
+        }
+    });
+</script>
+{% endblock %}

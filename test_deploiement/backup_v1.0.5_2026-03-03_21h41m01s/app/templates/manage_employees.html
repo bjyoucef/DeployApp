@@ -1,0 +1,514 @@
+{% extends "layout.html" %} {% block content %}
+
+{% if 'AJOUTER_EMPLOYE' in session.privileges %}
+
+<!-- Bouton pour ouvrir la modal d'ajout -->
+<div class="d-flex justify-content-center">
+    <button
+            class="btn btn-primary btn-lg shadow mb-3"
+            data-bs-toggle="modal"
+            data-bs-target="#addEmployeeModal"
+    >
+        <i class="fas fa-plus me-2"></i> Ajouter un employé
+    </button>
+</div>
+<!-- Modal pour ajouter un nouvel employé -->
+<div
+        class="modal fade"
+        id="addEmployeeModal"
+        tabindex="-1"
+        role="dialog"
+        aria-labelledby="addEmployeeModalLabel"
+        aria-hidden="true"
+>
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addEmployeeModalLabel">
+                    Ajouter un nouvel employé
+                </h5>
+                <button
+                        type="button"
+                        class="btn-close"
+                        data-bs-dismiss="modal"
+                        aria-label="Close"
+                ></button>
+            </div>
+            <div class="modal-body">
+                <form
+                        action="{{ url_for('manage_employees') }}"
+                        method="POST"
+                        enctype="multipart/form-data"
+                        class="needs-validation"
+                        novalidate
+                >
+                    <input type="hidden" name="add_employee" value="1"/>
+                    <div class="row">
+                        <!-- Formulaire pour ajouter un employé -->
+                        <div class="col">
+                            <div class="form-group">
+                                <label for="nom">Nom de l'employé</label>
+                                <input
+                                        type="text"
+                                        class="form-control"
+                                        id="nom"
+                                        name="nom"
+                                />
+                            </div>
+                            <div class="form-group">
+                                <label for="prenom">Prénom de l'employé</label>
+                                <input
+                                        type="text"
+                                        class="form-control"
+                                        id="prenom"
+                                        name="prenom"
+                                />
+                            </div>
+                            <div class="form-group">
+                                <label for="telephone">Téléphone</label>
+                                <input
+                                        type="text"
+                                        class="form-control"
+                                        id="telephone"
+                                        name="telephone"
+                                />
+                            </div>
+                            <div class="form-group">
+                                <label for="role">Rôle</label>
+                                <input type="text" class="form-control" id="role" name="role"/>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="service">service</label>
+                                <select name="service" id="service" class="form-select">
+                                    {% for service in services %}
+                                    <option>
+                                        {{ service['service_name'] }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+
+                            <div class="form-switch-container mb-3 d-flex justify-content-center align-items-center">
+
+                                <label class="form-switch" for="use_in_planning">
+                                    <input
+                                            class="paymentCheckbox"
+                                            type="checkbox"
+                                            id="use_in_planning"
+                                            name="use_in_planning"
+                                    />
+                                    <span class="slider"></span>
+                                    <span class="label-text">Affiché dans le planning</span>
+
+                                </label>
+                            </div>
+                        </div>
+
+                        {% if 'AJOUTER_UTILISATEUR' in session.privileges %}
+                        <div class="col">
+                            <div class="mb-3">
+                                <label for="usernameI" class="form-label"
+                                >Nom d'utilisateur</label
+                                >
+                                <input
+                                        type="text"
+                                        name="usernameI"
+                                        id="usernameI"
+                                        class="form-control"
+                                />
+                            </div>
+                            <div class="mb-3">
+                                <label for="passwordI" class="form-label">Mot de passe</label>
+                                <input
+                                        type="password"
+                                        name="passwordI"
+                                        id="passwordI"
+                                        class="form-control"
+                                />
+                            </div>
+                            <div class="mb-3">
+                                <label for="confirm_passwordI" class="form-label"
+                                >Confirmer le mot de passe</label
+                                >
+                                <input
+                                        type="password"
+                                        name="confirm_passwordI"
+                                        id="confirm_passwordI"
+                                        class="form-control"
+                                />
+                            </div>
+                        </div>
+                        {% endif %}
+
+
+                    </div>
+
+                    <div class="modal-footer">
+                        <button type="submit" class="btn btn-primary btn-sm">Ajouter</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<div>
+
+    <table id="myTable" class="table table-hover">
+        <thead>
+        <tr>
+            <th>#</th>
+            <th>Nom</th>
+            <th>Prénom</th>
+            <th>Rôle</th>
+            <th>Service</th>
+            <th>Actions</th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for employe in employes %}
+        {% if not employe['is_admin'] %}
+        <tr>
+            <td>{{ loop.index }}</td>
+            <td>{{ employe.nom }}</td>
+            <td>{{ employe.prenom }}</td>
+            <td>{{ employe.role }}</td>
+            <td>{{ employe.service_name }}</td>
+            <td>
+                {% if 'ATTRIBUER_ROLES_UTILISATEUR' in session.privileges %}
+                <!-- Bouton pour gérer les rôles -->
+                <button type="button" class="btn btn-info btn-sm" data-bs-toggle="modal"
+                        data-bs-target="#rolesModal{{ employe.id_personnel }}">
+                    Gérer les rôles
+                </button>
+                {% endif %}
+
+                {% if 'MODIFIER_EMPLOYE' in session.privileges %}
+                <!-- Bouton Modifier -->
+                <button type="button" class="btn btn-warning btn-sm" data-bs-toggle="modal"
+                        data-bs-target="#editEmployeeModal{{ employe.id_personnel }}">
+                    Modifier
+                </button>
+                {% endif %}
+
+                {% if 'DESACTIVER_EMPLOYE' in session.privileges %}
+                <!-- Formulaire pour désactiver/activer l'employé -->
+                <form action="{{ url_for('manage_employees') }}" method="POST" style="display: inline-block">
+                    <input type="hidden" name="id_personnel" value="{{ employe.id_personnel }}"/>
+                    {% if employe.statut_activite %}
+                    <input type="hidden" name="change_status" value="0"/>
+                    <button type="submit" class="btn btn-danger btn-sm">Désactiver</button>
+                    {% else %}
+                    <input type="hidden" name="change_status" value="1"/>
+                    <button type="submit" class="btn btn-success btn-sm">Activer</button>
+                    {% endif %}
+                </form>
+                {% endif %}
+            </td>
+        </tr>
+
+        <!-- Modal d'association des rôles -->
+        <div class="modal fade" id="rolesModal{{ employe.id_personnel }}" tabindex="-1"
+             aria-labelledby="rolesModalLabel{{ employe.id_personnel }}" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="rolesModalLabel{{ employe.id_personnel }}">Gestion des rôles - {{
+                            employe.nom }}</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <h6>Rôles Actuels</h6>
+                        <ul id="associes-list-{{ employe.id_personnel }}" class="list-group mb-3">
+                            <!-- Liste remplie dynamiquement -->
+                        </ul>
+
+                        <div class="form-group">
+                            <label for="role-select-{{ employe.id_personnel }}">Associer un rôle</label>
+                            <select id="role-select-{{ employe.id_personnel }}" class="form-select">
+                                <!-- Options dynamiques -->
+                            </select>
+                        </div>
+                        <button class="btn btn-primary mt-3" onclick="associerRole({{ employe.id_personnel }})">
+                            Associer Rôle
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal de modification d'employé spécifique -->
+        <div
+                class="modal fade"
+                id="editEmployeeModal{{ employe.id_personnel }}"
+                tabindex="-1"
+                role="dialog"
+                aria-labelledby="editEmployeeModalLabel{{ employe.id_personnel }}"
+                aria-hidden="true"
+        >
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5
+                                class="modal-title"
+                                id="editEmployeeModalLabel{{ employe.id_personnel }}"
+                        >
+                            Modifier l'employé
+                        </h5>
+                        <button
+                                type="button"
+                                class="btn-close"
+                                data-bs-dismiss="modal"
+                                aria-label="Close"
+                        ></button>
+                    </div>
+                    <div class="modal-body">
+                        <!-- Formulaire de modification -->
+                        <form
+                                action="{{ url_for('manage_employees') }}"
+                                method="POST"
+                                enctype="multipart/form-data"
+                                class="needs-validation"
+                                novalidate
+                        >
+                            <input
+                                    type="hidden"
+                                    name="id_personnel"
+                                    value="{{ employe.id_personnel }}"
+                            />
+                            <input type="hidden" name="edit_employee" value="1"/>
+                            <div class="row">
+
+                                <div class="col">
+                                    <!-- Nom -->
+                                    <div class="form-group">
+                                        <label for="nom{{ employe.id_personnel }}"
+                                        >Nom de l'employé</label
+                                        >
+                                        <input
+                                                type="text"
+                                                class="form-control"
+                                                id="nom{{ employe.id_personnel }}"
+                                                name="nom"
+                                                value="{{ employe.nom }}"
+                                        />
+                                    </div>
+                                    <!-- Prénom -->
+                                    <div class="form-group">
+                                        <label for="prenom{{ employe.id_personnel }}"
+                                        >Prénom de l'employé</label
+                                        >
+                                        <input
+                                                type="text"
+                                                class="form-control"
+                                                id="prenom{{ employe.id_personnel }}"
+                                                name="prenom"
+                                                value="{{ employe.prenom }}"
+                                        />
+                                    </div>
+
+                                    <!-- Rôle -->
+                                    <div class="form-group">
+                                        <label for="role{{ employe.id_personnel }}">Rôle</label>
+                                        <input
+                                                type="text"
+                                                class="form-control"
+                                                id="role{{ employe.id_personnel }}"
+                                                name="role"
+                                                value="{{ employe.role }}"
+                                        />
+                                    </div>
+                                    <!-- Service -->
+                                    <div class="form-group">
+                                        <label for="service" class="form-label">Service :</label>
+                                        <select name="service" id="service" class="form-select">
+                                            <!-- Option pour tous les services -->
+                                            <option value="all" {% if employe.service_name==
+                                            'all' %}selected{% endif %}>
+                                            Tous les services
+                                            </option>
+
+                                            <!-- Boucle pour afficher les services -->
+                                            {% for service in services %}
+                                            <option value="{{ service['service_name'] }}"
+                                                    {% if employe.service_name== service[
+                                            'service_name'] %}selected{% endif %}>
+                                            {{ service['service_name'] }}
+                                            </option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+
+                                    <div class="form-switch-container mb-3 d-flex justify-content-center align-items-center">
+
+                                        <label class="form-switch" for="use_in_planning{{ employe.id_personnel }}">
+                                            <input
+                                                    class="paymentCheckbox"
+                                                    type="checkbox"
+                                                    id="use_in_planning{{ employe.id_personnel }}"
+                                                    name="use_in_planning"
+                                                    {% if employe.use_in_planning %}checked{% endif %}
+                                            />
+                                            <span class="slider"></span>
+                                            <span class="label-text">Affiché dans le planning</span>
+
+                                        </label>
+                                    </div>
+                                </div>
+                                {% if 'MODIFIER_UTILISATEUR' in session.privileges %}
+                                <div class="col">
+
+                                    <div class="mb-3">
+                                        <label for="usernameM{{ employe.username }}">Nom d'utilisateur</label
+                                        >
+                                        <input
+                                                type="text"
+                                                name="usernameM"
+                                                id="usernameM{{ employe.username }}"
+                                                class="form-control"
+                                        />
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <label for="passwordM" class="form-label">Mot de passe</label>
+                                        <input
+                                                type="password"
+                                                name="passwordM"
+                                                id="passwordM"
+                                                class="form-control"
+                                        />
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <label for="confirm_passwordM" class="form-label"
+                                        >Confirmer le mot de passe</label
+                                        >
+                                        <input
+                                                type="password"
+                                                name="confirm_passwordM"
+                                                id="confirm_passwordM"
+                                                class="form-control"
+                                        />
+                                    </div>
+
+                                </div>
+                                {% endif %}
+
+                            </div>
+
+                            <div class="modal-footer">
+                                <button type="submit" class="btn btn-primary btn-sm">Mettre à jour</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {% endif %}
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<script>
+    // Fonction pour charger les données des rôles pour un employé spécifique
+    function loadRolesData(idPersonnel) {
+        const url = `/personnel/${idPersonnel}/roles/data`;
+
+        // Récupérer les données via AJAX
+        fetch(url)
+            .then(response => response.json())
+            .then(data => {
+            // Sections de la modal
+            const associesList = document.getElementById(`associes-list-${idPersonnel}`);
+            const selectElement = document.getElementById(`role-select-${idPersonnel}`);
+
+            // Vider les anciennes données
+            associesList.innerHTML = "";
+            selectElement.innerHTML = "";
+
+            // Ajouter les rôles associés
+            data.associes.forEach(role => {
+                const listItem = document.createElement('li');
+                listItem.className = "list-group-item d-flex justify-content-between align-items-center";
+                listItem.textContent = role.nom_role;
+
+                const removeButton = document.createElement('button');
+                removeButton.className = "btn btn-danger btn-sm";
+                removeButton.textContent = "Dissocier";
+                removeButton.onclick = () => dissocierRole(idPersonnel, role.id_role);
+
+                listItem.appendChild(removeButton);
+                associesList.appendChild(listItem);
+            });
+
+            // Ajouter au select pour association (optionnel si vous voulez toujours permettre l'ajout d'un rôle)
+            data.non_associes.forEach(role => {
+                const option = document.createElement('option');
+                option.value = role.id_role;
+                option.textContent = role.nom_role;
+                selectElement.appendChild(option);
+            });
+        })
+            .catch(error => console.error("Erreur lors du chargement des rôles:", error));
+    }
+    // Fonction pour dissocier un rôle
+    function dissocierRole(idPersonnel, idRole) {
+        fetch(`/personnel/${idPersonnel}/roles/supprimer/${idRole}`, {
+            method: "GET"
+        })
+            .then(response => response.json())
+            .then(data => {
+            if (data.message) {
+                // Recharger les rôles après la suppression
+                loadRolesData(idPersonnel); // Rechargement des données pour mettre à jour l'affichage
+            }
+        })
+            .catch(error => {
+            console.error("Erreur de dissociation du rôle :", error);
+        });
+    }
+
+    // Fonction pour associer un rôle
+    function associerRole(idPersonnel) {
+        const selectElement = document.getElementById(`role-select-${idPersonnel}`);
+        const idRole = selectElement.value;
+
+        // Assurez-vous que l'ID du rôle est défini
+        if (!idRole) {
+            return;
+        }
+
+        fetch(`/personnel/${idPersonnel}/roles`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({ id_role: idRole })  // Envoi des données sous forme de JSON
+        })
+            .then(response => response.json())  // Assurez-vous que vous récupérez la réponse en JSON
+            .then(data => {
+            if (data.message) {
+                loadRolesData(idPersonnel);
+            }
+        })
+            .catch(error => {
+            console.error("Erreur lors de l'association du rôle:", error);
+        });
+    }
+
+    // Écouteur d'événement pour charger les données au démarrage de la modal
+    document.addEventListener('DOMContentLoaded', () => {
+        const modals = document.querySelectorAll('[id^="rolesModal"]');
+        modals.forEach(modal => {
+            modal.addEventListener('show.bs.modal', function () {
+                const idPersonnel = this.id.split("rolesModal")[1];
+                loadRolesData(idPersonnel);
+            });
+        });
+    });
+</script>
+{% endblock %}

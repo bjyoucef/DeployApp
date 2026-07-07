@@ -1,0 +1,85 @@
+{% extends "admin/admin_layout.html" %}
+
+{% block title %}Historique des Étiquettes{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="h3 mb-0 text-gray-800"><i class="fas fa-history text-primary me-2"></i>Historique des Étiquettes</h2>
+        <a href="{{ url_for('create_barcode_label') }}" class="btn btn-primary" id="history_a_1">
+            <i class="fas fa-plus me-2"></i>Nouvelle Étiquette
+        </a>
+    </div>
+
+    <div class="card shadow mb-4" id="history_div_2">
+        <div class="card-header py-3">
+            <h6 class="m-0 font-weight-bold text-primary">Dernières Étiquettes Générées</h6>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-bordered table-hover" id="dataTable" width="100%" cellspacing="0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>ID</th>
+                            <th>Date Création</th>
+                            <th>Produit</th>
+                            <th>Lot</th>
+                            <th>SN</th>
+                            <th>Expiration</th>
+                            <th>Utilisateur</th>
+                            <th class="text-center" style="width: 100px;">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in history %}
+                        <tr>
+                            <td>{{ item.id }}</td>
+                            <td>{{ item.created_at }}</td>
+                            <td>{{ item.product_name }}</td>
+                            <td>{{ item.lot }}</td>
+                            <td>{{ item.sn }}</td>
+                            <td>{{ item.exp_date }}</td>
+                            <td>{{ item.user_name if item.user_name else 'Inconnu' }}</td>
+                            <td class="text-center">
+                                <a href="{{ url_for('reprint_barcode_label', label_id=item.id) }}" target="_blank"
+                                    class="btn btn-sm btn-info" title="Réimprimer" id="history_a_3">
+                                    <i class="fas fa-print"></i>
+                                </a>
+                                <a href="{{ url_for('sheet_setup', label_id=item.id) }}" class="btn btn-sm btn-primary"
+                                    title="Imprimer Planche" id="history_a_4">
+                                    <i class="fas fa-table"></i>
+                                </a>
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="8" class="text-center text-muted">Aucun historique disponible.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            {% if total_pages > 1 %}
+            <nav aria-label="Page navigation" class="mt-4">
+                <ul class="pagination justify-content-center">
+                    <li class="page-item {% if current_page == 1 %}disabled{% endif %}">
+                        <a class="page-link"
+                            href="{{ url_for('search_barcode_history', page=current_page-1) }}" id="history_a_5">Précédent</a>
+                    </li>
+                    {% for p in range(1, total_pages + 1) %}
+                    <li class="page-item {% if p == current_page %}active{% endif %}">
+                        <a class="page-link" href="{{ url_for('search_barcode_history', page=p) }}" id="history_a_6">{{ p }}</a>
+                    </li>
+                    {% endfor %}
+                    <li class="page-item {% if current_page == total_pages %}disabled{% endif %}">
+                        <a class="page-link"
+                            href="{{ url_for('search_barcode_history', page=current_page+1) }}" id="history_a_7">Suivant</a>
+                    </li>
+                </ul>
+            </nav>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

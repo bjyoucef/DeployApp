@@ -1,0 +1,42 @@
+{% for ligne in lignes %}
+<tr data-ligne-id="{{ ligne.id }}" {% if ligne.est_debours %}class="table-warning" {% endif %}>
+    <td>
+        <strong>{{ ligne.designation }}</strong>
+        {% if ligne.est_debours %}
+        <span class="badge bg-warning text-dark ms-2">
+            <i class="fas fa-file-invoice-dollar"></i> DÉBOURS
+        </span>
+        {% endif %}
+        {% if ligne.description %}
+        <br><small class="text-muted">{{ ligne.description }}</small>
+        {% endif %}
+        {% if ligne.reference_justificatif %}
+        <br><small class="text-info">
+            <i class="fas fa-receipt"></i> Réf: {{ ligne.reference_justificatif }}
+        </small>
+        {% endif %}
+    </td>
+    <td class="text-center">{{ "%.2f"|format(ligne.quantite) }}</td>
+    <td class="text-end">{{ "%.2f"|format(ligne.prix_unitaire) }} DA</td>
+    <td class="text-end">{{ "%.2f"|format(ligne.montant_ht) }} DA</td>
+    <td class="text-center">
+        {% if ligne.est_debours %}
+        <span class="badge bg-warning text-dark">N/A</span>
+        {% else %}
+        <span class="badge {% if ligne.taux_tva == 9 %}bg-info{% else %}bg-warning{% endif %}">
+            {{ ligne.taux_tva|int }}%
+        </span>
+        {% endif %}
+    </td>
+    <td class="text-end">
+        <strong>{{ "%.2f"|format(ligne.montant_ttc if not ligne.est_debours else ligne.montant_ht) }} DA</strong>
+    </td>
+    <td class="text-center">
+        {% if facture.statut == 'brouillon' %}
+        <button type="button" class="btn btn-sm btn-danger btn-delete-line" onclick="supprimerLigne({{ ligne.id }})">
+            <i class="fas fa-trash"></i>
+        </button>
+        {% endif %}
+    </td>
+</tr>
+{% endfor %}

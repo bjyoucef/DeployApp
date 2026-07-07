@@ -1,0 +1,843 @@
+{% extends "layout.html" %}
+
+{% block style %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/daterangepicker.css') }}" />
+
+<style>
+    :root {
+        /* Modern Color Palette */
+        --primary-50: #f5f3ff;
+        --primary-100: #ede9fe;
+        --primary-200: #ddd6fe;
+        --primary-300: #c4b5fd;
+        --primary-400: #a78bfa;
+        --primary-500: #8b5cf6;
+        --primary-600: #7c3aed;
+        --primary-700: #6d28d9;
+        --primary-800: #5b21b6;
+        --primary-900: #4c1d95;
+
+        --secondary-50: #f8fafc;
+        --secondary-100: #f1f5f9;
+        --secondary-200: #e2e8f0;
+        --secondary-300: #cbd5e1;
+        --secondary-400: #94a3b8;
+        --secondary-500: #64748b;
+        --secondary-600: #475569;
+        --secondary-700: #334155;
+        --secondary-800: #1e293b;
+        --secondary-900: #0f172a;
+
+        --success-50: #f0fdf4;
+        --success-500: #10b981;
+        --success-600: #059669;
+        --warning-50: #fffbeb;
+        --warning-500: #f59e0b;
+        --warning-600: #d97706;
+        --danger-50: #fef2f2;
+        --danger-500: #ef4444;
+        --danger-600: #dc2626;
+
+        /* Extended Variables */
+        --bg-body: var(--secondary-50);
+        --bg-card: #ffffff;
+        --bg-sidebar-card: rgba(255, 255, 255, 0.05);
+        --text-main: var(--secondary-900);
+        --text-muted: var(--secondary-600);
+        --border-color: var(--secondary-200);
+        --shadow-sm: 0 1px 3px 0 rgba(0, 0, 0, 0.05), 0 1px 2px 0 rgba(0, 0, 0, 0.03);
+        --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+        --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -2px rgba(0, 0, 0, 0.02);
+        --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.05), 0 10px 10px -5px rgba(0, 0, 0, 0.02);
+
+        --radius-sm: 8px;
+        --radius-md: 12px;
+        --radius-lg: 16px;
+        --radius-xl: 20px;
+        --radius-2xl: 24px;
+        --radius-full: 9999px;
+
+        --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+        --transition-base: 250ms cubic-bezier(0.4, 0, 0.2, 1);
+        --transition-slow: 350ms cubic-bezier(0.4, 0, 0.2, 1);
+
+        --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    }
+
+    [data-theme="dark"] {
+        --bg-body: var(--secondary-900);
+        --bg-card: var(--secondary-800);
+        --bg-sidebar-card: rgba(30, 41, 59, 0.5);
+        --text-main: var(--secondary-100);
+        --text-muted: var(--secondary-400);
+        --border-color: var(--secondary-700);
+        --shadow-sm: 0 1px 3px 0 rgba(0, 0, 0, 0.2), 0 1px 2px 0 rgba(0, 0, 0, 0.15);
+        --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.2), 0 2px 4px -1px rgba(0, 0, 0, 0.15);
+        --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.2), 0 4px 6px -2px rgba(0, 0, 0, 0.15);
+        --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.25), 0 10px 10px -5px rgba(0, 0, 0, 0.2);
+    }
+
+    body {
+        font-family: var(--font-sans);
+        background-color: var(--bg-body);
+        color: var(--text-main);
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+    }
+
+    /* Modern Container */
+    .modern-container {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 0 24px;
+    }
+
+    /* Glassmorphism Effect */
+    .glass-card {
+        background: rgba(255, 255, 255, 0.7);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        box-shadow: var(--shadow-lg);
+    }
+
+    [data-theme="dark"] .glass-card {
+        background: rgba(30, 41, 59, 0.7);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    /* Modern Cards */
+    .modern-card {
+        background-color: var(--bg-card);
+        border-radius: var(--radius-xl);
+        border: 1px solid var(--border-color);
+        box-shadow: var(--shadow-md);
+        transition: all var(--transition-base);
+        overflow: hidden;
+    }
+
+    .modern-card:hover {
+        box-shadow: var(--shadow-xl);
+        transform: translateY(-2px);
+        border-color: var(--primary-300);
+    }
+
+    .modern-card-header {
+        background: linear-gradient(135deg, var(--primary-600), var(--primary-800));
+        color: white;
+        padding: 20px 24px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    [data-theme="dark"] .modern-card-header {
+        background: linear-gradient(135deg, var(--primary-700), var(--primary-900));
+    }
+
+    /* Gradient Text */
+    .gradient-text {
+        background: linear-gradient(135deg, var(--primary-600), var(--primary-800));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+
+    /* Status Indicators */
+    .status-indicator {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 4px 12px;
+        border-radius: var(--radius-full);
+        font-size: 12px;
+        font-weight: 600;
+        letter-spacing: 0.02em;
+    }
+
+    .status-active {
+        background-color: rgba(16, 185, 129, 0.1);
+        color: var(--success-600);
+        border: 1px solid rgba(16, 185, 129, 0.2);
+    }
+
+    .status-pending {
+        background-color: rgba(245, 158, 11, 0.1);
+        color: var(--warning-600);
+        border: 1px solid rgba(245, 158, 11, 0.2);
+    }
+
+    .status-inactive {
+        background-color: rgba(148, 163, 184, 0.1);
+        color: var(--secondary-500);
+        border: 1px solid rgba(148, 163, 184, 0.2);
+    }
+
+    /* Stat Cards */
+    .stat-card {
+        padding: 24px;
+        border-radius: var(--radius-lg);
+        background: linear-gradient(135deg, var(--primary-50), var(--primary-100));
+        border: 1px solid var(--primary-200);
+        transition: all var(--transition-base);
+    }
+
+    [data-theme="dark"] .stat-card {
+        background: linear-gradient(135deg, rgba(124, 58, 237, 0.1), rgba(109, 40, 217, 0.1));
+        border: 1px solid rgba(124, 58, 237, 0.2);
+    }
+
+    .stat-card:hover {
+        transform: translateY(-4px);
+        box-shadow: var(--shadow-lg);
+    }
+
+    .stat-icon {
+        width: 48px;
+        height: 48px;
+        border-radius: var(--radius-md);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 20px;
+        color: white;
+        margin-bottom: 16px;
+    }
+
+    /* Modern Badges */
+    .modern-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        padding: 6px 12px;
+        border-radius: var(--radius-full);
+        font-size: 12px;
+        font-weight: 600;
+        line-height: 1;
+        border: 1px solid transparent;
+    }
+
+    .badge-primary {
+        background-color: rgba(139, 92, 246, 0.1);
+        color: var(--primary-700);
+        border-color: rgba(139, 92, 246, 0.2);
+    }
+
+    .badge-success {
+        background-color: rgba(16, 185, 129, 0.1);
+        color: var(--success-600);
+        border-color: rgba(16, 185, 129, 0.2);
+    }
+
+    .badge-warning {
+        background-color: rgba(245, 158, 11, 0.1);
+        color: var(--warning-600);
+        border-color: rgba(245, 158, 11, 0.2);
+    }
+
+    .badge-info {
+        background-color: rgba(59, 130, 246, 0.1);
+        color: #2563eb;
+        border-color: rgba(59, 130, 246, 0.2);
+    }
+
+    /* Modern Buttons */
+    .btn-modern {
+        padding: 10px 20px;
+        border-radius: var(--radius-md);
+        font-weight: 600;
+        font-size: 14px;
+        transition: all var(--transition-base);
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        border: 1px solid transparent;
+    }
+
+    .btn-modern-primary {
+        background: linear-gradient(135deg, var(--primary-600), var(--primary-800));
+        color: white;
+        border: none;
+        box-shadow: 0 4px 12px rgba(139, 92, 246, 0.2);
+    }
+
+    .btn-modern-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(139, 92, 246, 0.3);
+        background: linear-gradient(135deg, var(--primary-700), var(--primary-900));
+    }
+
+    .btn-modern-secondary {
+        background-color: var(--bg-card);
+        color: var(--text-main);
+        border: 1px solid var(--border-color);
+        box-shadow: var(--shadow-sm);
+    }
+
+    .btn-modern-secondary:hover {
+        background-color: var(--secondary-100);
+        border-color: var(--primary-300);
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-md);
+    }
+
+    /* Modern Table */
+    .modern-table {
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0;
+    }
+
+    .modern-table thead th {
+        background-color: var(--primary-50);
+        color: var(--primary-800);
+        font-weight: 600;
+        font-size: 13px;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        padding: 16px;
+        border-bottom: 2px solid var(--primary-200);
+    }
+
+    [data-theme="dark"] .modern-table thead th {
+        background-color: rgba(139, 92, 246, 0.1);
+        color: var(--primary-300);
+        border-bottom-color: rgba(139, 92, 246, 0.2);
+    }
+
+    .modern-table tbody tr {
+        transition: background-color var(--transition-fast);
+    }
+
+    .modern-table tbody tr:hover {
+        background-color: var(--primary-50);
+    }
+
+    [data-theme="dark"] .modern-table tbody tr:hover {
+        background-color: rgba(139, 92, 246, 0.05);
+    }
+
+    .modern-table tbody td {
+        padding: 16px;
+        border-bottom: 1px solid var(--border-color);
+        color: var(--text-main);
+    }
+
+    /* Avatar */
+    .avatar {
+        width: 48px;
+        height: 48px;
+        border-radius: var(--radius-full);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 600;
+        font-size: 18px;
+        color: white;
+        background: linear-gradient(135deg, var(--primary-600), var(--primary-800));
+    }
+
+    /* Progress Bar */
+    .modern-progress {
+        height: 8px;
+        background-color: var(--secondary-200);
+        border-radius: var(--radius-full);
+        overflow: hidden;
+    }
+
+    .modern-progress-bar {
+        height: 100%;
+        background: linear-gradient(90deg, var(--primary-500), var(--primary-700));
+        border-radius: var(--radius-full);
+        transition: width var(--transition-slow);
+    }
+
+    /* Filter Bar */
+    .filter-bar {
+        background-color: var(--bg-card);
+        border-radius: var(--radius-lg);
+        padding: 16px 24px;
+        border: 1px solid var(--border-color);
+        box-shadow: var(--shadow-sm);
+        margin-bottom: 24px;
+    }
+
+    /* Empty State */
+    .empty-state {
+        text-align: center;
+        padding: 48px 24px;
+        color: var(--text-muted);
+    }
+
+    .empty-state-icon {
+        font-size: 48px;
+        color: var(--secondary-300);
+        margin-bottom: 16px;
+    }
+
+    /* Animation */
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .fade-in-up {
+        animation: fadeInUp 0.5s ease-out;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+        .modern-container {
+            padding: 0 16px;
+        }
+
+        .stat-card {
+            padding: 16px;
+        }
+
+        .modern-card-header {
+            padding: 16px 20px;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Sticky Header -->
+<header class="sticky-top bg-body border-bottom" style="z-index: 1030;">
+    <div class="modern-container py-3">
+        <div
+            class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3">
+            <div class="d-flex align-items-center gap-3">
+                <div class="avatar" style="width: 40px; height: 40px; font-size: 16px;">
+                    <i class="fas fa-stethoscope"></i>
+                </div>
+                <div>
+                    <h1 class="h4 fw-bold mb-0 gradient-text">{{ title }}</h1>
+                    <p class="text-muted mb-0 small">{{ config.subtitle }}</p>
+                </div>
+            </div>
+
+            <div class="d-flex flex-wrap gap-2">
+                {% if config.show_items_link %}
+                <a href="{{ url_for(config.items_route) }}" class="btn btn-modern btn-modern-secondary">
+                    <i class="{{ config.items_icon }}"></i>
+                    {{ config.items_label }}
+                </a>
+                {% endif %}
+
+                <a href="{{ url_for(config.decharges_route) }}" class="btn btn-modern btn-modern-secondary">
+                    <i class="fas fa-receipt"></i>
+                    Décharges
+                </a>
+
+                <a href="{{ url_for(config.stats_route) }}" class="btn btn-modern btn-modern-secondary">
+                    <i class="fas fa-chart-line"></i>
+                    Statistiques
+                </a>
+                {% if config.back_route %}
+                <a href="{{ url_for(config.back_route) }}" class="btn btn-modern btn-modern-secondary" title="Retour">
+                    <i class="fas fa-arrow-left"></i>
+                </a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</header>
+
+<main class="modern-container py-4">
+    <!-- Navigation Tabs -->
+    <div class="d-flex justify-content-center mb-5 fade-in-up">
+        <div class="glass-card p-1 d-inline-flex rounded-pill">
+            <a class="btn btn-modern {{ 'btn-modern-primary' if config.type == 'medecin' else 'btn-modern-secondary' }} rounded-pill px-4"
+                href="{{ url_for('situations_medecins_internes_list', date_debut=date_debut, date_fin=date_fin) }}">
+                <i class="fas fa-hospital me-2"></i>Bloc Opératoire
+            </a>
+            <a class="btn btn-modern {{ 'btn-modern-primary' if config.type == 'gyneco' else 'btn-modern-secondary' }} rounded-pill px-4"
+                href="{{ url_for('situations_gyneco_internes_list', date_debut=date_debut, date_fin=date_fin) }}">
+                <i class="fas fa-heartbeat me-2"></i>Maternité
+            </a>
+        </div>
+    </div>
+
+    <!-- Summary Stats -->
+    <div class="row g-4 mb-5 fade-in-up">
+        <div class="col-md-4">
+            <div class="stat-card h-100">
+                <div class="stat-icon"
+                    style="background: linear-gradient(135deg, var(--primary-600), var(--primary-800));">
+                    <i class="fas fa-user-md"></i>
+                </div>
+                <h3 class="h2 fw-bold mb-1 text-main">{{ medecins|length }}</h3>
+                <p class="text-muted mb-0">{{ config.medecin_label_plural }}</p>
+                <div class="mt-2">
+                    <span class="modern-badge badge-primary">
+                        <i class="fas fa-users me-1"></i> Actifs
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="stat-card h-100">
+                <div class="stat-icon" style="background: linear-gradient(135deg, #8b5cf6, #a78bfa);">
+                    <i class="{{ config.item_icon }}"></i>
+                </div>
+                <h3 class="h2 fw-bold mb-1 text-main">{{ total_general_items }}</h3>
+                <p class="text-muted mb-0">{{ config.item_label_plural }}</p>
+                <div class="mt-2">
+                    <span class="modern-badge badge-info">
+                        <i class="fas fa-chart-bar me-1"></i> Total
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="stat-card h-100">
+                <div class="stat-icon" style="background: linear-gradient(135deg, var(--success-600), #34d399);">
+                    <i class="fas fa-coins"></i>
+                </div>
+                <h3 class="h2 fw-bold mb-1 gradient-text">
+                    {{ "{:,.0f}".format(total_general_honoraires).replace(",", " ") }} DA
+                </h3>
+                <p class="text-muted mb-0">Honoraires totaux</p>
+                <div class="mt-2">
+                    <span class="modern-badge badge-success">
+                        <i class="fas fa-money-bill-wave me-1"></i> Cumul
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filter Bar -->
+    <div class="filter-bar fade-in-up">
+        <form method="GET" id="dateForm" class="row g-3 align-items-center">
+            <div class="col-md-auto">
+                <div class="d-flex align-items-center text-muted fw-medium">
+                    <i class="far fa-calendar-alt me-2"></i>
+                    <span>Période :</span>
+                </div>
+            </div>
+
+            <div class="col-md-4">
+                <div class="input-group">
+                    <input type="text" id="daterange" class="form-control border-end-0"
+                        placeholder="Sélectionner une période">
+                    <span class="input-group-text bg-white border-start-0">
+                        <i class="fas fa-calendar-alt"></i>
+                    </span>
+                </div>
+            </div>
+
+            <div class="col-md-auto">
+                <button type="button" id="applyFilter" class="btn btn-modern btn-modern-primary px-4">
+                    <i class="fas fa-filter me-2"></i>Filtrer
+                </button>
+            </div>
+
+            <div class="col-md-auto">
+                <span id="loadingMessage" class="text-primary-600" style="display:none;">
+                    <i class="fas fa-circle-notch fa-spin me-1"></i>Chargement...
+                </span>
+            </div>
+
+            <input type="hidden" name="date_debut" id="date_debut" value="{{ date_debut }}">
+            <input type="hidden" name="date_fin" id="date_fin" value="{{ date_fin }}">
+        </form>
+    </div>
+
+    <!-- Doctors List -->
+    {% if medecins %}
+    <div class="row g-4">
+        {% for m in medecins %}
+        <div class="col-12 fade-in-up" style="animation-delay: {{ loop.index * 0.1 }}s;">
+            <div class="modern-card">
+                <!-- Doctor Header -->
+                <div class="modern-card-header">
+                    <div
+                        class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3">
+                        <div class="d-flex align-items-center gap-3">
+                            <div class="avatar" style="width: 56px; height: 56px; font-size: 20px;">
+                                {{ m.nom_complet[:2].upper() }}
+                            </div>
+
+                            <div>
+                                <h3 class="h5 fw-bold mb-1 text-white">{{ m.nom_complet }}</h3>
+                                <div class="d-flex flex-wrap gap-2">
+                                    <span class="modern-badge" style="background: rgba(255,255,255,0.2); color: white;">
+                                        {{ m.specialite }}
+                                    </span>
+                                    {% if m.pourcentage_medecin %}
+                                    <span class="modern-badge" style="background: rgba(255,255,255,0.2); color: white;">
+                                        {{ "{:.0f}".format(m.pourcentage_medecin) }}% Quote-part
+                                    </span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="d-flex gap-2">
+                            {% if m.nb_items_non_payes > 0 %}
+                            <a href="{{ url_for(config.create_decharge_route, **{config.doctor_param: m.id, 'date_debut': date_debut, 'date_fin': date_fin}) }}"
+                                class="btn btn-modern btn-modern-primary">
+                                <i class="fas fa-plus me-1"></i> Nouvelle décharge
+                            </a>
+                            {% endif %}
+                            <a href="{{ url_for(config.detail_route, **{config.doctor_param: m.id, 'date_debut': date_debut, 'date_fin': date_fin}) }}"
+                                class="btn btn-modern btn-modern-secondary">
+                                <i class="fas fa-eye me-1"></i> Voir détails
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Doctor Stats -->
+                <div class="p-4">
+                    <div class="row g-4 mb-4">
+                        <div class="col-sm-6 col-lg-3">
+                            <div class="p-3 border rounded-lg">
+                                <div class="d-flex align-items-center justify-content-between mb-2">
+                                    <span class="text-muted small fw-semibold">{{ config.item_label_plural }}</span>
+                                    <i class="fas {{ config.item_icon }} text-primary-500"></i>
+                                </div>
+                                <h4 class="h3 fw-bold mb-0">{{ m.nb_items }}</h4>
+                                {% if m.nb_items_non_payes > 0 %}
+                                <small class="text-warning-600">
+                                    <i class="fas fa-exclamation-circle me-1"></i>
+                                    {{ m.nb_items_non_payes }} en attente
+                                </small>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <div class="col-sm-6 col-lg-3">
+                            <div class="p-3 border rounded-lg">
+                                <div class="d-flex align-items-center justify-content-between mb-2">
+                                    <span class="text-muted small fw-semibold">Honoraires</span>
+                                    <i class="fas fa-coins text-success-500"></i>
+                                </div>
+                                <h4 class="h3 fw-bold gradient-text mb-0">
+                                    {{ "{:,.0f}".format(m.total_honoraires).replace(",", " ") }} DA
+                                </h4>
+                            </div>
+                        </div>
+
+                        <div class="col-sm-6 col-lg-3">
+                            <div class="p-3 border rounded-lg">
+                                <div class="d-flex align-items-center justify-content-between mb-2">
+                                    <span class="text-muted small fw-semibold">Payé</span>
+                                    <i class="fas fa-check-circle text-success-500"></i>
+                                </div>
+                                <h4 class="h3 fw-bold text-success-600 mb-0">
+                                    {{ "{:,.0f}".format(m.montant_paye).replace(",", " ") }} DA
+                                </h4>
+                                <small class="text-success-600">
+                                    {{ "{:.1f}".format(m.pourcentage_paye) }}% du total
+                                </small>
+                            </div>
+                        </div>
+
+                        <div class="col-sm-6 col-lg-3">
+                            <div class="p-3 border rounded-lg">
+                                <div class="d-flex align-items-center justify-content-between mb-2">
+                                    <span class="text-muted small fw-semibold">Solde restant</span>
+                                    <i
+                                        class="fas fa-clock {{ 'text-warning-500' if m.solde_restant > 0 else 'text-muted' }}"></i>
+                                </div>
+                                <h4
+                                    class="h3 fw-bold {{ 'text-warning-600' if m.solde_restant > 0 else 'text-muted' }} mb-0">
+                                    {{ "{:,.0f}".format(m.solde_restant).replace(",", " ") }} DA
+                                </h4>
+                                {% if m.solde_restant > 0 %}
+                                <small class="text-warning-600">
+                                    <i class="fas fa-exclamation-triangle me-1"></i>
+                                    À régulariser
+                                </small>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Payment Progress -->
+                    {% if m.total_honoraires > 0 %}
+                    <div class="mb-4">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span class="fw-semibold">Progression du paiement</span>
+                            <span class="fw-bold gradient-text">{{ "{:.1f}".format(m.pourcentage_paye) }}%</span>
+                        </div>
+                        <div class="modern-progress">
+                            <div class="modern-progress-bar" style="width: {{ '{:.1f}'.format(m.pourcentage_paye) }}%">
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <!-- Repartition Table -->
+                    {% if m.repartition %}
+                    <div class="mt-4">
+                        <h5 class="fw-semibold mb-3">Répartition des actes</h5>
+                        <div class="table-responsive rounded-lg border">
+                            <table class="modern-table">
+                                <thead>
+                                    <tr>
+                                        {% for header in config.repartition_headers %}
+                                        <th>{{ header.label }}</th>
+                                        {% endfor %}
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for r in m.repartition %}
+                                    <tr>
+                                        {% if config.type == 'gyneco' %}
+                                        <td>
+                                            {% if r.type_accouchement == 'VOIE_BASSE' %}
+                                            <span class="modern-badge badge-success">
+                                                <i class="fas fa-baby me-1"></i> Voie Basse
+                                            </span>
+                                            {% else %}
+                                            <span class="modern-badge badge-warning">
+                                                <i class="fas fa-procedures me-1"></i> Césarienne
+                                            </span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {% if r.type_tarification == 'CONVENTION' %}
+                                            <span class="modern-badge badge-primary">Convention</span>
+                                            {% else %}
+                                            <span class="modern-badge"
+                                                style="background-color: var(--secondary-100); color: var(--secondary-700);">
+                                                Payant
+                                            </span>
+                                            {% endif %}
+                                        </td>
+                                        <td class="text-center fw-bold">{{ r.nb }}</td>
+                                        {% else %}
+                                        <td class="fw-medium">{{ r.nom_acte }}</td>
+                                        <td class="text-center">
+                                            <span class="modern-badge badge-primary">{{ r.nb }}</span>
+                                        </td>
+                                        {% endif %}
+                                        <td class="text-end fw-bold">
+                                            {{ "{:,.2f}".format(r.honoraires).replace(",", " ") }} DA
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <!-- Empty State -->
+    <div class="empty-state fade-in-up">
+        <div class="empty-state-icon">
+            <i class="fas fa-user-md"></i>
+        </div>
+        <h3 class="h4 fw-bold mb-3">Aucun médecin trouvé</h3>
+        <p class="text-muted mb-4">Aucune donnée disponible pour la période sélectionnée.</p>
+        <button class="btn btn-modern btn-modern-primary" onclick="document.getElementById('daterange').focus()">
+            <i class="fas fa-calendar-alt me-2"></i>Changer la période
+        </button>
+    </div>
+    {% endif %}
+</main>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/moment.min.js') }}"></script>
+<script src="{{ url_for('static', filename='js/daterangepicker.min.js') }}"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        // Initialize date range picker
+        const dateFormat = 'DD/MM/YYYY';
+        const start = moment('{{ date_debut }}', 'YYYY-MM-DD');
+        const end = moment('{{ date_fin }}', 'YYYY-MM-DD');
+
+        $('#daterange').daterangepicker({
+            startDate: start,
+            endDate: end,
+            opens: 'left',
+            showDropdowns: true,
+            autoApply: false,
+            locale: {
+                format: dateFormat,
+                separator: ' - ',
+                applyLabel: 'Appliquer',
+                cancelLabel: 'Annuler',
+                fromLabel: 'De',
+                toLabel: 'À',
+                customRangeLabel: 'Personnalisé',
+                weekLabel: 'S',
+                daysOfWeek: moment.weekdaysMin(),
+                monthNames: moment.months(),
+                firstDay: 1
+            },
+            ranges: {
+                'Aujourd\'hui': [moment(), moment()],
+                'Hier': [moment().subtract(1, 'days'), moment().subtract(1, 'days')],
+                'Les 7 derniers jours': [moment().subtract(6, 'days'), moment()],
+                'Les 30 derniers jours': [moment().subtract(29, 'days'), moment()],
+                'Ce mois-ci': [moment().startOf('month'), moment().endOf('month')],
+                'Le mois dernier': [moment().subtract(1, 'month').startOf('month'), moment().subtract(1, 'month').endOf('month')],
+                'Cette année': [moment().startOf('year'), moment().endOf('year')]
+            }
+        });
+
+        // Form submission with loading state
+        const applyBtn = document.getElementById('applyFilter');
+        const loadingMsg = document.getElementById('loadingMessage');
+        const dateForm = document.getElementById('dateForm');
+
+        if (applyBtn) {
+            applyBtn.addEventListener('click', function (e) {
+                e.preventDefault();
+
+                // Get selected dates
+                const drp = $('#daterange').data('daterangepicker');
+                document.getElementById('date_debut').value = drp.startDate.format('YYYY-MM-DD');
+                document.getElementById('date_fin').value = drp.endDate.format('YYYY-MM-DD');
+
+                // Show loading state
+                applyBtn.disabled = true;
+                applyBtn.innerHTML = '<i class="fas fa-circle-notch fa-spin me-2"></i>Filtrage...';
+                loadingMsg.style.display = 'inline';
+
+                // Save to localStorage
+                localStorage.setItem('medecins_date_debut', drp.startDate.format('YYYY-MM-DD'));
+                localStorage.setItem('medecins_date_fin', drp.endDate.format('YYYY-MM-DD'));
+
+                // Submit form
+                setTimeout(() => {
+                    dateForm.submit();
+                }, 300);
+            });
+        }
+
+        // Add keyboard shortcut for filter (Ctrl+F)
+        document.addEventListener('keydown', function (e) {
+            if ((e.ctrlKey || e.metaKey) && e.key === 'f') {
+                e.preventDefault();
+                document.getElementById('daterange').focus();
+            }
+        });
+
+        // Initialize tooltips
+        const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl);
+        });
+    });
+</script>
+{% endblock %}

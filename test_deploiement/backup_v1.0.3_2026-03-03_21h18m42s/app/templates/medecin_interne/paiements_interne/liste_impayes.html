@@ -1,0 +1,234 @@
+{% extends "layout.html" %}
+
+{% block style %}
+<style>
+    :root {
+        --primary: #3b82f6;
+        --danger: #ef4444;
+        --warning: #f59e0b;
+        --info: #0ea5e9;
+    }
+
+    .page-header {
+        background: linear-gradient(135deg, var(--primary), #2563eb);
+        color: white;
+        padding: 2rem;
+        border-radius: 12px;
+        margin-bottom: 2rem;
+    }
+
+    .filter-card {
+        background: white;
+        border-radius: 12px;
+        padding: 1.5rem;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        margin-bottom: 2rem;
+    }
+
+    .medecin-card {
+        background: white;
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        border-left: 4px solid var(--warning);
+        transition: transform 0.2s;
+    }
+
+    .medecin-card:hover {
+        transform: translateY(-4px);
+    }
+
+    .stat-box {
+        background: #f9fafb;
+        border-radius: 8px;
+        padding: 1rem;
+        text-align: center;
+    }
+
+    .stat-value {
+        font-size: 1.8rem;
+        font-weight: 700;
+        color: var(--primary);
+    }
+
+    .stat-label {
+        font-size: 0.85rem;
+        color: #6b7280;
+    }
+
+    .acte-item {
+        background: #f9fafb;
+        border-radius: 8px;
+        padding: 1rem;
+        margin-bottom: 0.75rem;
+        border-left: 3px solid var(--info);
+    }
+
+    .badge {
+        padding: 0.35rem 0.75rem;
+        border-radius: 50px;
+        font-size: 0.8rem;
+        font-weight: 600;
+    }
+
+    .btn-create-decharge {
+        background: linear-gradient(135deg, var(--primary), #2563eb);
+        color: white;
+        border: none;
+        padding: 0.75rem 1.5rem;
+        border-radius: 8px;
+        font-weight: 600;
+        transition: all 0.2s;
+    }
+
+    .btn-create-decharge:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Header -->
+    <div class="page-header">
+        <!-- Modifier le header existant -->
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h1><i class="fas fa-wallet me-2"></i>{{ title }}</h1>
+                <small class="opacity-75">Gestion des paiements aux médecins internes (Liste impayés</small>
+            </div>
+            <div class="d-flex gap-2">
+                <a href="{{ url_for('medecin_interne_decharges_list') }}" class="btn btn-light">
+                    <i class="fas fa-receipt me-1"></i>Voir toutes les décharges
+                </a>
+                <a href="{{ url_for('situations_medecins_internes_list') }}" class="btn btn-info">
+                    <i class="fas fa-users me-1"></i>Situations médecins
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filtres -->
+    <div class="filter-card">
+        <form method="GET" class="row g-3 align-items-end">
+            <div class="col-md-3">
+                <label class="form-label small">Médecin</label>
+                <select name="id_doctor" class="form-select">
+                    <option value="all">Tous</option>
+                    {% for m in medecins %}
+                    <option value="{{ m.id }}" {% if m.id|string==id_doctor_selected %}selected{% endif %}>
+                        {{ m.nom_complet }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label small">Date début</label>
+                <input type="date" name="date_debut" class="form-control" value="{{ date_debut }}">
+            </div>
+            <div class="col-md-3">
+                <label class="form-label small">Date fin</label>
+                <input type="date" name="date_fin" class="form-control" value="{{ date_fin }}">
+            </div>
+            <div class="col-md-3">
+                <button type="submit" class="btn btn-primary w-100">
+                    <i class="fas fa-filter me-1"></i>Filtrer
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Vue par médecin -->
+    {% if id_doctor_selected == 'all' %}
+    <!-- Liste des médecins avec montants dus -->
+    {% for ms in medecins_stats %}
+    <div class="medecin-card">
+        <div class="d-flex justify-content-between align-items-start mb-3">
+            <div>
+                <h4 class="mb-1">
+                    <i class="fas fa-user-md text-primary me-2"></i>
+                    {{ ms.medecin_name }}
+                </h4>
+                <small class="text-muted">
+                    Période: {{ ms.date_min.strftime('%d/%m/%Y') }} - {{ ms.date_max.strftime('%d/%m/%Y') }}
+                </small>
+            </div>
+            <a href="{{ url_for('medecin_interne_decharge_create', id_doctor=ms.id_doctor, date_debut=date_debut, date_fin=date_fin) }}"
+                class="btn btn-create-decharge">
+                <i class="fas fa-file-invoice me-1"></i>Créer décharge
+            </a>
+        </div>
+
+        <div class="row g-3">
+            <div class="col-md-4">
+                <div class="stat-box">
+                    <div class="stat-value">{{ ms.nb_actes }}</div>
+                    <div class="stat-label">Actes non payés</div>
+                </div>
+            </div>
+            <div class="col-md-8">
+                <div class="stat-box" style="background: #fef3c7; border-left: 4px solid var(--warning);">
+                    <div class="stat-value" style="color: var(--warning);">
+                        {{ "{:,.2f}".format(ms.total_honoraires).replace(",", " ") }} DA
+                    </div>
+                    <div class="stat-label">Total honoraires dus</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+
+    {% if not medecins_stats %}
+    <div class="text-center py-5">
+        <i class="fas fa-check-circle text-success" style="font-size: 4rem; opacity: 0.5;"></i>
+        <h4 class="mt-3">Aucun paiement en attente</h4>
+        <p class="text-muted">Tous les médecins sont à jour</p>
+    </div>
+    {% endif %}
+
+    {% else %}
+    <!-- Détail pour un médecin spécifique -->
+    {% if actes %}
+    <div class="card">
+        <div class="card-header bg-white d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">
+                <i class="fas fa-list me-2"></i>
+                Actes non payés ({{ actes|length }})
+            </h5>
+            <div>
+                <strong class="text-warning me-3">
+                    Total: {{ "{:,.2f}".format(actes|sum(attribute='part_medecin')).replace(",", " ") }} DA
+                </strong>
+                <a href="{{ url_for('medecin_interne_decharge_create', id_doctor=id_doctor_selected, date_debut=date_debut, date_fin=date_fin) }}"
+                    class="btn btn-create-decharge">
+                    <i class="fas fa-file-invoice me-1"></i>Créer décharge pour tous
+                </a>
+            </div>
+        </div>
+        <div class="card-body">
+            {% for a in actes %}
+            <div class="acte-item">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <strong>#{{ a.id_acte }}</strong> - {{ a.patient }}
+                        <br>
+                        <small class="text-muted">{{ a.date_acte.strftime('%d/%m/%Y') }}</small>
+                        <span class="badge bg-info ms-2">{{ a.nom_acte or 'Acte médical' }}</span>
+                    </div>
+                    <div class="text-end">
+                        <div class="text-muted small">Honoraires</div>
+                        <strong class="text-primary" style="font-size: 1.2rem;">
+                            {{ "{:,.2f}".format(a.part_medecin).replace(",", " ") }} DA
+                        </strong>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+    {% endif %}
+</div>
+{% endblock %}

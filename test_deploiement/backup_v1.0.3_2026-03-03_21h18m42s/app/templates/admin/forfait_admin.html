@@ -1,0 +1,310 @@
+{% extends 'admin/admin_layout.html' %}
+
+{% block style %}
+<style>
+    .card {
+        border-radius: 10px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    .table-hover tbody tr:hover {
+        background-color: rgba(0, 123, 255, 0.05);
+    }
+
+    .badge-count {
+        font-size: 0.85rem;
+        padding: 0.35rem 0.6rem;
+        font-weight: 600;
+    }
+
+    .btn-info {
+        background-color: #17a2b8;
+        border-color: #17a2b8;
+    }
+
+    .btn-info:hover {
+        background-color: #138496;
+        border-color: #117a8b;
+    }
+
+    .btn-group .btn {
+        margin: 0;
+        border-radius: 0;
+    }
+
+    .btn-group .btn:first-child {
+        border-top-left-radius: 0.25rem;
+        border-bottom-left-radius: 0.25rem;
+    }
+
+    .btn-group .btn:last-child {
+        border-top-right-radius: 0.25rem;
+        border-bottom-right-radius: 0.25rem;
+    }
+
+    .forfait-card {
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .forfait-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- En-tête avec bouton d'ajout -->
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2><i class="fas fa-briefcase-medical me-2"></i>Gestion des Forfaits</h2>
+        <p class="text-muted mb-0">Gérez vos forfaits médicaux et leurs composants</p>
+    </div>
+    <button class="btn btn-primary btn-lg shadow" data-bs-toggle="modal" data-bs-target="#addForfaitModal">
+        <i class="fas fa-plus me-2"></i>Nouveau Forfait
+    </button>
+</div>
+
+<!-- Modal d'ajout -->
+<div class="modal fade" id="addForfaitModal" tabindex="-1" aria-labelledby="addForfaitModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="addForfaitModalLabel">
+                    <i class="fas fa-plus-circle me-2"></i>Ajouter un Forfait
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                    aria-label="Fermer"></button>
+            </div>
+            <form method="POST" action="{{ url_for('add_forfait') }}">
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="name_forfait" class="form-label">
+                                <i class="fas fa-tag me-1"></i>Nom du Forfait <span class="text-danger">*</span>
+                            </label>
+                            <input type="text" name="name_forfait" id="name_forfait" class="form-control" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="specialty_forfait" class="form-label">
+                                <i class="fas fa-user-md me-1"></i>Spécialité <span class="text-danger">*</span>
+                            </label>
+                            <select class="form-select" id="specialty_forfait" name="specialty_forfait" required>
+                                <option value="">Choisir une spécialité</option>
+                                {% for specialty in specialtys %}
+                                <option value="{{ specialty.id_specialty }}">{{ specialty.name_specialty }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <label for="duree_forfait" class="form-label">
+                                <i class="fas fa-clock me-1"></i>Durée (Minutes)
+                            </label>
+                            <input type="number" name="duree_forfait" id="duree_forfait" class="form-control"
+                                placeholder="Ex: 120" min="0">
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label for="nbr_nuit" class="form-label">
+                                <i class="fas fa-moon me-1"></i>Nombre de Nuits
+                            </label>
+                            <input type="number" name="nbr_nuit" id="nbr_nuit" class="form-control" placeholder="Ex: 2"
+                                min="0">
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label for="prix_forfait" class="form-label">
+                                <i class="fas fa-money-bill-wave me-1"></i>Prix (DA) <span class="text-danger">*</span>
+                            </label>
+                            <input type="number" name="prix_forfait" id="prix_forfait" class="form-control" required
+                                placeholder="Ex: 50000" min="0" step="0.01">
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times me-1"></i>Annuler
+                    </button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save me-1"></i>Créer et Configurer
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Tableau des forfaits -->
+<div class="card">
+    <div class="card-body">
+        <table id="myTable" class="table table-hover">
+            <thead class="table-light">
+                <tr>
+                    <th><i class="fas fa-tag me-1"></i>Nom</th>
+                    <th style="width: 100px;"><i class="fas fa-clock me-1"></i>Durée</th>
+                    <th style="width: 100px;"><i class="fas fa-moon me-1"></i>Nuits</th>
+                    <th style="width: 130px;"><i class="fas fa-money-bill-wave me-1"></i>Prix</th>
+                    <th><i class="fas fa-user-md me-1"></i>Spécialité</th>
+                    <th class="text-center" style="width: 150px;"><i class="fas fa-cube me-1"></i>Composants</th>
+                    <th class="text-center" style="width: 200px;"><i class="fas fa-cog me-1"></i>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for forfait in forfaits %}
+                <tr>
+                    <td>
+                        <strong>{{ forfait.name_forfait }}</strong>
+                    </td>
+                    <td>
+                        {% if forfait.duree_forfait %}
+                        <span class="badge bg-info">{{ forfait.duree_forfait }} min</span>
+                        {% else %}
+                        <span class="text-muted">-</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if forfait.nbr_nuit %}
+                        <span class="badge bg-secondary">{{ forfait.nbr_nuit }}</span>
+                        {% else %}
+                        <span class="text-muted">-</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <span class="badge bg-success badge-count">{{ forfait.prix_forfait }} DA</span>
+                    </td>
+                    <td>
+                        <span class="badge bg-primary">{{ forfait.name_specialty }}</span>
+                    </td>
+                    <td class="text-center">
+                        <span class="badge bg-success me-1" title="Produits inclus">
+                            <i class="fas fa-box me-1"></i>{{ forfait.nb_produits }}
+                        </span>
+                        <span class="badge bg-info" title="Actes inclus">
+                            <i class="fas fa-stethoscope me-1"></i>{{ forfait.nb_actes }}
+                        </span>
+                    </td>
+                    <td class="text-center">
+                        <div class="btn-group" role="group">
+                            <a href="{{ url_for('configure_forfait', id_forfait=forfait.id_forfait) }}"
+                                class="btn btn-primary btn-sm" title="Configurer le forfait">
+                                <i class="fas fa-cog"></i>
+                            </a>
+
+                            <!-- Bouton de duplication -->
+                            <button type="button" class="btn btn-info btn-sm btn-duplicate-forfait" title="Dupliquer"
+                                data-id="{{ forfait.id_forfait }}" data-name="{{ forfait.name_forfait }}"
+                                data-prix="{{ forfait.prix_forfait }}" data-nb-produits="{{ forfait.nb_produits }}"
+                                data-nb-actes="{{ forfait.nb_actes }}">
+                                <i class="fas fa-copy"></i>
+                            </button>
+
+                            <!-- Bouton d'impression -->
+                            <a href="{{ url_for('print_forfait', id_forfait=forfait.id_forfait) }}" target="_blank"
+                                class="btn btn-secondary btn-sm" title="Imprimer / Exporter">
+                                <i class="fas fa-print"></i>
+                            </a>
+
+                            <form method="POST" action="{{ url_for('delete_forfait', id_forfait=forfait.id_forfait) }}"
+                                class="d-inline"
+                                onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer ce forfait et toutes ses associations ?')">
+                                <button type="submit" class="btn btn-danger btn-sm" title="Supprimer">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </form>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Modal de confirmation de duplication (DYNAMIQUE) -->
+<div class="modal fade" id="duplicateForfaitModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-info text-white">
+                <h5 class="modal-title">
+                    <i class="fas fa-copy me-2"></i>Dupliquer le forfait
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST" id="duplicateForfaitForm" action="">
+                <div class="modal-body">
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i>
+                        <strong>Cette action va créer une copie complète du forfait incluant :</strong>
+                    </div>
+                    <ul id="duplicateForfaitDetails">
+                        <!-- Sera rempli dynamiquement par JavaScript -->
+                    </ul>
+                    <p class="text-muted mb-0">
+                        <i class="fas fa-lightbulb me-1"></i>
+                        Vous serez redirigé vers la page de configuration du nouveau forfait après la duplication.
+                    </p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times me-1"></i>Annuler
+                    </button>
+                    <button type="submit" class="btn btn-info">
+                        <i class="fas fa-copy me-1"></i>Dupliquer le forfait
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{% if forfaits|length == 0 %}
+<div class="text-center py-5">
+    <i class="fas fa-briefcase-medical fa-4x text-muted mb-3"></i>
+    <h4 class="text-muted">Aucun forfait créé</h4>
+    <p class="text-muted">Commencez par créer votre premier forfait</p>
+    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addForfaitModal">
+        <i class="fas fa-plus me-2"></i>Créer un Forfait
+    </button>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        'use strict';
+
+        // Gérer les clics sur les boutons de duplication
+        const duplicateButtons = document.querySelectorAll('.btn-duplicate-forfait');
+        const duplicateModal = document.getElementById('duplicateForfaitModal');
+        const duplicateForm = document.getElementById('duplicateForfaitForm');
+        const duplicateDetails = document.getElementById('duplicateForfaitDetails');
+
+        duplicateButtons.forEach(button => {
+            button.addEventListener('click', function () {
+                // Récupérer les données du forfait depuis les attributs data-*
+                const forfaitId = this.dataset.id;
+                const forfaitName = this.dataset.name;
+                const forfaitPrix = this.dataset.prix;
+                const nbProduits = this.dataset.nbProduits;
+                const nbActes = this.dataset.nbActes;
+
+                // Mettre à jour l'action du formulaire
+                duplicateForm.action = `/duplicate_forfait/${forfaitId}`;
+
+                // Mettre à jour le contenu du modal
+                duplicateDetails.innerHTML = `
+                <li><strong>${forfaitName}</strong> → <strong>${forfaitName} (Copie)</strong></li>
+                <li><i class="fas fa-box text-success me-1"></i>${nbProduits} produit(s)</li>
+                <li><i class="fas fa-stethoscope text-info me-1"></i>${nbActes} acte(s)</li>
+                <li><i class="fas fa-money-bill-wave text-success me-1"></i>Prix : ${forfaitPrix} DA</li>
+            `;
+
+                // Ouvrir le modal
+                const modal = new bootstrap.Modal(duplicateModal);
+                modal.show();
+            });
+        });
+    });
+</script>
+{% endblock %}

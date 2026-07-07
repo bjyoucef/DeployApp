@@ -1,0 +1,21 @@
+<div class="shelf shelf-{{ type | default('horizontal') }}" id="shelf-{{ rayonnage.id }}"
+    onclick="handleShelfClick(event, this)" data-id="{{ rayonnage.id }}" data-code="{{ rayonnage.code_etagere }}"
+    data-zone="{{ rayonnage.nom_zone }}" data-cols="1" data-rows="{{ rayonnage.nb_lignes }}"
+    data-width="{{ rayonnage.largeur_cm }}" data-specialties="{{ rayonnage.specialties or '' }}"
+    data-interne="{{ 1 if rayonnage.est_interne else 0 }}"
+    data-partageable="{{ 1 if rayonnage.est_partageable else 0 }}"
+    data-href="{{ url_for('archivage_detail_rayonnage', id_rayonnage=rayonnage.id) }}"
+    title="Voir Détail {{ rayonnage.code_etagere }}">
+
+    <div class="shelf-header">{{ rayonnage.code_etagere }}</div>
+
+    <div class="shelf-grid" style="grid-template-columns: repeat(1, 100px);">
+        {% for cell in rayonnage.cells %}
+        <div class="shelf-cell {% if cell.est_occupe %}occupied{% endif %} {% if cell.est_pleine %}full{% endif %}"
+            data-ligne="{{ cell.ligne_y }}" data-col="{{ cell.colonne_x }}"
+            title="{% if cell.est_occupe %}{{ cell.nb_boites }} Boîtes ({{ cell.remplissage_pct }}%){% else %}Libre{% endif %}"
+            style="{% if cell.est_occupe and cell.remplissage_pct < 100 %}opacity: {{ 0.4 + (cell.remplissage_pct / 200) }};{% endif %}">
+        </div>
+        {% endfor %}
+    </div>
+</div>

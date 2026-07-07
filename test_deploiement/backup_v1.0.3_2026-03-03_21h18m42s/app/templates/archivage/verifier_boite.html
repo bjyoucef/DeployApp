@@ -1,0 +1,894 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vérification Boîte d'Archives</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/modern_toast.css') }}" />
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #450A54 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-size: 24px;
+            margin-bottom: 8px;
+        }
+
+        .header p {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+
+        .card {
+            background: white;
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+        }
+
+        .spinner-container {
+            text-align: center;
+            padding: 40px 20px;
+        }
+
+        .spinner {
+            display: inline-block;
+            width: 50px;
+            height: 50px;
+            border: 5px solid #f3f3f3;
+            border-top: 5px solid #450A54;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        .spinner-text {
+            margin-top: 20px;
+            color: #666;
+            font-size: 14px;
+        }
+
+        .alert {
+            padding: 16px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .alert-error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .alert-icon {
+            font-size: 24px;
+            margin-bottom: 8px;
+            display: block;
+        }
+
+        .result-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            padding-bottom: 16px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+
+        .result-header h2 {
+            font-size: 18px;
+            color: #333;
+        }
+
+        .badge {
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .badge-success {
+            background: #28a745;
+            color: white;
+        }
+
+        .badge-danger {
+            background: #dc3545;
+            color: white;
+        }
+
+        .badge-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 12px 0;
+            border-bottom: 1px solid #f5f5f5;
+        }
+
+        .info-row:last-child {
+            border-bottom: none;
+        }
+
+        .info-label {
+            font-weight: 600;
+            color: #666;
+            font-size: 14px;
+        }
+
+        .info-value {
+            color: #333;
+            font-weight: 500;
+            font-size: 14px;
+            text-align: right;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 14px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-top: 16px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #450A54 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .verification-status {
+            text-align: center;
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            font-weight: 600;
+        }
+
+        .verification-status.valid {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .verification-status.invalid {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        /* Dossiers Section */
+        .dossiers-section {
+            margin-top: 25px;
+            border: 1px solid #e0e0e0;
+            border-radius: 12px;
+            overflow: hidden;
+            background: #fafafa;
+        }
+
+        .dossiers-header {
+            padding: 16px;
+            background: white;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .dossiers-header .title-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .dossiers-header h3 {
+            font-size: 16px;
+            color: #333;
+            margin: 0;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 10px 14px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 14px;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .search-input:focus {
+            border-color: #450A54;
+        }
+
+        .dossier-list {
+            max-height: 400px;
+            overflow-y: auto;
+            background: white;
+        }
+
+        .dossier-item {
+            display: flex;
+            align-items: center;
+            padding: 14px 16px;
+            border-bottom: 1px solid #f0f0f0;
+            transition: background 0.2s;
+        }
+
+        .dossier-item:last-child {
+            border-bottom: none;
+        }
+
+        .dossier-datebox {
+            text-align: center;
+            min-width: 55px;
+            margin-right: 15px;
+            border-right: 2px solid #f0f0f0;
+            padding-right: 15px;
+        }
+
+        .dossier-day {
+            font-size: 18px;
+            font-weight: 800;
+            color: #450A54;
+            line-height: 1.1;
+        }
+
+        .dossier-month {
+            font-size: 10px;
+            text-transform: uppercase;
+            color: #888;
+            font-weight: 700;
+        }
+
+        .dossier-info {
+            flex-grow: 1;
+        }
+
+        .dossier-name {
+            font-weight: 700;
+            color: #222;
+            font-size: 15px;
+            margin-bottom: 4px;
+        }
+
+        .dossier-module {
+            font-size: 10px;
+            background: rgba(69, 10, 84, 0.08);
+            color: #450A54;
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-weight: 700;
+            display: inline-block;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .empty-dossiers {
+            text-align: center;
+            padding: 40px 20px;
+            color: #888;
+        }
+
+        .empty-dossiers p {
+            margin-top: 10px;
+            font-size: 14px;
+        }
+
+        .empty-icon {
+            font-size: 32px;
+            opacity: 0.3;
+        }
+
+        /* ─── Status Badges ─── */
+        .statut-badge {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-size: 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-left: 8px;
+        }
+
+        .statut-archive {
+            background: #e6f4ea;
+            color: #1e8e3e;
+            border: 1px solid #ceead6;
+        }
+
+        .statut-sorti {
+            background: #fce8e6;
+            color: #d93025;
+            border: 1px solid #fad2cf;
+        }
+
+        .statut-desarchive {
+            background: #f1f3f4;
+            color: #5f6368;
+            border: 1px solid #e8eaed;
+        }
+
+        .sortie-info {
+            font-size: 11px;
+            color: #d93025;
+            margin-top: 4px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        /* ─── Action Buttons ─── */
+        .dossier-actions {
+            display: flex;
+            gap: 6px;
+            margin-top: 8px;
+            flex-wrap: wrap;
+        }
+
+        .action-btn {
+            padding: 6px 12px;
+            border: none;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .action-btn:hover {
+            opacity: 0.8;
+        }
+
+        .btn-sortie {
+            background: #fce8e6;
+            color: #d93025;
+        }
+
+        .btn-retour {
+            background: #e6f4ea;
+            color: #1e8e3e;
+        }
+
+        .btn-historique {
+            background: #f3e8fd;
+            color: #764ba2;
+        }
+
+        /* ─── Modal ─── */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            padding: 20px;
+        }
+
+        .modal-overlay.hidden {
+            display: none;
+        }
+
+        .modal-box {
+            background: white;
+            border-radius: 12px;
+            padding: 24px;
+            width: 100%;
+            max-width: 400px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+        }
+
+        .modal-title {
+            font-size: 18px;
+            font-weight: 700;
+            color: #333;
+            margin-bottom: 16px;
+        }
+
+        .modal-label {
+            display: block;
+            font-size: 13px;
+            font-weight: 600;
+            color: #555;
+            margin-bottom: 8px;
+        }
+
+        .modal-input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 14px;
+            margin-bottom: 16px;
+        }
+
+        .modal-input:focus {
+            border-color: #764ba2;
+            outline: none;
+        }
+
+        .modal-footer {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .modal-footer .action-btn {
+            flex: 1;
+            justify-content: center;
+            padding: 10px;
+            font-size: 14px;
+        }
+
+        .btn-cancel {
+            background: #f1f3f4;
+            color: #5f6368;
+        }
+
+        /* ─── Timeline ─── */
+        .timeline-container {
+            max-height: 300px;
+            overflow-y: auto;
+            padding-right: 10px;
+        }
+
+        .timeline-entry {
+            padding: 12px 0;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .timeline-entry:last-child {
+            border-bottom: none;
+        }
+
+        .timeline-action {
+            font-weight: 700;
+            font-size: 14px;
+            color: #333;
+        }
+
+        .timeline-meta {
+            font-size: 12px;
+            color: #888;
+            margin-top: 4px;
+        }
+
+        .timeline-detail {
+            font-size: 13px;
+            color: #555;
+            margin-top: 6px;
+            background: #fafafa;
+            padding: 8px;
+            border-radius: 6px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔍 Clinique INAYA - Service d'Archivage</h1>
+        </div>
+
+        <div class="card">
+            <!-- Spinner de chargement -->
+            <div id="loadingSection" class="spinner-container">
+                <div class="spinner"></div>
+                <div class="spinner-text">Vérification sécurisée en cours...</div>
+            </div>
+
+            <!-- Section d'alerte -->
+            <div id="alertSection" class="hidden"></div>
+
+            <!-- Section résultat -->
+            <div id="resultSection" class="hidden">
+                <div id="verificationStatus"></div>
+
+                <div class="result-header">
+                    <h2>Identité de la Boîte</h2>
+                    <span class="badge" id="validBadge"></span>
+                </div>
+
+                <div id="boiteInfo"></div>
+
+                <!-- Section des dossiers -->
+                <div class="dossiers-section hidden" id="dossiersSection">
+                    <div class="dossiers-header">
+                        <div class="title-row">
+                            <h3>Contenu de la Boîte</h3>
+                            <span class="badge badge-secondary" id="dossierCount"></span>
+                        </div>
+                        <input type="text" id="searchInput" class="search-input"
+                            placeholder="Rechercher un dossier clinique...">
+                    </div>
+                    <div class="dossier-list" id="dossiersContainer">
+                        <!-- Populated by JS -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modals (Hidden by default) -->
+    <div class="modal-overlay hidden" id="modalSortie">
+        <div class="modal-box">
+            <div class="modal-title">🔴 Sortie Temporaire</div>
+            <input type="hidden" id="sortie_id_dossier">
+            <label class="modal-label">Motif <span style="color:red;">*</span></label>
+            <textarea id="sortie_motif" class="modal-input" rows="3"
+                placeholder="Ex: Consultation par le médecin traitant..."></textarea>
+
+            <label class="modal-label">Date de retour prévue</label>
+            <input type="date" id="sortie_date_retour" class="modal-input">
+
+            <div class="modal-footer">
+                <button onclick="fermerModal('modalSortie')" class="action-btn btn-cancel">Annuler</button>
+                <button onclick="confirmerSortie()" class="action-btn btn-sortie"
+                    style="color:white; background:#d93025;">Confirmer</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay hidden" id="modalHistorique">
+        <div class="modal-box">
+            <div class="modal-title">📜 Historique des mouvements</div>
+            <div class="timeline-container" id="historique_body">
+                <div style="text-align:center; padding: 20px; color: #888;">Chargement...</div>
+            </div>
+            <div class="modal-footer">
+                <button onclick="fermerModal('modalHistorique')" class="action-btn btn-cancel">Fermer</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function getUrlParams() {
+            const params = new URLSearchParams(window.location.search);
+            return {
+                data: params.get('data'),
+                hash: params.get('hash')
+            };
+        }
+
+        function decodeData(encodedData) {
+            try {
+                const decoded = atob(encodedData.replace(/-/g, '+').replace(/_/g, '/'));
+                return JSON.parse(decoded);
+            } catch (e) {
+                console.error('Erreur de décodage:', e);
+                return null;
+            }
+        }
+
+        function showAlert(type, message, icon = '') {
+            const alertSection = document.getElementById('alertSection');
+            const iconHtml = icon ? `<span class="alert-icon">${icon}</span>` : '';
+            alertSection.className = `alert alert-${type}`;
+            alertSection.innerHTML = `${iconHtml}${message}`;
+            alertSection.classList.remove('hidden');
+        }
+
+        let isUserAuthenticated = false;
+
+        function showResults(boite, dossiers, isValid, isAuth = false) {
+            isUserAuthenticated = isAuth;
+            document.getElementById('loadingSection').classList.add('hidden');
+            document.getElementById('resultSection').classList.remove('hidden');
+
+            const statusDiv = document.getElementById('verificationStatus');
+            if (isValid) {
+                statusDiv.className = 'verification-status valid';
+                statusDiv.innerHTML = '✅ <strong>Boîte Authentique</strong><br>Cette boîte est bien référencée dans le système.';
+            } else {
+                statusDiv.className = 'verification-status invalid';
+                statusDiv.innerHTML = '⚠️ <strong>Boîte Non Valide</strong><br>Les données lues sont compromises ou la boîte n\'existe pas.';
+            }
+
+            const badge = document.getElementById('validBadge');
+            badge.className = `badge ${isValid ? 'badge-success' : 'badge-danger'}`;
+            badge.textContent = isValid ? '✓ VALIDE' : '✗ INVALIDE';
+
+            // Affichage Infos Boîte
+            const infoHTML = `
+                <div class="info-row">
+                    <span class="info-label">N° Archive :</span>
+                    <span class="info-value"><strong>${boite.numero_archive}</strong></span>
+                </div>
+                ${boite.emplacement ? `
+                <div class="info-row">
+                    <span class="info-label">Emplacement :</span>
+                    <span class="info-value">${boite.emplacement}</span>
+                </div>` : ''}
+                <div class="info-row">
+                    <span class="info-label">Médecin Assigné :</span>
+                    <span class="info-value">Dr. ${boite.doctor_name || 'Non défini'}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Spécialité :</span>
+                    <span class="info-value">${boite.specialite_nom || '-'}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Date Création :</span>
+                    <span class="info-value">${boite.date_creation}</span>
+                </div>
+            `;
+            document.getElementById('boiteInfo').innerHTML = infoHTML;
+
+            // Affichage Dossiers
+            const dossiersSection = document.getElementById('dossiersSection');
+            const container = document.getElementById('dossiersContainer');
+
+            if (isValid) {
+                dossiersSection.classList.remove('hidden');
+
+                if (dossiers && dossiers.length > 0) {
+                    renderDossiers(dossiers, dossiers.length);
+
+                    // Search Logic
+                    document.getElementById('searchInput').addEventListener('input', (e) => {
+                        const term = e.target.value.toLowerCase();
+                        const filtered = dossiers.filter(d => d.nom_patient.toLowerCase().includes(term));
+                        renderDossiers(filtered, dossiers.length);
+                    });
+                } else {
+                    document.getElementById('dossierCount').textContent = "0 dossier";
+                    container.innerHTML = `
+                        <div class="empty-dossiers">
+                            <div class="empty-icon">📁</div>
+                            <p>Aucun dossier clinique assigné à cette boîte.</p>
+                        </div>
+                    `;
+                    document.getElementById('searchInput').style.display = 'none';
+                }
+            }
+        }
+
+        function renderDossiers(dossiersList, totalPossible = null) {
+            const container = document.getElementById('dossiersContainer');
+
+            if (dossiersList.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-dossiers" style="padding: 20px;">
+                        <p>Aucun dossier ne correspond à votre recherche.</p>
+                    </div>
+                `;
+            } else {
+                container.innerHTML = dossiersList.map(dossier => {
+                    let badgeHtml = '';
+                    let actionHtml = '';
+                    let sortieHtml = '';
+
+                    // Badges statut
+                    if (dossier.statut === 'ARCHIVE') badgeHtml = '<span class="statut-badge statut-archive">📦 Archivé</span>';
+                    else if (dossier.statut === 'SORTI') badgeHtml = '<span class="statut-badge statut-sorti">🔴 Sorti</span>';
+                    else if (dossier.statut === 'DESARCHIVE') badgeHtml = '<span class="statut-badge statut-desarchive">⚪ Désarchivé</span>';
+
+                    // Info sortie
+                    if (dossier.statut === 'SORTI' && dossier.sortie_motif) {
+                        sortieHtml = `<div class="sortie-info">ℹ️ ${dossier.sortie_motif} ${dossier.sorti_par_nom ? `— ${dossier.sorti_par_nom}` : ''}</div>`;
+                    }
+
+                    // Boutons d'action (si authentifié)
+                    if (isUserAuthenticated) {
+                        let btns = [];
+                        if (dossier.statut === 'ARCHIVE') {
+                            btns.push(`<button class="action-btn btn-sortie" onclick="ouvrirModalSortie(${dossier.id_archive})">🔴 Sortie</button>`);
+                        } else if (dossier.statut === 'SORTI') {
+                            btns.push(`<button class="action-btn btn-retour" onclick="enregistrerRetour(${dossier.id_archive})">↩️ Retour</button>`);
+                        }
+                        btns.push(`<button class="action-btn btn-historique" onclick="ouvrirHistorique(${dossier.id_archive})">📜 Historique</button>`);
+
+                        actionHtml = `<div class="dossier-actions">${btns.join('')}</div>`;
+                    }
+
+                    return `
+                    <div class="dossier-item">
+                        <div class="dossier-datebox">
+                            <div class="dossier-day">${dossier.day}</div>
+                            <div class="dossier-month">${dossier.month_year}</div>
+                        </div>
+                        <div class="dossier-info">
+                            <div class="dossier-name">${dossier.nom_patient} ${badgeHtml}</div>
+                            <span class="dossier-module">${dossier.source_module}</span>
+                            ${sortieHtml}
+                            ${actionHtml}
+                        </div>
+                    </div>
+                `}).join('');
+            }
+
+            const countLabel = totalPossible !== null
+                ? `${dossiersList.length} / ${totalPossible} dossiers`
+                : `${dossiersList.length} dossier(s)`;
+            document.getElementById('dossierCount').textContent = countLabel;
+        }
+
+        async function verifierBoite() {
+            const urlParams = getUrlParams();
+            if (!urlParams.data || !urlParams.hash) {
+                document.getElementById('loadingSection').classList.add('hidden');
+                showAlert('error', '❌ <strong>QR Code invalide</strong><br>Lien corrompu ou incomplet.', '⚠️');
+                return;
+            }
+
+            const decodedData = decodeData(urlParams.data);
+            if (!decodedData) {
+                document.getElementById('loadingSection').classList.add('hidden');
+                showAlert('error', '❌ <strong>Erreur de lecture</strong><br>Impossible de lire ce QR Code.', '⚠️');
+                return;
+            }
+
+            const apiData = {
+                type: 'BOITE_ARCHIVE',
+                numero: decodedData.id,
+                timestamp: decodedData.ts,
+                hash: urlParams.hash
+            };
+
+            try {
+                const response = await fetch('/api/verifier_boite', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(apiData)
+                });
+
+                const result = await response.json();
+                if (result.success) {
+                    showResults(result.boite, result.dossiers, result.valid, result.is_authenticated);
+                } else {
+                    document.getElementById('loadingSection').classList.add('hidden');
+                    showAlert('error', `❌ <strong>Erreur de vérification</strong><br>${result.error}`, '⚠️');
+                }
+            } catch (error) {
+                document.getElementById('loadingSection').classList.add('hidden');
+                showAlert('error', `❌ <strong>Erreur serveur</strong><br>Impossible de joindre la base de données de la clinique. Assurez-vous d'être connecté au Wi-Fi.`, '⚠️');
+            }
+        }
+
+    </script>
+    <script src="{{ url_for('static', filename='js/modern_toast.js') }}"></script>
+    <script>
+        // ─── Actions JS ───
+
+        // Note: Global showToast is now available via modern_toast.js
+
+        function fermerModal(id) {
+            document.getElementById(id).classList.add('hidden');
+        }
+
+        function ouvrirModalSortie(id) {
+            document.getElementById('sortie_id_dossier').value = id;
+            document.getElementById('sortie_motif').value = '';
+            document.getElementById('sortie_date_retour').value = '';
+            document.getElementById('modalSortie').classList.remove('hidden');
+        }
+
+        function confirmerSortie() {
+            const id = document.getElementById('sortie_id_dossier').value;
+            const motif = document.getElementById('sortie_motif').value.trim();
+            const dateRetour = document.getElementById('sortie_date_retour').value || null;
+            if (!motif) { showToast('Le motif est obligatoire.', 'error'); return; }
+
+            fetch(`/archivage/api/dossier/${id}/sortie`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ motif, date_retour_prevue: dateRetour })
+            })
+                .then(r => r.json())
+                .then(data => {
+                    if (data.success) { showToast(data.message, 'success'); setTimeout(() => location.reload(), 1500); }
+                    else { showToast(data.message, 'error'); }
+                })
+                .catch(() => showToast('Erreur réseau.', 'error'));
+        }
+
+        function enregistrerRetour(id) {
+            if (!confirm('Confirmer le retour de ce dossier ?')) return;
+            fetch(`/archivage/api/dossier/${id}/retour`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' }
+            })
+                .then(r => r.json())
+                .then(data => {
+                    if (data.success) { showToast(data.message, 'success'); setTimeout(() => location.reload(), 1500); }
+                    else { showToast(data.message, 'error'); }
+                });
+        }
+
+        const ACTION_LABELS = {
+            'CREATION': '🟢 Création',
+            'DEPLACEMENT_BOITE': '🟡 Déplacement (Boîte)',
+            'DEPLACEMENT_ZONE': '🟡 Déplacement (Zone)',
+            'SORTIE_TEMPORAIRE': '🔴 Sortie temporaire',
+            'RETOUR': '🔵 Retour',
+            'DESARCHIVE': '⚪ Désarchivé',
+        };
+
+        function ouvrirHistorique(id) {
+            const body = document.getElementById('historique_body');
+            body.innerHTML = '<div style="text-align:center; padding:20px; color:#888;">Chargement...</div>';
+            document.getElementById('modalHistorique').classList.remove('hidden');
+
+            fetch(`/archivage/api/dossier/${id}/historique`)
+                .then(r => r.json())
+                .then(data => {
+                    if (!data.success || !data.historique.length) {
+                        body.innerHTML = '<div style="text-align:center; padding:20px; color:#888;">Aucun historique enregistré.</div>';
+                        return;
+                    }
+                    body.innerHTML = data.historique.map(h => `
+                    <div class="timeline-entry">
+                        <div class="timeline-action">${ACTION_LABELS[h.action] || h.action}</div>
+                        <div class="timeline-meta">${h.date_action || ''} — ${h.effectue_par || ''}</div>
+                        ${h.boite_avant && h.boite_apres ? `<div class="timeline-detail">Boîte: ${h.boite_avant} → ${h.boite_apres}</div>` : ''}
+                        ${h.zone_avant && h.zone_apres ? `<div class="timeline-detail">Zone: ${h.zone_avant} → ${h.zone_apres}</div>` : ''}
+                        ${h.commentaire ? `<div class="timeline-detail">${h.commentaire}</div>` : ''}
+                    </div>
+                `).join('');
+                })
+                .catch(() => { body.innerHTML = '<div style="text-align:center; color:red;">Erreur de chargement.</div>'; });
+        }
+    </script>
+</body>
+
+</html>

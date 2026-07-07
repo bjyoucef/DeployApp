@@ -1,0 +1,50 @@
+<div class="modal fade" id="afficheRetournerModal{{ emprunt.id }}" tabindex="-1" role="dialog"
+     aria-labelledby="afficheModalLabel{{ emprunt.id }}" aria-hidden="true">
+    <div class="modal-dialog modal-xl" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="afficheModalLabel{{ emprunt.id }}">
+                    Détails du retour pour la clé {{ emprunt.numero_cle }}
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+
+            </div>
+            <div class="modal-body">
+                <table class="table table-hover">
+                    <thead>
+                    <tr>
+                        <th><i class="fas fa-user-check"></i> Receveur</th>
+                        <th><i class="fas fa-user-slash"></i> Poste</th>
+
+                        <th><i class="fas fa-user-clock"></i> Retournant</th>
+                        <th><i class="fas fa-user-clock"></i> Poste</th>
+                        <th><i class="fas fa-calendar-check"></i> Date de retour</th>
+                    </tr>
+
+                    </thead>
+                    <tbody>
+                    <tr>
+
+                        <td>{{ emprunt.nom_personne_recoit }} {{ emprunt.prenom_personne_recoit }}</td>
+                        <td>{{ emprunt.role_personne_recoit }}</td>
+                        <td>{{ emprunt.nom_personne_retourne }} {{ emprunt.prenom_personne_retourne }}</td>
+                        <td>{{ emprunt.role_personne_retourne }}</td>
+
+                        <td>{{ emprunt.date_retour }}</td>
+
+
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="modal-footer">
+                <form action="{{ url_for('export_retour_pdf' , id=emprunt.id) }}"
+                      method="GET">
+                    <button class="btn btn-info btn-sm mr-2" type="submit">Télécharger Décharge</button>
+                </form>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fermer</button>
+
+            </div>
+        </div>
+    </div>
+</div>

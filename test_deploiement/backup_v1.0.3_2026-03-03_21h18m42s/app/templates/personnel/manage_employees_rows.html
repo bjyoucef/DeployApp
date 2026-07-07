@@ -1,0 +1,124 @@
+{% for employe in employes %}
+<tr class="{% if not employe.statut_activite %}opacity-50{% endif %}">
+    <td>{{ (current_page - 1) * per_page + loop.index }}</td>
+    <td>
+        <div class="d-flex align-items-center">
+            <div class="avatar-circle me-3">
+                {{ employe.prenom[0] }}{{ employe.nom[0] }}
+            </div>
+            <div>
+                <div class="fw-bold text-dark header-title">{{ employe.nom }} {{ employe.prenom }}</div>
+                {% if employe.username %}
+                <div class="small text-muted"><i class="fas fa-user-tag me-1"></i>{{ employe.username }}</div>
+                {% endif %}
+            </div>
+        </div>
+    </td>
+    <td>
+        <div class="d-flex flex-column align-items-start">
+            <span class="badge badge-role mb-1">{{ employe.role }}</span>
+            {% if employe.service_name and employe.service_name != 'None' %}
+            <span class="small text-muted"><i class="fas fa-building me-1"></i>{{ employe.service_name }}</span>
+            {% else %}
+            <span class="small text-muted fst-italic">Non assigné</span>
+            {% endif %}
+        </div>
+    </td>
+    <td>
+        {% if employe.telephone %}
+        <a href="tel:{{ employe.telephone }}" class="text-decoration-none text-dark" id="manage_employees_rows_a_1">
+            <i class="fas fa-phone-alt me-2 text-primary"></i>{{ employe.telephone }}
+        </a>
+        {% else %}
+        <span class="text-muted opacity-50"><i class="fas fa-minus"></i></span>
+        {% endif %}
+    </td>
+    <td>
+        {% if employe.last_activity %}
+        <div class="d-flex align-items-center">
+            <i class="far fa-clock me-2 text-muted"></i>
+            <div class="d-flex flex-column">
+                <small class="fw-bold">{{ employe.last_activity.strftime('%d/%m') }}</small>
+                <small class="text-muted" style="font-size: 0.75rem;">{{ employe.last_activity.strftime('%H:%M')
+                    }}</small>
+            </div>
+        </div>
+        {% else %}
+        <span class="text-muted small fst-italic">Jamais</span>
+        {% endif %}
+    </td>
+    <td>
+        {% if not employe.statut_activite %}
+        <div class="badge-status badge-status-disabled">
+            <span class="status-dot disabled"></span>Désactivé
+        </div>
+        {% elif employe.is_online %}
+        <div class="badge-status badge-status-online">
+            <span class="status-dot online"></span>En ligne
+        </div>
+        {% else %}
+        <div class="badge-status badge-status-offline">
+            <span class="status-dot offline"></span>Hors ligne
+        </div>
+        {% endif %}
+    </td>
+    <td class="text-end">
+        {% if not employe['is_admin'] %}
+        <div class="d-flex justify-content-end gap-2">
+            <!-- Gérer les rôles -->
+            {% if 'ATTRIBUER_ROLES_UTILISATEUR' in session.privileges %}
+            <a href="{{ url_for('manage_employee_roles', id_personnel=employe.id_personnel) }}"
+                class="btn btn-action btn-action-info" title="Gérer les rôles" data-bs-toggle="tooltip"
+                id="manage_employees_rows_a_2">
+                <i class="fas fa-user-shield"></i>
+            </a>
+            {% endif %}
+
+            <!-- Modifier employé : Notez l'utilisation de onclick="openEditModal(this)" et des attributs data-* -->
+            {% if 'MODIFIER_EMPLOYE' in session.privileges %}
+            <button type="button" class="btn btn-action btn-action-warning" onclick="openEditModal(this)"
+                title="Modifier l'employé" data-bs-toggle="tooltip" data-id="{{ employe.id_personnel }}"
+                data-nom="{{ employe.nom }}" data-prenom="{{ employe.prenom }}" data-role="{{ employe.role }}"
+                data-telephone="{{ employe.telephone or '' }}" data-service="{{ employe.service_name or '' }}"
+                data-planning="{{ employe.use_in_planning }}" id="manage_employees_rows_button_3">
+                <i class="fas fa-pencil-alt"></i>
+            </button>
+            {% endif %}
+
+            <!-- Modifier credentials -->
+            {% if 'MODIFIER_UTILISATEUR' in session.privileges and employe.username %}
+            <button type="button" class="btn btn-action btn-action-primary" onclick="openCredentialsModal(this)"
+                title="Modifier les accès" data-bs-toggle="tooltip" data-id="{{ employe.id_personnel }}"
+                data-username="{{ employe.username }}" id="manage_employees_rows_button_4">
+                <i class="fas fa-key"></i>
+            </button>
+            {% endif %}
+
+            <!-- Activer/Désactiver -->
+            {% if 'DESACTIVER_EMPLOYE' in session.privileges %}
+            <form action="{{ url_for('manage_employees') }}" method="POST" class="d-inline">
+                <input type="hidden" name="action" value="change_status" / id="manage_employees_rows_input_5">
+                <input type="hidden" name="id_personnel" value="{{ employe.id_personnel }}" /
+                    id="manage_employees_rows_input_6">
+                <input type="hidden" name="change_status"
+                    value="{% if employe.statut_activite %}0{% else %}1{% endif %}" /
+                    id="manage_employees_rows_input_7">
+                <button type="submit"
+                    class="btn btn-action {% if employe.statut_activite %}btn-action-danger{% else %}btn-action-success{% endif %}"
+                    title="{% if employe.statut_activite %}Désactiver{% else %}Activer{% endif %}"
+                    data-bs-toggle="tooltip" id="manage_employees_rows_button_8">
+                    <i class="fas fa-{% if employe.statut_activite %}ban{% else %}check{% endif %}"></i>
+                </button>
+            </form>
+            {% endif %}
+        </div>
+        {% endif %}
+    </td>
+</tr>
+{% else %}
+<tr>
+    <td colspan="7" class="text-center py-4 text-muted">
+        <i class="fas fa-search me-2"></i>Aucun employé trouvé.
+    </td>
+</tr>
+{% endfor %}
